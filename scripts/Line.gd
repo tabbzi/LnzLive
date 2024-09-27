@@ -10,34 +10,31 @@ export var ball_world_pos2 = Vector3.ZERO setget set_ball_world_pos2
 export var texture: Texture setget set_texture
 export var transparent_color = 0 setget set_transparent_color
 
-var palette = preload("res://resources/textures/petzpalette.png")
 var petz_palette = preload("res://resources/textures/petzpalette.png")
 var babyz_palette = preload("res://resources/textures/babyzpalette.png")
 
 func _ready():
-	print("Node is ready but waiting for palette setup signal.")
-	# The palette won't be set here until the dog_generator signals it's time to do so.
+	$MeshInstance.material_override.set_shader_param("palette", petz_palette)
+
+func _on_palette_change(new_palette):
+	set_palette(new_palette)
 
 func set_palette(new_palette):
 	var new_material = $MeshInstance.material_override.duplicate()
 
-	print("Setting palette to:", new_palette)
-
 	if new_palette == "PETZ":
 		new_material.set_shader_param("palette", petz_palette)
-		print("Palette set to PETZ palette: ", petz_palette)
 	elif new_palette == "BABYZ":
 		new_material.set_shader_param("palette", babyz_palette)
-		print("Palette set to BABYZ palette: ", babyz_palette)
 	else:
-		new_material.set_shader_param("palette", palette)
-		print("Palette set to default: ", palette)
+		new_material.set_shader_param("palette", petz_palette)
 
 	$MeshInstance.material_override = new_material
 
-func _on_palette_ready(species_palette):
-	set_palette(species_palette)
-
+func update_palette_after_added(new_palette):
+	set_deferred("material_override", $MeshInstance.material_override.duplicate())
+	set_palette(new_palette)
+	
 func set_line_width(new_value):
 	line_widths = new_value
 	$MeshInstance.material_override.set_shader_param("line_width_in_pixels_start", new_value.x)
