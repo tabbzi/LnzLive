@@ -1,11 +1,9 @@
 extends Node
 
-export var pixel_world_size = 0.002;
+export var pixel_world_size = 0.002
 
 var balls = []
-
 var lines = []
-
 var ball_map = {}
 var paintball_map = {}
 var lines_map = {}
@@ -18,11 +16,13 @@ export var draw_paintballs = true
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
 var line_scene = preload("res://Line.tscn")
+
 var bhd: BhdParser
 var lnz: LnzParser
 var current_animation = 0
 var current_frame = 0
 var current_bdt: BdtParser
+
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 signal animation_loaded(num_of_frames)
@@ -40,6 +40,8 @@ func set_animation(anim_index: int):
 	var species = "CAT"
 	if lnz.species == KeyBallsData.Species.DOG:
 		species = "DOG"
+	if lnz.species == KeyBallsData.Species.BABY:
+		species = "BABY"
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
 	current_bdt = BdtParser.new(species + str(anim_index) + ".bdt", anim_frames, bhd.num_balls)
 	set_frame(0)
@@ -53,25 +55,64 @@ func set_frame(frame: int):
 		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
 	init_visual_balls(lnz, false)
 
+var line_instance = null
+
+func clear_ball_data():
+	for ball in balls:
+		if ball.instance_exists():
+			ball.queue_free()
+	balls.clear()
+	ball_map.clear()
+	paintball_map.clear()
+	lines_map.clear()
+
+func cleanup_balls():
+	for ball in balls:
+		if ball != null:
+			ball.queue_free()
+	balls.clear()
+
+signal palette_ready(palette_name)
+
 func init_ball_data(species):
+	cleanup_balls()
+	var line_instance = line_scene.instance()
+
+	print("Species:", species)  # Debugging output
+
 	if species == KeyBallsData.Species.DOG:
+		print("Setting palette to PETZ for DOG")  # Debugging output
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
+		line_instance.set_palette("PETZ")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
 		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
-		var bdt = BdtParser.new("DOG"+str(current_animation)+".bdt", first_anim_frames, bhd.num_balls)
+		var bdt = BdtParser.new("DOG" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
 		emit_signal("animation_loaded", first_anim_frames.size())
 		current_bdt = bdt
-		
 		for n in bhd.num_balls:
 			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
-	else:
+
+	elif species == KeyBallsData.Species.CAT:
+		print("Setting palette to PETZ for CAT")  # Debugging output
 		bhd = BhdParser.new("res://resources/animations/CAT.bhd")
+		line_instance.set_palette("PETZ")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
 		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
-		var bdt = BdtParser.new("CAT"+str(current_animation)+".bdt", first_anim_frames, bhd.num_balls)
+		var bdt = BdtParser.new("CAT" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
 		emit_signal("animation_loaded", first_anim_frames.size())
 		current_bdt = bdt
-		
+		for n in bhd.num_balls:
+			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
+
+	elif species == KeyBallsData.Species.BABY:
+		print("Setting palette to BABYZ for BABY")  # Debugging output
+		bhd = BhdParser.new("res://resources/animations/BABY.bhd")
+		line_instance.set_palette("BABYZ")
+		emit_signal("bhd_loaded", bhd.animation_ranges.size())
+		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
+		var bdt = BdtParser.new("BABY" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
+		emit_signal("animation_loaded", first_anim_frames.size())
+		current_bdt = bdt
 		for n in bhd.num_balls:
 			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
 
@@ -131,7 +172,7 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 	var head_ext
 	var foot_ext
 	var ear_ext
-	var ear_bases
+
 	if lnz.species == KeyBallsData.Species.DOG:
 		legs = KeyBallsData.legs_dog
 		body_ext = KeyBallsData.body_ext_dog
@@ -139,7 +180,7 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 		head_ext = KeyBallsData.head_ext_dog
 		foot_ext = KeyBallsData.foot_ext_dog
 		ear_ext = KeyBallsData.ear_ext_dog
-	else:
+	elif lnz.species == KeyBallsData.Species.CAT:
 		legs = KeyBallsData.legs_cat
 		body_ext = KeyBallsData.body_ext_cat
 		face_ext = KeyBallsData.face_ext_cat
@@ -149,6 +190,13 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 		
 		for b in KeyBallsData.eyes_cat:
 			head_ext.erase(b)
+	else:
+		legs = KeyBallsData.legs_bab
+		body_ext = KeyBallsData.body_ext_bab
+		face_ext = KeyBallsData.face_ext_bab
+		head_ext = KeyBallsData.head_ext_bab
+		foot_ext = KeyBallsData.foot_ext_bab
+		ear_ext = KeyBallsData.ear_ext_bab
 		
 	# legs
 	for ball_no in legs[0]:
