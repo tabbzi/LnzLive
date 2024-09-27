@@ -210,10 +210,12 @@ func get_lines(file: File):
 	for line in parsed_lines:
 		var line_data = LineData.new(line.start, line.end, line.start_thickness, line.end_thickness, line.fuzz, line.color, line.l_color, line.r_color)
 		lines.append(line_data)
-		
+
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
 	var parsed_lines = get_parsed_lines(file, ["color", "outline_color", "speckle", "fuzz", "outline", "size", "group", "texture"])
+	if parsed_lines.size() == 0:
+		print("Error: No Ballz Info found.")
 	var i = 0
 	for line in parsed_lines:
 		var bd = BallData.new(
@@ -229,6 +231,7 @@ func get_balls(file: File):
 			line.group, 
 			line.texture)
 		self.balls[i] = bd
+		print("Added ball " + str(i) + " with size " + str(line.size))
 		i += 1
 
 func get_addballs(file: File):
@@ -266,6 +269,7 @@ func get_species(file: File):
 		species = 2
 	else:
 		species = parsed_lines[0].species
+	print("Species detected: " + str(species))
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")
@@ -273,3 +277,4 @@ func get_texture_list(file: File):
 	for line in parsed_lines:
 		var filename = line.filepath.get_file()
 		texture_list.append({filename = filename, transparent_color = line.transparent_color})
+
