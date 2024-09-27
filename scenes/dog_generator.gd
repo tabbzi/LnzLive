@@ -33,6 +33,7 @@ signal ball_selected(ball_no, is_addball)
 signal addball_deleted(ball_no)
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
+signal palette_change(new_palette)
 
 func set_animation(anim_index: int):
 	current_animation = anim_index
@@ -72,18 +73,23 @@ func cleanup_balls():
 			ball.queue_free()
 	balls.clear()
 
-signal palette_ready(palette_name)
-
 func init_ball_data(species):
 	cleanup_balls()
-	var line_instance = line_scene.instance()
 
-	print("Species:", species)  # Debugging output
+	print("Species:", species)
+	
+	if species == KeyBallsData.Species.DOG:
+		print("Setting palette to PETZ for DOG")
+		emit_signal("palette_change", "PETZ")
+	elif species == KeyBallsData.Species.CAT:
+		print("Setting palette to PETZ for CAT")
+		emit_signal("palette_change", "PETZ")
+	elif species == KeyBallsData.Species.BABY:
+		print("Setting palette to BABYZ for BABY")
+		emit_signal("palette_change", "BABYZ")
 
 	if species == KeyBallsData.Species.DOG:
-		print("Setting palette to PETZ for DOG")  # Debugging output
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
-		line_instance.set_palette("PETZ")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
 		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
 		var bdt = BdtParser.new("DOG" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
@@ -93,9 +99,7 @@ func init_ball_data(species):
 			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
 
 	elif species == KeyBallsData.Species.CAT:
-		print("Setting palette to PETZ for CAT")  # Debugging output
 		bhd = BhdParser.new("res://resources/animations/CAT.bhd")
-		line_instance.set_palette("PETZ")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
 		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
 		var bdt = BdtParser.new("CAT" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
@@ -105,9 +109,7 @@ func init_ball_data(species):
 			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
 
 	elif species == KeyBallsData.Species.BABY:
-		print("Setting palette to BABYZ for BABY")  # Debugging output
 		bhd = BhdParser.new("res://resources/animations/BABY.bhd")
-		line_instance.set_palette("BABYZ")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
 		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
 		var bdt = BdtParser.new("BABY" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
@@ -350,6 +352,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	var parent = root.get_node("petholder/balls")
 	var pb_parent = root.get_node("petholder/paintballs")
 	var ab_parent = root.get_node("petholder/addballs")
+	
 	if new_create:
 		for c in parent.get_children():
 			parent.remove_child(c)
@@ -364,20 +367,33 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		paintball_map = {}
 	
 	var belly_position
+	
+	var palette_name = "PETZ"  # Default palette
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
-	else:
+		palette_name = "PETZ"
+	elif species == KeyBallsData.Species.CAT:
 		belly_position = ball_data[KeyBallsData.belly_cat].position
+		palette_name = "PETZ"
+	else:
+		belly_position = ball_data[KeyBallsData.belly_bab].position
+		palette_name = "BABYZ"
+	
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
+	
 	var eyes: Dictionary
 	if species == KeyBallsData.Species.DOG:
 		eyes = KeyBallsData.eyes_dog
-	else:
+	elif species == KeyBallsData.Species.CAT:
 		eyes = KeyBallsData.eyes_cat
+	else:
+		eyes = KeyBallsData.eyes_bab
+	
 	for key in ball_data:
 		var ball = ball_data[key]
 		var visual_ball
+		
 		if(key in eyes.keys()): # treat irises like paintballs
 			if new_create:
 				visual_ball = paintball_scene.instance()
@@ -388,8 +404,15 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
+				
+				parent.add_child(visual_ball)
+				visual_ball.set_owner(root)
+				
+				visual_ball.update_palette_after_added(palette_name)
+			
 			else:
 				visual_ball = ball_map[key]
+				
 			var base_ball = ball_data[eyes[key]]
 			visual_ball.base_ball_size = base_ball.size
 			var bbp = base_ball.position
@@ -399,6 +422,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			var rotated_pos = ball.position
 			rotated_pos.y *= -1.0
 			visual_ball.transform.origin = rotated_pos * pixel_world_size
+			
 		else:
 			if new_create:
 				visual_ball = ball_scene.instance()
@@ -406,6 +430,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
+				
+				parent.add_child(visual_ball)
+				visual_ball.set_owner(root)
+				
+				visual_ball.update_palette_after_added(palette_name)
+				
 			else:
 				visual_ball = ball_map[key]
 			visual_ball.pet_center = belly_position
@@ -548,7 +578,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			paintball_map[key] = ar
 			if !draw_paintballs:
 				visual_ball.visible_override = false
-				
+
 func get_real_ball_size(ball_size):
 	return ball_size
 				
