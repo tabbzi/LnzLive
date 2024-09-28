@@ -1,0 +1,84 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=2]
+
+[ext_resource path="res://resources/textures/petzpalette.png" type="Texture" id=1]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+render_mode unshaded, skip_vertex_transform;
+
+uniform int color_index = 0;
+uniform int l_edge_color = 0;
+uniform int r_edge_color = 0;
+uniform int fuzz_amount = 0;
+uniform int transparent_index = 0;
+uniform sampler2D palette: hint_white;
+uniform sampler2D polygon_texture: hint_white;
+uniform bool has_texture = false;
+uniform vec2 texture_size = vec2(1.0, 1.0);
+
+uniform vec3 ball_world_pos1 = vec3(0.0);
+uniform vec3 ball_world_pos2 = vec3(0.0);
+uniform vec3 ball_world_pos3 = vec3(0.0);
+uniform vec3 ball_world_pos4 = vec3(0.0);
+
+float random(float x) {
+    return fract(sin(dot(vec2(x), vec2(12.9898, 78.233))) * 43758.5453123);
+}
+
+vec3 get_color_from_palette(int index) {
+    return texture(palette, vec2(float(index) / 255.0, 0.0)).rgb;
+}
+
+void fragment() {
+    vec2 uv = UV;
+    vec3 base_color = get_color_from_palette(color_index);
+
+    // Handle edge fuzziness
+    float fuzz_factor = random(uv.x + uv.y) * float(fuzz_amount) / 100.0;
+
+    vec3 texture_color = base_color;
+    if (has_texture) {
+        int texture_index = int(texture(polygon_texture, uv * texture_size).r * 255.0);
+        if (transparent_index > 0 && texture_index == transparent_index) {
+            discard;
+        }
+        texture_color = get_color_from_palette(texture_index);
+    }
+
+    // Add left and right edge coloring
+    if (uv.x < 0.05 && l_edge_color != -1) {
+        texture_color = get_color_from_palette(l_edge_color);
+    } else if (uv.x > 0.95 && r_edge_color != -1) {
+        texture_color = get_color_from_palette(r_edge_color);
+    }
+
+    ALBEDO = texture_color * (1.0 - fuzz_factor);
+    ALPHA = 1.0;
+}
+
+void vertex() {
+    // Interpolate the positions based on UV coordinates
+    vec3 interp_pos1 = mix(ball_world_pos1, ball_world_pos2, UV.x);
+    vec3 interp_pos2 = mix(ball_world_pos3, ball_world_pos4, UV.x);
+    vec3 final_position = mix(interp_pos1, interp_pos2, UV.y);
+
+    // Set the final vertex position using the calculated 3D position
+    VERTEX = (MODELVIEW_MATRIX * vec4(final_position, 1.0)).xyz;
+}"
+
+[resource]
+resource_local_to_scene = true
+shader = SubResource( 1 )
+shader_param/color_index = 0
+shader_param/l_edge_color = 0
+shader_param/r_edge_color = 0
+shader_param/fuzz_amount = 0
+shader_param/transparent_index = 0
+shader_param/has_texture = false
+shader_param/texture_size = Vector2( 1, 1 )
+shader_param/ball_world_pos1 = Vector3( 0, 0, 0 )
+shader_param/ball_world_pos2 = Vector3( 0, 0, 0 )
+shader_param/ball_world_pos3 = Vector3( 0, 0, 0 )
+shader_param/ball_world_pos4 = Vector3( 0, 0, 0 )
+shader_param/palette = ExtResource( 1 )

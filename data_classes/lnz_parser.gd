@@ -15,6 +15,7 @@ var foot_enlargement = Vector2(100, 0)
 var moves = {}
 var balls = {}
 var lines = []
+var polygons = []
 var addballs = {}
 var paintballs = {}
 var omissions = {}
@@ -91,6 +92,7 @@ func _init(file_path):
 	get_feet_enlargement(file)
 	get_omissions(file)
 	get_lines(file)
+	get_polygons(file)
 	get_balls(file)
 	
 	file.seek(0)
@@ -210,6 +212,24 @@ func get_lines(file: File):
 	for line in parsed_lines:
 		var line_data = LineData.new(line.start, line.end, line.start_thickness, line.end_thickness, line.fuzz, line.color, line.l_color, line.r_color)
 		lines.append(line_data)
+
+func get_polygons(file: File):
+	get_next_section(file, "Polygons")
+	var parsed_lines = get_parsed_lines(file, ["ball1", "ball2", "ball3", "ball4", "color", "l_edge_color", "r_edge_color", "fuzz", "texture"])
+	for line in parsed_lines:
+		var poly_data = PolyData.new(
+			line.ball1,
+			line.ball2,
+			line.ball3,
+			line.ball4,
+			line.color,
+			line.l_edge_color,
+			line.r_edge_color,
+			line.fuzz,
+			line.texture
+		)
+		polygons.append(poly_data)
+		print(polygons)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
