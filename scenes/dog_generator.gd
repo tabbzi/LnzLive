@@ -7,15 +7,18 @@ var lines = []
 var ball_map = {}
 var paintball_map = {}
 var lines_map = {}
+var polygons_map = {}
 
 export var draw_balls = true
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
+export var draw_polygons = true
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
 var line_scene = preload("res://Line.tscn")
+var polygon_scene = preload("res://Polygon.tscn")
 
 var bhd: BhdParser
 var lnz: LnzParser
@@ -77,16 +80,6 @@ func init_ball_data(species):
 	cleanup_balls()
 
 	print("Species:", species)
-	
-	if species == KeyBallsData.Species.DOG:
-		print("Setting palette to PETZ for DOG")
-		emit_signal("palette_change", "PETZ")
-	elif species == KeyBallsData.Species.CAT:
-		print("Setting palette to PETZ for CAT")
-		emit_signal("palette_change", "PETZ")
-	elif species == KeyBallsData.Species.BABY:
-		print("Setting palette to BABYZ for BABY")
-		emit_signal("palette_change", "BABYZ")
 
 	if species == KeyBallsData.Species.DOG:
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
@@ -151,7 +144,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data.omissions = lnz_info.omissions
 	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, new_create)
 	apply_projections()
-	generate_lines(lnz_info.lines, new_create)
+	generate_lines(lnz_info.lines, lnz_info.species, new_create)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -353,6 +346,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	var pb_parent = root.get_node("petholder/paintballs")
 	var ab_parent = root.get_node("petholder/addballs")
 	
+	# Clear existing visual balls
 	if new_create:
 		for c in parent.get_children():
 			parent.remove_child(c)
@@ -366,9 +360,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		ball_map = {}
 		paintball_map = {}
 	
+	# Determine belly position and palette name
 	var belly_position
 	
-	var palette_name = "PETZ"  # Default palette
+	var palette_name = "PETZ"
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
 		palette_name = "PETZ"
@@ -382,6 +377,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
 	
+	# Process eyes
 	var eyes: Dictionary
 	if species == KeyBallsData.Species.DOG:
 		eyes = KeyBallsData.eyes_dog
@@ -443,6 +439,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			rotated_pos.y *= -1.0
 			visual_ball.transform.origin = rotated_pos * pixel_world_size
 			visual_ball.ball_no = ball.ball_no
+			
+			# Apply texture to ball
 			if new_create:
 				if ball.texture_id > -1:
 					var tex_info = texture_list[ball.texture_id]
@@ -455,20 +453,26 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 						texture = ResourceLoader.load(resource_path)
 					else:
 						texture = preloader.get_resource(texture_filename)
+						
 					visual_ball.texture = texture
 				visual_ball.color_index = ball.color_index
 				visual_ball.outline_color_index = ball.outline_color_index
 				
+		# Ball properties
 		if new_create:
 			visual_ball.ball_size = get_real_ball_size(ball.size)
 			visual_ball.outline = ball.outline
 			visual_ball.outline_color_index = ball.outline_color_index
 			visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
 		visual_ball.rotation_degrees = ball.rotation
+		
+		# Finalize creation
 		if new_create:
 			parent.add_child(visual_ball)
 			visual_ball.set_owner(root)
 		ball_map[ball.ball_no] = visual_ball
+		
+		# Handle visibility and omissions
 		if !draw_balls:
 			visual_ball.visible_override = false
 		if omissions.get(key, false):
@@ -500,6 +504,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.ball_no = ball.ball_no
 			visual_ball.base_ball_no = ball.base
 			visual_ball.outline_color_index = ball.outline_color_index
+			visual_ball.update_palette_after_added(palette_name)
 		visual_ball.scale = Vector3(1,1,1)
 		if new_create:
 			if ball.texture_id > -1:
@@ -563,6 +568,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				else:
 					visual_ball.transparent_color = paintball.color_index
 				visual_ball.color_index = paintball.color_index
+
+				# Update palette for paintballs
+				visual_ball.update_palette_after_added(palette_name)
+
 			visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
 			visual_ball.ball_size = final_size
@@ -582,7 +591,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 func get_real_ball_size(ball_size):
 	return ball_size
 				
-func generate_lines(line_data: Array, new_create: bool):
+func generate_lines(line_data: Array, species: int, new_create: bool):
 	var root = get_root()
 	var parent = root.get_node("petholder/lines")
 	if new_create:
@@ -590,6 +599,14 @@ func generate_lines(line_data: Array, new_create: bool):
 			parent.remove_child(c)
 			c.queue_free()
 		lines_map = {}
+	
+	var palette_name = "PETZ"
+	if species == KeyBallsData.Species.DOG:
+		palette_name = "PETZ"
+	elif species == KeyBallsData.Species.CAT:
+		palette_name = "PETZ"
+	else:
+		palette_name = "BABYZ"
 	
 	var i = 0
 	for line in line_data:
@@ -601,7 +618,6 @@ func generate_lines(line_data: Array, new_create: bool):
 			continue
 		var omissions = lnz.omissions as Dictionary
 		if omissions.has(line.start) or omissions.has(line.end):
-#			print("Skipping line between " + str(line.start) + " and " + str(line.end))
 			continue
 		var visual_line
 		if new_create:
@@ -609,10 +625,12 @@ func generate_lines(line_data: Array, new_create: bool):
 			visual_line.add_to_group("lines")
 		else:
 			visual_line = lines_map[i]
+
 		var start_pos = start.global_transform.origin
 		var target_pos = end.global_transform.origin
 		var distance = (target_pos - start_pos).length()
 		var middle_point = lerp(start.global_transform.origin, end.global_transform.origin, 0.5)
+
 		if target_pos == middle_point:
 			visual_line.global_transform.origin = middle_point
 			visual_line.rotation_degrees.x += 90
@@ -636,6 +654,10 @@ func generate_lines(line_data: Array, new_create: bool):
 				visual_line.l_color_index = start.color_index
 			else:
 				visual_line.l_color_index = line.l_color_index
+
+			# Update palette for lines
+			visual_line.update_palette_after_added(palette_name)
+
 		visual_line.ball_world_pos1 = start_pos
 		visual_line.ball_world_pos2 = target_pos
 		visual_line.fuzz_amount = clamp(line.fuzz / 2, 0, 5)
@@ -648,7 +670,7 @@ func generate_lines(line_data: Array, new_create: bool):
 		if new_create:
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
-		i+=1
+		i += 1
 
 func _on_OptionButton_file_selected(file_name):
 	generate_pet(file_name)
