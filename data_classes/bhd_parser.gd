@@ -39,7 +39,7 @@ func _init(file_path):
 		var end = file.get_16()
 		var num_of_offsets = end - start
 		animation_ranges.append({num_of_offsets = num_of_offsets, end = end, start = frames_offset + (start * 4), actual_start = start})
-		print("Animation Range[", i, "]: start=", start, ", end=", end, ", num_of_offsets=", num_of_offsets)
+		#print("Animation Range[", i, "]: start=", start, ", end=", end, ", num_of_offsets=", num_of_offsets)
 	
 	file.close()
 
