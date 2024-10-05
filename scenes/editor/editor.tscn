@@ -151,6 +151,15 @@ margin_right = 20.0
 margin_bottom = 20.0
 items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Back up", null, 0, false, true, 2, 0, null, "", false ]
 
+[node name="FileDialog" type="FileDialog" parent="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu"]
+margin_right = 315.0
+margin_bottom = 130.0
+window_title = "Open File(s)"
+mode = 1
+access = 1
+current_dir = "user://C:/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize"
+current_path = "user://C:/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize/"
+
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
 margin_left = 144.0
 margin_right = 1024.0
