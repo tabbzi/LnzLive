@@ -11,6 +11,7 @@ var lines_map = {}
 var polygons_map = {}
 
 export var draw_balls = true
+export var draw_special_balls = false
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
@@ -377,10 +378,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		belly_position = ball_data[KeyBallsData.belly_bab].position
 		palette_name = "BABYZ"
 	
-	print("Using palette for Ballz:", palette_name)
-	
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
+	
+	# Collect visual elements that need palette updates
+	var visual_elements_to_update = []
 	
 	# Process eyes
 	var eyes: Dictionary
@@ -409,7 +411,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
 				
-				visual_ball.update_palette_after_added(palette_name)
+				# Defer palette update
+				visual_elements_to_update.append(visual_ball)
 			
 			else:
 				visual_ball = ball_map[key]
@@ -435,7 +438,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
 				
-				visual_ball.update_palette_after_added(palette_name)
+				# Defer palette update
+				visual_elements_to_update.append(visual_ball)
 				
 			else:
 				visual_ball = ball_map[key]
@@ -480,6 +484,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		# Handle visibility and omissions
 		if !draw_balls:
 			visual_ball.visible_override = false
+		#if !draw_special_balls:
+		#	visual_ball.visible_override = false
 		if omissions.get(key, false):
 			visual_ball.visible_override = false
 			visual_ball.omitted = true
@@ -487,6 +493,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	for key in addball_data:
 		var ball = addball_data[key]
 		var visual_ball
+		
 		if new_create:
 			visual_ball = ball_scene.instance()
 		else:
@@ -509,7 +516,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.ball_no = ball.ball_no
 			visual_ball.base_ball_no = ball.base
 			visual_ball.outline_color_index = ball.outline_color_index
-			visual_ball.update_palette_after_added(palette_name)
+			
+			# Defer palette update
+			visual_elements_to_update.append(visual_ball)
 		visual_ball.scale = Vector3(1,1,1)
 		if new_create:
 			if ball.texture_id > -1:
@@ -526,8 +535,17 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.texture = texture
 			visual_ball.color_index = ball.color_index
 		ball_map[ball.ball_no] = visual_ball
+		
+		# Check for special balls in Babyz to hide
+		if species == KeyBallsData.Species.BABY and ball.ball_no >= 120 and ball.ball_no <= 137:
+			visual_ball.add_to_group("special_balls")
+		
 		if !draw_addballs:
 			visual_ball.visible_override = false
+			
+		if !draw_special_balls:
+			visual_ball.visible_override = false
+			
 		if omissions.get(key, false):
 			visual_ball.visible_override = false
 			visual_ball.omitted = true
@@ -574,8 +592,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					visual_ball.transparent_color = paintball.color_index
 				visual_ball.color_index = paintball.color_index
 
-				# Update palette for paintballs
-				visual_ball.update_palette_after_added(palette_name)
+				# Defer palette update
+				visual_elements_to_update.append(visual_ball)
 
 			visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
@@ -586,22 +604,30 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.fuzz_amount = clamp(paintball.fuzz / 2, 0, 5)
 			visual_ball.z_add = count * 1.0
 			visual_ball.base_ball_no = paintball.base
+			
+			# Defer palette update
+			visual_elements_to_update.append(visual_ball)
+			
 			count += 1
 			var ar = paintball_map.get(key, [])
 			ar.append(visual_ball)
 			paintball_map[key] = ar
 			if !draw_paintballs:
 				visual_ball.visible_override = false
+				
+	# Perform palette updates in batch
+	for visual_element in visual_elements_to_update:
+		visual_element.update_palette_after_added(palette_name)
 
 func get_real_ball_size(ball_size):
 	return ball_size
 
 func generate_polygons(polygon_data: Array, species: int, new_create: bool):
-	print("Generating polygons")
-	print("Polygon data size:", polygon_data.size())
+	#print("Generating polygons")
+	#print("Polygon data size:", polygon_data.size())
 	var root = get_root()
 	var parent = root.get_node("petholder/polygons")
-	print("Parent node found:", parent)
+	#print("Parent node found:", parent)
 
 	if new_create:
 		for c in parent.get_children():
@@ -618,9 +644,10 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 	else:
 		palette_name = "BABYZ"
 		
-	print("Using palette for Polygonz:", palette_name)
+	#print("Using palette for Polygonz:", palette_name)
 	
 	var i = 0
+	var visual_elements_to_update = []
 	for polygon in polygon_data:
 		var point1 = ball_map.get(polygon.ball1)
 		var point2 = ball_map.get(polygon.ball2)
@@ -632,7 +659,7 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 			print("Could not make a polygon between " + str(polygon.ball1) + ", " + str(polygon.ball2) + ", " + str(polygon.ball3) + ", " + str(polygon.ball4))
 			continue
 
-		print("Creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
+		#print("Creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
 		
 		# Create or retrieve the visual polygon
 		var visual_polygon
@@ -645,56 +672,58 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 			visual_polygon = polygons_map[i]
 
 		# Set positions for the polygon's 4 vertices
-		print("Positioning polygon with vertices at: ", point1.global_transform.origin, point2.global_transform.origin, point3.global_transform.origin, point4.global_transform.origin)
+		#print("Positioning polygon with vertices at: ", point1.global_transform.origin, point2.global_transform.origin, point3.global_transform.origin, point4.global_transform.origin)
 		visual_polygon.ball_world_pos1 = point1.global_transform.origin
 		visual_polygon.ball_world_pos2 = point2.global_transform.origin
 		visual_polygon.ball_world_pos3 = point3.global_transform.origin
 		visual_polygon.ball_world_pos4 = point4.global_transform.origin
 
 		if new_create:
-			# Update palette for polygons
-			visual_polygon.update_palette_after_added(palette_name)
-			print("Updated polygon palette to:", palette_name)
+			# Defer palette update
+			visual_elements_to_update.append(visual_polygon)
 			
 			# Use the first point's texture
 			visual_polygon.texture = point1.texture  
 			visual_polygon.transparent_color = point1.transparent_color
-			print("Polygon color and texture set.")
+			#print("Polygon color and texture set.")
 
 			if polygon.color == -1:
 				visual_polygon.color_index = point1.color_index
 			else:
 				visual_polygon.color_index = polygon.color
-			print("Polygon color set to: ", visual_polygon.color_index)
+			#print("Polygon color set to: ", visual_polygon.color_index)
 		
 			# Log left and right edge colors
-			print("Setting edge colors for polygon")
+			#print("Setting edge colors for polygon")
 			if polygon.l_edge_color == -1:
 				visual_polygon.l_edge_color = point1.color_index
 			else:
 				visual_polygon.l_edge_color = polygon.l_edge_color
-			print("Left edge color: ", visual_polygon.l_edge_color)
+			#print("Left edge color: ", visual_polygon.l_edge_color)
 
 			if polygon.r_edge_color == -1:
 				visual_polygon.r_edge_color = point1.color_index
 			else:
 				visual_polygon.r_edge_color = polygon.r_edge_color
-			print("Right edge color: ", visual_polygon.r_edge_color)
+			#print("Right edge color: ", visual_polygon.r_edge_color)
 
 		# Set other polygon properties like fuzz
 		visual_polygon.fuzz_amount = clamp(polygon.fuzz / 2, 0, 5)
-		print("Polygon fuzz amount set to:", visual_polygon.fuzz_amount)
+		#print("Polygon fuzz amount set to:", visual_polygon.fuzz_amount)
 
 		if !draw_polygons:
 			visual_polygon.hide()
-			print("Polygon hidden as draw_polygons is false.")
+			#print("Polygon hidden as draw_polygons is false.")
 		
-		visual_polygon.update_palette_after_added(palette_name)
-		print("Updated polygon palette to:", palette_name)
+		# Defer palette update
+		visual_elements_to_update.append(visual_polygon)
 		
 		polygons_map[i] = visual_polygon
 		i += 1
 
+	# Perform palette updates in batch
+	for visual_element in visual_elements_to_update:
+		visual_element.update_palette_after_added(palette_name)
 
 func generate_lines(line_data: Array, species: int, new_create: bool):
 	var root = get_root()
@@ -713,9 +742,10 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 	else:
 		palette_name = "BABYZ"
 		
-	print("Using palette for Linez:", palette_name)
+	#print("Using palette for Linez:", palette_name)
 	
 	var i = 0
+	var visual_elements_to_update = []
 	for line in line_data:
 		var start = ball_map.get(line.start)
 		var end = ball_map.get(line.end)
@@ -747,8 +777,8 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
 		if new_create:
-			# Update palette for lines
-			visual_line.update_palette_after_added(palette_name)
+			# Defer palette update
+			visual_elements_to_update.append(visual_line)
 			
 			visual_line.texture = start.texture
 			visual_line.transparent_color = start.transparent_color
@@ -778,9 +808,13 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
 		
-		# Update palette for lines
-		visual_line.update_palette_after_added(palette_name)		
+		# Defer palette update
+		visual_elements_to_update.append(visual_line)
 		i += 1
+		
+	# Perform palette updates in batch
+	for visual_element in visual_elements_to_update:
+		visual_element.update_palette_after_added(palette_name)
 
 func _on_OptionButton_file_selected(file_name):
 	generate_pet(file_name)
@@ -794,10 +828,8 @@ func _on_AnimPicker_text_entered(new_text):
 		set_animation(int(new_text))
 
 func _on_ToggleSpecialBalls_toggled(button_pressed):
-	for key in ball_map:
-		var visual_ball = ball_map[key]
-		if visual_ball.base_ball_no >= 120 and visual_ball.base_ball_no <= 137:
-			visual_ball.set_visible(button_pressed)
+	get_tree().call_group("special_balls", "set_visible", button_pressed)
+	draw_special_balls = button_pressed
 
 func _on_BallCheckBox_toggled(button_pressed):
 	get_tree().call_group("balls", "set_visible", button_pressed)
