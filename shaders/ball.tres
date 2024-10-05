@@ -34,6 +34,7 @@ float random (float x) {
 vec3 get_shifted_color(int palette_index) {
 	int modded_color = color_index - int(mod(float(color_index), 10.0));
 	int amount_to_shift_index = int(mod(float(palette_index), 10.0));
+	
 	// shift according to z
 	if(z_center_ball < z_center_pet) {
 		amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
@@ -177,11 +178,11 @@ void vertex() {
 [resource]
 resource_local_to_scene = true
 shader = SubResource( 1 )
-shader_param/fuzz_amount = 8
-shader_param/ball_size = 417
-shader_param/outline = 5
-shader_param/color_index = 28
-shader_param/outline_color_index = 14
+shader_param/fuzz_amount = 0
+shader_param/ball_size = 10
+shader_param/outline = -1
+shader_param/color_index = 0
+shader_param/outline_color_index = 0
 shader_param/z_add = 0.0
 shader_param/has_texture = false
 shader_param/texture_size = null
