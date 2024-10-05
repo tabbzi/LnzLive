@@ -24,12 +24,16 @@ func set_palette(new_palette):
 
 	if new_palette == "PETZ":
 		new_material.set_shader_param("palette", petz_palette)
+		#print("Set Petz palette")
 	elif new_palette == "BABYZ":
 		new_material.set_shader_param("palette", babyz_palette)
+		#print("Set Babyz palette")
 	else:
 		new_material.set_shader_param("palette", petz_palette)
+		#print("Set default Petz palette")
 
 	$MeshInstance.material_override = new_material
+
 
 func update_palette_after_added(new_palette):
 	set_deferred("material_override", $MeshInstance.material_override.duplicate())
