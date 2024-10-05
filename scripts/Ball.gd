@@ -48,8 +48,9 @@ func set_palette(new_palette):
 	$MeshInstance.material_override = new_material
 
 func update_palette_after_added(new_palette):
-	set_deferred("material_override", $MeshInstance.material_override.duplicate())
-	set_palette(new_palette)
+	call_deferred("set_palette", new_palette)
+	#set_deferred("material_override", $MeshInstance.material_override.duplicate())
+	#set_palette(new_palette)
 
 func set_visible(new_value):
 	visible_override = new_value

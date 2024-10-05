@@ -36,8 +36,9 @@ func set_palette(new_palette):
 
 
 func update_palette_after_added(new_palette):
-	set_deferred("material_override", $MeshInstance.material_override.duplicate())
-	set_palette(new_palette)
+	call_deferred("set_palette", new_palette)
+	#set_deferred("material_override", $MeshInstance.material_override.duplicate())
+	#set_palette(new_palette)
 	
 func set_line_width(new_value):
 	line_widths = new_value

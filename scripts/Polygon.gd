@@ -36,8 +36,9 @@ func set_palette(new_palette):
 	$MeshInstance.material_override = new_material
 
 func update_palette_after_added(new_palette):
-	set_deferred("material_override", $MeshInstance.material_override.duplicate())
-	set_palette(new_palette)
+	call_deferred("set_palette", new_palette)
+	#set_deferred("material_override", $MeshInstance.material_override.duplicate())
+	#set_palette(new_palette)
 
 func set_fuzz_amount(new_value):
 	fuzz_amount = new_value
