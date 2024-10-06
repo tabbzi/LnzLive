@@ -49,104 +49,120 @@ vec3 get_shifted_color(int palette_index) {
 }
 
 void fragment() {
-  vec2 c = center_fragcoord;
-  vec2 b =  base_center_fragcoord;
-  vec2 st = FRAGCOORD.xy;
+    vec2 c = center_fragcoord;
+    vec2 b = base_center_fragcoord;
+    vec2 st = FRAGCOORD.xy;
 
-  // FUZZING
-  // Find random number based on y-pixel, offset to center of ball
-  float r = random(st.y - c.y);
-  // Stretch random number between -1.0 and 1.0
-  r = (r * 2.0) - 1.0;
-  // Increase distortion by fuzz amount
-  r *= float(fuzz_amount);
-  // Offset x line by the final random amount
-  st.x += floor(r);
+    // FUZZING
+    // Find random number based on y-pixel, offset to center of ball
+    float r = random(st.y - c.y);
+    // Stretch random number between -1.0 and 1.0
+    r = (r * 2.0) - 1.0;
+    // Increase distortion by fuzz amount
+    r *= float(fuzz_amount);
+    // Offset x line by the final random amount
+    st.x += floor(r);
 
-  //OUTLINING
-  float pct2 = 0.0;
-  vec2 st2 = st;
-  int modified_outline = outline;
-  if(outline == -1) {
-    // no outline
-    modified_outline = 0;
-  }
-  else if(outline == 0) {
-    // one sided outline
-    st2.x -= 1.0;
-    vec2 vec = st2 - c;
-    pct2 = step(length(vec), float(ball_size) / 2.0);
-	modified_outline = 0;
-  } else if (outline == -2) {
-    // one sided outline
-    st2.x += 1.0;
-    vec2 vec = st2 - c;
-    pct2 = step(length(vec), float(ball_size) / 2.0);
-	modified_outline = 0;
-  } else if (outline == -1) {
-    pct2 = 0.0;
-    modified_outline = 0;
-  } else if (outline > 1) {
-    vec2 vec = st2 - c;
-    pct2 = step(length(vec), float(ball_size) / 2.0);
-	modified_outline -= 1;
-  } else if (outline == 1) {
-    // dotted outline
-	float side = sign(st2.x - c.x);
-	st2.x -= 1.0 * side;
-    vec2 vec = st2 - c;
-    pct2 = step(length(vec), float(ball_size) / 2.0);
-    modified_outline = 0;
-  } else if (outline < -1) {
-	// use as debug for now
-	float side = sign(st2.x - c.x);
-	float side2 = sign(st2.y - c.y);
-	st2.x -= 1.0 * side;
-	st2.y -= 1.0 * side2;
-    vec2 vec = st2 - c;
-    pct2 = step(length(vec), float(ball_size) / 2.0);
-    modified_outline = 0;
-  }
+    // OUTLINING
+    float pct2 = 0.0;
+    vec2 st2 = st;
+    int modified_outline = outline;
 
-  //DRAWING
-  vec2 vector_from_base_center = st - b;
-  vec2 vector_from_center = st - c;
-  // Draw a circle.
-  // Base ball size gives exact pixel size at camera scale 1.
-  float base_pct = step(length(vector_from_base_center), (float(base_ball_size) / 2.0));
-  float pct = step(length(vector_from_center), (float(ball_size) / 2.0 - float(modified_outline)));
+    if(outline == -1) {
+        // no outline
+        modified_outline = 0;
+    }
+    else if(outline == 0) {
+        // one sided outline
+        st2.x -= 1.0;
+        vec2 vec = st2 - c;
+        pct2 = step(length(vec), float(ball_size) / 2.0);
+        modified_outline = 0;
+    }
+    else if (outline == -2) {
+        // one sided outline
+        st2.x += 1.0;
+        vec2 vec = st2 - c;
+        pct2 = step(length(vec), float(ball_size) / 2.0);
+        modified_outline = 0;
+    }
+    else if (outline > 1) {
+        vec2 vec = st2 - c;
+        pct2 = step(length(vec), float(ball_size) / 2.0);
+        modified_outline -= 1;
+    }
+    else if (outline == 1) {
+        // dotted outline
+        float side = sign(st2.x - c.x);
+        st2.x -= 1.0 * side;
+        vec2 vec = st2 - c;
+        pct2 = step(length(vec), float(ball_size) / 2.0);
+        modified_outline = 0;
+    }
+    else if (outline < -1) {
+        // use as debug for now
+        float side = sign(st2.x - c.x);
+        float side2 = sign(st2.y - c.y);
+        st2.x -= 1.0 * side;
+        st2.y -= 1.0 * side2;
+        vec2 vec = st2 - c;
+        pct2 = step(length(vec), float(ball_size) / 2.0);
+        modified_outline = 0;
+    }
 
-  pct *= base_pct;
+    // DRAWING
+    vec2 vector_from_base_center = st - b;
+    vec2 vector_from_center = st - c;
+    // Draw a circle.
+    // Base ball size gives exact pixel size at camera scale 1.
+    float base_pct = step(length(vector_from_base_center), (float(base_ball_size) / 2.0));
+    float pct = step(length(vector_from_center), (float(ball_size) / 2.0 - float(modified_outline)));
 
-  if(outline != -1)	
- 	 pct2 -= pct;
+    pct *= base_pct;
 
-  pct2 *= base_pct;
+    if(outline != -1)	
+        pct2 -= pct;
 
-  vec3 texture_color;
-  vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
-  int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 255.0);
-  if (transparent_index > 0 && color_index < 150 && has_texture) {
-	  // if the index of the texture is the same as the transparent color
-	  // then palette shift	
-	  if(transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
-		texture_color = get_shifted_color(palette_index);
-	  } else {
-	  // get the base texture color
-		texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-		}
-	}
-	else if (transparent_index == 0 && color_index < 150 && has_texture) {
-			texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-		}
-  else {
-	texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
-}
-	vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
-  ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
-  ALPHA = 1.0 - step(pct + pct2, 0.0);
+    pct2 *= base_pct;
 
-  ALPHA_SCISSOR = 1.0;
+    vec3 texture_color;
+    vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
+    int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 255.0);
+
+    // Initialize is_transparent to false
+    bool is_transparent = false;
+
+    if (transparent_index > 0 && color_index < 150 && has_texture) {
+        // if the index of the texture is the same as the transparent color
+        // then palette shift	
+        if(transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
+            texture_color = get_shifted_color(palette_index);
+        } else {
+            // get the base texture color
+            texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+        }
+    }
+    else if (transparent_index == 0 && color_index < 150 && has_texture) {
+        texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+    }
+    else {
+        texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
+    }
+
+    // Determine if the current pixel should be transparent
+    is_transparent = (palette_index == 253);
+
+    vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+    ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
+
+    // Adjust ALPHA based on conditions
+    float alpha_value = 1.0;
+    if (pct + pct2 == 0.0 || is_transparent) {
+        alpha_value = 0.0;
+    }
+
+    ALPHA = alpha_value;
+    ALPHA_SCISSOR = 1.0;
 }
 
 void vertex() {
