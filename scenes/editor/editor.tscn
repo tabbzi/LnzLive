@@ -125,7 +125,7 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer"]
-margin_right = 132.0
+margin_right = 231.0
 margin_bottom = 768.0
 mouse_filter = 0
 size_flags_horizontal = 3
@@ -135,7 +135,7 @@ __meta__ = {
 }
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer"]
-margin_right = 132.0
+margin_right = 231.0
 margin_bottom = 744.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -167,12 +167,12 @@ __meta__ = {
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 margin_top = 748.0
-margin_right = 132.0
+margin_right = 231.0
 margin_bottom = 768.0
 text = "Add File"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
-margin_left = 144.0
+margin_left = 243.0
 margin_right = 1024.0
 margin_bottom = 768.0
 rect_clip_content = true
@@ -181,7 +181,7 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="PetViewContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_right = 668.0
+margin_right = 569.0
 margin_bottom = 768.0
 rect_clip_content = true
 mouse_default_cursor_shape = 3
@@ -194,12 +194,12 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"]
-margin_right = 668.0
+margin_right = 569.0
 margin_bottom = 768.0
 mouse_filter = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_right = 668.0
+margin_right = 569.0
 margin_bottom = 24.0
 mouse_filter = 0
 
@@ -213,7 +213,7 @@ __meta__ = {
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer"]
 margin_left = 62.0
-margin_right = 587.0
+margin_right = 494.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -223,8 +223,8 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer"]
-margin_left = 591.0
-margin_right = 629.0
+margin_left = 498.0
+margin_right = 536.0
 margin_bottom = 20.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -237,9 +237,9 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer"]
-margin_left = 633.0
+margin_left = 540.0
 margin_top = 5.0
-margin_right = 668.0
+margin_right = 569.0
 margin_bottom = 19.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -247,7 +247,7 @@ script = ExtResource( 7 )
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 28.0
-margin_right = 668.0
+margin_right = 569.0
 margin_bottom = 52.0
 mouse_filter = 0
 
@@ -290,21 +290,34 @@ mouse_filter = 1
 pressed = true
 text = "Draw polygons"
 
-[node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2"]
-margin_left = 573.0
-margin_right = 640.0
-margin_bottom = 24.0
-text = "Select"
+[node name="HBoxContainer3" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
+margin_top = 56.0
+margin_right = 569.0
+margin_bottom = 80.0
+mouse_filter = 0
 
-[node name="ToggleSpecialBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2"]
-margin_left = 644.0
-margin_right = 668.0
+[node name="ToggleSpecialBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3"]
+margin_right = 144.0
 margin_bottom = 24.0
 pressed = true
+text = "Show special balls"
+
+[node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3"]
+margin_left = 148.0
+margin_right = 296.0
+margin_bottom = 24.0
+pressed = true
+text = "Transparency (253)"
+
+[node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3"]
+margin_left = 300.0
+margin_right = 407.0
+margin_bottom = 24.0
+text = "Select Mode"
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_left = 680.0
-margin_right = 880.0
+margin_left = 581.0
+margin_right = 781.0
 margin_bottom = 768.0
 rect_min_size = Vector2( 200, 0 )
 size_flags_horizontal = 13
@@ -707,8 +720,9 @@ __meta__ = {
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2/PaintballCheckBox" to="PetRoot/Node" method="_on_PaintballCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2/LineCheckBox" to="PetRoot/Node" method="_on_LineCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2/PolygonCheckBox" to="PetRoot/Node" method="_on_PolygonCheckBox_toggled"]
-[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2/SelectCheckBox" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_SelectCheckBox_toggled"]
-[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer2/ToggleSpecialBalls" to="PetRoot/Node" method="_on_ToggleSpecialBalls_toggled"]
+[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3/ToggleSpecialBalls" to="PetRoot/Node" method="_on_ToggleSpecialBalls_toggled"]
+[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3/TransparencyCheckBox" to="PetRoot/Node" method="_on_TransparencyCheckBox_toggled"]
+[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer3/SelectCheckBox" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_SelectCheckBox_toggled"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
