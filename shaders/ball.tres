@@ -17,6 +17,7 @@ uniform bool has_texture = false;
 uniform sampler2D ball_texture: hint_white;
 uniform vec2 texture_size;
 uniform int transparent_index = 0;
+uniform bool transparency_on = true;
 uniform sampler2D palette: hint_white;
 uniform vec3 z_center_pet_world = vec3(0.0);
 
@@ -135,7 +136,7 @@ void fragment() {
     }
 
     float alpha_value = 1.0 - step(pct + pct2, 0.0);
-    if (is_transparent) {
+    if (is_transparent && transparency_on) {
         alpha_value = 0.0;
     }
     ALPHA = alpha_value;
@@ -180,5 +181,6 @@ shader_param/z_add = 0.0
 shader_param/has_texture = false
 shader_param/texture_size = null
 shader_param/transparent_index = 0
+shader_param/transparency_on = true
 shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
 shader_param/palette = ExtResource( 1 )

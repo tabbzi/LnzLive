@@ -22,6 +22,7 @@ uniform vec3 ball_world_pos2 = vec3(0.0);
 uniform sampler2D line_texture: hint_white;
 uniform vec2 texture_size;
 uniform int transparent_index = 0;
+uniform bool transparency_on = true;
 uniform sampler2D palette: hint_white;
 varying vec2 uv_mod;
 varying vec2 max_x;
@@ -103,9 +104,8 @@ void fragment() {
 
     ALBEDO = texture_color;
 
-    // Adjust ALPHA based on conditions
     float alpha_value = 1.0;
-    if (modified_uv.x < 0.25 || modified_uv.x > 0.75 || is_transparent) {
+    if (modified_uv.x < 0.25 || modified_uv.x > 0.75 || (is_transparent && transparency_on)) {
         alpha_value = 0.0;
     }
 
@@ -201,6 +201,7 @@ shader_param/ball_world_pos1 = Vector3( 0, 0, 0 )
 shader_param/ball_world_pos2 = Vector3( 0, 0, 0 )
 shader_param/texture_size = null
 shader_param/transparent_index = 0
+shader_param/transparency_on = true
 shader_param/has_texture = false
 shader_param/z_center = Vector3( 0, 0, 0 )
 shader_param/palette = ExtResource( 1 )

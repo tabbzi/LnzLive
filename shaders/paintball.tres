@@ -15,6 +15,7 @@ uniform int outline = -1;
 uniform int color_index = 0;
 uniform int outline_color_index = 0;
 uniform int transparent_index = 0;
+uniform bool transparency_on = true;
 uniform float z_add = 0.0;
 uniform sampler2D palette: hint_white;
 uniform vec2 texture_size;
@@ -212,6 +213,7 @@ shader_param/outline = -1
 shader_param/color_index = -1
 shader_param/outline_color_index = 0
 shader_param/transparent_index = 0
+shader_param/transparency_on = true
 shader_param/z_add = 0.0
 shader_param/texture_size = null
 shader_param/has_texture = false
