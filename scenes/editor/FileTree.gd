@@ -10,8 +10,12 @@ var local_storage_textures: TreeItem
 
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
+
 onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as WindowDialog
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
+
+onready var add_file_button = get_node("../Button")
+onready var file_dialog = get_node("../ItemPopupMenu/FileDialog")
 
 signal backup_file
 
@@ -19,6 +23,15 @@ func _ready():
 	root = create_item()
 	examples = create_item(root)
 	examples.set_text(0, "Examples")
+	
+	add_file_button.connect("pressed", self, "_on_AddFileButton_pressed")
+	file_dialog.connect("file_selected", self, "_on_FileDialog_file_selected")
+	
+	file_dialog.clear_filters()
+	file_dialog.add_filter("*.lnz ; LNZ Files")
+	file_dialog.add_filter("*.bmp ; Bitmap Textures")
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
 	
 	var dir = Directory.new()
 	dir.open(example_file_location)
@@ -34,6 +47,42 @@ func _ready():
 
 	rescan(null)
 	rescan_textures()
+
+func _on_AddFileButton_pressed():
+	file_dialog.popup_centered()
+
+func _on_FileDialog_file_selected(selected_path):
+	var file_extension = selected_path.get_extension().to_lower()
+	var dest_dir = ""
+	var dest_path = ""
+
+	if file_extension == "lnz":
+		dest_dir = user_file_location
+	elif file_extension == "bmp":
+		dest_dir = user_file_location + "/textures"
+	else:
+		print("Unsupported file type: ", file_extension)
+		return
+
+	dest_path = dest_dir.plus_file(selected_path.get_file())
+
+	var dir = Directory.new()
+	if not dir.dir_exists(dest_dir):
+		var err = dir.make_dir_recursive(dest_dir)
+		if err != OK:
+			print("Error creating directory: ", err)
+			return
+
+	var err = dir.copy(selected_path, dest_path)
+	if err != OK:
+		print("Error copying file: ", err)
+		return
+
+	if file_extension == "lnz":
+		rescan(dest_path)
+		emit_signal("user_file_selected", dest_path)
+	elif file_extension == "bmp":
+		rescan_textures()
 
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem

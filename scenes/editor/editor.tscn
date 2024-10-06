@@ -136,7 +136,7 @@ __meta__ = {
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 margin_right = 132.0
-margin_bottom = 768.0
+margin_bottom = 744.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 allow_rmb_select = true
@@ -146,19 +146,30 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ItemPopupMenu" type="PopupMenu" parent="SceneRoot/HSplitContainer/VBoxContainer/Tree"]
-margin_right = 20.0
-margin_bottom = 20.0
+[node name="ItemPopupMenu" type="PopupMenu" parent="SceneRoot/HSplitContainer/VBoxContainer"]
+margin_top = 674.0
+margin_right = 132.0
+margin_bottom = 744.0
 items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Back up", null, 0, false, true, 2, 0, null, "", false ]
 
-[node name="FileDialog" type="FileDialog" parent="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu"]
-margin_right = 315.0
-margin_bottom = 130.0
+[node name="FileDialog" type="FileDialog" parent="SceneRoot/HSplitContainer/VBoxContainer/ItemPopupMenu"]
+visible = true
+margin_right = 450.0
+margin_bottom = 300.0
 window_title = "Open File(s)"
 mode = 1
-access = 1
-current_dir = "user://C:/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize"
-current_path = "user://C:/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize/"
+access = 2
+current_dir = "/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize"
+current_path = "/Users/Tabbloza/Documents/Games/PetzBabyz_LOCAL/Petz Software/LnzLive/custom/LnzLive_godot-3_v2/LnzLive-add-babyz-optimize/"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Button" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer"]
+margin_top = 748.0
+margin_right = 132.0
+margin_bottom = 768.0
+text = "Add File"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
 margin_left = 144.0
@@ -683,8 +694,8 @@ __meta__ = {
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_rmb_selected"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
-[connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_about_to_show"]
-[connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_id_pressed"]
+[connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_about_to_show"]
+[connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="resized" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_resized"]
 [connection signal="sort_children" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_sort_children"]
 [connection signal="text_entered" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HBoxContainer/AnimPicker" to="PetRoot/Node" method="_on_AnimPicker_text_entered"]
