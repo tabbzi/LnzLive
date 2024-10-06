@@ -534,17 +534,26 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					texture = preloader.get_resource(texture_filename)
 				visual_ball.texture = texture
 			visual_ball.color_index = ball.color_index
+			
+			# Defer palette update
+			visual_elements_to_update.append(visual_ball)
 		ball_map[ball.ball_no] = visual_ball
 		
 		# Check for special balls in Babyz to hide
+		var is_special_ball = false
 		if species == KeyBallsData.Species.BABY and ball.ball_no >= 120 and ball.ball_no <= 137:
+			is_special_ball = true
 			visual_ball.add_to_group("special_balls")
+		
+		if is_special_ball:
+			visual_ball.visible = draw_special_balls
+		else:
+			visual_ball.visible = draw_addballs
 		
 		if !draw_addballs:
 			visual_ball.visible_override = false
-			
-		if !draw_special_balls:
-			visual_ball.visible_override = false
+		else:
+			visual_ball.visible_override = true
 			
 		if omissions.get(key, false):
 			visual_ball.visible_override = false
@@ -831,25 +840,49 @@ func _on_ToggleSpecialBalls_toggled(button_pressed):
 	get_tree().call_group("special_balls", "set_visible", button_pressed)
 	draw_special_balls = button_pressed
 
-func _on_BallCheckBox_toggled(button_pressed):
-	get_tree().call_group("balls", "set_visible", button_pressed)
-	draw_balls = button_pressed
-	
+func _on_TransparencyCheckBox_toggled(button_pressed):
+	var balls = get_tree().get_nodes_in_group("balls")
+	for ball in balls:
+		if ball is Spatial:
+			ball.set_transparency(button_pressed)
+	var addballs = get_tree().get_nodes_in_group("addballs")
+	for addball in addballs:
+		if addball is Spatial:
+			addball.set_transparency(button_pressed)
+	var lines = get_tree().get_nodes_in_group("lines")
+	for line in lines:
+		if line is Spatial:
+				line.set_transparency(button_pressed)
+	var paintballs = get_tree().get_nodes_in_group("paintballs")
+	for paintball in paintballs:
+		if paintball is Spatial:
+			paintball.set_transparency(button_pressed)
+
+func set_visibility_for_group(group_name: String, is_visible: bool):
+    var nodes = get_tree().get_nodes_in_group(group_name)
+    for node in nodes:
+        if node is Spatial:
+            node.set_visible(is_visible)
+
 func _on_AddballCheckBox_toggled(button_pressed):
-	get_tree().call_group("addballs", "set_visible", button_pressed)
-	draw_addballs = button_pressed
-	
+    set_visibility_for_group("addballs", button_pressed)
+    draw_addballs = button_pressed
+
+func _on_BallCheckBox_toggled(button_pressed):
+    set_visibility_for_group("balls", button_pressed)
+    draw_balls = button_pressed
+
 func _on_PaintballCheckBox_toggled(button_pressed):
-	get_tree().call_group("paintballs", "set_visible", button_pressed)
-	draw_paintballs = button_pressed
-	
-func _on_PolygonCheckBox_toggled(button_pressed):
-	get_tree().call_group("polygons", "set_visible", button_pressed)
-	draw_polygons = button_pressed
-	
+    set_visibility_for_group("paintballs", button_pressed)
+    draw_paintballs = button_pressed
+
 func _on_LineCheckBox_toggled(button_pressed):
-	get_tree().call_group("lines", "set_visible", button_pressed)
-	draw_lines = button_pressed
+    set_visibility_for_group("lines", button_pressed)
+    draw_lines = button_pressed
+
+func _on_PolygonCheckBox_toggled(button_pressed):
+    set_visibility_for_group("polygons", button_pressed)
+    draw_polygons = button_pressed
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)
