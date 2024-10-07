@@ -2,19 +2,19 @@
 
 ## Quickstart
 
-Load a pet by double-clicking one of the Examples.
+Load a Petz or Babyz LNZ file by double-clicking one of the Examples.
 
 Edit the LNZ in the right-hand window.
 
 Hit Ctrl+S to save and refresh the pet view. Your file will be saved in local storage.
 
-Once a pet is loaded, you can paste in external LNZ. If using in a browser, your browser must have permission to access the clipboard.
+Once a Petz or Babyz LNZ is loaded, you can paste in external LNZ. If using in a browser, your browser must have permission to access the clipboard.
 
 ## Help! It crashes when I do this!
 
 LnzLive is definitely a work in progress!  
 
-f you're using the web version, it should be fairly resilient. If you make a mistake in your LNZ (e.g. missing a space between two numbers) and the pet view goes all weird, you should be able to correct it and continue.
+If you're using the web version, it should be fairly resilient. If you make a mistake in your LNZ (e.g. missing a space between two numbers) and the pet view goes all weird, you should be able to correct it and continue.
 
 If you're using the Windows exe, run the debug version rather than the release version.
 
@@ -89,9 +89,7 @@ Color Swap and Copy L to R can be destructive! LnzLive takes a backup of your fi
 
 ## Custom textures
 
-Custom bmp files can be loaded from local storage. There's no way to add these via the interface at the moment, but you can do it manually if you're using the Windows exe.
-
-Go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/textures (you may have to create this folder). Copy your textures directly into this folder, without subfolders. Relaunch LnzLive. If your textures have been loaded correctly, you will see them if you expand the Local Textures part of the filetree in the left panel.
+Custom BMP files can be loaded from local storage by clicking "Add File". You can also add BMP files directly for LnzLive to access from your file system. Go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/textures (you may have to create this folder). Copy your textures directly into this folder, without subfolders. Relaunch LnzLive. If your textures have been loaded correctly, you will see them if you expand the Local Textures part of the filetree in the left panel.
 
 Apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
 

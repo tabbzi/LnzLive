@@ -17,3 +17,12 @@ Some browsers have security restrictions that won't let you paste into the LNZ t
 This app is in development. Expect crashes and visual bugs.
 
 If you would like to help with development, raise [an issue](https://github.com/mnemoli/LnzLive/issues) (as long as it's not covered above) or a pull request.
+
+
+## Updates
+
+**2024-10-06**:
+- Added support for loading Babyz including example LNZ file and in-game palette, textures, and animations
+- Added rendering for `[Polygons]` section which is used in Babyz
+- Added toggleable transparency for magenta, which is color 253 in Petz and Babyz palettes
+- Added toggle for hiding special ballz i.e. tears in Babyz
