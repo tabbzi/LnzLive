@@ -125,7 +125,7 @@ void fragment() {
 
   vec3 texture_color;
   vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
-  int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 255.0);
+  int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 256.0);
   if (transparent_index > 0 && color_index < 150 && has_texture) {
 	  // if the index of the texture is the same as the transparent color
 	  // then palette shift	
@@ -133,16 +133,16 @@ void fragment() {
 		texture_color = get_shifted_color(palette_index);
 	  } else {
 	  // get the base texture color
-		texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+		texture_color = texture(palette, vec2(float(palette_index) / 256.0, 0.0)).rgb;
 		}
 	}
 	else if (transparent_index == 0 && color_index < 150 && has_texture) {
-			texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+			texture_color = texture(palette, vec2(float(palette_index) / 256.0, 0.0)).rgb;
 		}
   else {
-	texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
+	texture_color = texture(palette, vec2(float(color_index) / 256.0, 0.0)).rgb;
 }
-	vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+	vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 256.0, 0.0)).rgb;
   ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
   ALPHA = 1.0 - step(pct + pct2, 0.0);
 
