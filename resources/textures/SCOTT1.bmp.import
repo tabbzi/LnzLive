@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/scott1.bmp-484c747a60aab89e2cce20b2be2f9801.stex"
+path="res://.import/SCOTT1.bmp-70c89e863b17701f642d46ab98b167c4.stex"
 
 [deps]
 
-source_file="res://resources/textures/scott1.bmp"
-dest_files=[ "res://.import/scott1.bmp-484c747a60aab89e2cce20b2be2f9801.stex" ]
+source_file="res://resources/textures/SCOTT1.bmp"
+dest_files=[ "res://.import/SCOTT1.bmp-70c89e863b17701f642d46ab98b167c4.stex" ]
 
 [params]
 
