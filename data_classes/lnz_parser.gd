@@ -67,6 +67,9 @@ func get_parsed_line_strings(file: File, keys: Array):
 	return return_array
 
 func _init(file_path):
+	if (file_path == null):
+		return
+	
 	self.file_path = file_path
 	r.compile("[-.\\d]+")
 	str_r.compile("[\\S]+")
