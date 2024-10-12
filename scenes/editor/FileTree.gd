@@ -7,6 +7,7 @@ var examples: TreeItem
 var local_storage: TreeItem
 var root: TreeItem
 var local_storage_textures: TreeItem
+var local_storage_palettes: TreeItem
 
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
@@ -34,6 +35,7 @@ func _ready():
 
 	rescan(null)
 	rescan_textures()
+	rescan_palettes()
 
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
@@ -61,6 +63,16 @@ func rescan_textures():
 	local_storage_textures.collapsed = was_collapsed
 	local_storage_textures.set_text(0, "Local Textures")
 	scan_local_textures()
+	
+func rescan_palettes():
+	var was_collapsed = true
+	if local_storage_palettes != null:
+		was_collapsed = local_storage_palettes.collapsed
+		root.remove_child(local_storage_palettes)
+	local_storage_palettes = create_item(root, 3)
+	local_storage_palettes.collapsed = was_collapsed
+	local_storage_palettes.set_text(0, "Local Palettes")
+	scan_local_palettes()
 	
 func scan_local_storage(selected_filepath):
 	var dir2 = Directory.new()
@@ -92,6 +104,24 @@ func scan_local_textures():
 			var tex = ImageTexture.new()
 			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
 			preloader.add_resource(filename, tex)
+		filename = dir2.get_next()
+	dir2.list_dir_end()
+	
+func scan_local_palettes():
+	var dir2 = Directory.new()
+	dir2.open(user_file_location + "/palettes")
+	dir2.list_dir_begin()
+	filename = dir2.get_next()
+	while(!filename.empty()):
+		if filename.ends_with(".png"):
+			var new_item = create_item(local_storage_palettes)
+			new_item.set_text(0, filename)
+			new_item.set_metadata(0, user_file_location + filename)
+			var img = Image.new()
+			img.load(user_file_location + "/palettes/" + filename, true, true)
+			var tex = ImageTexture.new()
+			tex.create_from_image((img))
+			preloader.add_resource("palette_" + filename, tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 

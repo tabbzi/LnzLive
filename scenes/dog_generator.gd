@@ -106,9 +106,9 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = apply_extensions(collated_data, lnz_info)
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
-	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, new_create)
+	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create)
 	apply_projections()
-	generate_lines(lnz_info.lines, new_create)
+	generate_lines(lnz_info.lines, lnz_info.palette, new_create)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -293,7 +293,7 @@ func get_root():
 	else:
 		return get_tree().root.get_node("Root/PetRoot")
 
-func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, new_create: bool):
+func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool):
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
 	var paintball_data = all_ball_data.paintballs
@@ -302,6 +302,15 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	var parent = root.get_node("petholder/balls")
 	var pb_parent = root.get_node("petholder/paintballs")
 	var ab_parent = root.get_node("petholder/addballs")
+	
+	var pal_texture = null
+	if palette != null:
+		var resource_path = "user://resources/palettes/"+palette
+		if ResourceLoader.exists(resource_path):
+			pal_texture = ResourceLoader.load(resource_path)
+		else:
+			pal_texture = preloader.get_resource("palette_"+palette)
+					
 	if new_create:
 		for c in parent.get_children():
 			parent.remove_child(c)
@@ -386,6 +395,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.outline = ball.outline
 			visual_ball.outline_color_index = ball.outline_color_index
 			visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
+			visual_ball.palette = pal_texture
 		visual_ball.rotation_degrees = ball.rotation
 		if new_create:
 			parent.add_child(visual_ball)
@@ -437,12 +447,15 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					texture = preloader.get_resource(texture_filename)
 				visual_ball.texture = texture
 			visual_ball.color_index = ball.color_index
+			visual_ball.palette = pal_texture
+			
 		ball_map[ball.ball_no] = visual_ball
 		if !draw_addballs:
 			visual_ball.visible_override = false
 		if omissions.get(key, false):
 			visual_ball.visible_override = false
 			visual_ball.omitted = true
+		visual_ball.palette = pal_texture
 			
 	for key in paintball_data:
 		if ball_map[key].omitted:
@@ -485,6 +498,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				else:
 					visual_ball.transparent_color = paintball.color_index
 				visual_ball.color_index = paintball.color_index
+				visual_ball.palette = pal_texture
+					
 			visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
 			visual_ball.ball_size = final_size
@@ -500,11 +515,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			paintball_map[key] = ar
 			if !draw_paintballs:
 				visual_ball.visible_override = false
+			visual_ball.palette = pal_texture
 				
 func get_real_ball_size(ball_size):
 	return ball_size
 				
-func generate_lines(line_data: Array, new_create: bool):
+func generate_lines(line_data: Array, palette, new_create: bool):
 	var root = get_root()
 	var parent = root.get_node("petholder/lines")
 	if new_create:
@@ -512,6 +528,14 @@ func generate_lines(line_data: Array, new_create: bool):
 			parent.remove_child(c)
 			c.queue_free()
 		lines_map = {}
+	
+	var pal_texture = null
+	if palette != null:
+		var resource_path = "user://resources/palettes/"+palette
+		if ResourceLoader.exists(resource_path):
+			pal_texture = ResourceLoader.load(resource_path)
+		else:
+			pal_texture = preloader.get_resource("palette_"+palette)
 	
 	var i = 0
 	for line in line_data:
@@ -546,6 +570,7 @@ func generate_lines(line_data: Array, new_create: bool):
 		if new_create:
 			visual_line.texture = start.texture
 			visual_line.transparent_color = start.transparent_color
+			visual_line.palette = pal_texture
 			if line.color_index == -1:
 				visual_line.color_index = start.color_index
 			else:
@@ -564,6 +589,7 @@ func generate_lines(line_data: Array, new_create: bool):
 		var final_line_width = Vector2(start.ball_size, end.ball_size)
 		final_line_width = final_line_width * (Vector2(line.s_thick, line.e_thick) / 100)
 		visual_line.line_widths = final_line_width
+		
 		lines_map[i] = visual_line
 		if !draw_lines:
 			visual_line.hide()

@@ -20,6 +20,7 @@ var paintballs = {}
 var omissions = {}
 var project_ball = []
 var texture_list = []
+var palette = null
 
 var file_path
 
@@ -84,6 +85,7 @@ func _init(file_path):
 	var this_line = ""
 	
 	get_texture_list(file)
+	get_palette(file)
 	get_species(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
@@ -276,3 +278,10 @@ func get_texture_list(file: File):
 	for line in parsed_lines:
 		var filename = line.filepath.get_file()
 		texture_list.append({filename = filename, transparent_color = line.transparent_color})
+
+func get_palette(file: File):
+	get_next_section(file, "Palette")
+	var parsed_lines = get_parsed_line_strings(file, ["filepath"])
+	for line in parsed_lines:
+		var filename = line.filepath.get_file()
+		palette = filename + ".png"
