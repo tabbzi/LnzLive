@@ -1,3 +1,10 @@
+> [!NOTE]  
+> This is a fork of the original LnzLive, with the sole purpose of adding support for palette swapping. In order to use palette swapping, you will need to [download the EXE](https://github.com/draconizations/LnzLive/releases) for now.
+
+Please read the [usage guide](GUIDE.md#palette-swapping) for details on how to load in your palettes!
+
+Support for adding files in the browser will (hopefully) be there once this fork has been merged with [Tabbzi's babyz fork](https://github.com/tabbzi/LnzLive/)!
+
 # LnzLive
 
 ![screenshot](screenshot.png)
