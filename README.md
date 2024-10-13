@@ -1,5 +1,5 @@
 > [!NOTE]  
-> This is a fork of the original LnzLive, with the sole purpose of adding support for palette swapping. In order to use palette swapping, you will need to [download the EXE](https://github.com/draconizations/LnzLive/releases) for now.
+> This is a fork of the original LnzLive, with the sole purpose of adding support for palette swapping. In order to use palette swapping, you will need to [download the EXE](https://github.com/Draconizations/LnzLive/releases/latest) for now.
 
 Please read the [usage guide](GUIDE.md#palette-swapping) for details on how to load in your palettes!
 
