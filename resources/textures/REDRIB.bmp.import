@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/REDRIB.bmp-7cc76cda9cb2051240c0c8617208dd4c.stex"
+path="res://.import/redrib.bmp-85675c68288806f8231e7d5a51910e32.stex"
 
 [deps]
 
-source_file="res://resources/textures/REDRIB.bmp"
-dest_files=[ "res://.import/REDRIB.bmp-7cc76cda9cb2051240c0c8617208dd4c.stex" ]
+source_file="res://resources/textures/redrib.bmp"
+dest_files=[ "res://.import/redrib.bmp-85675c68288806f8231e7d5a51910e32.stex" ]
 
 [params]
 

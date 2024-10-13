@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/FLOWER.bmp-51ea1c400fbfeb2c1bcfe2b8cd45dfbf.stex"
+path="res://.import/flower.bmp-2f2e2b28c6d6cd841e750258babb759a.stex"
 
 [deps]
 
-source_file="res://resources/textures/FLOWER.bmp"
-dest_files=[ "res://.import/FLOWER.bmp-51ea1c400fbfeb2c1bcfe2b8cd45dfbf.stex" ]
+source_file="res://resources/textures/flower.bmp"
+dest_files=[ "res://.import/flower.bmp-2f2e2b28c6d6cd841e750258babb759a.stex" ]
 
 [params]
 

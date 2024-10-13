@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/JOWL2.bmp-f4802bc551287c12e44f60ae1b12a47d.stex"
+path="res://.import/jowl2.bmp-3b8dd61918494cf9b5b27ba1ff57054e.stex"
 
 [deps]
 
-source_file="res://resources/textures/JOWL2.bmp"
-dest_files=[ "res://.import/JOWL2.bmp-f4802bc551287c12e44f60ae1b12a47d.stex" ]
+source_file="res://resources/textures/jowl2.bmp"
+dest_files=[ "res://.import/jowl2.bmp-3b8dd61918494cf9b5b27ba1ff57054e.stex" ]
 
 [params]
 

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/HONEY1.bmp-cbac120d7e11754adc804b4df95a438e.stex"
+path="res://.import/honey1.bmp-b07bab16694609605341cc415c4ba9d5.stex"
 
 [deps]
 
-source_file="res://resources/textures/HONEY1.bmp"
-dest_files=[ "res://.import/HONEY1.bmp-cbac120d7e11754adc804b4df95a438e.stex" ]
+source_file="res://resources/textures/honey1.bmp"
+dest_files=[ "res://.import/honey1.bmp-b07bab16694609605341cc415c4ba9d5.stex" ]
 
 [params]
 
