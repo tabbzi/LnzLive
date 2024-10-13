@@ -46,7 +46,7 @@ vec3 get_shifted_color(int palette_index) {
 		amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
 	}
 	int new_palette_index = modded_color + amount_to_shift_index;
-	vec3 new_color = texture(palette, vec2(float(new_palette_index)/256.0, 0.0)).rgb;
+	vec3 new_color = texture(palette, vec2(float(new_palette_index)/255.0, 0.0)).rgb;
 	return new_color;
 }
 
@@ -71,9 +71,9 @@ void fragment() {
 	vec2 modified_uv = vec2(scaled_uv_x, UV.y) - move_vec;
 	float one_pixel = 0.5 / (floor(line_width_in_pixels) + 0.5);
 	if(modified_uv.x < 0.25 + one_pixel && r_color_index != -1)
-		texture_color = texture(palette, vec2(float(r_color_index) / 256.0, 0.0)).rgb;
+		texture_color = texture(palette, vec2(float(r_color_index) / 255.0, 0.0)).rgb;
 	else if (modified_uv.x > 0.75 - one_pixel && l_color_index != -1)
-		texture_color = texture(palette, vec2(float(l_color_index) / 256.0, 0.0)).rgb;
+		texture_color = texture(palette, vec2(float(l_color_index) / 255.0, 0.0)).rgb;
 		
 	else {
 		int palette_index = int(texture(line_texture, (SCREEN_UV - center_of_line_screen_uv) * (1000.0 / texture_size)).r * 255.0);

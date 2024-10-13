@@ -121,6 +121,7 @@ func scan_local_palettes():
 			img.load(user_file_location + "/palettes/" + filename, true, true)
 			var tex = ImageTexture.new()
 			tex.create_from_image((img))
+			tex.flags = 0
 			preloader.add_resource("palette_" + filename, tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
