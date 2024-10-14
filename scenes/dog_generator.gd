@@ -38,7 +38,6 @@ signal ball_selected(ball_no, is_addball)
 signal addball_deleted(ball_no)
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
-signal palette_change(new_palette)
 
 func set_animation(anim_index: int):
 	current_animation = anim_index
@@ -859,30 +858,30 @@ func _on_TransparencyCheckBox_toggled(button_pressed):
 			paintball.set_transparency(button_pressed)
 
 func set_visibility_for_group(group_name: String, is_visible: bool):
-    var nodes = get_tree().get_nodes_in_group(group_name)
-    for node in nodes:
-        if node is Spatial:
-            node.set_visible(is_visible)
+	var nodes = get_tree().get_nodes_in_group(group_name)
+	for node in nodes:
+		if node is Spatial:
+			node.set_visible(is_visible)
 
 func _on_AddballCheckBox_toggled(button_pressed):
-    set_visibility_for_group("addballs", button_pressed)
-    draw_addballs = button_pressed
+	set_visibility_for_group("addballs", button_pressed)
+	draw_addballs = button_pressed
 
 func _on_BallCheckBox_toggled(button_pressed):
-    set_visibility_for_group("balls", button_pressed)
-    draw_balls = button_pressed
+	set_visibility_for_group("balls", button_pressed)
+	draw_balls = button_pressed
 
 func _on_PaintballCheckBox_toggled(button_pressed):
-    set_visibility_for_group("paintballs", button_pressed)
-    draw_paintballs = button_pressed
+	set_visibility_for_group("paintballs", button_pressed)
+	draw_paintballs = button_pressed
 
 func _on_LineCheckBox_toggled(button_pressed):
-    set_visibility_for_group("lines", button_pressed)
-    draw_lines = button_pressed
+	set_visibility_for_group("lines", button_pressed)
+	draw_lines = button_pressed
 
 func _on_PolygonCheckBox_toggled(button_pressed):
-    set_visibility_for_group("polygons", button_pressed)
-    draw_polygons = button_pressed
+	set_visibility_for_group("polygons", button_pressed)
+	draw_polygons = button_pressed
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)
@@ -928,3 +927,6 @@ func _on_ToolsMenu_print_ball_colors():
 			ball_map_string += this_ball_string
 			print(this_ball_string)
 	OS.set_clipboard(ball_map_string)
+
+func _on_ViewPaletteButton_pressed():
+	$SceneRoot/ToolsMenu/PaletteViewerPopup.popup_centered_minsize()
