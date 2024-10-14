@@ -1,6 +1,4 @@
-[gd_resource type="ShaderMaterial" load_steps=3 format=2]
-
-[ext_resource path="res://resources/textures/petzpalette.png" type="Texture" id=1]
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
 
 [sub_resource type="Shader" id=1]
 code = "shader_type spatial;
@@ -204,4 +202,3 @@ shader_param/transparent_index = 0
 shader_param/transparency_on = true
 shader_param/has_texture = false
 shader_param/z_center = Vector3( 0, 0, 0 )
-shader_param/palette = ExtResource( 1 )
