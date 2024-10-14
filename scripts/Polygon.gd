@@ -12,7 +12,8 @@ export var texture: Texture setget set_texture
 export var transparent_color = 0 setget set_transparent_color
 
 var petz_palette = preload("res://resources/textures/petzpalette.png")
-var babyz_palette = preload("res://resources/textures/babyzpalette.png")
+#var petz_palette = preload("res://resources/palettes/petz_palette.png")
+var babyz_palette = preload("res://resources/palettes/babyz_palette.png")
 
 func _ready():
 	$MeshInstance.material_override.set_shader_param("palette", petz_palette)

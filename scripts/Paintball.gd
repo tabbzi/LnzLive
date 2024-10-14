@@ -13,9 +13,11 @@ export var visible_override = true setget set_visible
 export var override_ball_no = -1
 export var texture: Texture setget set_texture
 export var transparent_color = 0 setget set_transparent_color
+export var transparency_on = true setget set_transparency
 
 var petz_palette = preload("res://resources/textures/petzpalette.png")
-var babyz_palette = preload("res://resources/textures/babyzpalette.png")
+#var petz_palette = preload("res://resources/palettes/petz_palette.png")
+var babyz_palette = preload("res://resources/palettes/babyz_palette.png")
 
 var old_outline
 var old_outline_color
@@ -30,6 +32,7 @@ signal ball_selected(ball_no, section)
 
 func _ready():
 	$MeshInstance.material_override.set_shader_param("palette", petz_palette)
+	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
@@ -46,6 +49,8 @@ func set_palette(new_palette):
 	else:
 		new_material.set_shader_param("palette", petz_palette)
 		#print("Set default Petz palette")
+	
+	new_material.set_shader_param("transparency_on", transparency_on)
 
 	$MeshInstance.material_override = new_material
 
@@ -76,6 +81,10 @@ func set_texture(new_value):
 func set_transparent_color(new_value):
 	transparent_color = new_value
 	$MeshInstance.material_override.set_shader_param("transparent_index", new_value)
+
+func set_transparency(new_value):
+	transparency_on = new_value
+	$MeshInstance.material_override.set_shader_param("transparency_on", new_value)
 
 func set_base_ball_position(new_value):
 	base_ball_position = new_value

@@ -10,6 +10,7 @@ export var ball_no = 0
 export var base_ball_no = -1
 export var texture: Texture setget set_texture
 export var transparent_color = 0 setget set_transparent_color
+export var transparency_on = true setget set_transparency
 export var visible_override = true setget set_visible
 export var omitted = false
 export var pet_center = Vector3(0, 0, 0) setget set_pet_center
@@ -19,7 +20,8 @@ var old_outline_color
 var is_over = false
 
 var petz_palette = preload("res://resources/textures/petzpalette.png")
-var babyz_palette = preload("res://resources/textures/babyzpalette.png")
+#var petz_palette = preload("res://resources/palettes/petz_palette.png")
+var babyz_palette = preload("res://resources/palettes/babyz_palette.png")
 
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
@@ -28,6 +30,7 @@ signal ball_deleted(ball_no)
 
 func _ready():
 	$MeshInstance.material_override.set_shader_param("palette", petz_palette)
+	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
@@ -44,6 +47,8 @@ func set_palette(new_palette):
 	else:
 		new_material.set_shader_param("palette", petz_palette)
 		#print("Set default Petz palette")
+	
+	new_material.set_shader_param("transparency_on", transparency_on)
 
 	$MeshInstance.material_override = new_material
 
@@ -101,6 +106,10 @@ func set_texture(new_value):
 func set_transparent_color(new_value):
 	transparent_color = new_value
 	$MeshInstance.material_override.set_shader_param("transparent_index", new_value)
+
+func set_transparency(new_value):
+	transparency_on = new_value
+	$MeshInstance.material_override.set_shader_param("transparency_on", new_value)
 
 func set_pet_center(new_value):
 	pet_center = new_value
