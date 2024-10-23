@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/ZIGZAG.bmp-95f421095b07ef69a2a4d0cbca5aeadd.stex"
+path="res://.import/zigzag.bmp-c4872c6c380ee9244c3c979a0aff4752.stex"
 
 [deps]
 
-source_file="res://resources/textures/ZIGZAG.bmp"
-dest_files=[ "res://.import/ZIGZAG.bmp-95f421095b07ef69a2a4d0cbca5aeadd.stex" ]
+source_file="res://resources/textures/zigzag.bmp"
+dest_files=[ "res://.import/zigzag.bmp-c4872c6c380ee9244c3c979a0aff4752.stex" ]
+
+[params]
+

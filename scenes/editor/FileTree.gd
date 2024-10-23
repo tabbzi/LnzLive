@@ -7,6 +7,7 @@ var examples: TreeItem
 var local_storage: TreeItem
 var root: TreeItem
 var local_storage_textures: TreeItem
+var local_storage_palettes: TreeItem
 
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
@@ -15,7 +16,7 @@ onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialo
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 onready var add_file_button = get_node("../Button")
-onready var file_dialog = get_node("../ItemPopupMenu/FileDialog")
+onready var file_dialog = get_node("./ItemPopupMenu/FileDialog")
 
 signal backup_file
 
@@ -47,6 +48,7 @@ func _ready():
 
 	rescan(null)
 	rescan_textures()
+	rescan_palettes()
 
 func _on_AddFileButton_pressed():
 	file_dialog.popup_centered()
@@ -111,6 +113,16 @@ func rescan_textures():
 	local_storage_textures.set_text(0, "Local Textures")
 	scan_local_textures()
 	
+func rescan_palettes():
+	var was_collapsed = true
+	if local_storage_palettes != null:
+		was_collapsed = local_storage_palettes.collapsed
+		root.remove_child(local_storage_palettes)
+	local_storage_palettes = create_item(root, 3)
+	local_storage_palettes.collapsed = was_collapsed
+	local_storage_palettes.set_text(0, "Local Palettes")
+	scan_local_palettes()
+	
 func scan_local_storage(selected_filepath):
 	var dir2 = Directory.new()
 	dir2.open(user_file_location)
@@ -142,6 +154,25 @@ func scan_local_textures():
 			tex.flags = 0 # turn OFF anti-aliasing! but not after flagging repeat:
 			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
 			preloader.add_resource(filename, tex)
+		filename = dir2.get_next()
+	dir2.list_dir_end()
+	
+func scan_local_palettes():
+	var dir2 = Directory.new()
+	dir2.open(user_file_location + "/palettes")
+	dir2.list_dir_begin()
+	filename = dir2.get_next()
+	while(!filename.empty()):
+		if filename.ends_with(".png"):
+			var new_item = create_item(local_storage_palettes)
+			new_item.set_text(0, filename)
+			new_item.set_metadata(0, user_file_location + filename)
+			var img = Image.new()
+			img.load(user_file_location + "/palettes/" + filename, true, true)
+			var tex = ImageTexture.new()
+			tex.create_from_image((img))
+			tex.flags = 0
+			preloader.add_resource("palette_" + filename, tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 
@@ -182,8 +213,9 @@ func _on_RenameDialog_confirmed():
 func _on_ItemPopupMenu_about_to_show():
 	var clicked_item = get_selected() as TreeItem
 	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit") as TextEdit
-	var clicked_filepath = clicked_item.get_metadata(0) as String
-	$ItemPopupMenu.set_item_disabled(2, !textlnz.filepath == clicked_filepath)
+	var clicked_filepath = clicked_item.get_metadata(0)
+	if (clicked_filepath != null):
+		$ItemPopupMenu.set_item_disabled(2, !textlnz.filepath == clicked_filepath)
 
 func _on_LnzTextEdit_file_backed_up():
 	rescan(get_selected().get_metadata(0) as String)

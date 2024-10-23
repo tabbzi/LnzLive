@@ -1,11 +1,10 @@
 > [!NOTE]  
-> This branch forks of the original LnzLive to add resources and code for loading Babyz LNZ, including the Babyz palette and animations, toggleable transparency of color 253 (magenta), more game-consistent view and texture offsets, and rendering `[Polygons]` LNZ section, as well as a few tweaks to the editor UI e.g. having the LNZ text editor expand when the window is enlarged and allowing file uploads to local storage. Eventually, features from this branch/fork will be merged with features from [Draconization's branch/fork of LnzLive](https://github.com/Draconizations/LnzLive/tree/add-palette-swaps), which supports custom palettes!
+> This branch forks of the original LnzLive to add resources and code for loading Babyz LNZ, including the Babyz palette and animations, toggleable transparency of color 253 (magenta), more game-consistent view and texture offsets, and rendering `[Polygons]` LNZ section, as well as a few tweaks to the editor UI e.g. having the LNZ text editor expand when the window is enlarged and allowing file uploads to local storage. Additionally, this fork now has been merged with [Draconizations' palette swap fork](https://github.com/Draconizations/LnzLive/tree/add-palette-swaps)!
 
-**TBD:**
-- Double check that Babyz textures imported properly
-- Prepare for smooth merge of Petz/Babyz palette swapping with Draconization's custom palette additions
+**2024-10-23**:
+- Merged with [Draconizations' palette swap fork](https://github.com/Draconizations/LnzLive/tree/add-palette-swaps)
 
-**2024-11-13**:
+**2024-10-13**:
 - Modified editor UI so that the text editor rescales more when window enlarged
 - Enabled UI for loading files into local storage
 - Mirrored view and inverted camera controls to be consistent with in-game view

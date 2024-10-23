@@ -144,10 +144,10 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = apply_extensions(collated_data, lnz_info)
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
-	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, new_create)
+	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create)
 	apply_projections()
-	generate_polygons(lnz_info.polygons, lnz_info.species, new_create)
-	generate_lines(lnz_info.lines, lnz_info.species, new_create)
+	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create)
+	generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -339,7 +339,7 @@ func get_root():
 	else:
 		return get_tree().root.get_node("Root/PetRoot")
 
-func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, new_create: bool):
+func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool):
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
 	var paintball_data = all_ball_data.paintballs
@@ -349,7 +349,32 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	var pb_parent = root.get_node("petholder/paintballs")
 	var ab_parent = root.get_node("petholder/addballs")
 	
-	# Clear existing visual balls
+	# Determine belly position and default palette
+	var belly_position
+	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	
+	if species == KeyBallsData.Species.DOG:
+		belly_position = ball_data[KeyBallsData.belly_dog].position
+	elif species == KeyBallsData.Species.CAT:
+		belly_position = ball_data[KeyBallsData.belly_cat].position
+	elif species == KeyBallsData.Species.BABY:
+		belly_position = ball_data[KeyBallsData.belly_bab].position
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
+	
+	belly_position.y *= -1
+	belly_position *= pixel_world_size
+	
+	var pal_texture = null
+	if palette != null:
+		var resource_path = "user://resources/palettes/"+palette
+		if ResourceLoader.exists(resource_path):
+			pal_texture = ResourceLoader.load(resource_path)
+		else:
+			pal_texture = preloader.get_resource("palette_"+palette)
+	else:
+		pal_texture = default_palette
+	
+	# Clear existing visual balls		
 	if new_create:
 		for c in parent.get_children():
 			parent.remove_child(c)
@@ -362,26 +387,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			c.queue_free()
 		ball_map = {}
 		paintball_map = {}
-	
-	# Determine belly position and palette name
-	var belly_position
-	
-	var palette_name = "PETZ"
-	if species == KeyBallsData.Species.DOG:
-		belly_position = ball_data[KeyBallsData.belly_dog].position
-		palette_name = "PETZ"
-	elif species == KeyBallsData.Species.CAT:
-		belly_position = ball_data[KeyBallsData.belly_cat].position
-		palette_name = "PETZ"
-	else:
-		belly_position = ball_data[KeyBallsData.belly_bab].position
-		palette_name = "BABYZ"
-	
-	belly_position.y *= -1
-	belly_position *= pixel_world_size
-	
-	# Collect visual elements that need palette updates
-	var visual_elements_to_update = []
 	
 	# Process eyes
 	var eyes: Dictionary
@@ -409,9 +414,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				
 				parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
-				
-				# Defer palette update
-				visual_elements_to_update.append(visual_ball)
 			
 			else:
 				visual_ball = ball_map[key]
@@ -436,9 +438,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				
 				parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
-				
-				# Defer palette update
-				visual_elements_to_update.append(visual_ball)
 				
 			else:
 				visual_ball = ball_map[key]
@@ -472,6 +471,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.outline = ball.outline
 			visual_ball.outline_color_index = ball.outline_color_index
 			visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
+			visual_ball.palette = pal_texture
 		visual_ball.rotation_degrees = ball.rotation
 		
 		# Finalize creation
@@ -515,9 +515,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.ball_no = ball.ball_no
 			visual_ball.base_ball_no = ball.base
 			visual_ball.outline_color_index = ball.outline_color_index
-			
-			# Defer palette update
-			visual_elements_to_update.append(visual_ball)
 		visual_ball.scale = Vector3(1,1,1)
 		if new_create:
 			if ball.texture_id > -1:
@@ -533,9 +530,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					texture = preloader.get_resource(texture_filename)
 				visual_ball.texture = texture
 			visual_ball.color_index = ball.color_index
-			
-			# Defer palette update
-			visual_elements_to_update.append(visual_ball)
+			visual_ball.palette = pal_texture
+
 		ball_map[ball.ball_no] = visual_ball
 		
 		# Check for special balls in Babyz to hide
@@ -557,6 +553,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if omissions.get(key, false):
 			visual_ball.visible_override = false
 			visual_ball.omitted = true
+		visual_ball.palette = pal_texture
 			
 	for key in paintball_data:
 		if ball_map[key].omitted:
@@ -599,10 +596,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				else:
 					visual_ball.transparent_color = paintball.color_index
 				visual_ball.color_index = paintball.color_index
-
-				# Defer palette update
-				visual_elements_to_update.append(visual_ball)
-
+				visual_ball.palette = pal_texture
+					
 			visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
 			visual_ball.ball_size = final_size
@@ -613,24 +608,18 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.z_add = count * 1.0
 			visual_ball.base_ball_no = paintball.base
 			
-			# Defer palette update
-			visual_elements_to_update.append(visual_ball)
-			
 			count += 1
 			var ar = paintball_map.get(key, [])
 			ar.append(visual_ball)
 			paintball_map[key] = ar
 			if !draw_paintballs:
 				visual_ball.visible_override = false
-				
-	# Perform palette updates in batch
-	for visual_element in visual_elements_to_update:
-		visual_element.update_palette_after_added(palette_name)
+			visual_ball.palette = pal_texture
 
 func get_real_ball_size(ball_size):
 	return ball_size
 
-func generate_polygons(polygon_data: Array, species: int, new_create: bool):
+func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool):
 	#print("Generating polygons")
 	#print("Polygon data size:", polygon_data.size())
 	var root = get_root()
@@ -642,20 +631,8 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 			parent.remove_child(c)
 			c.queue_free()
 		polygons_map = {}
-
-	# Set palette based on species
-	var palette_name = "PETZ"
-	if species == KeyBallsData.Species.DOG:
-		palette_name = "PETZ"
-	elif species == KeyBallsData.Species.CAT:
-		palette_name = "PETZ"
-	else:
-		palette_name = "BABYZ"
-		
-	#print("Using palette for Polygonz:", palette_name)
 	
 	var i = 0
-	var visual_elements_to_update = []
 	for polygon in polygon_data:
 		var point1 = ball_map.get(polygon.ball1)
 		var point2 = ball_map.get(polygon.ball2)
@@ -687,13 +664,12 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 		visual_polygon.ball_world_pos4 = point4.global_transform.origin
 
 		if new_create:
-			# Defer palette update
-			visual_elements_to_update.append(visual_polygon)
-			
 			# Use the first point's texture
 			visual_polygon.texture = point1.texture  
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
+
+			visual_polygon.palette = point1.palette
 
 			if polygon.color == -1:
 				visual_polygon.color_index = point1.color_index
@@ -723,17 +699,10 @@ func generate_polygons(polygon_data: Array, species: int, new_create: bool):
 			visual_polygon.hide()
 			#print("Polygon hidden as draw_polygons is false.")
 		
-		# Defer palette update
-		visual_elements_to_update.append(visual_polygon)
-		
 		polygons_map[i] = visual_polygon
 		i += 1
 
-	# Perform palette updates in batch
-	for visual_element in visual_elements_to_update:
-		visual_element.update_palette_after_added(palette_name)
-
-func generate_lines(line_data: Array, species: int, new_create: bool):
+func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	var root = get_root()
 	var parent = root.get_node("petholder/lines")
 	if new_create:
@@ -741,19 +710,23 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 			parent.remove_child(c)
 			c.queue_free()
 		lines_map = {}
-	
-	var palette_name = "PETZ"
-	if species == KeyBallsData.Species.DOG:
-		palette_name = "PETZ"
-	elif species == KeyBallsData.Species.CAT:
-		palette_name = "PETZ"
-	else:
-		palette_name = "BABYZ"
 		
-	#print("Using palette for Linez:", palette_name)
+	# determine the default palette used
+	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	if (species == KeyBallsData.Species.BABY):
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
+	
+	var pal_texture = null
+	if palette != null:
+		var resource_path = "user://resources/palettes/"+palette
+		if ResourceLoader.exists(resource_path):
+			pal_texture = ResourceLoader.load(resource_path)
+		else:
+			pal_texture = preloader.get_resource("palette_"+palette)
+	else:
+		pal_texture = default_palette
 	
 	var i = 0
-	var visual_elements_to_update = []
 	for line in line_data:
 		var start = ball_map.get(line.start)
 		var end = ball_map.get(line.end)
@@ -785,11 +758,9 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
 		if new_create:
-			# Defer palette update
-			visual_elements_to_update.append(visual_line)
-			
 			visual_line.texture = start.texture
 			visual_line.transparent_color = start.transparent_color
+			visual_line.palette = pal_texture
 			if line.color_index == -1:
 				visual_line.color_index = start.color_index
 			else:
@@ -809,20 +780,14 @@ func generate_lines(line_data: Array, species: int, new_create: bool):
 		var final_line_width = Vector2(start.ball_size, end.ball_size)
 		final_line_width = final_line_width * (Vector2(line.s_thick, line.e_thick) / 100)
 		visual_line.line_widths = final_line_width
+		
 		lines_map[i] = visual_line
 		if !draw_lines:
 			visual_line.hide()
 		if new_create:
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
-		
-		# Defer palette update
-		visual_elements_to_update.append(visual_line)
 		i += 1
-		
-	# Perform palette updates in batch
-	for visual_element in visual_elements_to_update:
-		visual_element.update_palette_after_added(palette_name)
 
 func _on_OptionButton_file_selected(file_name):
 	generate_pet(file_name)
@@ -925,7 +890,7 @@ func _on_ToolsMenu_print_ball_colors():
 			if ball_map_string != "":
 				ball_map_string += "\n"
 			ball_map_string += this_ball_string
-			print(this_ball_string)
+			#print(this_ball_string)
 	OS.set_clipboard(ball_map_string)
 
 func _on_ViewPaletteButton_pressed():

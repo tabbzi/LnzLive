@@ -10,31 +10,9 @@ export var ball_world_pos3 = Vector3.ZERO setget set_ball_world_pos3
 export var ball_world_pos4 = Vector3.ZERO setget set_ball_world_pos4
 export var texture: Texture setget set_texture
 export var transparent_color = 0 setget set_transparent_color
+export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
 
-var petz_palette = preload("res://resources/textures/petzpalette.png")
-#var petz_palette = preload("res://resources/palettes/petz_palette.png")
-var babyz_palette = preload("res://resources/palettes/babyz_palette.png")
-
-func _ready():
-	$MeshInstance.material_override.set_shader_param("palette", petz_palette)
-
-func _on_palette_change(new_palette):
-	set_palette(new_palette)
-
-func set_palette(new_palette):
-	var new_material = $MeshInstance.material_override.duplicate()
-
-	if new_palette == "PETZ":
-		new_material.set_shader_param("palette", petz_palette)
-		#print("Set Petz palette")
-	elif new_palette == "BABYZ":
-		new_material.set_shader_param("palette", babyz_palette)
-		#print("Set Babyz palette")
-	else:
-		new_material.set_shader_param("palette", petz_palette)
-		#print("Set default Petz palette")
-
-	$MeshInstance.material_override = new_material
+const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
 
 func update_palette_after_added(new_palette):
 	call_deferred("set_palette", new_palette)
@@ -81,6 +59,14 @@ func set_texture(new_value):
 		$MeshInstance.material_override.set_shader_param("texture_size", new_value.get_size())
 	else:
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
+		
+func set_palette(new_value):
+	if new_value != null:
+		palette = new_value
+		$MeshInstance.material_override.set_shader_param("palette", new_value)
+	else:
+		palette = DEFAULT_PALETTE
+		$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
 
 func set_transparent_color(new_value):
 	transparent_color = new_value

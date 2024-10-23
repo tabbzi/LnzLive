@@ -23,7 +23,7 @@ func _ready():
 	add_item("Copy ball colors to clipboard")
 
 	# Connect palette viewer
-	$ViewPaletteButton.connect("pressed", self, "_on_ViewPaletteButton_pressed")
+	#$ViewPaletteButton.connect("pressed", self, "_on_ViewPaletteButton_pressed")
 
 #func _on_ViewPaletteButton_pressed():
 #	var current_palette = "PETZ"

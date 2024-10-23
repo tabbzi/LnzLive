@@ -21,6 +21,7 @@ var paintballs = {}
 var omissions = {}
 var project_ball = []
 var texture_list = []
+var palette = null
 
 var file_path
 
@@ -68,6 +69,9 @@ func get_parsed_line_strings(file: File, keys: Array):
 	return return_array
 
 func _init(file_path):
+	if (file_path == null):
+		return
+	
 	self.file_path = file_path
 	r.compile("[-.\\d]+")
 	str_r.compile("[\\S]+")
@@ -82,6 +86,7 @@ func _init(file_path):
 	var this_line = ""
 	
 	get_texture_list(file)
+	get_palette(file)
 	get_species(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
@@ -229,7 +234,7 @@ func get_polygons(file: File):
 			line.texture
 		)
 		polygons.append(poly_data)
-		print(polygons)
+		#print(polygons)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
@@ -251,7 +256,7 @@ func get_balls(file: File):
 			line.group, 
 			line.texture)
 		self.balls[i] = bd
-		print("Added ball " + str(i) + " with size " + str(line.size))
+		#print("Added ball " + str(i) + " with size " + str(line.size))
 		i += 1
 
 func get_addballs(file: File):
@@ -298,3 +303,9 @@ func get_texture_list(file: File):
 		var filename = line.filepath.get_file()
 		texture_list.append({filename = filename, transparent_color = line.transparent_color})
 
+func get_palette(file: File):
+	get_next_section(file, "Palette")
+	var parsed_lines = get_parsed_line_strings(file, ["filepath"])
+	for line in parsed_lines:
+		var filename = line.filepath.get_file()
+		palette = filename + ".png"
