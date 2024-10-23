@@ -31,6 +31,7 @@ func _ready():
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.lnz ; LNZ Files")
 	file_dialog.add_filter("*.bmp ; Bitmap Textures")
+	file_dialog.add_filter("*.png ; PNG Palettes")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
 	
@@ -62,6 +63,8 @@ func _on_FileDialog_file_selected(selected_path):
 		dest_dir = user_file_location
 	elif file_extension == "bmp":
 		dest_dir = user_file_location + "/textures"
+	elif file_extension == "png":
+		dest_dir = user_file_location + "/palettes"
 	else:
 		print("Unsupported file type: ", file_extension)
 		return
@@ -85,6 +88,8 @@ func _on_FileDialog_file_selected(selected_path):
 		emit_signal("user_file_selected", dest_path)
 	elif file_extension == "bmp":
 		rescan_textures()
+	elif file_extension == "png":
+		rescan_palettes()
 
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
