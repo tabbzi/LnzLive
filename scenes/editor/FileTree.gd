@@ -13,6 +13,7 @@ export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
 
 onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as WindowDialog
+onready var upload_popup = get_tree().root.get_node("Root/SceneRoot/WebFileUploadPopup") as AcceptDialog
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 onready var add_file_button = get_node("../Button")
@@ -52,23 +53,19 @@ func _ready():
 	rescan_palettes()
 
 func _on_AddFileButton_pressed():
-	file_dialog.popup_centered()
+	if (!OS.has_feature("HTML5")):
+		file_dialog.popup_centered()
+	else:
+		web_file_dialog()
 
 func _on_FileDialog_file_selected(selected_path):
 	var file_extension = selected_path.get_extension().to_lower()
-	var dest_dir = ""
-	var dest_path = ""
-
-	if file_extension == "lnz":
-		dest_dir = user_file_location
-	elif file_extension == "bmp":
-		dest_dir = user_file_location + "/textures"
-	elif file_extension == "png":
-		dest_dir = user_file_location + "/palettes"
-	else:
-		print("Unsupported file type: ", file_extension)
+	var	dest_dir = get_dest_dir(file_extension)
+	
+	if (dest_dir == null):
 		return
-
+	
+	var dest_path = ""
 	dest_path = dest_dir.plus_file(selected_path.get_file())
 
 	var dir = Directory.new()
@@ -82,7 +79,63 @@ func _on_FileDialog_file_selected(selected_path):
 	if err != OK:
 		print("Error copying file: ", err)
 		return
+		
+	rescan_with_extension(file_extension, dest_path)
+		
+func web_file_dialog():
+	JavaScript.eval("""
+	window.fileUploadData = {}
 
+	let el = document.createElement("input");
+	el.type = "file"
+	el.accept = "image/png, image/bmp, .lnz"
+	el.addEventListener("change", (e) => {
+	  if (e.target.files.length > 0) {
+		let file = e.target.files[0]
+		window.fileUploadData.name = file.name
+
+		let reader = new FileReader()
+		reader.readAsArrayBuffer(file)
+		reader.onloadend = (ev) => {
+		  window.fileUploadData.blob = ev.target.result
+		}
+	  }
+	})
+	el.click()
+	""")
+	upload_popup.visible = true
+	
+func _on_web_file_upload_popup_confirmed():
+	var file_blob = JavaScript.eval("window.fileUploadData.blob")
+	if (file_blob == null):
+		print("File is empty.")
+		return
+		
+	var file_name = JavaScript.eval("window.fileUploadData.name")
+	var file_extension = file_name.get_extension().to_lower()
+	
+	var dest_dir = get_dest_dir(file_extension)
+	if (dest_dir == null):
+		return
+	var dest_path = ""
+	dest_path = dest_dir.plus_file(file_name)
+	
+	var file = File.new()
+	var dir = Directory.new()
+	if not dir.dir_exists(dest_dir):
+		var err = dir.make_dir_recursive(dest_dir)
+		if err != OK:
+			print("Error creating directory: ", err)
+			return
+	var err = file.open(dest_path, File.WRITE_READ)
+	if err != OK:
+		print("Error creating file: ", err)
+		return
+	file.store_buffer(file_blob)
+	rescan_with_extension(file_extension, dest_path)
+	
+
+func rescan_with_extension(file_extension: String, dest_path: String):
 	if file_extension == "lnz":
 		rescan(dest_path)
 		emit_signal("user_file_selected", dest_path)
@@ -90,6 +143,17 @@ func _on_FileDialog_file_selected(selected_path):
 		rescan_textures()
 	elif file_extension == "png":
 		rescan_palettes()
+
+func get_dest_dir(file_extension: String):
+	if file_extension == "lnz":
+		return user_file_location
+	elif file_extension == "bmp":
+		return user_file_location + "/textures"
+	elif file_extension == "png":
+		return user_file_location + "/palettes"
+	else:
+		print("Unsupported file type: ", file_extension)
+		return null
 
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
