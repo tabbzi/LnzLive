@@ -158,7 +158,7 @@ func scan_local_textures():
 			var tex = ImageTexture.new()
 			tex.flags = 0 # turn OFF anti-aliasing! but not after flagging repeat:
 			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
-			preloader.add_resource(filename, tex)
+			preloader.add_resource(filename.to_lower(), tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 	
@@ -177,7 +177,7 @@ func scan_local_palettes():
 			var tex = ImageTexture.new()
 			tex.create_from_image((img))
 			tex.flags = 0
-			preloader.add_resource("palette_" + filename, tex)
+			preloader.add_resource("palette_" + filename.to_lower(), tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 

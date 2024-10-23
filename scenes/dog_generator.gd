@@ -370,7 +370,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if ResourceLoader.exists(resource_path):
 			pal_texture = ResourceLoader.load(resource_path)
 		else:
-			pal_texture = preloader.get_resource("palette_"+palette)
+			pal_texture = preloader.get_resource("palette_"+palette.to_lower())
 	else:
 		pal_texture = default_palette
 	
@@ -453,13 +453,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var tex_info = texture_list[ball.texture_id]
 					var texture_filename = tex_info.filename
 					visual_ball.transparent_color = tex_info.transparent_color
-					var resource_path = "res://resources/textures/"+texture_filename
+					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 					var user_resource_path = "user://resources/textures/"+texture_filename
 					var texture = null
 					if ResourceLoader.exists(resource_path):
 						texture = ResourceLoader.load(resource_path)
 					else:
-						texture = preloader.get_resource(texture_filename)
+						texture = preloader.get_resource(texture_filename.to_lower())
 						
 					visual_ball.texture = texture
 				visual_ball.color_index = ball.color_index
@@ -522,7 +522,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var texture_filename = tex_info.filename
 				visual_ball.transparent_color = tex_info.transparent_color
 				var texture = null
-				var resource_path = "res://resources/textures/"+texture_filename
+				var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 				var user_resource_path = "user://resources/textures/"+texture_filename
 				if ResourceLoader.exists(resource_path):
 					texture = ResourceLoader.load(resource_path)
@@ -586,7 +586,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var texture_filename = tex_info.filename
 					visual_ball.transparent_color = tex_info.transparent_color
 					var texture = null
-					var resource_path = "res://resources/textures/"+texture_filename
+					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 					var user_resource_path = "user://resources/textures/"+texture_filename
 					if ResourceLoader.exists(resource_path):
 						texture = ResourceLoader.load(resource_path)
