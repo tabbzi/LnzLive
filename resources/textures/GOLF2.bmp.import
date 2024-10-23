@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/GOLF2.bmp-3725cbec8ffee9568869d93a013e0fd1.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/golf2.bmp-ff36d8efc23f41d8a6ecca6f96a9f60c.stex"
 
 [deps]
 
-source_file="res://resources/textures/GOLF2.bmp"
-dest_files=[ "res://.import/GOLF2.bmp-3725cbec8ffee9568869d93a013e0fd1.stex" ]
+source_file="res://resources/textures/golf2.bmp"
+dest_files=[ "res://.import/golf2.bmp-ff36d8efc23f41d8a6ecca6f96a9f60c.stex" ]
+
+[params]
+

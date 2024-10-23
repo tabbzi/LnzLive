@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/SKI2.bmp-55fceabecccd5bc867a88ff043869a18.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/ski2.bmp-987eb1207bc7a47200e5c4cf6cd34786.stex"
 
 [deps]
 
-source_file="res://resources/textures/SKI2.bmp"
-dest_files=[ "res://.import/SKI2.bmp-55fceabecccd5bc867a88ff043869a18.stex" ]
+source_file="res://resources/textures/ski2.bmp"
+dest_files=[ "res://.import/ski2.bmp-987eb1207bc7a47200e5c4cf6cd34786.stex" ]
+
+[params]
+

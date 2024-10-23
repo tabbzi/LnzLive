@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/LONGJOHN.bmp-425444acf5200a5dbd539d40d97ea951.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/longjohn.bmp-23f40ef8035fccc7483803b8fca44fc0.stex"
 
 [deps]
 
-source_file="res://resources/textures/LONGJOHN.bmp"
-dest_files=[ "res://.import/LONGJOHN.bmp-425444acf5200a5dbd539d40d97ea951.stex" ]
+source_file="res://resources/textures/longjohn.bmp"
+dest_files=[ "res://.import/longjohn.bmp-23f40ef8035fccc7483803b8fca44fc0.stex" ]
+
+[params]
+

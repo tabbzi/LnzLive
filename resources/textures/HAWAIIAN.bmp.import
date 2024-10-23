@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/HAWAIIAN.bmp-87562a5350ac9d45cbb6967ef3917a2b.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/hawaiian.bmp-820215a927aea396316521512d7ee275.stex"
 
 [deps]
 
-source_file="res://resources/textures/HAWAIIAN.bmp"
-dest_files=[ "res://.import/HAWAIIAN.bmp-87562a5350ac9d45cbb6967ef3917a2b.stex" ]
+source_file="res://resources/textures/hawaiian.bmp"
+dest_files=[ "res://.import/hawaiian.bmp-820215a927aea396316521512d7ee275.stex" ]
+
+[params]
+

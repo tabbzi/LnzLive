@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/HEARTS3.bmp-294d1d9445fd421bbb15284c527647ac.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/hearts3.bmp-86b43c76e2f14dc77742d1d59b2850e8.stex"
 
 [deps]
 
-source_file="res://resources/textures/HEARTS3.bmp"
-dest_files=[ "res://.import/HEARTS3.bmp-294d1d9445fd421bbb15284c527647ac.stex" ]
+source_file="res://resources/textures/hearts3.bmp"
+dest_files=[ "res://.import/hearts3.bmp-86b43c76e2f14dc77742d1d59b2850e8.stex" ]
+
+[params]
+

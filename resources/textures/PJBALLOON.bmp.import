@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/PJBALLOON.bmp-6ca236261f472b830b31acc22da569de.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/pjballoon.bmp-0f94ba7598e951ac78111b4712a44d98.stex"
 
 [deps]
 
-source_file="res://resources/textures/PJBALLOON.bmp"
-dest_files=[ "res://.import/PJBALLOON.bmp-6ca236261f472b830b31acc22da569de.stex" ]
+source_file="res://resources/textures/pjballoon.bmp"
+dest_files=[ "res://.import/pjballoon.bmp-0f94ba7598e951ac78111b4712a44d98.stex" ]
+
+[params]
+

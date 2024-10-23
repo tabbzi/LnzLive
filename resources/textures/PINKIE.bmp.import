@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/PINKIE.bmp-1d0486ea9473dbabdba1c235d360f606.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/pinkie.bmp-14b5b91f117eecedb4b0590b33a2b06e.stex"
 
 [deps]
 
-source_file="res://resources/textures/PINKIE.bmp"
-dest_files=[ "res://.import/PINKIE.bmp-1d0486ea9473dbabdba1c235d360f606.stex" ]
+source_file="res://resources/textures/pinkie.bmp"
+dest_files=[ "res://.import/pinkie.bmp-14b5b91f117eecedb4b0590b33a2b06e.stex" ]
+
+[params]
+

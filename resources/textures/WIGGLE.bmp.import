@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/WIGGLE.bmp-977ef0aa64ddec053039c6ab10792b01.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/wiggle.bmp-c43059cfc87699c5a19339f210d7b6cb.stex"
 
 [deps]
 
-source_file="res://resources/textures/WIGGLE.bmp"
-dest_files=[ "res://.import/WIGGLE.bmp-977ef0aa64ddec053039c6ab10792b01.stex" ]
+source_file="res://resources/textures/wiggle.bmp"
+dest_files=[ "res://.import/wiggle.bmp-c43059cfc87699c5a19339f210d7b6cb.stex" ]
+
+[params]
+

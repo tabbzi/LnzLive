@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/STARS.bmp-4dae6015971aa022c82d96790e754e84.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/stars.bmp-36e062309fc093de3a08fad43d93e68d.stex"
 
 [deps]
 
-source_file="res://resources/textures/STARS.bmp"
-dest_files=[ "res://.import/STARS.bmp-4dae6015971aa022c82d96790e754e84.stex" ]
+source_file="res://resources/textures/stars.bmp"
+dest_files=[ "res://.import/stars.bmp-36e062309fc093de3a08fad43d93e68d.stex" ]
+
+[params]
+

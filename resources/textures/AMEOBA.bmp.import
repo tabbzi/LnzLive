@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/AMEOBA.bmp-a26548d88db059c2135a1f4377ef1781.stex"
+path="res://.import/ameoba.bmp-c38ad2098b5d330c23dedba1c5977618.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/AMEOBA.bmp"
-dest_files=[ "res://.import/AMEOBA.bmp-a26548d88db059c2135a1f4377ef1781.stex" ]
+source_file="res://resources/textures/ameoba.bmp"
+dest_files=[ "res://.import/ameoba.bmp-c38ad2098b5d330c23dedba1c5977618.stex" ]
 
 [params]
 

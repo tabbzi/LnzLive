@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/HERRING2.bmp-38989481c1a9b39ed48c0cb46f5ccd1f.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/herring2.bmp-be32b09b6a3dfc148abea84c7374a792.stex"
 
 [deps]
 
-source_file="res://resources/textures/HERRING2.bmp"
-dest_files=[ "res://.import/HERRING2.bmp-38989481c1a9b39ed48c0cb46f5ccd1f.stex" ]
+source_file="res://resources/textures/herring2.bmp"
+dest_files=[ "res://.import/herring2.bmp-be32b09b6a3dfc148abea84c7374a792.stex" ]
+
+[params]
+
