@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/TANRIB.bmp-c63e073ac7ca184f682ba56d62318e78.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/tanrib.bmp-2ca042d6499fc889faeea24b170441d8.stex"
 
 [deps]
 
-source_file="res://resources/textures/TANRIB.bmp"
-dest_files=[ "res://.import/TANRIB.bmp-c63e073ac7ca184f682ba56d62318e78.stex" ]
+source_file="res://resources/textures/tanrib.bmp"
+dest_files=[ "res://.import/tanrib.bmp-2ca042d6499fc889faeea24b170441d8.stex" ]
+
+[params]
+

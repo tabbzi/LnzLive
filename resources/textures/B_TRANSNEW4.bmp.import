@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/B_TRANSNEW4.bmp-bfe3fccdb5bc3ea1ee0f563cc792e393.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/b_transnew4.bmp-75e1918227a17ade01bbab5597b544b9.stex"
 
 [deps]
 
-source_file="res://resources/textures/B_TRANSNEW4.bmp"
-dest_files=[ "res://.import/B_TRANSNEW4.bmp-bfe3fccdb5bc3ea1ee0f563cc792e393.stex" ]
+source_file="res://resources/textures/b_transnew4.bmp"
+dest_files=[ "res://.import/b_transnew4.bmp-75e1918227a17ade01bbab5597b544b9.stex" ]
+
+[params]
+

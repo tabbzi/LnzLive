@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/PLAID5.bmp-f024cbc0a8a4216a28b184af2371b0b4.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/plaid5.bmp-bcfe7338f329545b19505a5eb0e4b2b2.stex"
 
 [deps]
 
-source_file="res://resources/textures/PLAID5.bmp"
-dest_files=[ "res://.import/PLAID5.bmp-f024cbc0a8a4216a28b184af2371b0b4.stex" ]
+source_file="res://resources/textures/plaid5.bmp"
+dest_files=[ "res://.import/plaid5.bmp-bcfe7338f329545b19505a5eb0e4b2b2.stex" ]
+
+[params]
+

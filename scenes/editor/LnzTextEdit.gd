@@ -21,6 +21,9 @@ func _on_example_file_selected(filepath):
 	file.close()
 
 func _on_user_file_selected(filepath):
+	if (filepath == null):
+		return
+	
 	var file = File.new()
 	file.open(filepath, File.READ)
 	text = file.get_as_text()

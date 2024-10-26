@@ -22,12 +22,12 @@ func _init(file_path):
 	if "baby" in file_path.to_lower():
 		for i in range(num_balls):
 			ball_sizes.append(file.get_16()) 
-			print("Ball Size[", i, "]: ", ball_sizes[i])
+			#print("Ball Size[", i, "]: ", ball_sizes[i])
 		file.seek(438)
 	else:
 		for i in range(num_balls):
 			ball_sizes.append(file.get_16())
-			print("Ball Size[", i, "]: ", ball_sizes[i])
+			#print("Ball Size[", i, "]: ", ball_sizes[i])
 	
 	var animation_count = file.get_16()
 	print("Number of Animations: ", animation_count)
@@ -44,7 +44,7 @@ func _init(file_path):
 	file.close()
 
 func get_frame_offsets_for(index: int):
-	print("Getting frame offsets for animation index: ", index)
+	#print("Getting frame offsets for animation index: ", index)
 	var result = []
 
 	if index >= animation_ranges.size():
@@ -52,10 +52,10 @@ func get_frame_offsets_for(index: int):
 		return result
 
 	var anim_range = animation_ranges[index]
-	print("Animation range: ", anim_range)
+	#print("Animation range: ", anim_range)
 
 	var num_of_offsets = anim_range.num_of_offsets
-	print("Number of offsets for animation: ", num_of_offsets)
+	#print("Number of offsets for animation: ", num_of_offsets)
 
 	var file = File.new()
 	file.open(file_path, File.READ)
@@ -64,7 +64,7 @@ func get_frame_offsets_for(index: int):
 	for i in range(num_of_offsets):
 		var offset = file.get_32()
 		result.append(offset)
-		print("Offset[", i, "]: ", offset)
+		#print("Offset[", i, "]: ", offset)
 
 	file.close()
 	return result

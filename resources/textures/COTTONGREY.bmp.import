@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/COTTONGREY.bmp-c9499d12b293361f039d90002ba578b2.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/cottongrey.bmp-88ce139049a2f384b14482b9334215bf.stex"
 
 [deps]
 
-source_file="res://resources/textures/COTTONGREY.bmp"
-dest_files=[ "res://.import/COTTONGREY.bmp-c9499d12b293361f039d90002ba578b2.stex" ]
+source_file="res://resources/textures/cottongrey.bmp"
+dest_files=[ "res://.import/cottongrey.bmp-88ce139049a2f384b14482b9334215bf.stex" ]
+
+[params]
+

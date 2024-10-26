@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/TRIANGLESYEL.bmp-03c0a2157d2c6ee5cba730533a73af54.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/trianglesyel.bmp-1a6a750bb0655ba9f56c032fd0feebf1.stex"
 
 [deps]
 
-source_file="res://resources/textures/TRIANGLESYEL.bmp"
-dest_files=[ "res://.import/TRIANGLESYEL.bmp-03c0a2157d2c6ee5cba730533a73af54.stex" ]
+source_file="res://resources/textures/trianglesyel.bmp"
+dest_files=[ "res://.import/trianglesyel.bmp-1a6a750bb0655ba9f56c032fd0feebf1.stex" ]
+
+[params]
+

@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/MAINE4.bmp-d0e2b7b3f2664763087ba83b1bdacb8e.stex"
+path="res://.import/maine4.bmp-e514de24f8f1e77639533604bb65e43f.stex"
 
 [deps]
 
-source_file="res://resources/textures/MAINE4.bmp"
-dest_files=[ "res://.import/MAINE4.bmp-d0e2b7b3f2664763087ba83b1bdacb8e.stex" ]
+source_file="res://resources/textures/maine4.bmp"
+dest_files=[ "res://.import/maine4.bmp-e514de24f8f1e77639533604bb65e43f.stex" ]
+
+[params]
+

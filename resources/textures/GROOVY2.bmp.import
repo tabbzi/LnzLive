@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/GROOVY2.bmp-35dfe1d69056c4ba62e74d80f4c65b2a.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/groovy2.bmp-02cd5401d2f12f10ce67c32f95f6676d.stex"
 
 [deps]
 
-source_file="res://resources/textures/GROOVY2.bmp"
-dest_files=[ "res://.import/GROOVY2.bmp-35dfe1d69056c4ba62e74d80f4c65b2a.stex" ]
+source_file="res://resources/textures/groovy2.bmp"
+dest_files=[ "res://.import/groovy2.bmp-02cd5401d2f12f10ce67c32f95f6676d.stex" ]
+
+[params]
+

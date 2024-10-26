@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/TERRYPINK.bmp-dca101bc1c034cebb398a632ade133ed.stex"
+path="res://.import/terrypink.bmp-0fc4f7b8531358f587a9ce02b723faf1.stex"
 
 [deps]
 
-source_file="res://resources/textures/TERRYPINK.bmp"
-dest_files=[ "res://.import/TERRYPINK.bmp-dca101bc1c034cebb398a632ade133ed.stex" ]
+source_file="res://resources/textures/terrypink.bmp"
+dest_files=[ "res://.import/terrypink.bmp-0fc4f7b8531358f587a9ce02b723faf1.stex" ]
+
+[params]
+

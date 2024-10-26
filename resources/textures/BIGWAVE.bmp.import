@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/BIGWAVE.bmp-922711764ead3cda0c251944003ce8fe.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/bigwave.bmp-6125f148d5b70c7b42fa46de8c738754.stex"
 
 [deps]
 
-source_file="res://resources/textures/BIGWAVE.bmp"
-dest_files=[ "res://.import/BIGWAVE.bmp-922711764ead3cda0c251944003ce8fe.stex" ]
+source_file="res://resources/textures/bigwave.bmp"
+dest_files=[ "res://.import/bigwave.bmp-6125f148d5b70c7b42fa46de8c738754.stex" ]
+
+[params]
+

@@ -12,12 +12,11 @@ export var base_ball_no = 0
 export var visible_override = true setget set_visible
 export var override_ball_no = -1
 export var texture: Texture setget set_texture
+export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
 export var transparent_color = 0 setget set_transparent_color
 export var transparency_on = true setget set_transparency
 
-var petz_palette = preload("res://resources/textures/petzpalette.png")
-#var petz_palette = preload("res://resources/palettes/petz_palette.png")
-var babyz_palette = preload("res://resources/palettes/babyz_palette.png")
+const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
 
 var old_outline
 var old_outline_color
@@ -31,33 +30,10 @@ signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
 
 func _ready():
-	$MeshInstance.material_override.set_shader_param("palette", petz_palette)
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
-
-func set_palette(new_palette):
-	var new_material = $MeshInstance.material_override.duplicate()
-
-	if new_palette == "PETZ":
-		new_material.set_shader_param("palette", petz_palette)
-		#print("Set Petz palette")
-	elif new_palette == "BABYZ":
-		new_material.set_shader_param("palette", babyz_palette)
-		#print("Set Babyz palette")
-	else:
-		new_material.set_shader_param("palette", petz_palette)
-		#print("Set default Petz palette")
-	
-	new_material.set_shader_param("transparency_on", transparency_on)
-
-	$MeshInstance.material_override = new_material
-
-func update_palette_after_added(new_palette):
-	call_deferred("set_palette", new_palette)
-	#set_deferred("material_override", $MeshInstance.material_override.duplicate())
-	#set_palette(new_palette)
 	
 func set_visible(new_value):
 	visible_override = new_value
@@ -77,6 +53,14 @@ func set_texture(new_value):
 		$MeshInstance.material_override.set_shader_param("has_texture", true)
 	else:
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
+
+func set_palette(new_value):
+	if new_value != null:
+		palette = new_value
+		$MeshInstance.material_override.set_shader_param("palette", new_value)
+	else:
+		palette = DEFAULT_PALETTE
+		$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
 
 func set_transparent_color(new_value):
 	transparent_color = new_value

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/YELLOWDIAMOND.bmp-f41dffdb5bf42d5f599545a2bc778d84.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/yellowdiamond.bmp-2b86ba88d1592c713e5ea2ec37fb52a8.stex"
 
 [deps]
 
-source_file="res://resources/textures/YELLOWDIAMOND.bmp"
-dest_files=[ "res://.import/YELLOWDIAMOND.bmp-f41dffdb5bf42d5f599545a2bc778d84.stex" ]
+source_file="res://resources/textures/yellowdiamond.bmp"
+dest_files=[ "res://.import/yellowdiamond.bmp-2b86ba88d1592c713e5ea2ec37fb52a8.stex" ]
+
+[params]
+

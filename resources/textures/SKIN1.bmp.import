@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/SKIN1.bmp-d6489a9974f6526a3431ba7652e901ed.stex"
+path="res://.import/skin1.bmp-eeed5290a04b0aa3c4da880815f2188d.stex"
 
 [deps]
 
-source_file="res://resources/textures/SKIN1.bmp"
-dest_files=[ "res://.import/SKIN1.bmp-d6489a9974f6526a3431ba7652e901ed.stex" ]
+source_file="res://resources/textures/skin1.bmp"
+dest_files=[ "res://.import/skin1.bmp-eeed5290a04b0aa3c4da880815f2188d.stex" ]
+
+[params]
+

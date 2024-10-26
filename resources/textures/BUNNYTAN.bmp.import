@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/BUNNYTAN.bmp-50ad3f6463f5b763e2135b4f745501d4.stex"
+path="res://.import/bunnytan.bmp-84eebca88e486d1781be0d0207e525aa.stex"
 
 [deps]
 
-source_file="res://resources/textures/BUNNYTAN.bmp"
-dest_files=[ "res://.import/BUNNYTAN.bmp-50ad3f6463f5b763e2135b4f745501d4.stex" ]
+source_file="res://resources/textures/bunnytan.bmp"
+dest_files=[ "res://.import/bunnytan.bmp-84eebca88e486d1781be0d0207e525aa.stex" ]
+
+[params]
+

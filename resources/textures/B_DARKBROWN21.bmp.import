@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/B_DARKBROWN21.bmp-5fbfc324533b34286ea787a60e3d251c.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/b_darkbrown21.bmp-44fac09173f0a877dac75abd9cb78994.stex"
 
 [deps]
 
-source_file="res://resources/textures/B_DARKBROWN21.bmp"
-dest_files=[ "res://.import/B_DARKBROWN21.bmp-5fbfc324533b34286ea787a60e3d251c.stex" ]
+source_file="res://resources/textures/b_darkbrown21.bmp"
+dest_files=[ "res://.import/b_darkbrown21.bmp-44fac09173f0a877dac75abd9cb78994.stex" ]
+
+[params]
+

@@ -2,9 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/BUNNYGREY.bmp-ac38aa6d87b01550ee72ec35243cc03f.stex"
+path="res://.import/bunnygrey.bmp-32f2406594601966354f867783db55a6.stex"
 
 [deps]
 
-source_file="res://resources/textures/BUNNYGREY.bmp"
-dest_files=[ "res://.import/BUNNYGREY.bmp-ac38aa6d87b01550ee72ec35243cc03f.stex" ]
+source_file="res://resources/textures/bunnygrey.bmp"
+dest_files=[ "res://.import/bunnygrey.bmp-32f2406594601966354f867783db55a6.stex" ]
+
+[params]
+

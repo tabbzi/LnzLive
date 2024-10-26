@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/TIEDYE4.bmp-0ff2231776175dd2a9e4dcecb5361f7d.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/tiedye4.bmp-56fa94e47f4345c67ccacafb5d8d9118.stex"
 
 [deps]
 
-source_file="res://resources/textures/TIEDYE4.bmp"
-dest_files=[ "res://.import/TIEDYE4.bmp-0ff2231776175dd2a9e4dcecb5361f7d.stex" ]
+source_file="res://resources/textures/tiedye4.bmp"
+dest_files=[ "res://.import/tiedye4.bmp-56fa94e47f4345c67ccacafb5d8d9118.stex" ]
+
+[params]
+

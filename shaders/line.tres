@@ -45,7 +45,7 @@ vec3 get_shifted_color(int palette_index) {
 		amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
 	}
 	int new_palette_index = modded_color + amount_to_shift_index;
-	vec3 new_color = texture(palette, vec2(float(new_palette_index)/256.0, 0.0)).rgb;
+	vec3 new_color = texture(palette, vec2(float(new_palette_index)/255.0, 0.0)).rgb;
 	return new_color;
 }
 

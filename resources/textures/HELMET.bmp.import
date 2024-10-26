@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/HELMET.bmp-366216f02af60722a96786a9c95819bd.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/helmet.bmp-58d6c42c4e8c6c6210574250e9344ab2.stex"
 
 [deps]
 
-source_file="res://resources/textures/HELMET.bmp"
-dest_files=[ "res://.import/HELMET.bmp-366216f02af60722a96786a9c95819bd.stex" ]
+source_file="res://resources/textures/helmet.bmp"
+dest_files=[ "res://.import/helmet.bmp-58d6c42c4e8c6c6210574250e9344ab2.stex" ]
+
+[params]
+

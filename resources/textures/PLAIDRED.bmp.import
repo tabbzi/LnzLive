@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/PLAIDRED.bmp-bc1101a51dfb8148d054aebe6ebb2d75.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/plaidred.bmp-73551b641c61883a54e2e32511503324.stex"
 
 [deps]
 
-source_file="res://resources/textures/PLAIDRED.bmp"
-dest_files=[ "res://.import/PLAIDRED.bmp-bc1101a51dfb8148d054aebe6ebb2d75.stex" ]
+source_file="res://resources/textures/plaidred.bmp"
+dest_files=[ "res://.import/plaidred.bmp-73551b641c61883a54e2e32511503324.stex" ]
+
+[params]
+

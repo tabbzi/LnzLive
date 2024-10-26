@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/REDSTRIPE.bmp-321ccf2d75d7ceeda777cb9753076fe7.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/redstripe.bmp-64fefe55795ef8accdd55d74ec654c39.stex"
 
 [deps]
 
-source_file="res://resources/textures/REDSTRIPE.bmp"
-dest_files=[ "res://.import/REDSTRIPE.bmp-321ccf2d75d7ceeda777cb9753076fe7.stex" ]
+source_file="res://resources/textures/redstripe.bmp"
+dest_files=[ "res://.import/redstripe.bmp-64fefe55795ef8accdd55d74ec654c39.stex" ]
+
+[params]
+

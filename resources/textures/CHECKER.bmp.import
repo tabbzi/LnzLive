@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/CHECKER.bmp-f96ce6ff6a614783dd2dfcbb0603cae6.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/checker.bmp-6180700d6c8f142d1b53f16cdc09c562.stex"
 
 [deps]
 
-source_file="res://resources/textures/CHECKER.bmp"
-dest_files=[ "res://.import/CHECKER.bmp-f96ce6ff6a614783dd2dfcbb0603cae6.stex" ]
+source_file="res://resources/textures/checker.bmp"
+dest_files=[ "res://.import/checker.bmp-6180700d6c8f142d1b53f16cdc09c562.stex" ]
+
+[params]
+

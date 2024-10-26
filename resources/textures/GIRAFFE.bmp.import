@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/GIRAFFE.bmp-e2bef730e69b387203d9b8e089cc385e.stex"
-metadata={
-"vram_texture": false
-}
+path="res://.import/giraffe.bmp-834f24388e59771ade9f2c6e22432c85.stex"
 
 [deps]
 
-source_file="res://resources/textures/GIRAFFE.bmp"
-dest_files=[ "res://.import/GIRAFFE.bmp-e2bef730e69b387203d9b8e089cc385e.stex" ]
+source_file="res://resources/textures/giraffe.bmp"
+dest_files=[ "res://.import/giraffe.bmp-834f24388e59771ade9f2c6e22432c85.stex" ]
+
+[params]
+
