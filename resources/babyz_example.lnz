@@ -7,8 +7,8 @@
 \art\autobuild\cottonwhite.bmp 0 256 256
 \art\autobuild\B_DarkBrown3.bmp	1 256 256
 \art\autobuild\B_DarkBrown3.bmp	1 256 256
-\resource\textures\ballsize100.bmp 0 100 100
-\resource\textures\256base.bmp 0 256 256
+\resource\textures\ballsize100.bmp 0 256 256 ; old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
+\resource\textures\256base.bmp 0 256 256 ; new style of no rotate BMP, which performs as expected
 
 [Num Ballz]
 120
