@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/bluerib.bmp-1f9983b4d0138cab1977157d65e49b38.stex"
+path="res://.import/BLUERIB.bmp-ca7181010cd9d44a498be85903751a31.stex"
 
 [deps]
 
-source_file="res://resources/textures/bluerib.bmp"
-dest_files=[ "res://.import/bluerib.bmp-1f9983b4d0138cab1977157d65e49b38.stex" ]
+source_file="res://resources/textures/BLUERIB.bmp"
+dest_files=[ "res://.import/BLUERIB.bmp-ca7181010cd9d44a498be85903751a31.stex" ]
 
 [params]
 

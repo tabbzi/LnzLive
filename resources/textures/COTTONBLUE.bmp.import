@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/cottonblue.bmp-0e46c89ac10f19ee473d8c0547f8dc74.stex"
+path="res://.import/COTTONBLUE.bmp-554c4a928f05baae8ba12fb0772e6f85.stex"
 
 [deps]
 
-source_file="res://resources/textures/cottonblue.bmp"
-dest_files=[ "res://.import/cottonblue.bmp-0e46c89ac10f19ee473d8c0547f8dc74.stex" ]
+source_file="res://resources/textures/COTTONBLUE.bmp"
+dest_files=[ "res://.import/COTTONBLUE.bmp-554c4a928f05baae8ba12fb0772e6f85.stex" ]
 
 [params]
 

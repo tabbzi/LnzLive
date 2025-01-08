@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/mottled5.bmp-6e670ecdd4084fa22b17d859c747a891.stex"
+path="res://.import/MOTTLED5.bmp-065e2d27341f5ec00c0068c374201495.stex"
 
 [deps]
 
-source_file="res://resources/textures/mottled5.bmp"
-dest_files=[ "res://.import/mottled5.bmp-6e670ecdd4084fa22b17d859c747a891.stex" ]
+source_file="res://resources/textures/MOTTLED5.bmp"
+dest_files=[ "res://.import/MOTTLED5.bmp-065e2d27341f5ec00c0068c374201495.stex" ]
 
 [params]
 

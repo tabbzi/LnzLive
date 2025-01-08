@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/soapbubwhite.bmp-5225b9b73287670b8808d32263e337d8.stex"
+path="res://.import/SOAPBUBWHITE.bmp-3a4d08c6c423d02711c18d53dc8f5353.stex"
 
 [deps]
 
-source_file="res://resources/textures/soapbubwhite.bmp"
-dest_files=[ "res://.import/soapbubwhite.bmp-5225b9b73287670b8808d32263e337d8.stex" ]
+source_file="res://resources/textures/SOAPBUBWHITE.bmp"
+dest_files=[ "res://.import/SOAPBUBWHITE.bmp-3a4d08c6c423d02711c18d53dc8f5353.stex" ]
 
 [params]
 

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/camoj.bmp-8a716d2c7ce2b911072705981c76ef77.stex"
+path="res://.import/CAMOJ.bmp-11e5cbf12269ef88b60158b6f841687d.stex"
 
 [deps]
 
-source_file="res://resources/textures/camoj.bmp"
-dest_files=[ "res://.import/camoj.bmp-8a716d2c7ce2b911072705981c76ef77.stex" ]
+source_file="res://resources/textures/CAMOJ.bmp"
+dest_files=[ "res://.import/CAMOJ.bmp-11e5cbf12269ef88b60158b6f841687d.stex" ]
 
 [params]
 

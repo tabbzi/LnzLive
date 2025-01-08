@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/zebra2.bmp-5cdc59f7ba0009bda21776fbf330b8c1.stex"
+path="res://.import/ZEBRA2.bmp-2f1a8f066f083005d1f0b7ef8cfe6386.stex"
 
 [deps]
 
-source_file="res://resources/textures/zebra2.bmp"
-dest_files=[ "res://.import/zebra2.bmp-5cdc59f7ba0009bda21776fbf330b8c1.stex" ]
+source_file="res://resources/textures/ZEBRA2.bmp"
+dest_files=[ "res://.import/ZEBRA2.bmp-2f1a8f066f083005d1f0b7ef8cfe6386.stex" ]
 
 [params]
 

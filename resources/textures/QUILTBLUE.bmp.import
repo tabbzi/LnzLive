@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/quiltblue.bmp-65e358b07fbc33f2cd38d16d90ce64ac.stex"
+path="res://.import/QUILTBLUE.bmp-73c5d41fa1d7b543dfd0ada04826910e.stex"
 
 [deps]
 
-source_file="res://resources/textures/quiltblue.bmp"
-dest_files=[ "res://.import/quiltblue.bmp-65e358b07fbc33f2cd38d16d90ce64ac.stex" ]
+source_file="res://resources/textures/QUILTBLUE.bmp"
+dest_files=[ "res://.import/QUILTBLUE.bmp-73c5d41fa1d7b543dfd0ada04826910e.stex" ]
 
 [params]
 

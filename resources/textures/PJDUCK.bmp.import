@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/pjduck.bmp-97dc92668d191642e3de680ca2ccce62.stex"
+path="res://.import/PJDUCK.bmp-e4fc9a7dd1c5ba3b205d3899ca04f6a3.stex"
 
 [deps]
 
-source_file="res://resources/textures/pjduck.bmp"
-dest_files=[ "res://.import/pjduck.bmp-97dc92668d191642e3de680ca2ccce62.stex" ]
+source_file="res://resources/textures/PJDUCK.bmp"
+dest_files=[ "res://.import/PJDUCK.bmp-e4fc9a7dd1c5ba3b205d3899ca04f6a3.stex" ]
 
 [params]
 

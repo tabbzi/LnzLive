@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/AMEOBA.bmp-a26548d88db059c2135a1f4377ef1781.stex"
+path="res://.import/ballsize100.bmp-8a1ba52a6e02eabe68ff7fa7f5f55e65.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/AMEOBA.bmp"
-dest_files=[ "res://.import/AMEOBA.bmp-a26548d88db059c2135a1f4377ef1781.stex" ]
+source_file="res://resources/textures/ballsize100.bmp"
+dest_files=[ "res://.import/ballsize100.bmp-8a1ba52a6e02eabe68ff7fa7f5f55e65.stex" ]
 
 [params]
 
@@ -18,17 +18,17 @@ compress/mode=0
 compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
-compress/normal_map=0
+compress/normal_map=2
 flags/repeat=0
-flags/filter=true
+flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false
-flags/srgb=2
-process/fix_alpha_border=true
+flags/srgb=0
+process/fix_alpha_border=false
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
 stream=false
 size_limit=0
-detect_3d=true
+detect_3d=false
 svg/scale=1.0

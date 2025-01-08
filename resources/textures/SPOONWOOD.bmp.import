@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/spoonwood.bmp-487ab9c943171725714c16b00ae8fa11.stex"
+path="res://.import/SPOONWOOD.bmp-3b3a6d101a1e2549c3aa818089de8618.stex"
 
 [deps]
 
-source_file="res://resources/textures/spoonwood.bmp"
-dest_files=[ "res://.import/spoonwood.bmp-487ab9c943171725714c16b00ae8fa11.stex" ]
+source_file="res://resources/textures/SPOONWOOD.bmp"
+dest_files=[ "res://.import/SPOONWOOD.bmp-3b3a6d101a1e2549c3aa818089de8618.stex" ]
 
 [params]
 

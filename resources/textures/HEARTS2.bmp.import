@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/hearts2.bmp-45b18e72af9a3af825b65395d7287d60.stex"
+path="res://.import/HEARTS2.bmp-107a7f77d88e570a2d278a9dec38554f.stex"
 
 [deps]
 
-source_file="res://resources/textures/hearts2.bmp"
-dest_files=[ "res://.import/hearts2.bmp-45b18e72af9a3af825b65395d7287d60.stex" ]
+source_file="res://resources/textures/HEARTS2.bmp"
+dest_files=[ "res://.import/HEARTS2.bmp-107a7f77d88e570a2d278a9dec38554f.stex" ]
 
 [params]
 

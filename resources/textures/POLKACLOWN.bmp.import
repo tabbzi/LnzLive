@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/polkaclown.bmp-94ac0fa4284d874ab1631c6650b2b5b1.stex"
+path="res://.import/POLKACLOWN.bmp-3274d9ba9505e72d1aafcc59265fc29a.stex"
 
 [deps]
 
-source_file="res://resources/textures/polkaclown.bmp"
-dest_files=[ "res://.import/polkaclown.bmp-94ac0fa4284d874ab1631c6650b2b5b1.stex" ]
+source_file="res://resources/textures/POLKACLOWN.bmp"
+dest_files=[ "res://.import/POLKACLOWN.bmp-3274d9ba9505e72d1aafcc59265fc29a.stex" ]
 
 [params]
 

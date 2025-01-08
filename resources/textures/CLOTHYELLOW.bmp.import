@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/clothyellow.bmp-4402849dcdc4fac039e28bb03cb8c4ec.stex"
+path="res://.import/CLOTHYELLOW.bmp-197bcd638445e84937d0cae6ec0d4bd1.stex"
 
 [deps]
 
-source_file="res://resources/textures/clothyellow.bmp"
-dest_files=[ "res://.import/clothyellow.bmp-4402849dcdc4fac039e28bb03cb8c4ec.stex" ]
+source_file="res://resources/textures/CLOTHYELLOW.bmp"
+dest_files=[ "res://.import/CLOTHYELLOW.bmp-197bcd638445e84937d0cae6ec0d4bd1.stex" ]
 
 [params]
 

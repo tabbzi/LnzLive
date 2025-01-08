@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/herring.bmp-6d900769cfb3b893464fa5b7acc353f2.stex"
+path="res://.import/HERRING.bmp-877473a80b1433c01cdb9fcfbe8e0dc4.stex"
 
 [deps]
 
-source_file="res://resources/textures/herring.bmp"
-dest_files=[ "res://.import/herring.bmp-6d900769cfb3b893464fa5b7acc353f2.stex" ]
+source_file="res://resources/textures/HERRING.bmp"
+dest_files=[ "res://.import/HERRING.bmp-877473a80b1433c01cdb9fcfbe8e0dc4.stex" ]
 
 [params]
 

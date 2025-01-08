@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/trianglespink.bmp-9c6400934d8d88a4e13c582fd3f68037.stex"
+path="res://.import/TRIANGLESPINK.bmp-cb4d2106c3087d7cbfa9e6e27367cd67.stex"
 
 [deps]
 
-source_file="res://resources/textures/trianglespink.bmp"
-dest_files=[ "res://.import/trianglespink.bmp-9c6400934d8d88a4e13c582fd3f68037.stex" ]
+source_file="res://resources/textures/TRIANGLESPINK.bmp"
+dest_files=[ "res://.import/TRIANGLESPINK.bmp-cb4d2106c3087d7cbfa9e6e27367cd67.stex" ]
 
 [params]
 

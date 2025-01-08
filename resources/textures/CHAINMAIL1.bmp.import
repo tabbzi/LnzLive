@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/chainmail1.bmp-4971a0447c4c6ff2501736df8444ecb3.stex"
+path="res://.import/CHAINMAIL1.bmp-8e77a54eb9f314b9e00769dc77bdd7ec.stex"
 
 [deps]
 
-source_file="res://resources/textures/chainmail1.bmp"
-dest_files=[ "res://.import/chainmail1.bmp-4971a0447c4c6ff2501736df8444ecb3.stex" ]
+source_file="res://resources/textures/CHAINMAIL1.bmp"
+dest_files=[ "res://.import/CHAINMAIL1.bmp-8e77a54eb9f314b9e00769dc77bdd7ec.stex" ]
 
 [params]
 

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/b_afro11.bmp-bc3e50b0c6a30b1ba2ca202a1c4d4704.stex"
+path="res://.import/B_AFRO11.bmp-277549c5860d43915e22984af5356293.stex"
 
 [deps]
 
-source_file="res://resources/textures/b_afro11.bmp"
-dest_files=[ "res://.import/b_afro11.bmp-bc3e50b0c6a30b1ba2ca202a1c4d4704.stex" ]
+source_file="res://resources/textures/B_AFRO11.bmp"
+dest_files=[ "res://.import/B_AFRO11.bmp-277549c5860d43915e22984af5356293.stex" ]
 
 [params]
 

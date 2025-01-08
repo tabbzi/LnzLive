@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/denimwashed.bmp-cc1f215e6681b3da51f1c24a2474810f.stex"
+path="res://.import/DENIMWASHED.bmp-1192b45c44c21556856349711e9cadce.stex"
 
 [deps]
 
-source_file="res://resources/textures/denimwashed.bmp"
-dest_files=[ "res://.import/denimwashed.bmp-cc1f215e6681b3da51f1c24a2474810f.stex" ]
+source_file="res://resources/textures/DENIMWASHED.bmp"
+dest_files=[ "res://.import/DENIMWASHED.bmp-1192b45c44c21556856349711e9cadce.stex" ]
 
 [params]
 

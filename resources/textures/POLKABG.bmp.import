@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/polkabg.bmp-2acd1d9d4831d7dc82c53770715bace0.stex"
+path="res://.import/POLKABG.bmp-c3c6e07fb42905a00080dff05815a5f4.stex"
 
 [deps]
 
-source_file="res://resources/textures/polkabg.bmp"
-dest_files=[ "res://.import/polkabg.bmp-2acd1d9d4831d7dc82c53770715bace0.stex" ]
+source_file="res://resources/textures/POLKABG.bmp"
+dest_files=[ "res://.import/POLKABG.bmp-c3c6e07fb42905a00080dff05815a5f4.stex" ]
 
 [params]
 

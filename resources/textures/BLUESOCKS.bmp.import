@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/bluesocks.bmp-dffbfa93a3fd7a961f5efc028edfd741.stex"
+path="res://.import/BLUESOCKS.bmp-551e2b5c35fe3952cd699a6718ba6791.stex"
 
 [deps]
 
-source_file="res://resources/textures/bluesocks.bmp"
-dest_files=[ "res://.import/bluesocks.bmp-dffbfa93a3fd7a961f5efc028edfd741.stex" ]
+source_file="res://resources/textures/BLUESOCKS.bmp"
+dest_files=[ "res://.import/BLUESOCKS.bmp-551e2b5c35fe3952cd699a6718ba6791.stex" ]
 
 [params]
 

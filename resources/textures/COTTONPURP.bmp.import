@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/cottonpurp.bmp-80629f1c9398419de36ade9dac7ff667.stex"
+path="res://.import/COTTONPURP.bmp-8c7e152f17c4b19e976b1067266ac191.stex"
 
 [deps]
 
-source_file="res://resources/textures/cottonpurp.bmp"
-dest_files=[ "res://.import/cottonpurp.bmp-80629f1c9398419de36ade9dac7ff667.stex" ]
+source_file="res://resources/textures/COTTONPURP.bmp"
+dest_files=[ "res://.import/COTTONPURP.bmp-8c7e152f17c4b19e976b1067266ac191.stex" ]
 
 [params]
 

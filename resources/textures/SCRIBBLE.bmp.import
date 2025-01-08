@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/scribble.bmp-4c1534adc6e57bb37f950d46f866ef43.stex"
+path="res://.import/SCRIBBLE.bmp-f534d57a8dca44bb08c9fa032023c781.stex"
 
 [deps]
 
-source_file="res://resources/textures/scribble.bmp"
-dest_files=[ "res://.import/scribble.bmp-4c1534adc6e57bb37f950d46f866ef43.stex" ]
+source_file="res://resources/textures/SCRIBBLE.bmp"
+dest_files=[ "res://.import/SCRIBBLE.bmp-f534d57a8dca44bb08c9fa032023c781.stex" ]
 
 [params]
 

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/clothred.bmp-7f4c8f8090943f48b37a3cd9a4305a8d.stex"
+path="res://.import/CLOTHRED.bmp-420238ba5687e2a8d2510eb810a4db25.stex"
 
 [deps]
 
-source_file="res://resources/textures/clothred.bmp"
-dest_files=[ "res://.import/clothred.bmp-7f4c8f8090943f48b37a3cd9a4305a8d.stex" ]
+source_file="res://resources/textures/CLOTHRED.bmp"
+dest_files=[ "res://.import/CLOTHRED.bmp-420238ba5687e2a8d2510eb810a4db25.stex" ]
 
 [params]
 

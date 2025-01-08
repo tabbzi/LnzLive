@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/diaper2.bmp-d213725d49733696f408d57218229c29.stex"
+path="res://.import/DIAPER2.bmp-21bdcf95822ec6ccccb45217f92613e5.stex"
 
 [deps]
 
-source_file="res://resources/textures/diaper2.bmp"
-dest_files=[ "res://.import/diaper2.bmp-d213725d49733696f408d57218229c29.stex" ]
+source_file="res://resources/textures/DIAPER2.bmp"
+dest_files=[ "res://.import/DIAPER2.bmp-21bdcf95822ec6ccccb45217f92613e5.stex" ]
 
 [params]
 

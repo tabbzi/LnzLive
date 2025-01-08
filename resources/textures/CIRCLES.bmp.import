@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/circles.bmp-552627e04a96921c06f7ff763607883f.stex"
+path="res://.import/CIRCLES.bmp-33c77c3f3c7025e75de41f9879c88c64.stex"
 
 [deps]
 
-source_file="res://resources/textures/circles.bmp"
-dest_files=[ "res://.import/circles.bmp-552627e04a96921c06f7ff763607883f.stex" ]
+source_file="res://resources/textures/CIRCLES.bmp"
+dest_files=[ "res://.import/CIRCLES.bmp-33c77c3f3c7025e75de41f9879c88c64.stex" ]
 
 [params]
 

@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/hair20.bmp-d911db0afd9744c76eb5834af5923673.stex"
+path="res://.import/HAIR20.bmp-3e775cb1b66e8dec53beda740799c980.stex"
 
 [deps]
 
-source_file="res://resources/textures/hair20.bmp"
-dest_files=[ "res://.import/hair20.bmp-d911db0afd9744c76eb5834af5923673.stex" ]
+source_file="res://resources/textures/HAIR20.bmp"
+dest_files=[ "res://.import/HAIR20.bmp-3e775cb1b66e8dec53beda740799c980.stex" ]
 
 [params]
 

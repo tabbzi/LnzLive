@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/cottonorange2.bmp-4cdd6970663f7d88545a921540fa89ec.stex"
+path="res://.import/COTTONORANGE2.bmp-16ff7333c276fde1d28c1c2ca9d1bf55.stex"
 
 [deps]
 
-source_file="res://resources/textures/cottonorange2.bmp"
-dest_files=[ "res://.import/cottonorange2.bmp-4cdd6970663f7d88545a921540fa89ec.stex" ]
+source_file="res://resources/textures/COTTONORANGE2.bmp"
+dest_files=[ "res://.import/COTTONORANGE2.bmp-16ff7333c276fde1d28c1c2ca9d1bf55.stex" ]
 
 [params]
 

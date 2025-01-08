@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/checker2.bmp-bf9667239ea280fc1029f077dafc26b5.stex"
+path="res://.import/CHECKER2.bmp-950fc09ff8a98746a3666216952968ec.stex"
 
 [deps]
 
-source_file="res://resources/textures/checker2.bmp"
-dest_files=[ "res://.import/checker2.bmp-bf9667239ea280fc1029f077dafc26b5.stex" ]
+source_file="res://resources/textures/CHECKER2.bmp"
+dest_files=[ "res://.import/CHECKER2.bmp-950fc09ff8a98746a3666216952968ec.stex" ]
 
 [params]
 

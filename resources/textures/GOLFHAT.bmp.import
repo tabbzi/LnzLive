@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/golfhat.bmp-81dd40f8a3164423e57248e90aa0e99d.stex"
+path="res://.import/GOLFHAT.bmp-0b8ca7f0597f21a44cb151cbe294af7f.stex"
 
 [deps]
 
-source_file="res://resources/textures/golfhat.bmp"
-dest_files=[ "res://.import/golfhat.bmp-81dd40f8a3164423e57248e90aa0e99d.stex" ]
+source_file="res://resources/textures/GOLFHAT.bmp"
+dest_files=[ "res://.import/GOLFHAT.bmp-0b8ca7f0597f21a44cb151cbe294af7f.stex" ]
 
 [params]
 

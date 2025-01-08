@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/yellownoise.bmp-21e5db7713ca52307ce2df0894c003e9.stex"
+path="res://.import/YELLOWNOISE.bmp-62a5b3b2da1005902c5cfb2b879cc048.stex"
 
 [deps]
 
-source_file="res://resources/textures/yellownoise.bmp"
-dest_files=[ "res://.import/yellownoise.bmp-21e5db7713ca52307ce2df0894c003e9.stex" ]
+source_file="res://resources/textures/YELLOWNOISE.bmp"
+dest_files=[ "res://.import/YELLOWNOISE.bmp-62a5b3b2da1005902c5cfb2b879cc048.stex" ]
 
 [params]
 

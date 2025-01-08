@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/blacknoise.bmp-c7921930f6abdf4965f8b138c7632ef3.stex"
+path="res://.import/BLACKNOISE.bmp-4bfe2f07460b0872b24d8d48cf0423a8.stex"
 
 [deps]
 
-source_file="res://resources/textures/blacknoise.bmp"
-dest_files=[ "res://.import/blacknoise.bmp-c7921930f6abdf4965f8b138c7632ef3.stex" ]
+source_file="res://resources/textures/BLACKNOISE.bmp"
+dest_files=[ "res://.import/BLACKNOISE.bmp-4bfe2f07460b0872b24d8d48cf0423a8.stex" ]
 
 [params]
 

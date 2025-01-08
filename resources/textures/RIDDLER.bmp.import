@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/riddler.bmp-693d42339042deb4454e37d3cb59fc3c.stex"
+path="res://.import/RIDDLER.bmp-39158186bb71490ec3c00fe47a9f27a6.stex"
 
 [deps]
 
-source_file="res://resources/textures/riddler.bmp"
-dest_files=[ "res://.import/riddler.bmp-693d42339042deb4454e37d3cb59fc3c.stex" ]
+source_file="res://resources/textures/RIDDLER.bmp"
+dest_files=[ "res://.import/RIDDLER.bmp-39158186bb71490ec3c00fe47a9f27a6.stex" ]
 
 [params]
 
