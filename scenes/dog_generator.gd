@@ -456,12 +456,17 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 					var user_resource_path = "user://resources/textures/"+texture_filename
 					var texture = null
+
 					if ResourceLoader.exists(resource_path):
 						texture = ResourceLoader.load(resource_path)
 					else:
 						texture = preloader.get_resource(texture_filename.to_lower())
 						
 					visual_ball.texture = texture
+
+					if tex_info.texture_size != null:
+						visual_ball.texture_size = tex_info.texture_size
+
 				visual_ball.color_index = ball.color_index
 				visual_ball.outline_color_index = ball.outline_color_index
 				
@@ -524,11 +529,17 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var texture = null
 				var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 				var user_resource_path = "user://resources/textures/"+texture_filename
+
 				if ResourceLoader.exists(resource_path):
 					texture = ResourceLoader.load(resource_path)
 				else:
 					texture = preloader.get_resource(texture_filename)
+				
 				visual_ball.texture = texture
+
+				if tex_info.texture_size != null:
+					visual_ball.texture_size = tex_info.texture_size
+
 			visual_ball.color_index = ball.color_index
 			visual_ball.palette = pal_texture
 
@@ -588,11 +599,14 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var texture = null
 					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
 					var user_resource_path = "user://resources/textures/"+texture_filename
+
 					if ResourceLoader.exists(resource_path):
 						texture = ResourceLoader.load(resource_path)
 					else:
 						texture = preloader.get_resource(texture_filename)
+
 					visual_ball.texture = texture
+
 				else:
 					visual_ball.transparent_color = paintball.color_index
 				visual_ball.color_index = paintball.color_index
