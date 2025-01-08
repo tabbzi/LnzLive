@@ -356,6 +356,15 @@ margin_right = 407.0
 margin_bottom = 24.0
 text = "Select Mode"
 
+[node name="ApplyChangesButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
+margin_top = 84.0
+margin_right = 569.0
+margin_bottom = 104.0
+text = "Apply Changes"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
 margin_left = 581.0
 margin_right = 814.0
