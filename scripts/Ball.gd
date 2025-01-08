@@ -9,6 +9,8 @@ export var z_add = 0.0 setget set_z_add
 export var ball_no = 0
 export var base_ball_no = -1
 export var texture: Texture setget set_texture
+export var texture_size = Vector2(256, 256) setget set_texture_size
+export var texture_size_raw: Vector2 = Vector2.ZERO
 export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
 export var transparent_color = 0 setget set_transparent_color
 export var transparency_on = true setget set_transparency
@@ -68,11 +70,20 @@ func set_z_add(new_value):
 	z_add = new_value
 	$MeshInstance.material_override.set_shader_param("z_add", new_value)
 
+func set_texture_size(new_value):
+	texture_size = new_value
+
 func set_texture(new_value):
 	texture = new_value
 	$MeshInstance.material_override.set_shader_param("ball_texture", new_value)
+	
 	if new_value != null:
-		$MeshInstance.material_override.set_shader_param("texture_size", new_value.get_size())
+		var raw_texture_size = new_value.get_size()
+		print(raw_texture_size)
+		var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
+		print(eff_texture_size)
+		$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
+		$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 		$MeshInstance.material_override.set_shader_param("has_texture", true)
 	else:
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
