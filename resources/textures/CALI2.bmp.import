@@ -2,12 +2,12 @@
 
 importer="PetzTexture"
 type="StreamTexture"
-path="res://.import/cali2.bmp-8a6a3bc1055f8240777489a5f490690f.stex"
+path="res://.import/CALI2.bmp-abecf544d63adce241996d47d6a104e4.stex"
 
 [deps]
 
-source_file="res://resources/textures/cali2.bmp"
-dest_files=[ "res://.import/cali2.bmp-8a6a3bc1055f8240777489a5f490690f.stex" ]
+source_file="res://resources/textures/CALI2.bmp"
+dest_files=[ "res://.import/CALI2.bmp-abecf544d63adce241996d47d6a104e4.stex" ]
 
 [params]
 

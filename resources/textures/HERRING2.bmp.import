@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/HERRING2.bmp-38989481c1a9b39ed48c0cb46f5ccd1f.stex"
+
+[deps]
+
+source_file="res://resources/textures/HERRING2.bmp"
+dest_files=[ "res://.import/HERRING2.bmp-38989481c1a9b39ed48c0cb46f5ccd1f.stex" ]
+
+[params]
+

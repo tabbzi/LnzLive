@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/BIGWAVE.bmp-922711764ead3cda0c251944003ce8fe.stex"
+
+[deps]
+
+source_file="res://resources/textures/BIGWAVE.bmp"
+dest_files=[ "res://.import/BIGWAVE.bmp-922711764ead3cda0c251944003ce8fe.stex" ]
+
+[params]
+

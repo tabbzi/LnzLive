@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/HELMET.bmp-366216f02af60722a96786a9c95819bd.stex"
+
+[deps]
+
+source_file="res://resources/textures/HELMET.bmp"
+dest_files=[ "res://.import/HELMET.bmp-366216f02af60722a96786a9c95819bd.stex" ]
+
+[params]
+

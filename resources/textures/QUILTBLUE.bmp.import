@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/QUILTBLUE.bmp-73c5d41fa1d7b543dfd0ada04826910e.stex"
+
+[deps]
+
+source_file="res://resources/textures/QUILTBLUE.bmp"
+dest_files=[ "res://.import/QUILTBLUE.bmp-73c5d41fa1d7b543dfd0ada04826910e.stex" ]
+
+[params]
+

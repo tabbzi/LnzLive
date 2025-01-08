@@ -10,15 +10,33 @@ onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as Wi
 var last_selected
 var selecting_on = false
 
+func _ready():
+	flip_camera_view()
+
+func flip_camera_view():
+	var camera_transform = camera.transform
+	camera_transform.basis.x *= -1
+	camera.transform = camera_transform
+
 func _gui_input(event):
 	if event is InputEventMouseMotion:
 		if Input.is_mouse_button_pressed(BUTTON_LEFT):
 			var motion = event.relative as Vector2
 			camera_holder.rotation.x += motion.y * 0.01
-			camera_holder.rotation.y += motion.x * -0.01
+			
+			# inverted view:
+			camera_holder.rotation.y += motion.x * 0.01
+			
+			# uninverted view:
+			# camera_holder.rotation.y += motion.x * -0.01
 		if Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
 			var motion = event.relative as Vector2
-			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
+			# inverted view:
+			camera.transform.origin.x -= motion.x * 0.001 / tex.rect_scale.x
+			
+			# uninverted view:
+			#camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
+			
 			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
 		label.rect_global_position = event.global_position

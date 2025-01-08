@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/COTTONPINK.bmp-9060e10d31f6b1200e2c1ee84038c492.stex"
+
+[deps]
+
+source_file="res://resources/textures/COTTONPINK.bmp"
+dest_files=[ "res://.import/COTTONPINK.bmp-9060e10d31f6b1200e2c1ee84038c492.stex" ]
+
+[params]
+

@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/TIEDYE2.bmp-0fbe9bc7ee2f24f2b1693403afa1d34b.stex"
+
+[deps]
+
+source_file="res://resources/textures/TIEDYE2.bmp"
+dest_files=[ "res://.import/TIEDYE2.bmp-0fbe9bc7ee2f24f2b1693403afa1d34b.stex" ]
+
+[params]
+

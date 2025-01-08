@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/PJBALLOON.bmp-6ca236261f472b830b31acc22da569de.stex"
+
+[deps]
+
+source_file="res://resources/textures/PJBALLOON.bmp"
+dest_files=[ "res://.import/PJBALLOON.bmp-6ca236261f472b830b31acc22da569de.stex" ]
+
+[params]
+

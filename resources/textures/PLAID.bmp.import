@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/PLAID.bmp-bc15e925da0cf18f3b70364a5c28aed9.stex"
+
+[deps]
+
+source_file="res://resources/textures/PLAID.bmp"
+dest_files=[ "res://.import/PLAID.bmp-bc15e925da0cf18f3b70364a5c28aed9.stex" ]
+
+[params]
+

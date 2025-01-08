@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/TRIANGLESPINK.bmp-cb4d2106c3087d7cbfa9e6e27367cd67.stex"
+
+[deps]
+
+source_file="res://resources/textures/TRIANGLESPINK.bmp"
+dest_files=[ "res://.import/TRIANGLESPINK.bmp-cb4d2106c3087d7cbfa9e6e27367cd67.stex" ]
+
+[params]
+

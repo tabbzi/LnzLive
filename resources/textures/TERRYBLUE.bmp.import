@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/TERRYBLUE.bmp-a1e280b438f74a9cbc0af17d4f6c2e2c.stex"
+
+[deps]
+
+source_file="res://resources/textures/TERRYBLUE.bmp"
+dest_files=[ "res://.import/TERRYBLUE.bmp-a1e280b438f74a9cbc0af17d4f6c2e2c.stex" ]
+
+[params]
+

@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/COW.bmp-0ba67838243a3ad9756304b22ff961f2.stex"
+
+[deps]
+
+source_file="res://resources/textures/COW.bmp"
+dest_files=[ "res://.import/COW.bmp-0ba67838243a3ad9756304b22ff961f2.stex" ]
+
+[params]
+

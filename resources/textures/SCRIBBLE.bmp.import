@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/SCRIBBLE.bmp-f534d57a8dca44bb08c9fa032023c781.stex"
+
+[deps]
+
+source_file="res://resources/textures/SCRIBBLE.bmp"
+dest_files=[ "res://.import/SCRIBBLE.bmp-f534d57a8dca44bb08c9fa032023c781.stex" ]
+
+[params]
+

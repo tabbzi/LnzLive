@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/LONGJOHN.bmp-425444acf5200a5dbd539d40d97ea951.stex"
+
+[deps]
+
+source_file="res://resources/textures/LONGJOHN.bmp"
+dest_files=[ "res://.import/LONGJOHN.bmp-425444acf5200a5dbd539d40d97ea951.stex" ]
+
+[params]
+

@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/SPOONWOOD.bmp-3b3a6d101a1e2549c3aa818089de8618.stex"
+
+[deps]
+
+source_file="res://resources/textures/SPOONWOOD.bmp"
+dest_files=[ "res://.import/SPOONWOOD.bmp-3b3a6d101a1e2549c3aa818089de8618.stex" ]
+
+[params]
+

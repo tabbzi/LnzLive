@@ -12,3 +12,7 @@ export_presets.cfg
 *.TMP
 
 export/*.zip
+
+# ignore WIP folders
+*/wip
+

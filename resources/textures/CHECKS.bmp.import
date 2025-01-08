@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/CHECKS.bmp-52c531e5ec0fc8ea6d2dd75b202140c5.stex"
+
+[deps]
+
+source_file="res://resources/textures/CHECKS.bmp"
+dest_files=[ "res://.import/CHECKS.bmp-52c531e5ec0fc8ea6d2dd75b202140c5.stex" ]
+
+[params]
+

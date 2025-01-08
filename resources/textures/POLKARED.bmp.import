@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/POLKARED.bmp-e50a0aa2dc6b4079b44042fa98f1dd1c.stex"
+
+[deps]
+
+source_file="res://resources/textures/POLKARED.bmp"
+dest_files=[ "res://.import/POLKARED.bmp-e50a0aa2dc6b4079b44042fa98f1dd1c.stex" ]
+
+[params]
+

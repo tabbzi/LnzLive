@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/WIZARD.bmp-99e4af0aecbb2f786b1096cbffed67a1.stex"
+
+[deps]
+
+source_file="res://resources/textures/WIZARD.bmp"
+dest_files=[ "res://.import/WIZARD.bmp-99e4af0aecbb2f786b1096cbffed67a1.stex" ]
+
+[params]
+

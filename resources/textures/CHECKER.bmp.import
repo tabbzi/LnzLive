@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/CHECKER.bmp-f96ce6ff6a614783dd2dfcbb0603cae6.stex"
+
+[deps]
+
+source_file="res://resources/textures/CHECKER.bmp"
+dest_files=[ "res://.import/CHECKER.bmp-f96ce6ff6a614783dd2dfcbb0603cae6.stex" ]
+
+[params]
+

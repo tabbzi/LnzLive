@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/TRIANGLESBLUE.bmp-0c8522524eb3f641302825e7d7cc5937.stex"
+
+[deps]
+
+source_file="res://resources/textures/TRIANGLESBLUE.bmp"
+dest_files=[ "res://.import/TRIANGLESBLUE.bmp-0c8522524eb3f641302825e7d7cc5937.stex" ]
+
+[params]
+

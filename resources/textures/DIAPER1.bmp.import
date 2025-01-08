@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/DIAPER1.bmp-1957e32250bc1b31bd79220a24fb4b7c.stex"
+
+[deps]
+
+source_file="res://resources/textures/DIAPER1.bmp"
+dest_files=[ "res://.import/DIAPER1.bmp-1957e32250bc1b31bd79220a24fb4b7c.stex" ]
+
+[params]
+

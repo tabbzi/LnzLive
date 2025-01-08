@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/SWTR3.bmp-37138d05358ca89cabaf9bc0dbacfaf3.stex"
+
+[deps]
+
+source_file="res://resources/textures/SWTR3.bmp"
+dest_files=[ "res://.import/SWTR3.bmp-37138d05358ca89cabaf9bc0dbacfaf3.stex" ]
+
+[params]
+

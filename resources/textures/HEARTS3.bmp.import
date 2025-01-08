@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/HEARTS3.bmp-294d1d9445fd421bbb15284c527647ac.stex"
+
+[deps]
+
+source_file="res://resources/textures/HEARTS3.bmp"
+dest_files=[ "res://.import/HEARTS3.bmp-294d1d9445fd421bbb15284c527647ac.stex" ]
+
+[params]
+

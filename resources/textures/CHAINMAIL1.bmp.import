@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/CHAINMAIL1.bmp-8e77a54eb9f314b9e00769dc77bdd7ec.stex"
+
+[deps]
+
+source_file="res://resources/textures/CHAINMAIL1.bmp"
+dest_files=[ "res://.import/CHAINMAIL1.bmp-8e77a54eb9f314b9e00769dc77bdd7ec.stex" ]
+
+[params]
+

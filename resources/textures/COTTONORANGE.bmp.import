@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/COTTONORANGE.bmp-86dad47fb9c718f29556f25437a0c5f7.stex"
+
+[deps]
+
+source_file="res://resources/textures/COTTONORANGE.bmp"
+dest_files=[ "res://.import/COTTONORANGE.bmp-86dad47fb9c718f29556f25437a0c5f7.stex" ]
+
+[params]
+

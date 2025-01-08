@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/PJDUCK.bmp-e4fc9a7dd1c5ba3b205d3899ca04f6a3.stex"
+
+[deps]
+
+source_file="res://resources/textures/PJDUCK.bmp"
+dest_files=[ "res://.import/PJDUCK.bmp-e4fc9a7dd1c5ba3b205d3899ca04f6a3.stex" ]
+
+[params]
+

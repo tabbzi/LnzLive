@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/WIGGLE.bmp-977ef0aa64ddec053039c6ab10792b01.stex"
+
+[deps]
+
+source_file="res://resources/textures/WIGGLE.bmp"
+dest_files=[ "res://.import/WIGGLE.bmp-977ef0aa64ddec053039c6ab10792b01.stex" ]
+
+[params]
+

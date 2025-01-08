@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/CAMOD.bmp-0a469e15b8b0cd7982f1b73324bc2cac.stex"
+
+[deps]
+
+source_file="res://resources/textures/CAMOD.bmp"
+dest_files=[ "res://.import/CAMOD.bmp-0a469e15b8b0cd7982f1b73324bc2cac.stex" ]
+
+[params]
+

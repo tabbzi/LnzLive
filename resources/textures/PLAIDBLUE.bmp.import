@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/PLAIDBLUE.bmp-41c9cdbbb4570769c92b9732c4770c7b.stex"
+
+[deps]
+
+source_file="res://resources/textures/PLAIDBLUE.bmp"
+dest_files=[ "res://.import/PLAIDBLUE.bmp-41c9cdbbb4570769c92b9732c4770c7b.stex" ]
+
+[params]
+

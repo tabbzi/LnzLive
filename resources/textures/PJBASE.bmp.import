@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/PJBASE.bmp-83ff3b509528ce9e5d3fdf3ac70b1b02.stex"
+
+[deps]
+
+source_file="res://resources/textures/PJBASE.bmp"
+dest_files=[ "res://.import/PJBASE.bmp-83ff3b509528ce9e5d3fdf3ac70b1b02.stex" ]
+
+[params]
+

@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/COTTONBLUE.bmp-554c4a928f05baae8ba12fb0772e6f85.stex"
+
+[deps]
+
+source_file="res://resources/textures/COTTONBLUE.bmp"
+dest_files=[ "res://.import/COTTONBLUE.bmp-554c4a928f05baae8ba12fb0772e6f85.stex" ]
+
+[params]
+

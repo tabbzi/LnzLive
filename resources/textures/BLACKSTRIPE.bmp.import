@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/BLACKSTRIPE.bmp-0bb217d7d41c6cf99468f0ad9a7d8f31.stex"
+
+[deps]
+
+source_file="res://resources/textures/BLACKSTRIPE.bmp"
+dest_files=[ "res://.import/BLACKSTRIPE.bmp-0bb217d7d41c6cf99468f0ad9a7d8f31.stex" ]
+
+[params]
+

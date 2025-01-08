@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/B_DARKBROWN3.bmp-6261d8c9b6ae47db4878df17e02dc4b1.stex"
+
+[deps]
+
+source_file="res://resources/textures/B_DARKBROWN3.bmp"
+dest_files=[ "res://.import/B_DARKBROWN3.bmp-6261d8c9b6ae47db4878df17e02dc4b1.stex" ]
+
+[params]
+

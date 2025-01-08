@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/ballsize100.bmp-8a1ba52a6e02eabe68ff7fa7f5f55e65.stex"
+
+[deps]
+
+source_file="res://resources/textures/ballsize100.bmp"
+dest_files=[ "res://.import/ballsize100.bmp-8a1ba52a6e02eabe68ff7fa7f5f55e65.stex" ]
+
+[params]
+

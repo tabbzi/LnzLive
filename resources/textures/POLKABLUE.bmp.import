@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/POLKABLUE.bmp-cc4b0d26b5abe3533356ef85dd55e948.stex"
+
+[deps]
+
+source_file="res://resources/textures/POLKABLUE.bmp"
+dest_files=[ "res://.import/POLKABLUE.bmp-cc4b0d26b5abe3533356ef85dd55e948.stex" ]
+
+[params]
+

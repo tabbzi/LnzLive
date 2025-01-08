@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/YELLOWNOISE.bmp-62a5b3b2da1005902c5cfb2b879cc048.stex"
+
+[deps]
+
+source_file="res://resources/textures/YELLOWNOISE.bmp"
+dest_files=[ "res://.import/YELLOWNOISE.bmp-62a5b3b2da1005902c5cfb2b879cc048.stex" ]
+
+[params]
+

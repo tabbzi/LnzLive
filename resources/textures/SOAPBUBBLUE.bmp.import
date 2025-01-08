@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/SOAPBUBBLUE.bmp-28679aa5d063461702b8a78d244b8eff.stex"
+
+[deps]
+
+source_file="res://resources/textures/SOAPBUBBLUE.bmp"
+dest_files=[ "res://.import/SOAPBUBBLUE.bmp-28679aa5d063461702b8a78d244b8eff.stex" ]
+
+[params]
+

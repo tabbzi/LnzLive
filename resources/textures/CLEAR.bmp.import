@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/CLEAR.bmp-d6c671a4b39765de04e86eb095b41693.stex"
+
+[deps]
+
+source_file="res://resources/textures/CLEAR.bmp"
+dest_files=[ "res://.import/CLEAR.bmp-d6c671a4b39765de04e86eb095b41693.stex" ]
+
+[params]
+

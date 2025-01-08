@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/RIDDLER.bmp-39158186bb71490ec3c00fe47a9f27a6.stex"
+
+[deps]
+
+source_file="res://resources/textures/RIDDLER.bmp"
+dest_files=[ "res://.import/RIDDLER.bmp-39158186bb71490ec3c00fe47a9f27a6.stex" ]
+
+[params]
+

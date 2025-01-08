@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/GOLF2.bmp-3725cbec8ffee9568869d93a013e0fd1.stex"
+
+[deps]
+
+source_file="res://resources/textures/GOLF2.bmp"
+dest_files=[ "res://.import/GOLF2.bmp-3725cbec8ffee9568869d93a013e0fd1.stex" ]
+
+[params]
+

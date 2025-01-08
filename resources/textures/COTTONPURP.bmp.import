@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/COTTONPURP.bmp-8c7e152f17c4b19e976b1067266ac191.stex"
+
+[deps]
+
+source_file="res://resources/textures/COTTONPURP.bmp"
+dest_files=[ "res://.import/COTTONPURP.bmp-8c7e152f17c4b19e976b1067266ac191.stex" ]
+
+[params]
+

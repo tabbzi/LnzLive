@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/YELLOWDIAMOND.bmp-f41dffdb5bf42d5f599545a2bc778d84.stex"
+
+[deps]
+
+source_file="res://resources/textures/YELLOWDIAMOND.bmp"
+dest_files=[ "res://.import/YELLOWDIAMOND.bmp-f41dffdb5bf42d5f599545a2bc778d84.stex" ]
+
+[params]
+

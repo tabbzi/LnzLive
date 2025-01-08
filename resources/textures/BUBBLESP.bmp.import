@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/BUBBLESP.bmp-54920457bb1fe5fb9ab70d249150803b.stex"
+
+[deps]
+
+source_file="res://resources/textures/BUBBLESP.bmp"
+dest_files=[ "res://.import/BUBBLESP.bmp-54920457bb1fe5fb9ab70d249150803b.stex" ]
+
+[params]
+

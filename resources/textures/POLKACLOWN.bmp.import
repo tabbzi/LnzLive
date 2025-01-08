@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/POLKACLOWN.bmp-3274d9ba9505e72d1aafcc59265fc29a.stex"
+
+[deps]
+
+source_file="res://resources/textures/POLKACLOWN.bmp"
+dest_files=[ "res://.import/POLKACLOWN.bmp-3274d9ba9505e72d1aafcc59265fc29a.stex" ]
+
+[params]
+

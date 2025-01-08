@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/YELLOWRIB.bmp-2dc3771374a0c10f7817e79bcf195928.stex"
+
+[deps]
+
+source_file="res://resources/textures/YELLOWRIB.bmp"
+dest_files=[ "res://.import/YELLOWRIB.bmp-2dc3771374a0c10f7817e79bcf195928.stex" ]
+
+[params]
+

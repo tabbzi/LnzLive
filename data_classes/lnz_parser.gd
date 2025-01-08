@@ -15,11 +15,13 @@ var foot_enlargement = Vector2(100, 0)
 var moves = {}
 var balls = {}
 var lines = []
+var polygons = []
 var addballs = {}
 var paintballs = {}
 var omissions = {}
 var project_ball = []
 var texture_list = []
+var palette = null
 
 var file_path
 
@@ -67,6 +69,9 @@ func get_parsed_line_strings(file: File, keys: Array):
 	return return_array
 
 func _init(file_path):
+	if (file_path == null):
+		return
+	
 	self.file_path = file_path
 	r.compile("[-.\\d]+")
 	str_r.compile("[\\S]+")
@@ -81,6 +86,7 @@ func _init(file_path):
 	var this_line = ""
 	
 	get_texture_list(file)
+	get_palette(file)
 	get_species(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
@@ -91,6 +97,7 @@ func _init(file_path):
 	get_feet_enlargement(file)
 	get_omissions(file)
 	get_lines(file)
+	get_polygons(file)
 	get_balls(file)
 	
 	file.seek(0)
@@ -210,10 +217,30 @@ func get_lines(file: File):
 	for line in parsed_lines:
 		var line_data = LineData.new(line.start, line.end, line.start_thickness, line.end_thickness, line.fuzz, line.color, line.l_color, line.r_color)
 		lines.append(line_data)
-		
+
+func get_polygons(file: File):
+	get_next_section(file, "Polygons")
+	var parsed_lines = get_parsed_lines(file, ["ball1", "ball2", "ball3", "ball4", "color", "l_edge_color", "r_edge_color", "fuzz", "texture"])
+	for line in parsed_lines:
+		var poly_data = PolyData.new(
+			line.ball1,
+			line.ball2,
+			line.ball3,
+			line.ball4,
+			line.color,
+			line.l_edge_color,
+			line.r_edge_color,
+			line.fuzz,
+			line.texture
+		)
+		polygons.append(poly_data)
+		#print(polygons)
+
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
 	var parsed_lines = get_parsed_lines(file, ["color", "outline_color", "speckle", "fuzz", "outline", "size", "group", "texture"])
+	if parsed_lines.size() == 0:
+		print("Error: No Ballz Info found.")
 	var i = 0
 	for line in parsed_lines:
 		var bd = BallData.new(
@@ -229,6 +256,7 @@ func get_balls(file: File):
 			line.group, 
 			line.texture)
 		self.balls[i] = bd
+		#print("Added ball " + str(i) + " with size " + str(line.size))
 		i += 1
 
 func get_addballs(file: File):
@@ -266,10 +294,26 @@ func get_species(file: File):
 		species = 2
 	else:
 		species = parsed_lines[0].species
+	print("Species detected: " + str(species))
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")
-	var parsed_lines = get_parsed_line_strings(file, ["filepath", "transparent_color"])
+	var parsed_lines = get_parsed_line_strings(file, ["filepath", "transparent_color", "width", "height"])
 	for line in parsed_lines:
 		var filename = line.filepath.get_file()
-		texture_list.append({filename = filename, transparent_color = line.transparent_color})
+		var texture_size = null
+
+		if line.has("width") and line.has("height"):
+			var width = float(line.width) if line.width.is_valid_float() else null
+			var height = float(line.height) if line.height.is_valid_float() else null
+			if width != null and height != null:
+				texture_size = Vector2(width, height)
+
+		texture_list.append({filename = filename, transparent_color = line.transparent_color, texture_size = texture_size})
+
+func get_palette(file: File):
+	get_next_section(file, "Palette")
+	var parsed_lines = get_parsed_line_strings(file, ["filepath"])
+	for line in parsed_lines:
+		var filename = line.filepath.get_file()
+		palette = filename + ".png"

@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/B_LTBROWN1.bmp-19c0c1146c9822462a55d7f678a340d6.stex"
+
+[deps]
+
+source_file="res://resources/textures/B_LTBROWN1.bmp"
+dest_files=[ "res://.import/B_LTBROWN1.bmp-19c0c1146c9822462a55d7f678a340d6.stex" ]
+
+[params]
+

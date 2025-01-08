@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/GIRAFFE.bmp-e2bef730e69b387203d9b8e089cc385e.stex"
+
+[deps]
+
+source_file="res://resources/textures/GIRAFFE.bmp"
+dest_files=[ "res://.import/GIRAFFE.bmp-e2bef730e69b387203d9b8e089cc385e.stex" ]
+
+[params]
+

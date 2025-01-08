@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/TIGER2.bmp-e623f5686d1cb797224486fa800d43d0.stex"
+
+[deps]
+
+source_file="res://resources/textures/TIGER2.bmp"
+dest_files=[ "res://.import/TIGER2.bmp-e623f5686d1cb797224486fa800d43d0.stex" ]
+
+[params]
+

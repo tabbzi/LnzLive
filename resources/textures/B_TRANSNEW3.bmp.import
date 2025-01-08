@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/B_TRANSNEW3.bmp-c8319621041492baa25d8accd553b0da.stex"
+
+[deps]
+
+source_file="res://resources/textures/B_TRANSNEW3.bmp"
+dest_files=[ "res://.import/B_TRANSNEW3.bmp-c8319621041492baa25d8accd553b0da.stex" ]
+
+[params]
+

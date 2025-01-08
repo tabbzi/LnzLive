@@ -12,12 +12,30 @@ var current_action
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
 
+#onready var palette_viewer_popup = get_node("/root/SceneRoot/ToolsMenu/PaletteViewerPopup")
+#onready var pet_root = get_node("/root/PetRoot")
+
 func _ready():
 	add_submenu_item("Color...", "RecolorMenu")
 	add_item("Add ball")
 	add_item("Copy L to R")
 	add_item("Move head")
 	add_item("Copy ball colors to clipboard")
+
+	# Connect palette viewer
+	#$ViewPaletteButton.connect("pressed", self, "_on_ViewPaletteButton_pressed")
+
+#func _on_ViewPaletteButton_pressed():
+#	var current_palette = "PETZ"
+#	var species = pet_root.get("species")
+#
+#	if species == KeyBallsData.Species.BABY:
+#		current_palette = "BABYZ"
+#	else:
+#		current_palette = "PETZ"
+#
+#	palette_viewer_popup.set_current_palette(current_palette)
+#	palette_viewer_popup.popup_centered()
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
@@ -125,8 +143,7 @@ func _on_RecolorPopup_confirmed():
 	recolor_info.ball_outlines_on = ball_outlines_on
 	recolor_info.paintballs_on = paintballs_on
 	recolor_info.lines_on = lines_on
-	emit_signal("recolor", recolor_info)
-		
+	emit_signal("recolor", recolor_info)	
 
 func _on_ClearButton_pressed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")

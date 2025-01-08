@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/DENIM.bmp-c9e6d64b7cecf3a49cecf1abaf41de7f.stex"
+
+[deps]
+
+source_file="res://resources/textures/DENIM.bmp"
+dest_files=[ "res://.import/DENIM.bmp-c9e6d64b7cecf3a49cecf1abaf41de7f.stex" ]
+
+[params]
+
