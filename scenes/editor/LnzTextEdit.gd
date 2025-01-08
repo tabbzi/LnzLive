@@ -8,9 +8,12 @@ signal file_saved(filepath)
 signal find_ball(ball_no)
 signal file_backed_up()
 
+onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/ApplyChangesButton")
+
 func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
+	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
 
 func _on_example_file_selected(filepath):
 	var file = File.new()
@@ -71,6 +74,10 @@ func save_file():
 		file.close()
 		filepath = possible_file_name
 		is_user_file = true
+	emit_signal("file_saved", filepath)
+
+func _on_ApplyChangesButton_pressed():
+	save_file()
 	emit_signal("file_saved", filepath)
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
