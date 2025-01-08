@@ -97,11 +97,11 @@ Apply textures as normal in the LNZ data. LnzLive doesn't care about the full fi
 
 Similar to textures, custom palettes can be loaded from local storage. There is no way to add these via the local interface, so you have to use the Windows exe.
 
-**You will need to convert your .bmp palette image to a .png in the format lnzlive expects**, I've written a tool to do this for you.
+**You will need to convert your .bmp palette image to a .png in the format lnzlive expects**, use the following tool:
 
 **[Convert your palette files here](https://draconizations.github.io/petz-palette-converter/)**!
 
-Go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/palettes (you may have to create this folder). Copy the converted .png files** directly into the folder. Relaunch LnzLive. If your palettes have been loaded correctly, you will see them if you expand the Local Palettes part of the filetree.
+To load your palette image, use the "Add File" button in the lower left. Or, go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/palettes (you may have to create this folder). Copy the converted .png files** directly into the folder. Relaunch LnzLive. If your palettes have been loaded correctly, you will see them if you expand the Local Palettes part of the filetree.
 
 You can now apply the paletes as normal in the LNZ data, make sure to omit the .png at the end.
 
