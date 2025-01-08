@@ -14,14 +14,11 @@ uniform float z_add = .0;
 uniform bool has_texture = false;
 uniform sampler2D ball_texture: hint_white;
 uniform vec2 texture_size;
+uniform vec2 texture_size_raw;
 uniform int transparent_index = 0;
 uniform bool transparency_on = true;
 uniform sampler2D palette: hint_white;
 uniform vec3 z_center_pet_world = vec3(0.0);
-
-// reposition texture until matches in-game positioning:
-uniform vec2 texture_offset = vec2(50.0, 75.0);
-//uniform vec2 texture_offset = vec2(48.0, 80.0);
 
 varying flat vec2 center_fragcoord;
 varying flat vec4 center_view;
@@ -108,23 +105,37 @@ void fragment() {
     vec2 vector_from_center = st - c;
     float pct = step(length(vector_from_center), (float(ball_size) / 2.0 - float(modified_outline)));
 
-    if(outline != -1)
+    if (outline != -1)
         pct2 -= pct;
 
     vec3 texture_color;
-    vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
 
-    // offset textures so that matches in-game appearance for nonrotate textures
-    vec2 tex_coords = (SCREEN_UV - center_uv) * (1000.0 / (texture_size));
-    tex_coords += (texture_offset * float(ball_size)) / VIEWPORT_SIZE.xy; 
+    // Directly calculate normalized coordinates relative to ball size
+    vec2 tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+
+    // Adjust texture coordinates to ensure the center of the texture aligns correctly
+    if (texture_size_raw.x < texture_size.x || texture_size_raw.y < texture_size.y) {
+        // Calculate exact half-size offset
+        float center_x_offset = (texture_size.x / 2.0 - texture_size_raw.x / 2.0) / texture_size.x;
+        float center_y_offset = (texture_size.y / 2.0 - texture_size_raw.y / 2.0) / texture_size.y;
+
+        // Apply the center offset precisely
+        tex_coords.x -= center_x_offset;
+        tex_coords.y += center_y_offset;
+
+        // Tile from the center point
+        tex_coords = mod(tex_coords, vec2(1.0, 1.0));
+    }
+
+    // Flip y-coordinate for correct orientation
     tex_coords.y = 1.0 - tex_coords.y;
+
+    // Sample from the texture
     int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
-    // original:
-    // vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
-    // int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 255.0);
-
+    // Determine transparency
     bool is_transparent = (palette_index == 253);
+
 
     if (outline == -3) 
         ALBEDO = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
@@ -191,7 +202,7 @@ shader_param/outline_color_index = 0
 shader_param/z_add = 0.0
 shader_param/has_texture = false
 shader_param/texture_size = null
+shader_param/texture_size_raw = null
 shader_param/transparent_index = 0
 shader_param/transparency_on = true
 shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
-shader_param/texture_offset = Vector2( 48, 80 )
