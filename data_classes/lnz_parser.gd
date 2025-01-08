@@ -298,10 +298,18 @@ func get_species(file: File):
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")
-	var parsed_lines = get_parsed_line_strings(file, ["filepath", "transparent_color"])
+	var parsed_lines = get_parsed_line_strings(file, ["filepath", "transparent_color", "width", "height"])
 	for line in parsed_lines:
 		var filename = line.filepath.get_file()
-		texture_list.append({filename = filename, transparent_color = line.transparent_color})
+		var texture_size = null
+
+		if line.has("width") and line.has("height"):
+			var width = float(line.width) if line.width.is_valid_float() else null
+			var height = float(line.height) if line.height.is_valid_float() else null
+			if width != null and height != null:
+				texture_size = Vector2(width, height)
+
+		texture_list.append({filename = filename, transparent_color = line.transparent_color, texture_size = texture_size})
 
 func get_palette(file: File):
 	get_next_section(file, "Palette")
