@@ -3,9 +3,6 @@
 importer="PetzTexture"
 type="StreamTexture"
 path="res://.import/256base.bmp-3b5b16f8e330544666fc4ad28dff7941.stex"
-metadata={
-"vram_texture": false
-}
 
 [deps]
 
@@ -14,21 +11,3 @@ dest_files=[ "res://.import/256base.bmp-3b5b16f8e330544666fc4ad28dff7941.stex" ]
 
 [params]
 
-compress/mode=0
-compress/lossy_quality=0.7
-compress/hdr_mode=0
-compress/bptc_ldr=0
-compress/normal_map=2
-flags/repeat=0
-flags/filter=false
-flags/mipmaps=false
-flags/anisotropic=false
-flags/srgb=0
-process/fix_alpha_border=false
-process/premult_alpha=false
-process/HDR_as_SRGB=false
-process/invert_color=false
-stream=false
-size_limit=0
-detect_3d=false
-svg/scale=1.0
