@@ -115,6 +115,9 @@ func init_ball_data(species):
 
 	KeyBallsData.max_base_ball_num = bhd.num_balls
 
+func is_special_baby_ball(species: int, ball_no: int) -> bool:
+	return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
+
 func generate_pet(file_path):
 	var lnz_info = LnzParser.new(file_path)
 	lnz = lnz_info
@@ -311,7 +314,7 @@ func apply_projections():
 		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
 		var base_pos = static_ball.global_transform.origin
 		visual_ball.global_transform.origin = base_pos + (vec * project_ball_data.amount / 100.0)
-		
+
 func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 	for k in all_ball_dict.balls:
 		var ball = all_ball_dict.balls[k]
@@ -376,21 +379,30 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 
 	return texture
 
+func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
+	if texture_id < 0 or texture_id >= texture_list.size():
+		return null
+
+	var tex_info = texture_list[texture_id]
+	if tex_info.has("filename"):
+		var texture_filename = tex_info.filename
+		return load_texture(texture_filename, preloader)
+	return null
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool):
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
 	var paintball_data = all_ball_data.paintballs
 	var omissions = all_ball_data.omissions
+
 	var root = get_root()
-	var parent = root.get_node("petholder/balls")
-	var pb_parent = root.get_node("petholder/paintballs")
-	var ab_parent = root.get_node("petholder/addballs")
-	
-	# Determine belly position and default palette
+	var balls_parent = root.get_node("petholder/balls")
+	var paintballs_parent = root.get_node("petholder/paintballs")
+	var addballs_parent = root.get_node("petholder/addballs")
+
+	# Figure out belly position and default palette
 	var belly_position
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
-	
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
 	elif species == KeyBallsData.Species.CAT:
@@ -398,77 +410,97 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	elif species == KeyBallsData.Species.BABY:
 		belly_position = ball_data[KeyBallsData.belly_bab].position
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
-	
+
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
-	
-	var pal_texture = null
+
+	var pal_texture: Texture = null
 	if palette != null:
-		var user_resource_path = "user://resources/palettes/" + palette
-		var res_resource_path = "res://resources/palettes/" + palette
-		if ResourceLoader.exists(user_resource_path):
-			pal_texture = ResourceLoader.load(user_resource_path)
-		elif ResourceLoader.exists(res_resource_path):
-			pal_texture = ResourceLoader.load(res_resource_path)
+		var user_res_path = "user://resources/palettes/" + palette
+		var res_res_path = "res://resources/palettes/" + palette
+		if ResourceLoader.exists(user_res_path):
+			pal_texture = ResourceLoader.load(user_res_path)
+		elif ResourceLoader.exists(res_res_path):
+			pal_texture = ResourceLoader.load(res_res_path)
 		else:
-			pal_texture = preloader.get_resource("palette_"+palette.to_lower())
+			pal_texture = preloader.get_resource("palette_" + palette.to_lower())
 	else:
 		pal_texture = default_palette
-	
-	# Clear existing visual balls		
+
+	# If we're creating everything fresh, clear out old visuals
 	if new_create:
-		for c in parent.get_children():
-			parent.remove_child(c)
+		for c in balls_parent.get_children():
+			balls_parent.remove_child(c)
 			c.queue_free()
-		for c in pb_parent.get_children():
-			pb_parent.remove_child(c)
+		for c in paintballs_parent.get_children():
+			paintballs_parent.remove_child(c)
 			c.queue_free()
-		for c in ab_parent.get_children():
-			ab_parent.remove_child(c)
+		for c in addballs_parent.get_children():
+			addballs_parent.remove_child(c)
 			c.queue_free()
-		ball_map = {}
-		paintball_map = {}
-	
-	# Process eyes
-	var eyes: Dictionary
+
+		ball_map.clear()
+		paintball_map.clear()
+
+	# Identify eyes so we can handle them like paintballs if needed
+	var eyes = {}
 	if species == KeyBallsData.Species.DOG:
 		eyes = KeyBallsData.eyes_dog
 	elif species == KeyBallsData.Species.CAT:
 		eyes = KeyBallsData.eyes_cat
 	else:
 		eyes = KeyBallsData.eyes_bab
-	
+
+	# Generate base ballz
 	for key in ball_data:
 		var ball = ball_data[key]
 		var visual_ball
-		
-		if(key in eyes.keys()): # treat irises like paintballs
+
+		# If the ball key is in the "eyes" dictionary, treat it like a paintball
+		if key in eyes:
 			if new_create:
 				visual_ball = paintball_scene.instance()
-				visual_ball.add_to_group("balls")
-				visual_ball.z_add = 10
+				visual_ball.add_to_group("paintballs")
 				visual_ball.override_ball_no = ball.ball_no
-				visual_ball.color_index = ball.color_index
+				visual_ball.z_add = 10
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
-				
-				parent.add_child(visual_ball)
+
+				paintballs_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
-			
 			else:
 				visual_ball = ball_map[key]
-				
+
+			# Parent ball so we know its center
 			var base_ball = ball_data[eyes[key]]
 			visual_ball.base_ball_size = base_ball.size
-			var bbp = base_ball.position
-			bbp.y *= -1
-			bbp *= pixel_world_size
-			visual_ball.base_ball_position = bbp
-			var rotated_pos = ball.position
-			rotated_pos.y *= -1.0
-			visual_ball.transform.origin = rotated_pos * pixel_world_size
-			
+			var base_pos = base_ball.position
+			base_pos.y *= -1
+			base_pos *= pixel_world_size
+			visual_ball.base_ball_position = base_pos
+
+			var pos = ball.position
+			pos.y *= -1.0
+			visual_ball.transform.origin = pos * pixel_world_size
+
+			if new_create:
+				# Apply texture if needed
+				if ball.texture_id >= 0:
+					var texture_eye = load_texture_from_list(ball.texture_id, texture_list)
+					if texture_eye:
+						visual_ball.texture = texture_eye
+						visual_ball.transparent_color = texture_list[ball.texture_id].transparent_color
+				visual_ball.color_index = ball.color_index
+				visual_ball.outline_color_index = ball.outline_color_index
+				visual_ball.ball_size = get_real_ball_size(ball.size)
+				visual_ball.outline = ball.outline
+				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
+				visual_ball.palette = pal_texture
+
+			visual_ball.rotation_degrees = ball.rotation
+			ball_map[ball.ball_no] = visual_ball
+
 		else:
 			if new_create:
 				visual_ball = ball_scene.instance()
@@ -476,179 +508,160 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
-				
-				parent.add_child(visual_ball)
+
+				balls_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
-				
 			else:
 				visual_ball = ball_map[key]
-			visual_ball.pet_center = belly_position
-			var rotated_pos = ball.position
-			rotated_pos.y *= -1.0
-			visual_ball.transform.origin = rotated_pos * pixel_world_size
+
 			visual_ball.ball_no = ball.ball_no
-			
-			# Apply texture to ball
+			visual_ball.pet_center = belly_position
+
+			var pos_n = ball.position
+			pos_n.y *= -1.0
+			visual_ball.transform.origin = pos_n * pixel_world_size
+
 			if new_create:
-				if ball.texture_id > -1:
-					var tex_info = texture_list[ball.texture_id]
-					var texture_filename = tex_info.filename
-					visual_ball.transparent_color = tex_info.transparent_color
-
-					var texture = load_texture(texture_filename, preloader)
-					visual_ball.texture = texture
-
-					if tex_info.texture_size != null:
-						visual_ball.texture_size = tex_info.texture_size
-
+				if ball.texture_id >= 0:
+					var texture_main = load_texture_from_list(ball.texture_id, texture_list)
+					if texture_main:
+						visual_ball.texture = texture_main
+						visual_ball.transparent_color = texture_list[ball.texture_id].transparent_color
 				visual_ball.color_index = ball.color_index
 				visual_ball.outline_color_index = ball.outline_color_index
-				
-		# Ball properties
-		if new_create:
-			visual_ball.ball_size = get_real_ball_size(ball.size)
-			visual_ball.outline = ball.outline
-			visual_ball.outline_color_index = ball.outline_color_index
-			visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
-			visual_ball.palette = pal_texture
-		visual_ball.rotation_degrees = ball.rotation
-		
-		# Finalize creation
-		if new_create:
-			parent.add_child(visual_ball)
-			visual_ball.set_owner(root)
-		ball_map[ball.ball_no] = visual_ball
-		
-		# Handle visibility and omissions
-		if !draw_balls:
-			visual_ball.visible_override = false
-		#if !draw_special_balls:
-		#	visual_ball.visible_override = false
-		if omissions.get(key, false):
-			visual_ball.visible_override = false
-			visual_ball.omitted = true
-			
+				visual_ball.ball_size = get_real_ball_size(ball.size)
+				visual_ball.outline = ball.outline
+				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
+				visual_ball.palette = pal_texture
+
+			visual_ball.rotation_degrees = ball.rotation
+			ball_map[ball.ball_no] = visual_ball
+
+		# Handle omissions
+		if omissions.has(key):
+			ball_map[ball.ball_no].visible_override = false
+			ball_map[ball.ball_no].omitted = true
+		else:
+			# Respect user toggles
+			if !draw_balls:
+				ball_map[ball.ball_no].visible_override = false
+
+	# Generate addballz
 	for key in addball_data:
-		var ball = addball_data[key]
-		var visual_ball
-		
+		var add_ball = addball_data[key]
+		var add_visual_ball
+
 		if new_create:
-			visual_ball = ball_scene.instance()
+			add_visual_ball = ball_scene.instance()
 		else:
-			visual_ball = ball_map[key]
+			add_visual_ball = ball_map.get(key, null)
+
 		if new_create:
-			ball_map[ball.base].add_child(visual_ball)
-			visual_ball.set_owner(root)
-			visual_ball.add_to_group("addballs")
-			visual_ball.z_add = ball.size / 10.0
-			visual_ball.ball_size = ball.size
-			visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
-			visual_ball.connect("ball_selected", self, "signal_ball_selected")
-			visual_ball.connect("ball_deleted", self, "signal_ball_deleted")
-		var total_pos = ball.position
-		total_pos.y *= -1.0
-		visual_ball.transform.origin = total_pos * pixel_world_size
+			# Parent the addball under its base ball to preserve relative offsets
+			ball_map[add_ball.base].add_child(add_visual_ball)
+			add_visual_ball.set_owner(root)
+			add_visual_ball.add_to_group("addballs")
+			add_visual_ball.z_add = add_ball.size / 10.0
+			add_visual_ball.ball_size = add_ball.size
+			add_visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
+			add_visual_ball.connect("ball_selected", self, "signal_ball_selected")
+			add_visual_ball.connect("ball_deleted", self, "signal_ball_deleted")
+
+		var add_pos = add_ball.position
+		add_pos.y *= -1.0
+		add_visual_ball.transform.origin = add_pos * pixel_world_size
+
 		if new_create:
-			visual_ball.outline = ball.outline
-			visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
-			visual_ball.ball_no = ball.ball_no
-			visual_ball.base_ball_no = ball.base
-			visual_ball.outline_color_index = ball.outline_color_index
-		visual_ball.scale = Vector3(1,1,1)
-		if new_create:
-			if ball.texture_id > -1:
-				var tex_info = texture_list[ball.texture_id]
-				var texture_filename = tex_info.filename
-				visual_ball.transparent_color = tex_info.transparent_color
+			add_visual_ball.outline = add_ball.outline
+			add_visual_ball.fuzz_amount = clamp(add_ball.fuzz / 2, 0, 5)
+			add_visual_ball.ball_no = add_ball.ball_no
+			add_visual_ball.base_ball_no = add_ball.base
+			add_visual_ball.outline_color_index = add_ball.outline_color_index
+			if add_ball.texture_id >= 0:
+				var tex_info_add = load_texture_from_list(add_ball.texture_id, texture_list)
+				if tex_info_add:
+					add_visual_ball.texture = tex_info_add
+					add_visual_ball.transparent_color = texture_list[add_ball.texture_id].transparent_color
+			add_visual_ball.color_index = add_ball.color_index
+			add_visual_ball.palette = pal_texture
 
-				var texture = load_texture(texture_filename, preloader)
-				visual_ball.texture = texture
+		ball_map[add_ball.ball_no] = add_visual_ball
 
-				if tex_info.texture_size != null:
-					visual_ball.texture_size = tex_info.texture_size
-
-			visual_ball.color_index = ball.color_index
-			visual_ball.palette = pal_texture
-
-		ball_map[ball.ball_no] = visual_ball
-		
-		# Check for special balls in Babyz to hide
-		var is_special_ball = false
-		if species == KeyBallsData.Species.BABY and ball.ball_no >= 120 and ball.ball_no <= 137:
-			is_special_ball = true
-			visual_ball.add_to_group("special_balls")
-		
+		var is_special_ball = is_special_baby_ball(species, add_ball.ball_no)
 		if is_special_ball:
-			visual_ball.visible = draw_special_balls
+			add_visual_ball.add_to_group("special_balls")
+			add_visual_ball.visible = draw_special_balls
 		else:
-			visual_ball.visible = draw_addballs
-		
+			add_visual_ball.visible = draw_addballs
+
+		# If user hid addballs globally or if omitted
 		if !draw_addballs:
-			visual_ball.visible_override = false
-		else:
-			visual_ball.visible_override = true
-			
-		if omissions.get(key, false):
-			visual_ball.visible_override = false
-			visual_ball.omitted = true
-		visual_ball.palette = pal_texture
-			
+			add_visual_ball.visible_override = false
+		if omissions.has(key):
+			add_visual_ball.visible_override = false
+			add_visual_ball.omitted = true
+
+	# Generate paintballz
 	for key in paintball_data:
-		if ball_map[key].omitted:
+		if !ball_map.has(key) or ball_map[key].omitted:
 			continue
+
+		# Merge base ball + addball data so we can locate the base size
 		var merged_dict = {}
 		for v in ball_data:
 			merged_dict[v] = ball_data[v]
 		for v in addball_data:
 			merged_dict[v] = addball_data[v]
+
 		var base_ball = merged_dict[key]
-		var paintballs_for_base_ball: Array = paintball_data[key]
-		paintballs_for_base_ball.invert()
+		var paint_list: Array = paintball_data[key]
+		paint_list.invert() # preserve layered order
+
 		var count = 0
-		for paintball in paintballs_for_base_ball:
+		for paintball in paint_list:
 			var final_size = base_ball.size * (paintball.size / 100.0)
 			final_size -= 1 - fmod(final_size, 2)
-			var visual_ball: Spatial
+
+			var pb_visual_ball: Spatial
 			if new_create:
-				visual_ball = paintball_scene.instance()
+				pb_visual_ball = paintball_scene.instance()
 			else:
-				visual_ball = paintball_map[key][count]
+				pb_visual_ball = paintball_map[key][count]
+
 			if new_create:
-				ball_map[key].add_child(visual_ball)
-				visual_ball.set_owner(root)
-				visual_ball.add_to_group("paintballs")
-				visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
-				visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+				ball_map[key].add_child(pb_visual_ball)
+				pb_visual_ball.set_owner(root)
+				pb_visual_ball.add_to_group("paintballs")
+				pb_visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
+				pb_visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+
 				if paintball.texture_id > -1:
-					var tex_info = texture_list[paintball.texture_id]
-					var texture_filename = tex_info.filename
-					visual_ball.transparent_color = tex_info.transparent_color
+					var tex_pb = load_texture_from_list(paintball.texture_id, texture_list)
+					if tex_pb:
+						pb_visual_ball.texture = tex_pb
+						pb_visual_ball.transparent_color = texture_list[paintball.texture_id].transparent_color
+				pb_visual_ball.color_index = paintball.color_index
+				pb_visual_ball.palette = pal_texture
 
-					var texture = load_texture(texture_filename, preloader)
-					visual_ball.texture = texture
+			pb_visual_ball.base_ball_position = ball_map[key].global_transform.origin
+			pb_visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
+			pb_visual_ball.ball_size = final_size
+			pb_visual_ball.base_ball_size = base_ball.size
+			pb_visual_ball.outline_color_index = paintball.outline_color_index
+			pb_visual_ball.outline = paintball.outline
+			pb_visual_ball.fuzz_amount = clamp(paintball.fuzz / 2, 0, 5)
+			pb_visual_ball.z_add = float(count)
+			pb_visual_ball.base_ball_no = paintball.base
 
-				else:
-					visual_ball.transparent_color = paintball.color_index
-				visual_ball.color_index = paintball.color_index
-				visual_ball.palette = pal_texture
-					
-			visual_ball.base_ball_position = ball_map[key].global_transform.origin
-			visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
-			visual_ball.ball_size = final_size
-			visual_ball.base_ball_size = base_ball.size
-			visual_ball.outline_color_index = paintball.outline_color_index
-			visual_ball.outline = paintball.outline
-			visual_ball.fuzz_amount = clamp(paintball.fuzz / 2, 0, 5)
-			visual_ball.z_add = count * 1.0
-			visual_ball.base_ball_no = paintball.base
-			
-			count += 1
-			var ar = paintball_map.get(key, [])
-			ar.append(visual_ball)
-			paintball_map[key] = ar
 			if !draw_paintballs:
-				visual_ball.visible_override = false
-			visual_ball.palette = pal_texture
+				pb_visual_ball.visible_override = false
+
+			var ar = paintball_map.get(key, [])
+			if new_create:
+				ar.append(pb_visual_ball)
+				paintball_map[key] = ar
+
+			count += 1
 
 func get_real_ball_size(ball_size):
 	return ball_size
@@ -729,10 +742,13 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		visual_polygon.fuzz_amount = clamp(polygon.fuzz / 2, 0, 5)
 		#print("Polygon fuzz amount set to:", visual_polygon.fuzz_amount)
 
-		if !draw_polygons:
-			visual_polygon.hide()
-			#print("Polygon hidden as draw_polygons is false.")
-		
+		var special_poly =  is_special_baby_ball(species, polygon.ball1) or is_special_baby_ball(species, polygon.ball2) or is_special_baby_ball(species, polygon.ball3) or is_special_baby_ball(species, polygon.ball4)
+		if special_poly:
+			visual_polygon.add_to_group("special_balls")
+			visual_polygon.visible = draw_special_balls
+		else:
+			visual_polygon.visible = draw_polygons
+			
 		polygons_map[i] = visual_polygon
 		i += 1
 
@@ -771,9 +787,11 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		if start == null or end == null:
 			print("Could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
+
 		var omissions = lnz.omissions as Dictionary
 		if omissions.has(line.start) or omissions.has(line.end):
 			continue
+
 		var visual_line
 		if new_create:
 			visual_line = line_scene.instance()
@@ -819,11 +837,18 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		visual_line.line_widths = final_line_width
 		
 		lines_map[i] = visual_line
-		if !draw_lines:
-			visual_line.hide()
+
+		var special_line = is_special_baby_ball(species, line.start) or is_special_baby_ball(species, line.end)
+		if special_line:
+			visual_line.add_to_group("special_balls")
+			visual_line.visible = draw_special_balls
+		else:
+			visual_line.visible = draw_lines
+			
 		if new_create:
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
+		
 		i += 1
 
 func _on_OptionButton_file_selected(file_name):
