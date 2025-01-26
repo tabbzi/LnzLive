@@ -366,9 +366,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	
 	var pal_texture = null
 	if palette != null:
-		var resource_path = "user://resources/palettes/"+palette
-		if ResourceLoader.exists(resource_path):
-			pal_texture = ResourceLoader.load(resource_path)
+		var user_resource_path = "user://resources/palettes/" + palette
+		var res_resource_path = "res://resources/palettes/" + palette
+		if ResourceLoader.exists(user_resource_path):
+			pal_texture = ResourceLoader.load(user_resource_path)
+		elif ResourceLoader.exists(res_resource_path):
+			pal_texture = ResourceLoader.load(res_resource_path)
 		else:
 			pal_texture = preloader.get_resource("palette_"+palette.to_lower())
 	else:
@@ -732,11 +735,14 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	
 	var pal_texture = null
 	if palette != null:
-		var resource_path = "user://resources/palettes/"+palette
-		if ResourceLoader.exists(resource_path):
-			pal_texture = ResourceLoader.load(resource_path)
+		var user_resource_path = "user://resources/palettes/" + palette
+		var res_resource_path = "res://resources/palettes/" + palette
+		if ResourceLoader.exists(user_resource_path):
+			pal_texture = ResourceLoader.load(user_resource_path)
+		elif ResourceLoader.exists(res_resource_path):
+			pal_texture = ResourceLoader.load(res_resource_path)
 		else:
-			pal_texture = preloader.get_resource("palette_"+palette)
+			pal_texture = preloader.get_resource("palette_"+palette.to_lower())
 	else:
 		pal_texture = default_palette
 	
