@@ -8,3 +8,6 @@ path="res://.import/stripe16.bmp-c12c25ed35161e760154cb132155baff.stex"
 
 source_file="res://resources/textures/stripe16.bmp"
 dest_files=[ "res://.import/stripe16.bmp-c12c25ed35161e760154cb132155baff.stex" ]
+
+[params]
+

@@ -8,3 +8,6 @@ path="res://.import/hair10.bmp-6c545417d7a030ff0089a0808adc1a60.stex"
 
 source_file="res://resources/textures/hair10.bmp"
 dest_files=[ "res://.import/hair10.bmp-6c545417d7a030ff0089a0808adc1a60.stex" ]
+
+[params]
+
