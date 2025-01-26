@@ -171,7 +171,7 @@ __meta__ = {
 margin_top = 748.0
 margin_right = 198.0
 margin_bottom = 768.0
-text = "Add File"
+text = "Add LNZ / BMP / PNG"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
 margin_left = 210.0
