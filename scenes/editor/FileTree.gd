@@ -31,7 +31,7 @@ func _ready():
 	
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.lnz ; LNZ Files")
-	file_dialog.add_filter("*.bmp ; Bitmap Textures")
+	file_dialog.add_filter("*.bmp ; BMP Textures")
 	file_dialog.add_filter("*.png ; PNG Palettes")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
