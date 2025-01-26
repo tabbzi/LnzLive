@@ -40,6 +40,7 @@ func _init(file_path):
 		print("File not found: " + file_path)
 		return
 	
+	# Load base data
 	get_texture_list(file)
 	get_palette(file)
 	get_species(file)
@@ -54,14 +55,16 @@ func _init(file_path):
 	get_lines(file)
 	get_polygons(file)
 	get_balls(file)
+	get_addballs(file)
 
+	# Apply overrides after loading base data
 	get_ball_size_override(file)
 	get_fuzz_override(file)
 	get_add_ball_override(file)
 	get_color_info_override(file)
 	get_outline_color_override(file)
-	
-	get_addballs(file)
+
+	# Additional parsing for project balls and moves
 	get_project_balls(file)
 	parse_paintballs(file)
 	parse_moves(file)
@@ -86,14 +89,15 @@ func get_parsed_lines(file: File, keys: Array):
 		if line.begins_with(";") or line.begins_with("#"):
 			continue
 		var parsed = r.search_all(line)
+		if parsed.size() == 0:
+			continue
 		var dict = {}
-		var i = 0
-		for key in keys:
-			dict[key] = int(parsed[i].get_string())
-			i += 1
+		for i in range(keys.size()):
+			if i < parsed.size():
+				dict[keys[i]] = int(parsed[i].get_string())
 		return_array.append(dict)
 	return return_array
-	
+
 func get_parsed_line_strings(file: File, keys: Array):
 	var return_array = []
 	while true:
@@ -329,40 +333,53 @@ func get_ball_size_override(file: File):
 	get_next_section(file, "Ball Size Override")
 	var parsed_lines = get_parsed_lines(file, ["ball", "size"])
 	for line in parsed_lines:
-		var ball_data = balls.get(line.ball, null)
-		if ball_data:
-			ball_data.size = line.size
+		if balls.has(line.ball):
+			balls[line.ball].size = line.size
+		else:
+			print("Warning: [Ball Size Override] override attempted for non-existent ball ", line.ball)
 
 func get_color_info_override(file: File):
 	get_next_section(file, "Color Info Override")
 	var parsed_lines = get_parsed_lines(file, ["ball", "color", "group", "texture"])
 	for line in parsed_lines:
-		var ball_data = balls.get(line.ball, null)
-		if ball_data:
-			ball_data.color = line.color
-			ball_data.group = line.group
-			ball_data.texture = line.texture
+		if balls.has(line.ball):
+			var ball_data = balls[line.ball]
+			if "color_index" in ball_data:
+				ball_data.color_index = line.color
+			if "group" in ball_data and line.has("group"):
+				ball_data.group = line.group
+			if "texture_id" in ball_data and line.has("texture"):
+				ball_data.texture_id = line.texture
+		else:
+			print("Warning: [Color Info Override] override attempted for non-existent ball ", line.ball)
 
 func get_outline_color_override(file: File):
 	get_next_section(file, "Outline Color Override")
 	var parsed_lines = get_parsed_lines(file, ["ball", "outline_color"])
 	for line in parsed_lines:
-		var ball_data = balls.get(line.ball, null)
-		if ball_data:
-			ball_data.outline_color = line.outline_color
+		if balls.has(line.ball):
+			var ball_data = balls[line.ball]
+			if "outline_color" in ball_data:
+				ball_data.outline_color = line.outline_color
+		else:
+			print("Warning: [Outline Color Override] override for non-existent ball ", line.ball)
 
 func get_fuzz_override(file: File):
 	get_next_section(file, "Fuzz Override")
 	var parsed_lines = get_parsed_lines(file, ["ball", "fuzz"])
 	for line in parsed_lines:
-		var ball_data = balls.get(line.ball, null)
-		if ball_data:
-			ball_data.fuzz = line.fuzz
+		if balls.has(line.ball):
+			var ball_data = balls[line.ball]
+			if "fuzz" in ball_data:
+				ball_data.fuzz = line.fuzz
+		else:
+			print("Warning: [Fuzz Override] override for non-existent ball ", line.ball)
 
 func get_add_ball_override(file: File):
 	get_next_section(file, "Add Ball Override")
 	var parsed_lines = get_parsed_lines(file, ["ball", "base", "x", "y", "z"])
 	for line in parsed_lines:
-		var add_ball_data = addballs.get(line.ball, null)
-		if add_ball_data:
-			add_ball_data.position = Vector3(line.x, line.y, line.z)
+		if addballs.has(line.ball):
+			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
+		else:
+			print("Warning: [Add Ball Override] override attempted for non-existent ball ", line.ball)
