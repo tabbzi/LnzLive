@@ -115,6 +115,9 @@ func init_ball_data(species):
 
 	KeyBallsData.max_base_ball_num = bhd.num_balls
 
+func is_special_baby_ball(species: int, ball_no: int) -> bool:
+    return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
+
 func generate_pet(file_path):
 	var lnz_info = LnzParser.new(file_path)
 	lnz = lnz_info
@@ -729,10 +732,13 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		visual_polygon.fuzz_amount = clamp(polygon.fuzz / 2, 0, 5)
 		#print("Polygon fuzz amount set to:", visual_polygon.fuzz_amount)
 
-		if !draw_polygons:
-			visual_polygon.hide()
-			#print("Polygon hidden as draw_polygons is false.")
-		
+		var special_poly =  is_special_baby_ball(species, polygon.ball1) or is_special_baby_ball(species, polygon.ball2) or is_special_baby_ball(species, polygon.ball3) or is_special_baby_ball(species, polygon.ball4)
+		if special_poly:
+			visual_polygon.add_to_group("special_balls")
+			visual_polygon.visible = draw_special_balls
+		else:
+			visual_polygon.visible = draw_polygons
+			
 		polygons_map[i] = visual_polygon
 		i += 1
 
@@ -771,9 +777,11 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		if start == null or end == null:
 			print("Could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
+
 		var omissions = lnz.omissions as Dictionary
 		if omissions.has(line.start) or omissions.has(line.end):
 			continue
+
 		var visual_line
 		if new_create:
 			visual_line = line_scene.instance()
@@ -819,11 +827,18 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		visual_line.line_widths = final_line_width
 		
 		lines_map[i] = visual_line
-		if !draw_lines:
-			visual_line.hide()
+
+		var special_line = is_special_baby_ball(species, line.start) or is_special_baby_ball(species, line.end)
+		if special_line:
+			visual_line.add_to_group("special_balls")
+			visual_line.visible = draw_special_balls
+		else:
+			visual_line.visible = draw_lines
+			
 		if new_create:
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
+		
 		i += 1
 
 func _on_OptionButton_file_selected(file_name):
