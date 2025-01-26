@@ -682,9 +682,9 @@ dhpup.lnz
 ; Second argument is whether texture is single color (1) or multi-color (0)
 ; This texture list is used both here and in add ballz
 [Texture List]
-\art\textures\hair11.bmp        1
-\art\textures\hair10.bmp        1
-\art\textures\hair11.bmp        1
+\art\textures\hair11.bmp 1 256 256
+\art\textures\hair10.bmp 1 256 256
+\art\textures\hair11.bmp 1 256 256
 
 
 ;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
