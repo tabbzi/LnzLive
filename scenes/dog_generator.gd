@@ -339,6 +339,44 @@ func get_root():
 	else:
 		return get_tree().root.get_node("Root/PetRoot")
 
+func load_texture(texture_filename: String, preloader: ResourcePreloader):
+	var texture = null
+	var base_name = texture_filename.get_basename()
+	var extension = texture_filename.get_extension()
+	var filename_variants = []
+	filename_variants.append(texture_filename)
+	filename_variants.append(texture_filename.to_upper())
+	filename_variants.append(texture_filename.to_lower())
+	filename_variants.append(base_name + "." + extension.to_upper())
+	filename_variants.append(base_name + "." + extension.to_lower())
+	filename_variants.append(base_name.to_upper() + "." + extension)
+	filename_variants.append(base_name.to_lower() + "." + extension)
+	filename_variants.append(base_name.to_upper() + "." + extension.to_upper())
+	filename_variants.append(base_name.to_lower() + "." + extension.to_lower())
+
+	var deduped = []
+	for v in filename_variants:
+		if not (v in deduped):
+			deduped.append(v)
+	filename_variants = deduped
+
+	for variant in filename_variants:
+		var resource_path = "res://resources/textures/" + variant
+		var user_resource_path = "user://resources/textures/" + variant
+
+		if ResourceLoader.exists(resource_path):
+			texture = ResourceLoader.load(resource_path)
+			break
+		elif ResourceLoader.exists(user_resource_path):
+			texture = ResourceLoader.load(user_resource_path)
+			break
+
+	if texture == null:
+		texture = preloader.get_resource(texture_filename)
+
+	return texture
+
+
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool):
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
@@ -456,15 +494,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var tex_info = texture_list[ball.texture_id]
 					var texture_filename = tex_info.filename
 					visual_ball.transparent_color = tex_info.transparent_color
-					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
-					var user_resource_path = "user://resources/textures/"+texture_filename
-					var texture = null
 
-					if ResourceLoader.exists(resource_path):
-						texture = ResourceLoader.load(resource_path)
-					else:
-						texture = preloader.get_resource(texture_filename.to_lower())
-						
+					var texture = load_texture(texture_filename, preloader)
 					visual_ball.texture = texture
 
 					if tex_info.texture_size != null:
@@ -529,15 +560,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var tex_info = texture_list[ball.texture_id]
 				var texture_filename = tex_info.filename
 				visual_ball.transparent_color = tex_info.transparent_color
-				var texture = null
-				var resource_path = "res://resources/textures/"+texture_filename.to_lower()
-				var user_resource_path = "user://resources/textures/"+texture_filename
 
-				if ResourceLoader.exists(resource_path):
-					texture = ResourceLoader.load(resource_path)
-				else:
-					texture = preloader.get_resource(texture_filename)
-				
+				var texture = load_texture(texture_filename, preloader)
 				visual_ball.texture = texture
 
 				if tex_info.texture_size != null:
@@ -599,15 +623,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var tex_info = texture_list[paintball.texture_id]
 					var texture_filename = tex_info.filename
 					visual_ball.transparent_color = tex_info.transparent_color
-					var texture = null
-					var resource_path = "res://resources/textures/"+texture_filename.to_lower()
-					var user_resource_path = "user://resources/textures/"+texture_filename
 
-					if ResourceLoader.exists(resource_path):
-						texture = ResourceLoader.load(resource_path)
-					else:
-						texture = preloader.get_resource(texture_filename)
-
+					var texture = load_texture(texture_filename, preloader)
 					visual_ball.texture = texture
 
 				else:
