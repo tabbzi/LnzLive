@@ -22,12 +22,12 @@ func _init(file_path):
 	if "baby" in file_path.to_lower():
 		for i in range(num_balls):
 			ball_sizes.append(file.get_16()) 
-			#print("Ball Size[", i, "]: ", ball_sizes[i])
+			print("Ball Size[", i, "]: ", ball_sizes[i])
 		file.seek(438)
 	else:
 		for i in range(num_balls):
 			ball_sizes.append(file.get_16())
-			#print("Ball Size[", i, "]: ", ball_sizes[i])
+			print("Ball Size[", i, "]: ", ball_sizes[i])
 	
 	var animation_count = file.get_16()
 	print("Number of Animations: ", animation_count)
