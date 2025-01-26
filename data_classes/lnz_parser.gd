@@ -63,8 +63,11 @@ func get_parsed_line_strings(file: File, keys: Array):
 		var dict = {}
 		var i = 0
 		for key in keys:
-			dict[key] = parsed[i].get_string()
-			i += 1
+			if i < parsed.size():
+				dict[key] = parsed[i].get_string()
+				i += 1
+			else:
+				dict[key] = ""
 		return_array.append(dict)
 	return return_array
 
@@ -304,8 +307,8 @@ func get_texture_list(file: File):
 		var texture_size = null
 
 		if line.has("width") and line.has("height"):
-			var width = float(line.width) if line.width.is_valid_float() else null
-			var height = float(line.height) if line.height.is_valid_float() else null
+			var width = float(line.width) if line.width.is_valid_float() else 256
+			var height = float(line.height) if line.height.is_valid_float() else 256
 			if width != null and height != null:
 				texture_size = Vector2(width, height)
 
