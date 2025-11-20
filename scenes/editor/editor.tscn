@@ -1476,6 +1476,13 @@ margin_bottom = 29.0
 custom_fonts/font = ExtResource( 27 )
 text = "Randomize"
 
+[node name="WriteVariationCheckBox" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 704.0
+margin_right = 845.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+text = "As Variation"
+
 [node name="RecolorLines" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
 margin_top = 33.0
 margin_right = 622.0
