@@ -50,6 +50,7 @@ var _orig_world_pos := {}
 var eyelid_dir_map := {}
 var eyelid_mode := 0
 var variation_panel = null
+var current_variation_state = {}
 
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
@@ -74,10 +75,10 @@ signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, is_addball)
 signal addball_deleted(ball_no)
 
-signal ball_translation_changed(ball_no, new_position)
+signal ball_translation_changed(ball_no, new_position, variation_context)
 signal ball_translations_done
 
-signal ball_resized(ball_no, size_dif)
+signal ball_resized(ball_no, size_dif, variation_context)
 
 signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
@@ -262,6 +263,7 @@ func generate_pet(file_path):
 		variation_panel.setup(lnz_info)
 
 func _on_variation_changed(variation_state):
+	current_variation_state = variation_state
 	lnz.apply_variation_state(variation_state)
 	_reload_base_model()
 	init_visual_balls(lnz, true)
@@ -1268,10 +1270,10 @@ func _on_EyeLidButton_pressed():
 	update_eyelids(EYELID_TILTS[eyelid_mode])
 
 func emit_ball_translation(ball_no: int, new_position: Vector3):
-	emit_signal("ball_translation_changed", ball_no, new_position)
+	emit_signal("ball_translation_changed", ball_no, new_position, current_variation_state)
 
 func emit_ball_resize(ball_no: int, size_dif: int):
-	emit_signal("ball_resized", ball_no, size_dif)
+	emit_signal("ball_resized", ball_no, size_dif, current_variation_state)
 
 func remove_last_pending_paintball():
 	if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
