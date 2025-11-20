@@ -268,10 +268,14 @@ func _on_RecolorPopup_confirmed():
 	var ball_outlines_on = popup.get_node("CheckContainer/Ball outlines").pressed
 	var paintballs_on = popup.get_node("CheckContainer/Paintballs").pressed
 	var lines_on = popup.get_node("CheckContainer/Lines").pressed
+	var write_variation = popup.get_node("CheckContainer/WriteVariationCheckBox").pressed
+
 	recolor_info.balls_on = balls_on
 	recolor_info.ball_outlines_on = ball_outlines_on
 	recolor_info.paintballs_on = paintballs_on
 	recolor_info.lines_on = lines_on
+	recolor_info.write_to_variation = write_variation
+
 	emit_signal("recolor", recolor_info)
 
 func _on_ClearButton_pressed():
