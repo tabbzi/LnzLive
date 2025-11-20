@@ -228,6 +228,76 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 			empty_count += 1
 	return {"start": start_line, "end": end_line, "header": header_line, "empties": empty_count}
 
+func _get_section_name_from_tag(tag: String) -> String:
+	return tag.replace("[", "").replace("]", "")
+
+func _section_contains_header(start_line: int, end_line: int, header: String) -> bool:
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		if line == header or line.begins_with(header + " ") or line.begins_with(header + ";"):
+			return true
+	return false
+
+func _get_target_variation_header(section_tag: String, start_line: int, end_line: int, context: Dictionary) -> String:
+	if context == null or context.empty():
+		return ""
+
+	var section_name = _get_section_name_from_tag(section_tag)
+
+	# 1. Section Overrides
+	if context.has("Sections") and context["Sections"].has(section_name):
+		return "#" + str(context["Sections"][section_name])
+
+	# 2. Link Groups
+	if context.has("Link Groups"):
+		for link_group in context["Link Groups"]:
+			var index = str(context["Link Groups"][link_group])
+			var code_linked = "#" + index + "." + link_group
+			var code_simple = "#" + index
+
+			if _section_contains_header(start_line, end_line, code_linked):
+				return code_linked
+
+			# Fallback to simple index if linked one not found (standard LNZ behavior?)
+			# Actually standard behavior checks if the section supports the simple index too.
+			if _section_contains_header(start_line, end_line, code_simple):
+				return code_simple
+
+	return ""
+
+func _get_block_bounds_in_section(section_start: int, section_end: int, variation_header: String) -> Dictionary:
+	var block_start = section_start
+	var block_end = section_end
+
+	if variation_header == "":
+		# Default block: from start of section until first variation header
+		for i in range(section_start, section_end):
+			var line = get_line(i).strip_edges()
+			if line.begins_with("#"):
+				block_end = i
+				break
+		return {"start": block_start, "end": block_end, "found": true}
+	else:
+		# Variation block: find header, then find next header or end
+		var header_found = false
+		for i in range(section_start, section_end):
+			var line = get_line(i).strip_edges()
+			if line == variation_header or line.begins_with(variation_header + " ") or line.begins_with(variation_header + ";"):
+				block_start = i + 1
+				header_found = true
+				# Find end
+				for j in range(block_start, section_end):
+					var sub_line = get_line(j).strip_edges()
+					if sub_line.begins_with("#"):
+						block_end = j
+						break
+				break
+
+		if not header_found:
+			return {"start": -1, "end": -1, "found": false}
+
+		return {"start": block_start, "end": block_end, "found": true}
+
 func _split_line(line: String) -> PoolStringArray:
 	var regex = RegEx.new()
 	regex.compile("[\\s,]+") 
@@ -851,14 +921,25 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	else:
 		print("Missing bodyarea for ball", real_base_ball)
 	
-	var section_find = search("[Add Ball]", 0, 0, 0)
-	if section_find.empty():
+	var section_bounds = _get_section_bounds("[Add Ball]")
+	if section_bounds.empty():
 		print("[LNZ EDIT] No [Add Ball] section found")
 		return
-	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var start_line = section_bounds["start"]
+	var end_line = section_bounds["end"]
+
+	# Identify active variation block
+	var variation_context = pet_node.current_variation_state if pet_node else {}
+	var variation_header = _get_target_variation_header("[Add Ball]", start_line, end_line, variation_context)
+	var block_bounds = _get_block_bounds_in_section(start_line, end_line, variation_header)
+
+	if not block_bounds.found:
+		print("[LNZ EDIT] Active variation block not found, defaulting to section start")
+		block_bounds = {"start": start_line, "end": end_line}
+
+	var insert_line = _find_insertion_line(block_bounds.start, block_bounds.end)
 	var delim = _detect_delimiter(start_line, end_line)
-	var insert_line = _find_insertion_line(start_line, end_line)
 
 	var fields = [
 		str(real_base_ball),
@@ -889,6 +970,38 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
+	# Count addballs properly including defaults + overrides to determine new ball ID
+	# Actually, if we append to a variation, does it append to the end of the BALL LIST?
+	# LNZ Parser logic concatenates Default + Variation lines.
+	# So appending to variation adds a new ball at the end of the combined list.
+	# So the ball number should be valid.
+
+	# However, if we are writing to DEFAULT block while a Variation is active,
+	# the new ball is inserted BEFORE the variation balls?
+	# If Default has 5 balls, Variation has 2 balls.
+	# Total 7 balls (0-4 Default, 5-6 Variation).
+	# If we insert into Default at end of Default block, it becomes index 5.
+	# The old index 5 (Variation #0) becomes index 6.
+	# This shifts indices of Variation balls!
+	# So if we write to Default, we might break references to variation addballs?
+	# But Addballs are usually referenced by relative index in LNZ? No, absolute ball number.
+	# Addball IDs are implicit.
+	# If we shift IDs, we break [Linez] etc. that point to the high IDs.
+
+	# Ideally, we should always append to the END of the active set.
+	# If Variation is active, append to Variation. (Index = DefaultCount + VariationCount).
+	# If Default is active (no variation), append to Default.
+
+	# What if we insert into Default while Variation is present?
+	# This is dangerous. But if the user selected "Default" variation (None), then Variation is not active.
+	# If user has Variation A active, and adds a ball. We write to Variation A.
+	# The new ball is at the end. No index shift for existing balls. Safe.
+
+	# What if Variation A is active, but we decide to write to Default?
+	# That would be bad. So we MUST write to active variation if one is selected.
+	# Which is what my code does above (`_get_target_variation_header`).
+
+	# The returned `addball_no` needs to be the new total count.
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 
 	if also_connect_line:
@@ -3055,7 +3168,8 @@ func update_lnz_section_two_values(section_name, val1, val2):
 		set_line(start_line, new_line)
 		return
 
-func _on_Node_ball_resized(ball_no: int, size_dif: int):
+func _on_Node_ball_resized(ball_no: int, size_dif: int, variation_context: Dictionary = {}):
+	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -3067,81 +3181,170 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 
 	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
 
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var sec_bounds = _get_section_bounds(section_tag)
+	if sec_bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var start_line = sec_bounds["start"]
+	var end_line = sec_bounds["end"]
+	var variation_header = _get_target_variation_header(section_tag, start_line, end_line, variation_context)
+	var block_bounds = _get_block_bounds_in_section(start_line, end_line, variation_header)
 
-	if end_line == -1:
-		end_line = get_line_count()
+	if not block_bounds.found:
+		if variation_header != "":
+			print("[LNZ EDIT] Variation block %s not found in %s" % [variation_header, section_tag])
+			# TODO: Create the block? For now just return or fallback to default?
+			# If user selected a variation, we should create it if it doesn't exist but we are editing it.
+			# But usually LnzParser only offers available variations.
+			return
+		else:
+			# Should not happen if section exists
+			return
+
+	var block_start = block_bounds.start
+	var block_end = block_bounds.end
+
+	var line_found = false
 
 	if is_addball:
 		var addball_index = ball_no - max_base_ball_no
 		var count = 0
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
-			if count == addball_index:
-				var parts = _split_and_clean(raw)
-				if parts.size() > size_field_index:
-					var old_size = parts[size_field_index].to_int()
-					var new_size = size_dif
-					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
-					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
-					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, " ")
-					set_line(i, new_line)
-					print("[LNZ EDIT] Updated line: %s" % new_line)
-					save_file()
-					return
-			count += 1
-		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
-	else:
-		var count = 0
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
-			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
-			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
-			if count == ball_no:
-				var parts = _split_and_clean(raw)
-				if parts.size() > size_field_index:
-					var old_size = parts[size_field_index].to_int()
-					var new_size = size_dif
-					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
-					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
-					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, " ")
-					set_line(i, new_line)
-					print("[LNZ EDIT] Updated line: %s" % new_line)
-					save_file()
-					return
-				else:
-					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
-					return
-			count += 1
-		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
 
-func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+		if variation_header != "":
+			# Scan current variation block
+			var var_lines = []
+			var var_line_indices = []
+			for i in range(block_start, block_end):
+				var line = get_line(i).strip_edges()
+				if line != "" and not line.begins_with(";"):
+					var_lines.append(line)
+					var_line_indices.append(i)
+
+			if addball_index < var_lines.size():
+				# Found in variation
+				var i = var_line_indices[addball_index]
+				var raw = get_line(i).strip_edges()
+				var parts = _split_and_clean(raw)
+				if parts.size() > size_field_index:
+					var new_size = size_dif
+					parts[size_field_index] = str(new_size)
+					var new_line = _join_array(parts, " ")
+					set_line(i, new_line)
+					save_file()
+					return
+			else:
+				# Not found in variation. Need to copy from Default.
+				var def_bounds = _get_block_bounds_in_section(start_line, end_line, "")
+				var def_lines = []
+				for i in range(def_bounds.start, def_bounds.end):
+					var line = get_line(i).strip_edges()
+					if line != "" and not line.begins_with(";"):
+						def_lines.append(line)
+
+				if addball_index < def_lines.size():
+					var raw = def_lines[addball_index]
+					var parts = _split_and_clean(raw)
+					if parts.size() > size_field_index:
+						var new_size = size_dif
+						parts[size_field_index] = str(new_size)
+						var new_line = _join_array(parts, " ")
+
+						_insert_text_at_cursor_at_line(block_end, new_line + "\n")
+						save_file()
+						return
+		else:
+			# Default block editing (existing logic)
+			for i in range(block_start, block_end):
+				var raw = get_line(i).strip_edges()
+				if raw == "" or raw.begins_with(";"):
+					continue
+				if count == addball_index:
+					var parts = _split_and_clean(raw)
+					if parts.size() > size_field_index:
+						var old_size = parts[size_field_index].to_int()
+						var new_size = size_dif
+						parts[size_field_index] = str(new_size)
+						var new_line = _join_array(parts, " ")
+						set_line(i, new_line)
+						save_file()
+						return
+				count += 1
+
+	else:
+		# Base Balls [Ballz Info]
+		if variation_header != "":
+			# Scan variation block
+			var var_line_idx = -1
+			var count = 0
+			for i in range(block_start, block_end):
+				var raw = get_line(i).strip_edges()
+				if raw == "" or raw.begins_with(";"):
+					continue
+				if count == ball_no:
+					var_line_idx = i
+					break
+				count += 1
+
+			if var_line_idx != -1:
+				# Edit existing variation line
+				var raw = get_line(var_line_idx).strip_edges()
+				var parts = _split_and_clean(raw)
+				if parts.size() > size_field_index:
+					var new_size = size_dif
+					parts[size_field_index] = str(new_size)
+					var new_line = _join_array(parts, " ")
+					set_line(var_line_idx, new_line)
+					save_file()
+					return
+			else:
+				# Copy from Default
+				var def_bounds = _get_block_bounds_in_section(start_line, end_line, "")
+				var def_line_raw = ""
+				var def_count = 0
+				for i in range(def_bounds.start, def_bounds.end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"):
+						continue
+					if def_count == ball_no:
+						def_line_raw = raw
+						break
+					def_count += 1
+
+				if def_line_raw != "":
+					var parts = _split_and_clean(def_line_raw)
+					if parts.size() > size_field_index:
+						var new_size = size_dif
+						parts[size_field_index] = str(new_size)
+						var new_line = _join_array(parts, " ")
+
+						_insert_text_at_cursor_at_line(block_end, new_line + "\n")
+						save_file()
+						return
+
+func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3, variation_context: Dictionary = {}):
 	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Move]"
 	if is_addball:
-		section_tag = "[Add Ball]"
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+		section_tag = "[Add Ball]" # Moving addballs updates their definition in [Add Ball]
+
+	var sec_bounds = _get_section_bounds(section_tag)
+	if sec_bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		return
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-	if end_line == -1:
-		end_line = get_line_count()
+
+	var start_line = sec_bounds["start"]
+	var end_line = sec_bounds["end"]
+	var variation_header = _get_target_variation_header(section_tag, start_line, end_line, variation_context)
+	var block_bounds = _get_block_bounds_in_section(start_line, end_line, variation_header)
+
+	if not block_bounds.found:
+		return # Should create block logic here if needed
+
+	var block_start = block_bounds.start
+	var block_end = block_bounds.end
 
 	if is_addball:
 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
@@ -3155,50 +3358,147 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 				new_relative_pos.y *= -1.0
 
 				var idx = ball_no - KeyBallsData.max_base_ball_num
-				var count = 0
-				for i in range(start_line, end_line):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"):
-						continue
-					if count == idx:
-						var parts = _split_and_clean(raw)
-						if parts.size() >= 4:
-							parts[1] = str(round(new_relative_pos.x))
-							parts[2] = str(round(new_relative_pos.y))
-							parts[3] = str(round(new_relative_pos.z))
-							var new_line = _join_array(parts, " ")
-							set_line(i, new_line)
-						break
-					count += 1
+
+				var def_bounds = _get_block_bounds_in_section(start_line, end_line, "")
+				var def_count = 0
+				for i in range(def_bounds.start, def_bounds.end):
+					var line = get_line(i).strip_edges()
+					if line != "" and not line.begins_with(";"):
+						def_count += 1
+
+				var target_block_start = -1
+				var target_block_end = -1
+				var local_idx = -1
+
+				if variation_header != "":
+					# If active variation, shadow copy logic:
+					# If addball is in Default, we essentially duplicate it into Variation (appending).
+					# This follows the "Shadow Copy" instruction strictly even if it means duplication
+					# in a concatenating parser.
+
+					# Check if already in variation
+					var var_count = 0
+					var found_in_var = false
+					for i in range(block_start, block_end):
+						var line = get_line(i).strip_edges()
+						if line != "" and not line.begins_with(";"):
+							# Is this the addball we want?
+							# If we map global ID to variation index:
+							# global_id = max_base + def_count + var_index
+							# So var_index = global_id - max_base - def_count
+							# This assumes standard concatenation order.
+							if var_count == (idx - def_count):
+								target_block_start = block_start
+								target_block_end = block_end
+								local_idx = var_count
+								found_in_var = true
+								break
+							var_count += 1
+
+					if not found_in_var:
+						# Not found in variation. Must be in Default.
+						# Shadow Copy: Retrieve default line, modify, insert into Variation.
+						if idx < def_count:
+							var current_def_idx = 0
+							for i in range(def_bounds.start, def_bounds.end):
+								var raw = get_line(i).strip_edges()
+								if raw == "" or raw.begins_with(";"): continue
+								if current_def_idx == idx:
+									var parts = _split_and_clean(raw)
+									if parts.size() >= 4:
+										parts[1] = str(round(new_relative_pos.x))
+										parts[2] = str(round(new_relative_pos.y))
+										parts[3] = str(round(new_relative_pos.z))
+										var new_line = _join_array(parts, " ")
+										_insert_text_at_cursor_at_line(block_end, new_line + "\n")
+										save_file()
+									return
+								current_def_idx += 1
+					else:
+						# Found in variation, proceed to update
+						pass
+				else:
+					# Default block
+					if idx < def_count:
+						target_block_start = def_bounds.start
+						target_block_end = def_bounds.end
+						local_idx = idx
+					else:
+						return
+
+				if target_block_start != -1:
+					var current_count = 0
+					for i in range(target_block_start, target_block_end):
+						var raw = get_line(i).strip_edges()
+						if raw == "" or raw.begins_with(";"):
+							continue
+						if current_count == local_idx:
+							var parts = _split_and_clean(raw)
+							if parts.size() >= 4:
+								parts[1] = str(round(new_relative_pos.x))
+								parts[2] = str(round(new_relative_pos.y))
+								parts[3] = str(round(new_relative_pos.z))
+								var new_line = _join_array(parts, " ")
+								set_line(i, new_line)
+								save_file()
+							return
+						current_count += 1
 	else:
+		# Base Ball -> [Move]
 		var updated = false
-		for i in range(start_line, end_line):
+
+		for i in range(block_start, block_end):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"):
 				continue
 			var parts = _split_and_clean(raw)
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
-				parts[1] = str(parts[1].to_int() + new_pos.x)
-				parts[2] = str(parts[2].to_int() + new_pos.y)
-				parts[3] = str(parts[3].to_int() + new_pos.z)
+				var def_move = Vector3.ZERO
+				if variation_header != "":
+					var def_bounds = _get_block_bounds_in_section(start_line, end_line, "")
+					for j in range(def_bounds.start, def_bounds.end):
+						var d_raw = get_line(j).strip_edges()
+						if d_raw == "" or d_raw.begins_with(";"): continue
+						var d_parts = _split_and_clean(d_raw)
+						if d_parts.size() >= 4 and d_parts[0].to_int() == ball_no:
+							def_move = Vector3(d_parts[1].to_int(), d_parts[2].to_int(), d_parts[3].to_int())
+
+				var desired_val = new_pos - def_move
+				parts[1] = str(desired_val.x)
+				parts[2] = str(desired_val.y)
+				parts[3] = str(desired_val.z)
 				var new_line = _join_array(parts, " ")
 				set_line(i, new_line)
-				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
+				print("[LNZ EDIT] Updated [Move] line at %d: %s" % [i, new_line])
 				updated = true
 				break
+
 		if not updated:
+			var def_move = Vector3.ZERO
+			if variation_header != "":
+				var def_bounds = _get_block_bounds_in_section(start_line, end_line, "")
+				for j in range(def_bounds.start, def_bounds.end):
+					var d_raw = get_line(j).strip_edges()
+					if d_raw == "" or d_raw.begins_with(";"): continue
+					var d_parts = _split_and_clean(d_raw)
+					if d_parts.size() >= 4 and d_parts[0].to_int() == ball_no:
+						var val = Vector3(d_parts[1].to_int(), d_parts[2].to_int(), d_parts[3].to_int())
+						def_move += val
+
+			var desired_val = new_pos - def_move
+
 			var sep = " "
 			var line_txt = "%d%s%d%s%d%s%d" % [
 				ball_no, sep,
-				new_pos.x, sep,
-				new_pos.y, sep,
-				new_pos.z
+				desired_val.x, sep,
+				desired_val.y, sep,
+				desired_val.z
 			]
-			var insert_at = end_line
-			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
-				insert_at -= 1
+
+			var insert_at = block_end
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
+
 	save_file()
 
 func _escape_regex(pattern_str: String) -> String:
