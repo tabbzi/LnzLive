@@ -113,6 +113,18 @@ The 3D viewport displays the LNZ model.
 
 The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
 
+#### Find / Replace
+
+Search panel to find and replace.
+
+#### Variation Control Panel
+
+If the loaded LNZ file contains variation blocks (e.g., `#1`, `#2.A`), a **Variation Control Panel** will automatically appear between the toolbar and the text editor.
+
+*   **Link Groups:** Use these dropdowns to toggle entire sets of variations linked by an ID (e.g., `#1.A`, `#2.A`). Changing a Link Group (e.g., "Set A") will update all LNZ sections that contain variations tagged with that link ID.
+*   **Section Overrides:** Use these dropdowns to override the specific variation index for a single section (e.g., force `[Ballz Info]` to use variation #2), regardless of the active Link Group.
+*   **Real-time Updates:** Changing any dropdown will instantly update the 3D visualization to reflect the chosen combination of variations.
+
 ## Menu Options
 
 ### File
