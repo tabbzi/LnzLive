@@ -30,6 +30,7 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
 [ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=36]
+[ext_resource path="res://scenes/editor/VariationPanel.tscn" type="PackedScene" id=37]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -1212,6 +1213,12 @@ custom_styles/pressed = SubResource( 4 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Close"
+
+[node name="VariationPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer" instance=ExtResource( 37 )]
+visible = false
+margin_top = 25.0
+margin_right = 757.0
+margin_bottom = 134.0
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_top = 25.0
