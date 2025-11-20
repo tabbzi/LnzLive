@@ -49,6 +49,7 @@ var _orig_world_pos := {}
 
 var eyelid_dir_map := {}
 var eyelid_mode := 0
+var variation_panel = null
 
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
@@ -90,6 +91,10 @@ func _ready():
 	editor.connect("find_project_ball", self, "_on_LnzTextEdit_find_project_ball")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	t_pose_checkbox = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox")
+
+	variation_panel = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/VariationPanel")
+	if variation_panel:
+		variation_panel.connect("variation_changed", self, "_on_variation_changed")
 
 func symmetrize_skeleton():
 	var symmetry_data = {}
@@ -143,15 +148,20 @@ func set_animation(anim_index: int):
 
 func set_frame(frame: int):
 	current_frame = frame
+	_reload_base_model()
+	init_visual_balls(lnz, false)
+
+func _reload_base_model():
 	balls = []
+	if bhd == null or current_bdt == null:
+		return
+
 	for n in bhd.num_balls:
-		var x = current_bdt.frames[frame][n]
+		var x = current_bdt.frames[current_frame][n]
 		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
 	
 	if t_pose_active:
 		symmetrize_skeleton()
-
-	init_visual_balls(lnz, false)
 
 func _on_TPoseCheckBox_toggled(button_pressed):
 	t_pose_active = button_pressed
@@ -247,6 +257,14 @@ func generate_pet(file_path):
 	KeyBallsData.build_bodyarea_map()
 	init_ball_data(lnz_info.species)
 	init_visual_balls(lnz_info, true)
+
+	if variation_panel:
+		variation_panel.setup(lnz_info)
+
+func _on_variation_changed(variation_state):
+	lnz.apply_variation_state(variation_state)
+	_reload_base_model()
+	init_visual_balls(lnz, true)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()

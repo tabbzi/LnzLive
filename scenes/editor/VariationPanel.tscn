@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://scenes/editor/VariationPanel.gd" type="Script" id=1]
+[ext_resource path="res://resources/styles/stylebox_tree_bg.tres" type="StyleBox" id=2]
+
+[node name="VariationPanel" type="PanelContainer"]
+margin_right = 757.0
+margin_bottom = 100.0
+custom_styles/panel = ExtResource( 2 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_left = 5.0
+margin_top = 5.0
+margin_right = 752.0
+margin_bottom = 95.0
+
+[node name="LinkGroupsContainer" type="VBoxContainer" parent="VBoxContainer"]
+margin_right = 747.0
+margin_bottom = 43.0
+size_flags_vertical = 3
+
+[node name="SectionsContainer" type="VBoxContainer" parent="VBoxContainer"]
+margin_top = 47.0
+margin_right = 747.0
+margin_bottom = 90.0
+size_flags_vertical = 3
