@@ -330,10 +330,32 @@ func _on_BhdPrompt_confirmed():
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()
 	# dumb code - duplicate the lnz info to prevent movements being applied multiple times
+
+	var bhd_limit = 0
+	if bhd:
+		bhd_limit = bhd.num_balls
+
 	var addballs = {}
+
+	for k in lnz_info.balls:
+		if k >= bhd_limit:
+			var b = lnz_info.balls[k]
+			addballs[k] = AddBallData.new(0, k, b.size, b.position, b.color_index, b.outline_color_index, b.outline, b.fuzz, 0, b.group, 0, b.texture_id)
+
+	var shift_amount = 0
+	if lnz_info.addballs.size() > 0:
+		var min_add_id = lnz_info.addballs.keys().min()
+		if min_add_id < bhd_limit:
+			shift_amount = bhd_limit - min_add_id
+			
 	for k in lnz_info.addballs:
 		var a = lnz_info.addballs[k]
-		addballs[k] = AddBallData.new(a.base, a.ball_no, a.size, a.position, a.color_index, a.outline_color_index, a.outline, a.fuzz, a.z_add, a.group, a.body_area, a.texture_id)
+		var new_k = k + shift_amount
+		addballs[k] = AddBallData.new(a.base, new_k, a.size, a.position, a.color_index, a.outline_color_index, a.outline, a.fuzz, a.z_add, a.group, a.body_area, a.texture_id)
+	
+	# for k in lnz_info.addballs:
+	# 	var a = lnz_info.addballs[k]
+	# 	addballs[k] = AddBallData.new(a.base, a.ball_no, a.size, a.position, a.color_index, a.outline_color_index, a.outline, a.fuzz, a.z_add, a.group, a.body_area, a.texture_id)
 	
 	var paintballs = {}
 	
