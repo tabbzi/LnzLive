@@ -1240,8 +1240,7 @@ margin_right = 757.0
 margin_bottom = 1078.0
 rect_min_size = Vector2( 0, 30 )
 
-[node name="Label" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
-margin_left = 5.0
+[node name="ModelLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
 margin_top = 5.0
 margin_right = 138.0
 margin_bottom = 25.0
@@ -1249,7 +1248,23 @@ custom_fonts/font = ExtResource( 35 )
 text = "Current Model:"
 
 [node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
-margin_left = 155.0
+margin_left = 142.0
+margin_right = 392.0
+margin_bottom = 26.0
+rect_min_size = Vector2( 250, 20 )
+size_flags_horizontal = 2
+size_flags_vertical = 0
+custom_fonts/font = ExtResource( 35 )
+
+[node name="GameLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_top = 5.0
+margin_right = 138.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 35 )
+text = "Current Game:"
+
+[node name="GameOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 142.0
 margin_right = 392.0
 margin_bottom = 26.0
 rect_min_size = Vector2( 250, 20 )
