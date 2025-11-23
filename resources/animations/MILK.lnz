@@ -1,0 +1,28 @@
+[Num Ballz]
+5
+
+[Default Scales]
+130			normal pet scale
+160			normal ball scale
+
+[Omissions]
+0
+
+[Draw Linez Before Ballz]
+0
+
+; -1 mean use the associated ball color
+; Only the first three fields need to be specefied
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick	fulloutline
+[Linez]
+2, 	1, 	0, 	-1, 	244, 	244,	100,	100		1		
+
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+[Ballz Info]
+64,		244,       -1,        -1,   		-1,		0,		8,		-1 		bottle2
+64,		244,       -1,        -1,   		2,		-3,		8,		-1 		bottle3
+64,		244,       -1,        -1,   		2,		-3,		8,		-1 		bottle1
+175,	244,       -1,        -1,   		1,		0,		8,		-1 		nipple1
+175,	244,       -1,        -1,   		1,		0,		8,		-1 		nipple2
