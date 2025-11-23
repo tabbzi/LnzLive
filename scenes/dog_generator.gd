@@ -722,8 +722,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.transform.origin = pos * pixel_world_size
 
 			if new_create:
-				# Apply texture if needed
-				if ball.texture_id >= 0:
+				if ball.texture_id >= 0 and ball.texture_id < texture_list.size():
 					var tex_info_eye = texture_list[ball.texture_id]
 					var tex_load_eye = load_texture_from_list(ball.texture_id, texture_list)
 					if tex_load_eye:
@@ -795,7 +794,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.transform.origin = pos_n * pixel_world_size
 
 			if new_create:
-				if ball.texture_id >= 0:
+				if ball.texture_id >= 0 and ball.texture_id < texture_list.size():
 					var tex_info_base = texture_list[ball.texture_id]
 					var text_load_base = load_texture_from_list(ball.texture_id, texture_list)
 					if text_load_base:
@@ -858,7 +857,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			add_visual_ball.ball_no = add_ball.ball_no
 			add_visual_ball.base_ball_no = add_ball.base
 			add_visual_ball.outline_color_index = add_ball.outline_color_index
-			if add_ball.texture_id >= 0:
+			if add_ball.texture_id >= 0 and add_ball.texture_id < texture_list.size():
 				var tex_info_add = texture_list[add_ball.texture_id]
 				var text_load_add = load_texture_from_list(add_ball.texture_id, texture_list)
 				if text_load_add:
@@ -921,7 +920,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				pb_visual_ball.species = species
 
-				if paintball.texture_id > -1:
+				if paintball.texture_id >= 0 and paintball.texture_id < texture_list.size():
 					var tex_info_pb = texture_list[paintball.texture_id]
 					var tex_load_pb = load_texture_from_list(paintball.texture_id, texture_list)
 					if tex_load_pb:
