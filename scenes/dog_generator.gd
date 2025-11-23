@@ -57,11 +57,11 @@ onready var eyelid_button := get_tree().get_root().get_node(
 	+ "/VBoxContainer/DropDownMenu/EyeLidButton"
 ) as Button
 
-onready var bhd_option_button = get_tree().root.get_node(
-	"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/ModelOptionButton"
-) as OptionButton
+onready var bhd_option_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/ModelOptionButton") as OptionButton
 onready var bhd_prompt_dialog = get_tree().root.get_node("Root/SceneRoot/BhdPromptDialog") as ConfirmationDialog
 onready var bhd_prompt_option = get_tree().root.get_node("Root/SceneRoot/BhdPromptDialog/VBoxContainer/ModelOptionButton") as OptionButton
+
+onready var game_option_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/GameOptionButton") as OptionButton
 
 const EYELID_LABELS = ["neutral", "none", "angry", "scared"]
 const EYELID_TILTS  = [  0.0,      0.0,     -30.0,      30.0 ]
@@ -107,6 +107,12 @@ func _ready():
 		bhd_option_button.connect("item_selected", self, "_on_BhdSwitcher_item_selected")
 	if bhd_prompt_dialog:
 		bhd_prompt_dialog.connect("confirmed", self, "_on_BhdPrompt_confirmed")
+
+	if game_option_button:
+		game_option_button.clear()
+		game_option_button.add_item("Petz")  # Index 0
+		game_option_button.add_item("Babyz") # Index 1
+		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
 
 func populate_bhd_list():
 	bhd_file_list.clear()
@@ -289,6 +295,12 @@ func generate_pet(file_path):
 	KeyBallsData.species = lnz_info.species
 	KeyBallsData.build_bodyarea_map()
 
+	if game_option_button:
+		if lnz_info.species == KeyBallsData.Species.BABY:
+			game_option_button.select(1) # Babyz
+		else:
+			game_option_button.select(0) # Petz (default for Dogz/Catz/custom BHD)
+
 	if lnz_info.species == 0:
 		# Check if we already have a BHD selected from the dropdown/previous load
 		var selected_idx = bhd_option_button.selected
@@ -326,6 +338,19 @@ func _on_BhdPrompt_confirmed():
 		init_ball_data(0, "res://resources/animations/" + bhd_name)
 		init_visual_balls(lnz, true)
 		emit_signal("palette_changed", lnz.palette)
+
+func _on_GameSwitcher_item_selected(index):
+	if !lnz: return
+	if lnz.species == 0:
+		var selected_idx = bhd_option_button.selected
+		if selected_idx != -1:
+			var bhd_name = bhd_option_button.get_item_text(selected_idx)
+			init_ball_data(0, "res://resources/animations/" + bhd_name)
+	else:
+		init_ball_data(lnz.species)
+	
+	init_visual_balls(lnz, true)
+	emit_signal("palette_changed", lnz.palette)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()
@@ -652,19 +677,26 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	# Figure out belly position and default palette
 	var belly_position
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
+
+	var is_babyz_mode = (species == KeyBallsData.Species.BABY)
+	if game_option_button and game_option_button.selected == 1:
+		is_babyz_mode = true
+	
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
 	elif species == KeyBallsData.Species.CAT:
 		belly_position = ball_data[KeyBallsData.belly_cat].position
 	elif species == KeyBallsData.Species.BABY:
 		belly_position = ball_data[KeyBallsData.belly_bab].position
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
 	else:
-		# Fallback to first ball if unknown species
+		# Fallback belly position
 		if ball_data.size() > 0:
 			belly_position = ball_data[ball_data.keys()[0]].position
 		else:
 			belly_position = Vector3.ZERO
+
+	if is_babyz_mode:
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
 
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
@@ -1085,7 +1117,12 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		
 	# determine the default palette used
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
-	if (species == KeyBallsData.Species.BABY):
+	
+	var is_babyz_mode = (species == KeyBallsData.Species.BABY)
+	if game_option_button and game_option_button.selected == 1:
+		is_babyz_mode = true
+		
+	if is_babyz_mode:
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
 	
 	var pal_texture = null
