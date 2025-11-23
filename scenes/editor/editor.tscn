@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=2]
+[gd_scene load_steps=35 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -29,7 +29,6 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
-[ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=36]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -893,7 +892,7 @@ text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 116.0
-margin_right = 664.0
+margin_right = 587.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -903,8 +902,8 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 668.0
-margin_right = 718.0
+margin_left = 591.0
+margin_right = 641.0
 margin_bottom = 23.0
 rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
@@ -924,17 +923,17 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 722.0
+margin_left = 645.0
 margin_top = 4.0
-margin_right = 759.0
+margin_right = 677.0
 margin_bottom = 18.0
 mouse_filter = 1
 size_flags_horizontal = 3
 script = ExtResource( 7 )
 
 [node name="TPoseCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 765.0
-margin_right = 850.0
+margin_left = 681.0
+margin_right = 759.0
 margin_bottom = 23.0
 focus_mode = 0
 custom_styles/hover = ExtResource( 19 )
@@ -1216,7 +1215,7 @@ text = "Close"
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_top = 25.0
 margin_right = 757.0
-margin_bottom = 1078.0
+margin_bottom = 1044.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_fonts/font = ExtResource( 32 )
@@ -1234,6 +1233,29 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="ModelSwitcher" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+margin_top = 1048.0
+margin_right = 757.0
+margin_bottom = 1078.0
+rect_min_size = Vector2( 0, 30 )
+
+[node name="Label" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 5.0
+margin_top = 5.0
+margin_right = 138.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 35 )
+text = "Current Model:"
+
+[node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 155.0
+margin_right = 392.0
+margin_bottom = 26.0
+rect_min_size = Vector2( 250, 20 )
+size_flags_horizontal = 2
+size_flags_vertical = 0
+custom_fonts/font = ExtResource( 35 )
 
 [node name="BallLabel" type="Label" parent="SceneRoot"]
 visible = false
@@ -1586,6 +1608,23 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="BhdPromptDialog" type="ConfirmationDialog" parent="SceneRoot"]
+margin_right = 300.0
+margin_bottom = 100.0
+window_title = "Select Base Model"
+dialog_text = "No species or base model could be determined from the file. Please select a base model (BHD) to use:"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/BhdPromptDialog"]
+margin_left = 8.0
+margin_top = 22.0
+margin_right = 668.0
+margin_bottom = 64.0
+
+[node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/BhdPromptDialog/VBoxContainer"]
+margin_right = 284.0
+margin_bottom = 20.0
+custom_fonts/font = ExtResource( 35 )
+
 [node name="ToolsMenu" type="PopupMenu" parent="SceneRoot"]
 margin_left = 250.0
 margin_top = 750.0
@@ -1646,6 +1685,7 @@ __meta__ = {
 [connection signal="value_changed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" to="PetRoot/Node" method="set_frame"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" method="_on_Button_toggled"]
 [connection signal="timeout" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button/Timer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_Timer_timeout"]
+[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox" to="PetRoot/Node" method="_on_TPoseCheckBox_toggled"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/DecreaseFontButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_DecreaseFontButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/IncreaseFontButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_IncreaseFontButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/AutowrapButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_AutowrapButton_pressed"]
@@ -1666,8 +1706,8 @@ __meta__ = {
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit2" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="confirmed" from="SceneRoot/RecolorPopup" to="SceneRoot/ToolsMenu" method="_on_RecolorPopup_confirmed"]
-[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/AutofillButton" to="SceneRoot/ToolsMenu" method="_on_AutofillButton_pressed"]
 [connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/AutofillButton" to="SceneRoot/ToolsMenu" method="_on_AutofillButton_pressed"]
 [connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/RandomizeButton" to="SceneRoot/ToolsMenu" method="_on_RandomizeButton_pressed"]
 [connection signal="confirmed" from="SceneRoot/WebFileUploadPopup" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_web_file_upload_popup_confirmed"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
@@ -1685,4 +1725,3 @@ __meta__ = {
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]
-[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox" to="PetRoot/Node" method="_on_TPoseCheckBox_toggled"]
