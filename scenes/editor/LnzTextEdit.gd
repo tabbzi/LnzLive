@@ -946,7 +946,7 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 # Deletes an addball and references, or marks a base ball for omission
 func _on_ToolsMenu_delete_ball(ball_no: int):
 	save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 	if is_addball:
 		var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		if line_no != -1:
@@ -1948,7 +1948,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 func apply_preset_to_ball(ball_no, properties, do_save = true):
 	if do_save:
 		save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Ballz Info]"
 	if is_addball:
@@ -3070,7 +3070,7 @@ func update_lnz_section_two_values(section_name, val1, val2):
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	var is_addball = ball_no > max_base_ball_no
+	var is_addball = ball_no >= max_base_ball_no
 
 	var section_tag = "[Ballz Info]"
 	var size_field_index = 5  # 6th field is size
@@ -3142,7 +3142,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Move]"
 	if is_addball:
