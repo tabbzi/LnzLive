@@ -2,6 +2,15 @@
 ; GAME: BABYZ
 ; (keep the above comments for LnzLive to auto-read correct model and palette)
 
+[Num Ballz]
+18
+
+[Default Scales]
+200			master scale
+200			ball scale
+
+[Omissions]
+10
 
 ; ###########
 ; Teddy Bear
@@ -26,38 +35,7 @@
 ;	eDOLLBall_rmuzzle_ball,			// 16
 ;	eDOLLBall_tail_ball,			// 17
 
-; OLD:
-	;originball		// 0
-	;belly			// 1
-	;paw left		// 2
-	;paw right		// 3
-	;leg left		// 4
-	;leg right		// 5
-	;foot left		// 6
-	;foot right		// 7
-	;chest			// 8
-	;tail			// 9
-	;head			// 10
-	;cheek left		// 11
-	;cheek right		// 12
-	;nose			// 13
-	;ear left		// 14
-	;ear right		// 15
-	;arm right		// 16
-	;arm left		// 17
-
-[Num Ballz]
-18
-
-[Default Scales]
-200			master scale
-200			ball scale
-
-; First argument is name of texture.
-; Second argument is whether texture is single color (1) or multi-color (0)
-; This texture list is used both here and in add ballz
 [Texture List]
-;name				multi-color (0) or single-color (1)
 \art\Autobuild\Teddy1.bmp		1
 \art\Autobuild\CottonWhite.bmp		0
 
@@ -69,9 +47,7 @@
 3,	0, 	5, 	0	
 11,	0, 	5, 	0	
 
-[Omissions]
-10
-
+[Add Ball]
 
 [Ballz Info]
 ;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
@@ -127,4 +103,3 @@
 ;(belly)
 ;1,	70,			0, 	0, 	-1,	45,	-1,		0,	-1,	-1,	-1	0
 ;0,	60,			0, 	-.2, 	-1,	45,	-1,		0,	-1,	-1,	-1	0
-

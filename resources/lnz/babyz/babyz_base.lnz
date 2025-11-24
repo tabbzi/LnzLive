@@ -1,0 +1,527 @@
+[Texture List]
+;first is texture number 0, second is texture number 1, 3rd is texture no. 2 etc.
+\art\autobuild\hair3.bmp	1
+\art\autobuild\clear.bmp	0
+\art\autobuild\cottonwhite.bmp	0
+\art\autobuild\B_Blond1.bmp	0
+\art\autobuild\B_Orange1.bmp	0
+\art\autobuild\B_Orange2.bmp	0
+\art\autobuild\B_Blond1.bmp	0
+\art\autobuild\B_DarkBrown1.bmp	0
+\art\autobuild\B_LtBrown1.bmp	0
+[Num Ballz]
+120
+[Lnz Version]
+2
+[Species]
+3
+[Draw Linez Before Ballz]
+0
+[Circle Render Mode]
+0
+[Line Render Mode]
+0
+[Default Glue Ball]
+10
+[Z Shade Slope]
+100
+[Force To Female]
+0
+[Force To Male]
+0
+[Draw Small Balls]
+1
+[Body Extension]
+0
+[Face Extension]
+0
+[Ear Extension]
+100
+[Sounds]
+\ptzfiles\baby\cu\cusnd.txt
+[Little one]
+Wgx.lnz
+[Leg Extension]
+0
+0
+[Head Enlargement]
+100
+0
+[Feet Enlargement]
+100
+0
+[Default Scales]
+100	normal pet scale
+100	normal ball scale
+[Head Rotation Limits]
+-35 35
+[Head Tilt Limits]
+-20 25
+[Head Shot]
+1123	frame number
+-43	rotation
+0	roll
+-1	tilt
+43	head rotation
+7	head tilt
+0	head cock
+32, 32	R / L eyelid height
+26, 26	R / L eyelid tilt
+1, -2	(X, Y) eye target
+[256 Eyelid Color]
+48 -1
+;extra transparent nose balls for freckles
+[Add Ball]
+; first ball is 120
+;base	x	y	z	color otlnCol spckCol	fuzz   group  outline ballsize bodyarea addGroup texture
+;120 - 123 UTILITY ADDBALLZ
+;
+; (120) ball between the hands, off of the ztrans ball in front, for grabbing animations
+119,    0,      0,     130,	200,	244,	0,	0,	0,	-1,	50,	0,	0,	-1
+;
+; (121) satellite off of ztrans, for where to really attach held object
+119,    0,      0,      0,	150,	244,	0,	0,	0,	-1,	50,	0,	0,	-1
+;
+; (122) sitDrum align ball
+70,     0,      20,   -140,	180,	244,	0,	0,	0,	-1,	50,	0,	0,	-1
+;
+; milk bottle nipple suckle placement ball, made with clear texture
+; can't be omitted, otherwise it won't rotate with head! so we use a clear texture
+113,    -4,     8,      10,	150,	244,	0,	0,	0,	-1,	20,	8,	0,	1
+;
+; upperright tooth, which draw with CLEAR texture -- the tooth is made from the line connecting the ballz!
+112,	0,	3,	-3,	15,	244,	0,	-1,	0,	-1,	20,	0,	1,	1,
+112,	0,	8,	-3,	15,	244,	0,	-1,	0,	-1,	20,	0,	1,	1,
+; upperleft tooth, which draw with CLEAR texture -- the tooth is made from the line connecting the ballz!
+113,	0,	3,	-3,	15,	244,	0,	-1,	0,	-1,	15,	0,	2,	1,
+113,	0,	8,	-3,	15,	244,	0,	-1,	0,	-1,	15,	0,	2,	1,
+; lowercenter tooth, which draw with CLEAR texture -- the tooth is made from the line connecting the ballz!
+76,	0,	-6,	-5	15,	244,	0,	-1,	0,	-1,	15,	0,	3,	1,
+76,	0,	-10,	-5,	15,	244,	0,	-1,	0,	-1,	15,	0,	3,	1,
+;
+;extra transparent nose balls for freckles- 130
+83,	-10,    10,     -2,	45,	244,	0,	0,	0,	-1,	20,	8,	0,	-1
+83,	10,	10,	-2,	45,	244,	0,	0,	0,	-1,	20,	8,	0,	-1
+;
+; tears in left eye (132) -- addball group 4
+35,	6,	16,    -15,	108,	244,	0,	0,	0,	-1,	10,	8,	4,	-1
+35,	-5,	20,    -15,	108,	244,	0,	0,	0,	-1,	12,	8,	4,	-1
+35,	-20,    13,    -15,	108,	244,	0,	0,	0,	-1,	10,	8,	4,	-1
+; tears in right eye (135) -- addball group 5
+36,	-6,	20,    -15,	108,	244,	0,	0,	0,	-1,	10,	8,	5,	-1
+36,	5,	20,    -15,	108,	244,	0,	0,	0,	-1,	12,	8,	5,	-1
+36,	20,	13,    -15,	108,	244,	0,	0,	0,	-1,	10,	8,	5,	-1
+;
+;HAIR 138 this is where your hairballs start.  If you want no hair, put a semi-colon at the start of each line.
+;if you want more hair, add the lines of code between the commented-out bellybutton code and the [Thin/Fat].
+;the first ball, 138, is the bobble
+63,	65,	-60,	0,	46,	244,	0,	-1,	0,	2,	30,	8,	0,	-1,
+63,	90,	-80,	5,	10,	244,	0,	0,	0,	0,	50,	8,	0,	3,
+63,	110,	-60,	10,	10,	244,	0,	0,	0,	1,	40,	8,	0,	3,
+63,	105,	-40,	-2,	10,	244,	0,	0,	0,	1,	35,	8,	0,	3,
+63,	113,	-30,	-5,	10,	244,	0,	0,	0,	1,	23,	8,	0,	3,
+;next ball is ball no 143, and is the second bobble
+63,	-65,	-60,	0,	46,	244,	0,	-1,	0,	2,	30,	8,	0,	-1,
+63,	-90,	-80,	5,	10,	244,	0,	0,	0,	-2,	50,	8,	0,	3,
+63,	-110,	-60,	10,	10,	244,	0,	0,	0,	1,	40,	8,	0,	3,
+63,	-105,	-40,	-2,	10,	244,	0,	0,	0,	1,	35,	8,	0,	3,
+63,	-113,	-30,	-5,	10,	244,	0,	0,	0,	1,	23,	8,	0,	3,
+; took out bellybutton temporarily, it's interfering with clothes
+;4,	0,	30,	-60,	45,	244,	0,	-1,	0,	1,	20,	0,	0,	-1,
+[Thin/Fat]
+4,	-8,	24
+10,	0,	25
+11,	0,	25
+30,	-2,	5
+31,	-2,	5
+81,	-5,	24
+88,	-2,	5
+89,	-2,	5
+94,	-2,	10
+95,	-2,	10
+98,	-2,	5
+99,	-2,	5
+116,	-4,	10
+117,	-4,	10
+;
+0,	-8,	10
+1,	-8,	10
+2,	-4,	10
+3,	-4,	10
+66,	-4,	10
+67,	-4,	10
+70,	-8,	10
+71,	-8,	10
+72,	-8,	10
+;
+8,	-8,	12
+9,	-8,	12
+[Move]	
+;eyes
+35,	0,	0,	8
+36,	0,	0,	8
+68,	0,	0,	8
+69,	0,	0,	8
+; fixme -- fix head offset problem from Maya
+63, -12, 0, 0
+; project the 2nd addball, from palm2R and ztrans, for hold-object-distance
+[Project Ball]	
+93, 121, 250
+; move the head down a bit
+4, 63, 96
+[Eyes]
+36, 35	RightEye/leftEye
+69, 68	RightIris/leftIris
+[Key Balls]
+;if butt=-1 no z-shading
+63	head
+10	chest
+81	neck
+-1	jaw
+-1	tongue1
+-1	tongue2
+12	chin
+82	nose
+-1	butt (no zshade), was 69
+4	belly
+94	shoulderL
+95	shoulderR
+32	aftertilt facer ball
+[Omissions]
+32
+33
+34
+87
+108
+118
+119
+120
+121
+122
+;123 suckle/spoon placement ball <--don't omit this! keep the semi-colon there!
+124 tooth
+125 tooth
+126 tooth
+127 tooth
+128 tooth
+129 tooth
+; -1 mean use the associated ball color
+; Only the first three fields need to be specified
+;srt=start of line, end=end of line, col=colour, Thck=thickness of line
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick outline	drawAFTERBall
+[Linez]	
+;body
+10,	4,	-1,	-1,	-1,	-1,	95,	95,	1,	0	
+11,	4,	-1,	-1,	-1,	-1,	95,	95,	1,	0	
+;armL
+94,	30,	-1,	-1,	18,	18,	97,	97,	1,	3	
+30,	116,	-1,	-1,	18,	18,	100,	95,	1,	2	
+;armR
+95,	31,	-1,	-1,	18,	18,	97,	97,	1,	3
+31,	117,	-1,	-1,	18,	18,	100,	95,	1,	2
+;legL
+71,	66,	-1,	-1,	18,	18,	90,	90,	1,	0	
+71,	0,	-1,	-1,	18,	18,	90,	90,	1,	0	
+;legR
+72,	67,	-1,	-1,	18,	18,	90,	90,	1,	0	
+72,	1,	-1,	-1,	18,	18,	90,	90,	1,	0	
+;diaper
+66,	67,	-1,	-1,	-1,	-1,	70,	70,	1,	0
+66,	70,	-1,	-1,	-1,	-1,	100,	100,	1,	0	
+67,	70,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;
+;LIPLINES	
+;lowerlip (old)
+;73,	74,	-1,	-1,	18,	18,	100,	100,	1,
+;74,	75,	-1,	-1,	18,	18,	100,	100,	1,
+;75,	76,	-1,	-1,	18,	18,	100,	100,	1,	
+;76,	77,	-1,	-1,	18,	18,	100,	100,	1,	
+;77,	78,	-1,	-1,	18,	18,	100,	100,	1,	
+;upperlip
+110,	111,	-1,	-1,	18,	18,	100,	100,	1,	
+111,	112,	-1,	-1,	18,	18,	100,	100,	1,	
+112,	113,	-1,	-1,	18,	18,	100,	100,	1,	
+113,	114,	-1,	-1,	18,	18,	100,	100,	1,	
+114,	115,	-1,	-1,	18,	18,	100,	100,	1,
+;Dimples
+;73,	110,	-1,	-1,	18,	-1,	100,	100,	1	
+;78,	115,	-1,	-1,	-1,	18,	100,	100,	1	
+;
+;
+;
+;chin
+12,	13,	-1,	-1,	18,	-1,	100,	100,	1	
+13,	14,	-1,	-1,	18,	-1,	100,	100,	1	
+14,	15,	-1,	-1,	18,	-1,	100,	100,	1	
+;nose
+; APS 2.4.99: Don't draw this line, so that freckles can show up!
+;82,	83,	-1,	-1,	-1,	-1,	80,	100,	1,	
+85,	82,	-1,	-1,	-1,	18,	100,	100,	1,	
+86,	82,	-1,	-1,	18,	-1,	100,	100,	1,	
+;eyebrowL
+37,	39,	-1,	-1,	-1,	-1,	100,	100,	1	
+39,	41,	-1,	-1,	-1,	-1,	100,	100,	1	
+41,	43,	-1,	-1,	-1,	-1,	100,	100,	1	
+43,	45,	-1,	-1,	-1,	-1,	100,	100,	1	
+;eyebrowR
+38,	40,	-1,	-1,	-1,	-1,	100,	100,	1	
+40,	42,	-1,	-1,	-1,	-1,	100,	100,	1	
+42,	44,	-1,	-1,	-1,	-1,	100,	100,	1	
+44,	46,	-1,	-1,	-1,	-1,	100,	100,	1	
+;ears
+18,	20,	-1,	-1,	-1,	18,	100,	100,	1	
+20,	22,	-1,	-1,	-1,	18,	100,	100,	1	
+22,	24,	-1,	-1,	-1,	18,	100,	100,	1	
+24,	26,	-1,	-1,	-1,	18,	100,	100,	1	
+16,	18,	-1,	-1,	-1,	18,	100,	100,	1	
+;xtras -- unneeded, now done with polygons
+;nope -- we need them
+18,	28,	-1,	-1,	-1,	-1,	100,	100,	1	
+20,	28,	-1,	-1,	-1,	-1,	100,	100,	1	
+22,	28,	-1,	-1,	-1,	-1,	100,	100,	1	
+24,	28,	-1,	-1,	-1,	-1,	100,	100,	1	
+26,	28,	-1,	-1,	-1,	-1,	100,	100,	1	
+;
+19,	21,	-1,	-1,	18,	-1,	100,	100,	1	
+21,	23,	-1,	-1,	18,	-1,	100,	100,	1	
+23,	25,	-1,	-1,	18,	-1,	100,	100,	1	
+25,	27,	-1,	-1,	18,	-1,	100,	100,	1	
+17,	19,	-1,	-1,	18,	-1,	100,	100,	1	
+;xtras -- unneeded, now done with polygons
+;nope -- we need them
+19,	29,	-1,	-1,	-1,	-1,	100,	100,	1	
+21,	29,	-1,	-1,	-1,	-1,	100,	100,	1	
+23,	29,	-1,	-1,	-1,	-1,	100,	100,	1	
+25,	29,	-1,	-1,	-1,	-1,	100,	100,	1	
+27,	29,	-1,	-1,	-1,	-1,	100,	100,	1	
+;neck
+81,	63,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;cheek to head
+; APS 2.5.99: MAKE THESE LINEZ DRAW *BEFORE* BALLZ, so they won't occlude the rosy cheek paintballs!
+8,	63,	-1,	-1,	-1,	-1,	100,	100,	1,	0	
+9, 63,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+8, 28,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+9, 29,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;Mouth top to lip
+;79,	112,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;80,	113,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;chin to lip
+;13,	75,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;14,	76,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;handL	
+47,	49,	-1,	-1,	18,	18,	100,	100,	1,	
+51,	53,	-1,	-1,	18,	18,	100,	100,	1,	
+55,	57,	-1,	-1,	18,	18,	100,	100,	1,	
+98,	100,	-1,	-1,	18,	18,	100,	100,	1,	
+;handR	
+48,	50,	-1,	-1,	18,	18,	100,	100,	1,	
+52,	54,	-1,	-1,	18,	18,	100,	100,	1,	
+56,	58,	-1,	-1,	18,	18,	100,	100,	1,	
+99,	101,	-1,	-1,	18,	18,	100,	100,	1,	
+;wristL	
+116,	98,	-1,	-1,	18,	-1,	90,	100,	1,	2	
+116,	88,	-1,	-1,	-1,	18,	90,	100,	1,	2	
+;wristR	
+117,	99,	-1,	-1,	-1,	18,	90,	100,	1,	2	
+117,	89,	-1,	-1,	18,	-1,	90,	100,	1,	2	
+;
+; tears
+132,	133,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+133,	134,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+135,	136,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+136,	137,	-1,	-1,	-1,	-1,	100,	100,	1,	0
+;
+; -1 means use the main fill color in field number five (5).
+; only the first FIVE fields are necessary.  lEdge, rEdge, fuzz and texture are optional
+;ball1	ball2	ball3	ball4	color	lEdge	rEdge	fuzz	texture
+[Polygons]
+; mouth
+110,	111,	74,	73,	49,	-1	-1	0	-1	
+111,	112,	75,	74,	49,	-1	-1	0	-1	
+112,	113,	76,	75,	49,	-1	-1	0	-1	
+113,	114,	77,	76,	49,	-1	-1	0	-1	
+114,	115,	78,	77,	49,	-1	-1	0	-1	
+; green eyes, white skin
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col	outCol spklC	fuzz	otlnt sizeD    group texture ball num  ball name
+[Ballz Info]
+45,	18,	-1,	-1,	-2,	0,	8,	-1	//0	ankleL	
+45,	18,	-1,	-1,	0,	0,	8,	-1	//1	ankleR	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//2	archL	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//3	archR	
+45,	18,	-1,	-1,	1,	-4,	8,	-1	//4	belly	
+45,	18,	-1,	-1,	1,	5,	8,	-1	//5	bigtoeL	
+45,	18,	-1,	-1,	1,	5,	8,	-1	//6	bigtoeR	
+45,	18,	-1,	-1,	-1,	-4,	8,	-1	//7	bridge	
+45,	18,	-1,	-1,	-2,	-3,	8,	-1	//8	cheekL	
+45,	18,	-1,	-1,	0,	-3,	8,	-1	//9	cheekR	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//10	chestL	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//11	chestR	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//12	chin1	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//13	chin2	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//14	chin3	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//15	chin4	
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//16	ear1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//17	ear1R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//18	ear2L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//19	ear2R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//20	ear3L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//21	ear3R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//22	ear4L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//23	ear4R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//24	ear5L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//25	ear5R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//26	ear6L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//27	ear6R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//28	earcenterL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//29	earcenterR
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//30	elbowL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//31	elbowR
+13,	18,	-1,	-1,	-1,	3,	8,	-1	//32	extra1
+13,	18,	-1,	-1,	-1,	3,	8,	-1	//33	extra2
+13,	18,	-1,	-1,	-1,	3,	8,	-1	//34	extra3
+15,	45,	-1,	-1,	-1,	9,	8,	-1	//35	eyeL
+15,	45,	-1,	-1,	-1,	9,	8,	-1	//36	eyeR
+12,	244,	-1,	-1,	-1,	0,	8,	3	//37	eyebrow1L
+12,	244,	-1,	-1,	-1,	0,	8,	3	//38	eyebrow1R
+12,	244,	-1,	-1,	-1,	0,	8,	3	//39	eyebrow2L
+12,	244,	-1,	-1,	-1,	0,	8,	3	//40	eyebrow2R
+12,	105,	-1	-1,	-1,	0,	8,	3	//41	eyebrow3L
+12,	105,	-1,	-1,	-1,	0,	8,	3	//42	eyebrow3R
+12,	244,	-1,	-1,	-1,	0,	8,	3	//43	eyebrow4L
+12,	105,	-1,	-1,	-1,	0,	8,	3	//44	eyebrow4R
+12,	105,	-1,	-1,	-1,	0,	8,	3	//45	eyebrow5L
+12,	105,	-1,	-1,	-1,	0,	8,	3	//46	eyebrow5R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//47	finger_index1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//48	finger_index1R
+45,	18,	-1,	-1,	1,	0,	8,	-1	//49	finger_index2L
+45,	18,	-1,	-1,	1,	0,	8,	-1	//50	finger_index2R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//51	finger_middle1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//52	finger_middle1R
+45,	18,	-1,	-1,	1,	0,	8,	-1	//53	finger_middle2L
+45,	18,	-1,	-1,	1,	0,	8,	-1	//54	finger_middle2R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//55	finger_pinky1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//56	finger_pinky1R
+45,	18,	-1,	-1,	1,	0,	8,	-1	//57	finger_pinky2L
+45,	18,	-1,	-1,	1,	0,	8,	-1	//58	finger_pinky2R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//59	football1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//60	football1R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//61	football2L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//62	football2R
+45,	18,	-1,	-1,	-1,	-20,	8,	-1	//63	head	// was -10
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//64	heelL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//65	heelR
+15,	244,	-1,	-1,	-1,	0,	8,	-1	//66	hipL
+15,	244,	-1,	-1,	-1,	0,	8,	-1	//67	hipR
+244,	134,	-1,	-1,	3,	15,	8,	-1	//68	irisL
+244,	134,	-1,	-1,	3,	15,	8,	-1	//69	irisR
+15,	244,	-1,	-1,	-1,	0,	8,	-1	//70	jock
+45,	18,	-1,	-1,	-2,	0,	8,	-1	//71	kneeL
+45,	18,	-1,	-1,	0,	0,	8,	-1	//72	kneeR
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//73	lowerLip1
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//74	lowerLip2
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//75	lowerLip3
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//76	lowerLip4
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//77	lowerLip5
+45,	18,	-1,	-1,	-1,	-10,	8,	-1	//78	lowerLip6
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//79	mouthTopL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//80	mouthTopR
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//81	neck
+45,	18,	-1,	-1,	-1,	1,	8,	-1	//82	nose1
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//83	nose2
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//84	nosemiddle
+45,	18,	-1,	-1,	-2,	0,	8,	-1	//85	nostrilL
+45,	18,	-1,	-1,	0,	0,	8,	-1	//86	nostrilR
+45,	18,	-1,	-1,	1,	0,	8,	-1	//87	origin
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//88	palm1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//89	palm1R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//90	palm2L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//91	palm2R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//92	palm3L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//93	palm3R
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//94	shoulderL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//95	shoulderR
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//96	templeL
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//97	templeR
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//98	thumb1L
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//99	thumb1R
+45,	18,	-1,	-1,	1,	0,	8,	-1	//100	thumb2L
+45,	18,	-1,	-1,	1,	0,	8,	-1	//101	thumb2R
+45,	18,	-1,	-1,	1,	5,	8,	-1	//102	toe_indexL
+45,	18,	-1,	-1,	1,	5,	8,	-1	//103	toe_indexR
+45,	18,	-1,	-1,	1,	5,	8,	-1	//104	toe_middleL
+45,	18,	-1,	-1,	1,	5,	8,	-1	//105	toe_middleR
+45,	18,	-1,	-1,	1,	5,	8,	-1	//106	toe_pinkyL
+45,	18,	-1,	-1,	1,	5,	8,	-1	//107	toe_pinkyR
+12,	18,	-1,	-1,	-1,	3,	8,	-1	//108	tongue1
+45,	18,	-1,	-1,	-1,	0,	8,	-1	//109	underchin
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//110	upperLip1
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//111	upperLip2
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//112	upperLip3
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//113	upperLip4
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//114	upperLip5
+45,	18,	-1,	-1,	-1,	-5,	8,	-1	//115	upperLip6
+45,	18,	-1,	-1,	-1,	-7,	8,	-1	//116	wristL
+45,	18,	-1,	-1,	-1,	-7,	8,	-1	//117	wristR
+155,	18,	-1,	-1,	1,	0,	8,	-1	//118	zorient
+155,	18,	-1,	-1,	-1,	0,	8,	-1	//119   ztrans
+[Eyelash Info]
+4,	5, 6, 5, 4, -1	eyelash lengths -- must end with -1
+15	angle of side lashes (0 <-> 64)
+50	spacing between lashes (0 <-> 100)
+244	color
+37, 39, 41, 43, 45, -1	left eyebrow (lashes drawn AFTER eyebrow is drawn)
+38, 40, 42, 44, 46, -1	right eyebrow (lashes drawn AFTER eyebrow is drawn)
+[Paint Ballz]
+; diameter of -1 means don't draw these; the code will turn them on to their correct size, by negating the number!
+; CHICKEN POX -- if you add or delete any, change SetChickenPoxLevel() in the code!!!!
+;
+;base  diameter    direction color outlineindex	fuzz  outline  group  texture
+;  (%of baseball) (x, y, z)	
+4,	-8	10, 0, -10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	-3, -8, -10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	-10, 2, 0	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	2, 4, -5	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	7, -3, 10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	-7, 1, 10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	-3, 1, -10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	7, -4, -10	226	-1	0	-1	-1	-1	0, 0	
+4,	-8	-2, -8, 10	226	-1	0	-1	-1	-1	0, 0	
+94,	-20	0, 3, 5	        226	-1	0	-1	-1	-1	0, 0	
+95,	-20	0, -8, 5	226	-1	0	-1	-1	-1	0, 0	
+8,	-15	0, 2, -5	226	-1	0	-1	-1	-1	0, 0	
+8,	-15	5, 2, -2	226	-1	0	-1	-1	-1	0, 0	
+9,	-15	-5, 3, -5	226	-1	0	-1	-1	-1	0, 0	
+0,	-15	5, 0, -5	226	-1	0	-1	-1	-1	0, 0	
+71,	-15	10, 10, 0	226	-1	0	-1	-1	-1	0, 0	
+72,	-15	0, 5, -5	226	-1	0	-1	-1	-1	0, 0	
+;
+;freckles- nose and cheeks
+83,	30	0, -.5, -1	47	-1	0	-1	-1	-1	0, 0
+130,	50	-.2, -.1, -1	47	-1	0	-1	-1	-1	0, 0
+131,	50	.3, -.3, -1	47	-1	0	-1	-1	-1	0, 0
+;
+8,	8	0, -.3, -.6	47	-1	0	-1	-1	-1	0, 0
+8,	8	.2, -.1, -.7	47	-1	0	-1	-1	-1	0, 0
+8,	8	.3, -.3, -.4	47	-1	0	-1	-1	-1	0, 0
+8,	8	-.2, -.2, -1	47	-1	0	-1	-1	-1	0, 0
+;
+9,	8	0, -.3, -.6	47	-1	0	-1	-1	-1	0, 0
+9,	8	-.2, -.2, -.7	47	-1	0	-1	-1	-1	0, 0
+9,	8	-.4, -.3, -.4	47	-1	0	-1	-1	-1	0, 0
+9,	8	.2, -.2, -1	47	-1	0	-1	-1	-1	0, 0
+;Hair- orange side ponytails
+63,	50	.2, -1, -.5	10	-1	6	-1	-1	3	0, 0
+63,	60	.2, -1, 0	10	-1	6	-1	-1	3	0, 0
+63,	60	.2, -1, 1	10	-1	6	-1	-1	3	0, 0
+63,	60	-.8, -1, .5	10	-1	6	-1	-1	3	0, 0
+63,	60	.8, -1, .5	10	-1	6	-1	-1	3	0, 0
+63,	80	0, -.0, 1	10	-1	4	-1	-1	3	0, 0
+63,	50	.8, -.5, .3	10	-1	4	-1	-1	3	0, 0
+63,	50	-.8, -.5, .3	10	-1	4	-1	-1	3	0, 0
+;rosy cheeks
+8,	35	.2, .1, -1	46	-1	0	-1	-1	-1	0, 0
+9,	35	0, .1, -1	46	-1	0	-1	-1	-1	0, 0
+;bellybutton
+4,	10	0, .4, -1	35	18	0	2	-1	-1	0, 0

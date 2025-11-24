@@ -295,8 +295,22 @@ func generate_pet(file_path):
 	KeyBallsData.species = lnz_info.species
 	KeyBallsData.build_bodyarea_map()
 
+	var comment_model = ""
+	var comment_game = ""
+	if lnz_info.species == 0:
+		var f = File.new()
+		if f.open(file_path, File.READ) == OK:
+			for i in range(10):
+				if f.eof_reached(): break
+				var line = f.get_line()
+				if line.begins_with("; MODEL: "):
+					comment_model = line.substr(9).strip_edges()
+				elif line.begins_with("; GAME: "):
+					comment_game = line.substr(8).strip_edges()
+			f.close()
+
 	if game_option_button:
-		if lnz_info.species == KeyBallsData.Species.BABY:
+		if lnz_info.species == KeyBallsData.Species.BABY or comment_game == "BABYZ":
 			game_option_button.select(1) # Babyz
 		else:
 			game_option_button.select(0) # Petz (default for Dogz/Catz/custom BHD)
@@ -304,7 +318,10 @@ func generate_pet(file_path):
 	if lnz_info.species == 0:
 		# Check if we already have a BHD selected from the dropdown/previous load
 		var selected_idx = bhd_option_button.selected
-		if selected_idx != -1:
+		
+		if comment_model != "":
+			init_ball_data(0, "res://resources/animations/" + comment_model + ".bhd")
+		elif selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
 			init_ball_data(0, "res://resources/animations/" + bhd_name)
 			# Continue generation
@@ -697,6 +714,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	if is_babyz_mode:
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
+		species = KeyBallsData.Species.BABY
 
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
@@ -1016,6 +1034,13 @@ func get_real_ball_size(ball_size):
 	return ball_size
 
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
+	var is_babyz_mode = (species == KeyBallsData.Species.BABY)
+	if game_option_button and game_option_button.selected == 1:
+		is_babyz_mode = true
+	
+	if is_babyz_mode:
+		species = KeyBallsData.Species.BABY
+
 	#print("Generating polygons")
 	#print("Polygon data size:", polygon_data.size())
 	var root = get_root()
@@ -1124,6 +1149,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		
 	if is_babyz_mode:
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
+		species = KeyBallsData.Species.BABY
 	
 	var pal_texture = null
 	if palette != null:
@@ -1454,6 +1480,9 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.ball_size = final_size
 
 	pb_visual_ball.species = lnz.species
+	if game_option_button and game_option_button.selected == 1:
+		pb_visual_ball.species = KeyBallsData.Species.BABY
+
 	pb_visual_ball.base_ball_no = base_ball_no
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
@@ -1503,6 +1532,9 @@ func _on_randomize_auto_paintballz(paintballz):
 		pb_visual_ball.ball_size = final_size
 
 		pb_visual_ball.species = lnz.species
+		if game_option_button and game_option_button.selected == 1:
+			pb_visual_ball.species = KeyBallsData.Species.BABY
+
 		pb_visual_ball.base_ball_no = base_ball_no
 		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 		pb_visual_ball.base_ball_size = base_ball_node.ball_size

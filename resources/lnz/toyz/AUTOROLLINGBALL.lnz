@@ -10,10 +10,26 @@
 0		chest
 0		nose
 
-
 [Default Scales]
 65			normal pet scale
 65			normal ball scale
+
+[Move]
+
+
+[Add Ball]
+
+
+[Linez]
+
+
+[Texture List]
+\PtzFiles\Ball_A1\JOWL2.bmp		1
+
+
+[Ballz Info]
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+130,      35,       -1,        -1,        2,        100,        8,      0    
 
 
 [Paint Ballz]
@@ -34,14 +50,3 @@
 0,		27			-.5, -.5, .5	251	244	0	2	-1	-1
 0,		27			.5, .5, -.5	251	244	0	2	-1	-1
 0,		27			-.5, .5, -.5	251	244	0	2	-1	-1
-
-
-[Texture List]
-\PtzFiles\Ball_A1\JOWL2.bmp		1
-
-
-;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
-;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
-;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
-[Ballz Info]
-130,      35,       -1,        -1,        2,        100,        8,      0    

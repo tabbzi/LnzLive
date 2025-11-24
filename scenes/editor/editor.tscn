@@ -1242,34 +1242,49 @@ rect_min_size = Vector2( 0, 30 )
 
 [node name="ModelLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
 margin_top = 5.0
-margin_right = 138.0
+margin_right = 186.0
 margin_bottom = 25.0
+size_flags_horizontal = 3
 custom_fonts/font = ExtResource( 35 )
 text = "Current Model:"
+align = 1
 
 [node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
-margin_left = 142.0
-margin_right = 392.0
-margin_bottom = 26.0
-rect_min_size = Vector2( 250, 20 )
-size_flags_horizontal = 2
+margin_left = 190.0
+margin_right = 376.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 25, 20 )
+size_flags_horizontal = 3
 size_flags_vertical = 0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
 
 [node name="GameLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 380.0
 margin_top = 5.0
-margin_right = 138.0
+margin_right = 566.0
 margin_bottom = 25.0
+size_flags_horizontal = 3
 custom_fonts/font = ExtResource( 35 )
 text = "Current Game:"
+align = 1
 
 [node name="GameOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
-margin_left = 142.0
-margin_right = 392.0
-margin_bottom = 26.0
-rect_min_size = Vector2( 250, 20 )
-size_flags_horizontal = 2
+margin_left = 570.0
+margin_right = 757.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 25, 20 )
+size_flags_horizontal = 3
 size_flags_vertical = 0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
 
 [node name="BallLabel" type="Label" parent="SceneRoot"]
@@ -1712,8 +1727,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]

@@ -54,16 +54,29 @@ func _ready():
 	file_dialog.rect_min_size = Vector2(400, 400)
 	
 	var dir = Directory.new()
-	dir.open(example_file_location)
-	dir.list_dir_begin()
-	var filename = dir.get_next()
-	while(!filename.empty()):
-		if filename.ends_with(".lnz"):
-			var new_item = create_item(examples)
-			new_item.set_text(0, filename)
-			new_item.set_metadata(0, example_file_location + filename)
-		filename = dir.get_next()
-	dir.list_dir_end()
+	var lnz_dir_path = "res://resources/lnz/"
+	if dir.open(lnz_dir_path) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name = dir.get_next()
+		while file_name != "":
+			if dir.current_is_dir():
+				var subdir_path = lnz_dir_path + file_name
+				var subdir = Directory.new()
+				if subdir.open(subdir_path) == OK:
+					var sub_item = create_item(examples)
+					sub_item.set_text(0, file_name)
+					
+					subdir.list_dir_begin(true, true)
+					var sub_file = subdir.get_next()
+					while sub_file != "":
+						if sub_file.ends_with(".lnz"):
+							var new_item = create_item(sub_item)
+							new_item.set_text(0, sub_file)
+							new_item.set_metadata(0, subdir_path + "/" + sub_file)
+						sub_file = subdir.get_next()
+					subdir.list_dir_end()
+			file_name = dir.get_next()
+		dir.list_dir_end()
 
 	rescan(null)
 	rescan_textures()
@@ -191,7 +204,11 @@ func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
 	var filepath = selected.get_metadata(0)
 	var parent = selected.get_parent() as TreeItem
-	if parent == examples:
+	
+	if filepath == null:
+		return
+
+	if parent == examples or parent.get_parent() == examples:
 		emit_signal("example_file_selected", filepath)
 	elif parent == local_storage:
 		emit_signal("user_file_selected", filepath)

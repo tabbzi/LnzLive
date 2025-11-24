@@ -194,10 +194,11 @@ func save_file():
 		var dir = Directory.new()
 		dir.open("user://")
 		dir.make_dir("resources")
-		var possible_file_name = filepath.replace("res://", "user://")
+		var filename = filepath.get_file()
+		var possible_file_name = "user://resources/" + filename
 		var file = File.new()
 		if file.file_exists(possible_file_name):
-			possible_file_name = possible_file_name.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
+			possible_file_name = "user://resources/" + filename.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
 		file.open(possible_file_name, File.WRITE)
 		file.store_string(text)
 		file.close()
