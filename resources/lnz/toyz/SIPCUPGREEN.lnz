@@ -1,0 +1,80 @@
+; MODEL: MILK
+; GAME: BABYZ
+; (keep the above comments for LnzLive to auto-read correct model and palette)
+
+;Sippy Cup Green
+[Num Ballz]
+5
+
+[Default Scales]
+130			normal pet scale
+160			normal ball scale
+
+[Omissions]
+0
+
+[Draw Linez Before Ballz]
+0
+
+; -1 mean use the associated ball color
+; Only the first three fields need to be specefied
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick	fulloutline
+[Linez]
+2, 	1, 	0, 	-1, 	50, 	50,	100,	100		1	
+3, 	4, 	0, 	-1, 	-1, 	50,	100,	100		1	
+5, 	6, 	0, 	-1, 	50, 	50,	100,	100		1	
+6, 	7, 	0, 	-1, 	50, 	50,	100,	100		1	
+7, 	8, 	0, 	-1, 	50, 	50,	100,	100		1	
+8, 	9, 	0, 	-1, 	50, 	50,	100,	100		1	
+9, 	10, 	0, 	-1, 	50, 	50,	100,	100		1	
+10, 	11, 	0, 	-1, 	50, 	50,	100,	100		1	
+11, 	12, 	0, 	-1, 	50, 	50,	100,	100		1		
+12, 	5, 	0, 	-1, 	50, 	50,	100,	100		1	
+;l
+13, 	14, 	0, 	-1, 	-1, 	-1,	100,	100		1	
+14, 	15, 	0, 	-1, 	-1, 	-1,	100,	100		1	
+13, 	14, 	0, 	-1, 	-1, 	-1,	100,	100		1	
+14, 	15, 	0, 	-1, 	-1, 	-1,	100,	100		1	
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+[Ballz Info]
+127,	50,       -1,        -1,   	-1,	0,		8,	-1 		bottle2
+127,	50,       -1,        -1,   	-1,	-3,		8,	-1 		bottle3
+127,	50,       -1,        -1,   	-1,	12,		8,	-1 		bottle1
+65,	50,       -1,        -1,   	-2,	5,		8,	-1 		nipple1
+65,	50,       -1,        -1,   	-2,	15,		8,	-1 		nipple2
+
+[Add Ball]
+; first ball is numballz + 1 (5)
+;base	x,  y,  z	color otlnCol spckCol  fuzz   group  outline ballsize bodyarea   addGroup     texture
+4,	-5, -28, 0,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, -18, 18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, 0, 28,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, 18, 18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, 28, 0,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, 18, -18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, 0, -28,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-5, -18, -18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+;(13)
+4,	-2, -18, 0,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, -18, 8,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, 0, 18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, 8, 8,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, 18, 8,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, 8, -8,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, 0, -18,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+4,	-2, -8, -8,	65,	50,	0,	0,	0,	-1,	20,	0,	0,	-1
+
+[Move]	
+;ball	x	y	z
+0,	0, 	0, 	0
+1,	0, 	0, 	0
+2,	-30, 	0, 	0
+3,	-22, 	11, 	0
+4,	-25, 	0, 	0
+
+[Paint Ballz]
+;base	diameter(% of base)	x	y	z	color	outlinecolor	fuzz 	outline	group	texture
+3,	60,			1, 	0, 	.3,	162,	-1,		0,	-1,	-1,	-1
+3,	60,			1, 	0, 	-.3,	162,	-1,		0,	-1,	-1,	-1

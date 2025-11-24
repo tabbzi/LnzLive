@@ -1,0 +1,46 @@
+; MODEL: RATTLE
+; GAME: BABYZ
+; (keep the above comments for LnzLive to auto-read correct model and palette)
+
+;Rattle
+
+[Num Ballz]
+4
+
+[Default Scales]
+100			master scale
+100			ball scale
+
+; First argument is name of texture.
+; Second argument is whether texture is single color (1) or multi-color (0)
+; This texture list is used both here and in add ballz
+[Texture List]
+;name				multi-color (0) or single-color (1)
+\art\textures\hair10.bmp		1
+\art\textures\ameoba.bmp		0
+
+[Ballz Info]
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col	outCol	spklCl	fuzz	otlntTyp	sizeDif	group	texture 
+163,	244,	-1,	-1,	1,		2,	0,	-1  ;base 
+15,	244,	-1,	-1,	1,		5,	0,	1  ;belly
+160,	25,	-1,	-1,	1,		7,	0,	-1  ;handle_bottom
+160,	25,	-1,	-1, 	1,		5,	0,	-1  ;handl_top
+
+
+[Add Ball]
+; first ball is numballz + 1
+;base	x	y	z	color otlnCol spckCol  fuzz   group  outline ballsize bodyarea   addGroup     texture
+;2,	0,	-100,	0,	135	0	0	0	0	-1	100	0		1	-1
+
+
+[Linez]
+; -1 for color mean use the start ball color
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick	texture
+2, 	3, 	-1,	-1, 	244, 	244,	85,	85, 	1
+
+
+[Paint Ballz]
+;base	diameter(% of base)	x	y	z	color	outlinecolor	fuzz 	outline	group	texture
+;16,	50,			0, 	1, 	.3,	29,	-1,		0,	-1,	-1,	-1

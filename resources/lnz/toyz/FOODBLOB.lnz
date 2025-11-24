@@ -1,0 +1,49 @@
+; MODEL: FOODBLOB
+; GAME: BABYZ
+; (keep the above comments for LnzLive to auto-read correct model and palette)
+
+; Foodblob
+; a diff off of the milk bottle
+; didn't want to both making a new model
+
+[Num Ballz]
+5
+
+; omit all ballz but one
+; do the rest of the blob with addballz
+[Omissions]
+1
+2
+3
+4
+
+[Default Scales]
+55
+80
+
+[Add Ball]
+; first ball is numballz + 1
+;base	x	y	z	color otlnCol spckCol  fuzz   group  outline ballsize bodyarea   addGroup     texture
+0,		10, 10, 10,	147,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+0,		-10, -10, 20,	148,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+0,		15, -20, -5,	149,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+0,		-10, 10, -10,	153,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+0,		0, -20, 10,	140,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+0,		10, 15, -10,	136,	244,	0,	0,	0,	-1,	40,	0,	0,	-1
+
+; -1 mean use the associated ball color
+; Only the first three fields need to be specefied
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick	fulloutline
+[Linez]
+;2, 	1, 	0, 	-1, 	244, 	244,	100,	100		1		
+
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+[Ballz Info]
+140,	244,       -1,        -1,   		-1,		0,		8,		-1 		bottle2
+; these ballz are omitted
+64,		244,       -1,        -1,   		2,		-3,		8,		-1 		bottle3
+64,		244,       -1,        -1,   		2,		-3,		8,		-1 		bottle1
+175,	244,       -1,        -1,   		1,		0,		8,		-1 		nipple1
+175,	244,       -1,        -1,   		1,		0,		8,		-1 		nipple2

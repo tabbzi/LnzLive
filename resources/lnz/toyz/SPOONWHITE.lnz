@@ -1,0 +1,102 @@
+; MODEL: SPOON
+; GAME: BABYZ
+; (keep the above comments for LnzLive to auto-read correct model and palette)
+
+;SPOON White
+
+[Num Ballz]
+19
+
+[Default Scales]
+100			master scale
+100			ball scale
+
+; First argument is name of texture.
+; Second argument is whether texture is single color (1) or multi-color (0)
+; This texture list is used both here and in add ballz
+[Texture List]
+;name				multi-color (0) or single-color (1)
+;\art\textures\hair6.bmp		1
+
+[Ballz Info]
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col	outCol	spklCl	fuzz	otlntTyp	sizeDif	group	texture 
+15,	244,		-1,		-1,		-1		1,	0,	-1	;0 belly
+172,	244,		-1,		-1,		-1,		1,	0,	-1  	;1 bridge  
+15,	244,		-1,		-1		-1		1,	0,	-1  	;2 handle 
+15,	244,		-1,		-1,		-1,		1,	0,	-1    ;3 handle_end
+172,	244,		-1,		-1,		-1,		1,	0,	-1    ;4 spoon00
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;5 spoon01
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;6 spoon02
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;7 spoon03
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;8 spoon04
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;9 spoon05
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;10 spoon06
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;11 spoon07
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;12 spoon08
+172,	244,		-1,		-1,		-1,		2,	0,	-1    ;13 spoon09
+171,	244,		-1,		-1,		-1,		2,	0,	-1    ;14 spoon10
+171,	244,		-1,		-1,		-1,		2,	0,	-1    ;15 spoon11
+171,	244,		-1,		-1,		-1,		2,	0,	-1  	;16 spoon12
+171,	244,		-1,		-1,		-1,		2,	0,	-1    ;17 spoon13
+171,	244,		-1,		-1,		-1,		1,	0,	-1    ;18 spoon_center
+    
+[Linez]
+; -1 for color mean use the start ball color
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick	texture
+;handle
+0, 	1, 	-1,	-1, 	35, 	35,	100,	100, 	1
+0, 	2, 	-1,	-1, 	35, 	35,	100,	100, 	1
+3, 	2, 	-1,	-1, 	35, 	35,	100,	100, 	1
+1, 	4, 	-1,	-1, 	35, 	35,	100,	100, 	1
+;ladle
+4, 	5, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+5, 	7, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+7, 	9, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+9, 	11, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+11, 	13, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+13, 	12, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+12, 	10, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+10, 	8, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+8, 	6, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+6, 	4, 	-1,	-1, 	-1, 	-1,	100,	100, 	1
+14, 	17, 	-1,	-1, 	-1,	-1	100,	100, 	1
+17, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+15, 	16, 	-1,	-1, 	-1,	-1	100,	100, 	1
+16, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+14, 	18, 	-1,	-1, 	-1,	-1	100,	100, 	1
+17, 	18, 	-1,	-1, 	-1,	-1	100,	100, 	1
+15, 	18, 	-1,	-1, 	-1,	-1	100,	100, 	1
+16, 	18, 	-1,	-1, 	-1,	-1	100,	100, 	1
+;crosshatch
+4, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+13, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+10, 	16, 	-1,	-1, 	-1,	-1	100,	100, 	1
+8, 	16, 	-1,	-1, 	-1,	-1	100,	100, 	1
+9, 	17, 	-1,	-1, 	-1,	-1	100,	100, 	1
+7, 	17, 	-1,	-1, 	-1,	-1	100,	100, 	1
+5, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+7, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+8, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+6, 	14, 	-1,	-1, 	-1,	-1	100,	100, 	1
+11, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+12, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+9, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+10, 	15, 	-1,	-1, 	-1,	-1	100,	100, 	1
+
+[Add Ball]
+; first ball is numballz + 1
+;base	x	y	z	color otlnCol spckCol  fuzz   group  outline ballsize bodyarea   addGroup     texture
+;18,	-20,	0,	0,	55	244		0	0	0	-1	100	0		1	-1
+
+[Paint Ballz]
+;base	diameter(% of base)	x	y	z	color	outlinecolor	fuzz 	outline	group	texture
+;16,	50,			0, 	1, 	.3,	29,	-1,		0,	-1,	-1,	-1
+
+[Move]	
+;ball	x	y	z
+13,	5, 	2, 	0
+14,	5, 	2, 	0
+15,	-5, 	2, 	0				
+16,	0, 	2, 	0
+17,	0, 	2, 	0

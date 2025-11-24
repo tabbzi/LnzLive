@@ -1,0 +1,47 @@
+; MODEL: BALL_A1
+; GAME: PETZ
+; (keep the above comments for LnzLive to auto-read correct model and palette)
+
+[Num Ballz]
+1
+
+[Key Balls]
+0		head
+0		chest
+0		nose
+
+
+[Default Scales]
+65			normal pet scale
+65			normal ball scale
+
+
+[Paint Ballz]
+;basball  dmtr(%-baseball)    		 directn        color otlnclr fuzz  outline 	group   texture	scaling
+;POLKADOTS
+0,		27			-1, 0, 0	251	244	0	2	-1	-1
+0,		27			1, 0, 0		251	244	0	2	-1	-1
+0,		27			0, 1, 0		251	244	0	2	-1	-1 	
+0,		27			0, -1, 0	251	244	0	2	-1	-1
+0,		27			0, 0, 1		251	244	0	2	-1	-1
+0,		27			0, 0, -1	251	244	0	2	-1	-1
+;
+0,		27			.5, -.5, -.5	251	244	0	2	-1	-1
+0,		27			-.5, -.5, -.5	251	244	0	2	-1	-1
+0,		27			.5, .5, .5	251	244	0	2	-1	-1
+0,		27			-.5, .5, .5	251	244	0	2	-1	-1
+0,		27			.5, -.5, .5	251	244	0	2	-1	-1
+0,		27			-.5, -.5, .5	251	244	0	2	-1	-1
+0,		27			.5, .5, -.5	251	244	0	2	-1	-1
+0,		27			-.5, .5, -.5	251	244	0	2	-1	-1
+
+
+[Texture List]
+\PtzFiles\Ball_A1\JOWL2.bmp		1
+
+
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+[Ballz Info]
+130,      35,       -1,        -1,        2,        100,        8,      0    
