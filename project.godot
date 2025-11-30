@@ -78,6 +78,7 @@ config/name="LnzLive"
 config/description="A visual editor for P.F. Magic game files"
 run/main_scene="res://scenes/editor/editor.tscn"
 config/icon="res://LnzLiveIcon.png"
+config/windows_native_icon="res://LnzLiveIcon.ico"
 
 [autoload]
 

@@ -1,0 +1,265 @@
+[gd_scene load_steps=12 format=2]
+
+[ext_resource path="res://images/launcher.png" type="Texture" id=1]
+[ext_resource path="res://scripts/Control.gd" type="Script" id=2]
+[ext_resource path="res://fonts/font_pixel_maz_24.tres" type="DynamicFont" id=3]
+[ext_resource path="res://scenes/RichTextLabel.gd" type="Script" id=4]
+[ext_resource path="res://fonts/font_pixel_code_default.tres" type="DynamicFont" id=5]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.168627, 0.45098, 0.45098, 1 )
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.0863037, 0.394531, 0.394531, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0.0705882, 0.282353, 0.32549, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0.155762, 0.155762, 0.34375, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0.329727, 0.329727, 0.574219, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=6]
+bg_color = Color( 0.247059, 0.247059, 0.454902, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+anti_aliasing = false
+
+[node name="Launcher" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Background" type="Panel" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_styles/panel = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="Background"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 32
+custom_constants/margin_top = 16
+custom_constants/margin_left = 32
+custom_constants/margin_bottom = 16
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Background/MarginContainer"]
+margin_left = 32.0
+margin_top = 16.0
+margin_right = 992.0
+margin_bottom = 584.0
+custom_constants/separation = 20
+
+[node name="TextureRect" type="TextureRect" parent="Background/MarginContainer/HBoxContainer"]
+margin_right = 470.0
+margin_bottom = 568.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource( 1 )
+stretch_mode = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background/MarginContainer/HBoxContainer"]
+margin_left = 490.0
+margin_right = 960.0
+margin_bottom = 568.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Title" type="RichTextLabel" parent="Background/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 93.0
+margin_right = 470.0
+margin_bottom = 153.0
+rect_min_size = Vector2( 0, 60 )
+rect_clip_content = false
+size_flags_vertical = 0
+custom_fonts/mono_font = ExtResource( 3 )
+custom_fonts/bold_italics_font = ExtResource( 3 )
+custom_fonts/italics_font = ExtResource( 3 )
+custom_fonts/bold_font = ExtResource( 3 )
+custom_fonts/normal_font = ExtResource( 3 )
+custom_colors/default_color = Color( 1, 1, 1, 1 )
+custom_colors/selection_color = Color( 1, 1, 1, 1 )
+custom_colors/font_color_selected = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 1, 1, 1, 1 )
+text = "LnzLive Petz & Babyz"
+scroll_active = false
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Background/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 157.0
+margin_right = 470.0
+margin_bottom = 212.0
+rect_min_size = Vector2( 0, 55 )
+size_flags_horizontal = 3
+custom_fonts/normal_font = ExtResource( 5 )
+custom_colors/default_color = Color( 0.462745, 0.792157, 0.792157, 1 )
+text = "A visual editor for P.F. Magic game files!"
+scroll_active = false
+script = ExtResource( 4 )
+
+[node name="MenuContainer" type="VBoxContainer" parent="Background/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 216.0
+margin_right = 470.0
+margin_bottom = 416.0
+rect_min_size = Vector2( 0, 200 )
+size_flags_horizontal = 3
+custom_constants/separation = 10
+script = ExtResource( 2 )
+
+[node name="StatusLabel" type="Label" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_right = 470.0
+margin_bottom = 17.0
+custom_fonts/font = ExtResource( 5 )
+text = "Checking for updates..."
+align = 1
+valign = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_top = 27.0
+margin_right = 470.0
+margin_bottom = 52.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/fg = SubResource( 2 )
+custom_styles/bg = SubResource( 3 )
+custom_fonts/font = ExtResource( 5 )
+
+[node name="ChannelSelector" type="OptionButton" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_top = 62.0
+margin_right = 470.0
+margin_bottom = 87.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 5 )
+text = "Select Release Version"
+align = 1
+
+[node name="HSeparator" type="HSeparator" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_top = 97.0
+margin_right = 470.0
+margin_bottom = 101.0
+
+[node name="BtnLaunch" type="Button" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_top = 111.0
+margin_right = 470.0
+margin_bottom = 136.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = ExtResource( 5 )
+text = "Launch LnzLive"
+
+[node name="BtnUpdate" type="Button" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+visible = false
+margin_top = 146.0
+margin_right = 470.0
+margin_bottom = 171.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 5 )
+text = "Update Available"
+
+[node name="BtnInstall" type="Button" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+visible = false
+margin_top = 181.0
+margin_right = 470.0
+margin_bottom = 206.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 5 )
+text = "Install LnzLive"
+
+[node name="BtnOpenFolder" type="Button" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
+margin_top = 146.0
+margin_right = 470.0
+margin_bottom = 171.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 5 )
+text = "Open Install Folder"
+
+[node name="Notice" type="RichTextLabel" parent="Background/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 420.0
+margin_right = 470.0
+margin_bottom = 475.0
+rect_min_size = Vector2( 0, 55 )
+size_flags_horizontal = 3
+custom_fonts/normal_font = ExtResource( 5 )
+custom_colors/default_color = Color( 0.462745, 0.792157, 0.792157, 1 )
+bbcode_enabled = true
+bbcode_text = "WARNING: LnzLive Petz & Babyz is under active development!
+See repository at [url=https://github.com/tabbzi/LnzLive]https://github.com/tabbzi/LnzLive[/url] or message tabbzi on Discord to report bugs or share suggestions."
+text = "WARNING: LnzLive Petz & Babyz is under active development!
+See repository at https://github.com/tabbzi/LnzLive or message tabbzi on Discord to report bugs or share suggestions."
+scroll_active = false
+script = ExtResource( 4 )

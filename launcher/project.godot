@@ -1,0 +1,29 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+[application]
+
+config/name="LnzLiveLauncher"
+run/main_scene="res://scenes/Launcher.tscn"
+config/icon="res://LnzLiveLauncherIcon.png"
+config/windows_native_icon="res://LnzLiveLauncherIcon.ico"
+
+[display]
+
+window/size/resizable=false
+mouse_cursor/custom_image="res://icons/ico_hand_neutral_2x.png"
+window/stretch/aspect="keep"
+
+[rendering]
+
+quality/driver/driver_name="GLES2"
+vram_compression/import_etc=true
+vram_compression/import_etc2=false
+environment/default_environment="res://default_env.tres"
