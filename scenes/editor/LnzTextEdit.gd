@@ -25,6 +25,7 @@ extends TextEdit
 #	TOOLS MENU SIGNALS
 #	MIRRORING & SYMMETRY
 #	BATCH OPERATIONS
+#	HELPER FUNCTIONS
 
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = self
@@ -99,6 +100,8 @@ signal file_backed_up()
 signal ball_number_changed(ball_no)
 
 var max_move_head = 60
+
+enum FilterMode { EXCLUDE, INCLUDE }
 
 ### SETUP & INITIALIZATION ###
 # _safe_connect
@@ -207,9 +210,16 @@ func get_px_scale() -> float:
 	return pet_node.pixel_world_size
 
 func get_lnz_scale() -> float:
-	if not is_instance_valid(pet_node) or not pet_node.get("lnz") or not pet_node.lnz.has("scales"):
+	if not is_instance_valid(pet_node):
 		return 1.0
-	return pet_node.lnz.scales.x / 255.0
+	var lnz = pet_node.get("lnz")
+	if not is_instance_valid(lnz):
+		return 1.0
+	if lnz is Dictionary:
+		if not lnz.has("scales"):
+			return 1.0
+		return lnz.scales.x / 255.0
+	return lnz.scales.x / 255.0
 
 
 ### SIGNAL CALLBACKS ###
@@ -1092,6 +1102,9 @@ func _get_prev_section_line_idx(from_line: int) -> int:
 			return line_index 
 	return -1
 
+
+###
+
 func find_line_in_ball_section(ball_no):
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	if section_find.empty(): return -1
@@ -1105,129 +1118,69 @@ func find_line_in_addball_section(ball_no):
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
 func find_line_in_move_section(ball_no, start_from = -1):
-	var section_find = search('[Move]', 0, 0, 0)
-	if section_find.empty(): return -1
-	var header_idx = section_find[SEARCH_RESULT_LINE]
-	var start_of_section = header_idx + 1
-	
-	var i = 0
-	if start_from >= start_of_section:
-		i = start_from - start_of_section + 1 
-
-	while true:
-		var current_line_idx = start_of_section + i
-		if current_line_idx >= get_line_count(): break
-		
-		var line = get_line(current_line_idx)
-		var stripped = line.strip_edges()
-		if stripped.begins_with("["): break
-		
-		if stripped.empty() or stripped.begins_with(";"):
-			i += 1
-			continue
-
-		var parts = split_line(line)
-		if parts.size() > 0 and parts[0] == str(ball_no):
-			return current_line_idx
-		i += 1
-	
-	if start_from != -1:
-		var top_match = find_line_in_move_section(ball_no, -1)
-		return top_match
-			
-	return header_idx
+	return _find_line_in_section_with_match("[Move]", ball_no, "_linez_match_fn", start_from)
 
 func find_line_in_project_section(ball_no, start_from = -1):
-	var section_find = search('[Project Ball]', 0, 0, 0)
-	if section_find.empty(): return -1
-	var header_idx = section_find[SEARCH_RESULT_LINE]
-	var start_of_section = header_idx + 1
-	
-	var i = 0
-	if start_from >= start_of_section:
-		i = start_from - start_of_section + 1 
+	return _find_line_in_section_with_match("[Project Ball]", ball_no, "_project_match_fn", start_from)
 
-	while true:
-		var current_line_idx = start_of_section + i
-		if current_line_idx >= get_line_count(): break
-		
-		var line = get_line(current_line_idx)
-		var stripped = line.strip_edges()
-		if stripped.begins_with("["): break
-		
-		if stripped.empty() or stripped.begins_with(";"):
-			i += 1
-			continue
-			
-		var parts = split_line(line)
-		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
-			return current_line_idx
-		i += 1
-	
-	if start_from != -1:
-		return find_line_in_project_section(ball_no, -1)
-	
-	return header_idx
-	
 func find_line_in_linez_section(ball_no, start_from = -1):
-	var section_find = search('[Linez]', 0, 0, 0)
-	if section_find.empty(): return -1
-	var header_idx = section_find[SEARCH_RESULT_LINE]
-	var start_of_section = header_idx + 1
-	
-	var i = 0
-	if start_from >= start_of_section:
-		i = start_from - start_of_section + 1 
-
-	while true:
-		var current_line_idx = start_of_section + i
-		if current_line_idx >= get_line_count(): break
-		
-		var line = get_line(current_line_idx)
-		var stripped = line.strip_edges()
-		if stripped.begins_with("["): break
-		
-		var parsed_line = split_line(line)
-		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
-			return current_line_idx
-		i += 1
-	
-	if start_from != -1:
-		return find_line_in_linez_section(ball_no, -1)
-
-	return header_idx
+	return _find_line_in_section_with_match("[Linez]", ball_no, "_linez_match_fn", start_from)
 
 func find_line_in_paintball_section(ball_no, start_from = -1):
-	var section_find = search('[Paint Ballz]', 0, 0, 0)
-	if section_find.empty(): return -1
+	return _find_line_in_section_with_match("[Paint Ballz]", ball_no, "_paintball_match_fn", start_from)
+
+func _linez_match_fn(parts: Array, ball_no) -> bool:
+	return parts.size() >= 2 and (parts[0] == str(ball_no) or parts[1] == str(ball_no))
+
+func _project_match_fn(parts: Array, ball_no) -> bool:
+	return parts.size() > 1 and (parts[0] == str(ball_no) or parts[1] == str(ball_no))
+
+func _paintball_match_fn(parts: Array, ball_no) -> bool:
+	return parts.size() > 0 and parts[0] == str(ball_no)
+
+func _find_line_in_section_with_match(section_name: String, ball_no, match_fn_name: String, start_from = -1) -> int:
+	var header = section_name if section_name.begins_with("[") else ("[" + section_name + "]")
+	var section_find = search(header, 0, 0, 0)
+	if section_find.empty():
+		return -1
+	
 	var header_idx = section_find[SEARCH_RESULT_LINE]
 	var start_of_section = header_idx + 1
 	
 	var i = 0
 	if start_from >= start_of_section:
-		i = start_from - start_of_section + 1 
-
+		i = start_from - start_of_section + 1
+	
 	while true:
 		var current_line_idx = start_of_section + i
-		if current_line_idx >= get_line_count(): break
+		if current_line_idx >= get_line_count():
+			break
 		
 		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
-		if stripped.begins_with("["): break
 		
+		# Stop if we hit another section header
+		if stripped.begins_with("["):
+			break
+		
+		# Skip empty lines and comments
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
 		var parts = split_line(line)
-		if parts.size() > 0 and parts[0] == str(ball_no):
+		
+		if call(match_fn_name, parts, ball_no):
 			return current_line_idx
+			
 		i += 1
 		
 	if start_from != -1:
-		return find_line_in_paintball_section(ball_no, -1)
+		return _find_line_in_section_with_match(section_name, ball_no, match_fn_name, -1)
+	
+	return -1
 
-	return header_idx
+###
 
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
@@ -3152,9 +3105,100 @@ func move_ball(ball_no: int, new_pos: Vector3):
 # _on_ToolsMenu_copy_r_to_l
 # _on_ToolsMenu_recolor
 # _on_ToolsMenu_apply_global_fuzz
+# _resolve_recolor
+# _apply_color_to_section
 
 func _on_ToolsMenu_create_addball(reference_ball, also_connect_line := false):
 	create_addball(reference_ball, also_connect_line)
+
+func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dictionary:
+	var props = {
+		"target_base_ball": reference_ball.ball_no,
+		"size": 20,
+		"fuzz": 0,
+		"texture_id": -1,
+		"color": reference_ball.color_index,
+		"outline_color": reference_ball.outline_color_index,
+		"outline": reference_ball.outline,
+		"bodyarea": 1,
+		"position": Vector3(0, 0, 0)
+	}
+
+	# Size: addball_data, or ball_data fallback
+	var is_addball_ref = reference_ball.ball_no >= KeyBallsData.max_base_ball_num or reference_ball.is_in_group("addballs")
+	var s = 0
+	if is_addball_ref and addball_data != null:
+		if typeof(addball_data) == TYPE_DICTIONARY:
+			if addball_data.has("ball_size"): s = int(addball_data["ball_size"])
+			elif addball_data.has("size"): s = int(addball_data["size"])
+		else:
+			if "ball_size" in addball_data: s = int(addball_data.ball_size)
+			elif "size" in addball_data: s = int(addball_data.size)
+		
+		if s > 0:
+			props.size = s
+		elif reference_ball.has_method("set_ball_size"):
+			props.size = int(round(reference_ball.ball_size))
+	elif reference_ball.has_method("set_ball_size"):
+		props.size = int(round(reference_ball.ball_size))
+
+	# Fuzz and Texture: addball_data, or ball_data fallback
+	if addball_data != null:
+		props.fuzz = addball_data.fuzz
+		props.texture_id = addball_data.texture_id
+	elif ball_data != null:
+		props.fuzz = ball_data.fuzz
+		props.texture_id = ball_data.texture_id
+
+	# 3. Visual State
+	if reference_ball.get("current_outline_state") != 0:
+		props.outline = reference_ball.old_outline
+		props.outline_color = reference_ball.old_outline_color
+
+	# 4. Data Dictionary
+	if addball_data != null:
+		if "color" in addball_data: props.color = addball_data.color
+		if "outline_color" in addball_data: props.outline_color = addball_data.outline_color
+		elif "outline_color_index" in addball_data: props.outline_color = addball_data.outline_color_index
+		if "outline" in addball_data: props.outline = addball_data.outline
+	elif ball_data != null:
+		if "color" in ball_data: props.color = ball_data.color
+		if "outline_color" in ball_data: props.outline_color = ball_data.outline_color
+		elif "outline_color_index" in ball_data: props.outline_color = ball_data.outline_color_index
+		if "outline" in ball_data: props.outline = ball_data.outline
+
+	# 5. Base ball and position
+	if reference_ball.base_ball_no != -1:
+		props.target_base_ball = reference_ball.base_ball_no
+		if addball_data != null:
+			props.position = addball_data.position
+
+	# 6. Bodyarea
+	if KeyBallsData.bodyarea_map.has(props.target_base_ball):
+		props.bodyarea = KeyBallsData.bodyarea_map[props.target_base_ball]
+	else:
+		print("[WARNING] LnzTextEdit: _gather_addball_properties: Missing bodyarea for ball %d. Defaulting to 1." % props.target_base_ball)
+
+	return props
+
+func _construct_addball_line(props: Dictionary, delim: String) -> String:
+	var fields = [
+		str(props.target_base_ball),
+		str(int(props.position.x)),
+		str(int(props.position.y)),
+		str(int(props.position.z)),
+		str(props.color),
+		str(props.outline_color),
+		"0",
+		str(props.fuzz),
+		"0",
+		str(props.outline),
+		str(props.size),
+		str(props.bodyarea),
+		"0",
+		str(props.texture_id)
+	]
+	return _join_array(fields, delim) + "\n"
 
 func create_addball(reference_ball, also_connect_line := false):
 	save_backup()
@@ -3168,100 +3212,11 @@ func create_addball(reference_ball, also_connect_line := false):
 
 	var ball_no = reference_ball.ball_no
 	var lnz = pet_node.lnz
-
-	var lnz_size := 20  # fallback
-
-	if reference_ball != null:
-		var ref_no = reference_ball.ball_no
-		var is_addball_ref = ref_no >= KeyBallsData.max_base_ball_num or reference_ball.is_in_group("addballs")
-
-		if is_addball_ref and lnz.addballs.has(ref_no):
-			var ref_ab = lnz.addballs[ref_no]
-			var s = 0
-
-			if typeof(ref_ab) == TYPE_DICTIONARY:
-				if ref_ab.has("ball_size"):
-					s = int(ref_ab["ball_size"])
-				elif ref_ab.has("size"):
-					s = int(ref_ab["size"])
-			else:
-				if "ball_size" in ref_ab:
-					s = int(ref_ab.ball_size)
-				elif "size" in ref_ab:
-					s = int(ref_ab.size)
-
-			if s > 0:
-				lnz_size = s
-			elif reference_ball.has_method("set_ball_size"):
-				lnz_size = int(round(reference_ball.ball_size))
-		elif reference_ball.has_method("set_ball_size"):
-			lnz_size = int(round(reference_ball.ball_size))
-
 	var addball_data = lnz.addballs.get(ball_no, null)
 	var ball_data = lnz.balls.get(ball_no, null)
 
-	var fuzz_amount = 0
-	if addball_data != null:
-		fuzz_amount = addball_data.fuzz
-	elif ball_data != null:
-		fuzz_amount = ball_data.fuzz
+	var props = _gather_addball_properties(reference_ball, addball_data, ball_data)
 
-	var texture_id = -1
-	if addball_data != null:
-		texture_id = addball_data.texture_id
-	elif ball_data != null:
-		texture_id = ball_data.texture_id
-
-	var raw_color = reference_ball.color_index
-	var raw_outline_color = reference_ball.outline_color_index
-
-	var raw_outline = reference_ball.outline
-	if reference_ball.get("current_outline_state") != 0: 
-		raw_outline = reference_ball.old_outline
-		raw_outline_color = reference_ball.old_outline_color
-
-	if reference_ball.get("current_outline_state") != 0: 
-		raw_outline_color = reference_ball.old_outline_color
-
-	if addball_data != null:
-		if "color" in addball_data: 
-			raw_color = addball_data.color
-	
-		if "outline_color" in addball_data: 
-			raw_outline_color = addball_data.outline_color
-		elif "outline_color_index" in addball_data: 
-			raw_outline_color = addball_data.outline_color_index
-
-		if "outline" in addball_data:
-			raw_outline = addball_data.outline
-	elif ball_data != null:
-		if "color" in ball_data: raw_color = ball_data.color
-		
-		if "outline_color" in ball_data: 
-			raw_outline_color = ball_data.outline_color
-		elif "outline_color_index" in ball_data: 
-			raw_outline_color = ball_data.outline_color_index
-
-		if "outline" in ball_data:
-			raw_outline = ball_data.outline
-
-	var real_base_ball = ball_no
-	if reference_ball.base_ball_no != -1:
-		real_base_ball = reference_ball.base_ball_no
-
-	var new_pos = Vector3(0, 0, 0)
-	if reference_ball.base_ball_no != -1 and addball_data != null:
-		new_pos = addball_data.position - Vector3(0, 0, 0)
-
-	var bodyarea = 1
-	if KeyBallsData.bodyarea_map.has(real_base_ball):
-		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
-	else:
-		var msg = "Missing bodyarea for ball %d. Defaulting to 1." % real_base_ball
-		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
-		if console_log:
-			console_log.log_message(msg)
-	
 	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
 		var msg = "No [Add Ball] section found. Cannot add new ball."
@@ -3274,30 +3229,7 @@ func create_addball(reference_ball, also_connect_line := false):
 	var delim = _detect_delimiter(start_line, end_line)
 	var insert_line = _find_insertion_line(start_line, end_line)
 
-	var fields = [
-		str(real_base_ball),
-		str(int(new_pos.x)),
-		str(int(new_pos.y)),
-		str(int(new_pos.z)),
-		str(raw_color),
-		str(raw_outline_color),
-		"0",
-		str(fuzz_amount),
-		"0",
-		str(raw_outline),
-		str(lnz_size),
-		str(bodyarea),
-		"0",
-		str(texture_id)
-	]
-
-	var line_text = ""
-	for i in range(fields.size()):
-		line_text += fields[i]
-		if i < fields.size() - 1:
-			line_text += delim
-	line_text += "\n"
-
+	var line_text = _construct_addball_line(props, delim)
 	_insert_text_at_cursor_at_line(insert_line, line_text)
 	cursor_set_line(insert_line)
 	cursor_set_column(0)
@@ -3406,203 +3338,89 @@ func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 	save_backup()
 	var species = KeyBallsData.species
-	var balls_to_exclude = []
+	var balls_to_exclude: Array = []
 	
 	if species == KeyBallsData.Species.CAT:
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
-		balls_to_exclude.append_array(KeyBallsData.nose_cat)
-		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
+		for b in KeyBallsData.move_groups_cat["Eyes"]:
+			balls_to_exclude.append(b)
+		for n in KeyBallsData.nose_cat:
+			balls_to_exclude.append(n)
+		for t in KeyBallsData.tongue_cat:
+			balls_to_exclude.append(t)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]:
+			balls_to_exclude.append(w)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]:
+			balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.DOG:
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
-		balls_to_exclude.append_array(KeyBallsData.nose_dog)
-		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+		for b in KeyBallsData.move_groups_dog["Eyes"]:
+			balls_to_exclude.append(b)
+		for n in KeyBallsData.nose_dog:
+			balls_to_exclude.append(n)
+		for t in KeyBallsData.tongue_dog:
+			balls_to_exclude.append(t)
 	elif species == KeyBallsData.Species.BABY:
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
-		balls_to_exclude.append_array(KeyBallsData.eyebrow_bab)
-		
-	var section_find = search('[Ballz Info]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		if i in balls_to_exclude:
-			i += 1
-			continue
-			
-		var line = get_line(start_of_section + i).lstrip(" ")
-		if line.begins_with(";"):
-			i += 1
-			continue
-		elif line.begins_with("["):
-			break
+		for b in KeyBallsData.move_groups_bab["Eyes"]:
+			balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_bab:
+			balls_to_exclude.append(t)
+		for e in KeyBallsData.eyebrow_bab:
+			balls_to_exclude.append(e)
 
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = Array(line.split(delim, false))
-				break
-
-		if parsed_line.size() > 1:
-			if not color_index.empty():
-				parsed_line[0] = str(color_index)
-			if not outline_color_index.empty():
-				parsed_line[1] = str(outline_color_index)
+	# Find and exclude any addballs attached to the currently excluded base balls
+	var addball_bounds = get_section_bounds("[Add Ball]")
+	if not addball_bounds.empty():
+		var count = 0
+		for i in range(addball_bounds.start, addball_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): 
+				continue
 			
-			# Rebuild string exactly once
-			var final_line = parsed_line.join(" ") + " "
-			set_line(start_of_section + i, final_line)
-			
-		i += 1
-	
-	section_find = search('[Add Ball]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
-			i += 1
-			continue
-			
-		var line = get_line(start_of_section + i).lstrip(" ")
-		if line.begins_with(";"):
-			i += 1
-			continue
-		elif line.begins_with("["):
-			break
-
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = Array(line.split(delim, false))
-				break
-
-		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
-			i += 1
-			continue
-			
-		if parsed_line.size() > 5:
-			if not color_index.empty():
-				parsed_line[4] = str(color_index)
-			if not outline_color_index.empty():
-				parsed_line[5] = str(outline_color_index)
+			var parts = split_line(line)
+			if parts.size() > 0:
+				var base_ball_id = parts[0].to_int()
 				
-			# Rebuild string exactly once
-			var final_line = parsed_line.join(" ") + " "
-			set_line(start_of_section + i, final_line)
-			
-		i += 1
-		
+				# If this addball's parent is in the exclusion list, protect this addball too
+				if base_ball_id in balls_to_exclude:
+					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+					balls_to_exclude.append(absolute_addball_id)
+			count += 1
+
+	_apply_color_to_section("[Ballz Info]", 0, 1, balls_to_exclude, color_index, outline_color_index)
+	_apply_color_to_section_addball("[Add Ball]", 4, 5, balls_to_exclude, color_index, outline_color_index)
+	
 	save_file(true)
 	commit_full_snapshot("Applied Colors")
 
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
 	save_backup()
 	var species = KeyBallsData.species
-	var balls_to_exclude = []
+	var balls_to_exclude: Array = []
 	
 	if species == KeyBallsData.Species.CAT:
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
+		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
 		if intended_part != "TONGUE":
-			balls_to_exclude.append_array(KeyBallsData.tongue_cat)
+			for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
 		if intended_part != "NOSE":
-			balls_to_exclude.append_array(KeyBallsData.nose_cat)
+			for n in KeyBallsData.nose_cat: balls_to_exclude.append(n)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.DOG:
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
+		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
 		if intended_part != "TONGUE":
-			balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+			for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
 		if intended_part != "NOSE":
-			balls_to_exclude.append_array(KeyBallsData.nose_dog)
+			for n in KeyBallsData.nose_dog: balls_to_exclude.append(n)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.BABY:
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
 		if intended_part != "TONGUE":
-			balls_to_exclude.append_array(KeyBallsData.tongue_bab)
-		
-	var section_find = search('[Ballz Info]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		if i in balls_to_exclude:
-			i += 1
-			continue
-			
-		var line = get_line(start_of_section + i).lstrip(" ")
-		if line.begins_with(";"):
-			i += 1
-			continue
-		elif line.begins_with("["):
-			break
-			
-		if !(i in core_ball_nos):
-			i += 1
-			continue
+			for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
+		for e in KeyBallsData.eyebrow_bab: balls_to_exclude.append(e)
 
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = Array(line.split(delim, false))
-				break
-
-		if parsed_line.size() > 1:
-			if not color_index.empty():
-				parsed_line[0] = str(color_index)
-			if not outline_color_index.empty():
-				parsed_line[1] = str(outline_color_index)
-				
-			# Rebuild string exactly once
-			var final_line = parsed_line.join(" ") + " "
-			set_line(start_of_section + i, final_line)
-			
-		i += 1
+	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, core_ball_nos, color_index, outline_color_index)
+	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, core_ball_nos, color_index, outline_color_index)
 	
-	section_find = search('[Add Ball]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
-			i += 1
-			continue
-			
-		var line = get_line(start_of_section + i).lstrip(" ")
-		if line.begins_with(";"):
-			i += 1
-			continue
-		elif line.begins_with("["):
-			break
-
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = Array(line.split(delim, false))
-				break
-
-		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
-			i += 1
-			continue
-			
-		if !(int(parsed_line[0]) in core_ball_nos):
-			i += 1
-			continue
-			
-		if parsed_line.size() > 5:
-			if not color_index.empty():
-				parsed_line[4] = str(color_index)
-			if not outline_color_index.empty():
-				parsed_line[5] = str(outline_color_index)
-				
-			var final_line = parsed_line.join(" ") + " "
-			set_line(start_of_section + i, final_line)
-			
-		i += 1
-		
 	save_file(true)
 	commit_full_snapshot("Applied Colors")
 
@@ -3615,536 +3433,231 @@ func _on_ToolsMenu_copy_l_to_r(selected_ball_no: int = -1):
 func _on_ToolsMenu_copy_r_to_l(selected_ball_no: int = -1):
 	_mirror_l_to_r_full(true)
 
+func _apply_recolor_rules_to_parts(parts: Array, recolor_rules: Array, color_idx: int, outline_idx: int, texture_idx: int, info_dict) -> Dictionary:
+	var updates = {}
+	if parts.size() <= color_idx: return updates
+
+	var current_texture = ""
+	if texture_idx != -1 and texture_idx < parts.size():
+		current_texture = parts[texture_idx]
+
+	var current_color = parts[color_idx]
+	var new_color = _resolve_recolor(current_color, false, recolor_rules, info_dict, current_texture)
+	if new_color != null:
+		updates[color_idx] = new_color
+		# Check for texture change on the matching rule
+		for r in recolor_rules:
+			var tm = r.before_texture.empty() or r.before_texture == current_texture
+			if tm and not r.is_ramp and not r.before_color.empty() and not r.after_color.empty():
+				if r.before_color == current_color and not r.after_texture.empty():
+					if texture_idx != -1: updates[texture_idx] = r.after_texture
+				break
+
+	if outline_idx != -1 and outline_idx < parts.size():
+		var current_outline = parts[outline_idx]
+		var new_outline = _resolve_recolor(current_outline, true, recolor_rules, info_dict, current_texture)
+		if new_outline != null:
+			updates[outline_idx] = new_outline
+
+	return updates
+
+func _apply_multi_color_recolor(parts: Array, recolor_rules: Array, color_indices: Array, info_dict) -> Dictionary:
+	var updates = {}
+	for ci in color_indices:
+		if ci >= parts.size(): continue
+		var current_color = parts[ci]
+		var new_color = _resolve_recolor(current_color, false, recolor_rules, info_dict, "")
+		if new_color != null:
+			updates[ci] = new_color
+	return updates
+
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
 	var recolor_rules = all_recolor_info.recolors
 	
 	var species = KeyBallsData.species
-	var balls_to_exclude = []
+	var balls_to_exclude: Array = []
 	if species == KeyBallsData.Species.CAT:
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
-		balls_to_exclude.append_array(KeyBallsData.nose_cat)
-		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
+		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
+		for n in KeyBallsData.nose_cat: balls_to_exclude.append(n)
+		for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.DOG:
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
-		balls_to_exclude.append_array(KeyBallsData.nose_dog)
-		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
+		for n in KeyBallsData.nose_dog: balls_to_exclude.append(n)
+		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.BABY:
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
 
+	# [Ballz Info] - color=0, outline=1, texture=7
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
-		var section_find = search('[Ballz Info]', 0, 0, 0)
-		if section_find:
-			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-				
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-
-				if i in balls_to_exclude or line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
+		var bounds = get_section_bounds("[Ballz Info]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				if _idx_in_list(count, balls_to_exclude):
+					count += 1
 					continue
-
-				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = split_line(line)
-				
-				if parsed_line.size() < 8:
-					i += 1
+				var parts = split_line(line)
+				if parts.size() < 8:
+					count += 1
 					continue
-				
-				var color = parsed_line[0]
-				var outline_color = parsed_line[1]
-				var texture = parsed_line[7]
-				var updates = {}
-
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.balls_on or not texture_match: continue
-
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(color, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == color
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[0] = new_color
-						if not rule.after_texture.empty():
-							updates[7] = rule.after_texture
-						break
-
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.ball_outlines_on or not texture_match: continue
-
-					var new_outline_color = null
-					if rule.is_ramp:
-						new_outline_color = LnzLiveUtils.get_ramp_color(outline_color, rule)
-					else:
-						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
-						if outline_color_match and not rule.after_color.empty():
-							new_outline_color = rule.after_color
-					
-					if new_outline_color != null:
-						updates[1] = new_outline_color
-						break
-				
+				var updates = _apply_recolor_rules_to_parts(parts, recolor_rules, 0, 1, 7, all_recolor_info)
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delim)
-					set_line(current_line_num, final_line)
-				
-				i += 1
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
 
-	if all_recolor_info.paintballs_on or all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
-		var addball_find = search('[Add Ball]', 0, 0, 0)
-		var paintball_find = search('[Paint Ballz]', 0, 0, 0)
-
-		if addball_find and (all_recolor_info.balls_on or all_recolor_info.ball_outlines_on):
-			var start_of_section = addball_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-				
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-				
-				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
+	# [Add Ball] - color=4, outline=5, texture=13
+	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+		var bounds = get_section_bounds("[Add Ball]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 6 or int(parts[0]) in balls_to_exclude:
+					count += 1
 					continue
-
-				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = split_line(line)
-				
-				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
-					i += 1
-					continue
-
-				var color = parsed_line[4]
-				var outline_color = parsed_line[5]
-
-				var texture = ""
-				if parsed_line.size() > 13:
-					texture = parsed_line[13]
-
-				var updates = {}
-
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.balls_on or not texture_match:
-						continue
-
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(color, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == color
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[4] = new_color
-						if not rule.after_texture.empty() and parsed_line.size() > 13:
-							updates[13] = rule.after_texture
-						break
-
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.ball_outlines_on or not texture_match: continue
-
-					var new_outline_color = null
-					if rule.is_ramp:
-						new_outline_color = LnzLiveUtils.get_ramp_color(outline_color, rule)
-					else:
-						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
-						if outline_color_match and not rule.after_color.empty():
-							new_outline_color = rule.after_color
-					
-					if new_outline_color != null:
-						updates[5] = new_outline_color
-						break
-
+				var texture_idx = 13 if parts.size() > 13 else -1
+				var updates = _apply_recolor_rules_to_parts(parts, recolor_rules, 4, 5, texture_idx, all_recolor_info)
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delim)
-					set_line(current_line_num, final_line)
-				
-				i += 1
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
 
-		if paintball_find and all_recolor_info.paintballs_on:
-			var start_of_section = paintball_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-
-				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
+	# [Paint Ballz] - color=5, outline=6, texture=10
+	if all_recolor_info.paintballs_on:
+		var bounds = get_section_bounds("[Paint Ballz]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 11 or int(parts[0]) in balls_to_exclude:
+					count += 1
 					continue
-				
-				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = split_line(line)
-				
-				if parsed_line.size() < 11 or int(parsed_line[0]) in balls_to_exclude:
-					i += 1
-					continue
-
-				var color = parsed_line[5]
-				var outline_color = parsed_line[6] # Grab the outline color
-				var texture = parsed_line[10]
-				var updates = {}
-				
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not texture_match:
-						continue
-
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(color, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == color
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[5] = new_color
-						if not rule.after_texture.empty():
-							updates[10] = rule.after_texture
-						break
-
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not texture_match: continue
-						
-					var new_outline_color = null
-					if rule.is_ramp:
-						new_outline_color = LnzLiveUtils.get_ramp_color(outline_color, rule)
-					else:
-						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
-						if outline_color_match and not rule.after_color.empty():
-							new_outline_color = rule.after_color
-					
-					if new_outline_color != null:
-						updates[6] = new_outline_color
-						break
-
+				var updates = _apply_recolor_rules_to_parts(parts, recolor_rules, 5, 6, 10, all_recolor_info)
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delim)
-					set_line(current_line_num, final_line)
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
 
-				i += 1
-
+	# [Linez] - main=3, left=4, right=5 (no texture)
 	if all_recolor_info.lines_on:
-		var section_find = search('[Linez]', 0, 0, 0)
-		if section_find:
-			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-				
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-				
-				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
+		var bounds = get_section_bounds("[Linez]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 6:
+					count += 1
 					continue
-
-				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = split_line(line)
-				
-				if parsed_line.size() < 6:
-					i += 1
-					continue
-				
-				var mainColor = parsed_line[3]
-				var lColor = parsed_line[4]
-				var rColor = parsed_line[5]
-				var updates = {}
-				
-				for rule in recolor_rules:
-					if not rule.before_texture.empty(): continue
-
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(mainColor, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == mainColor
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[3] = new_color
-						break
-
-				for rule in recolor_rules:
-					if not rule.before_texture.empty(): continue
-					
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(lColor, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == lColor
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[4] = new_color
-						break
-
-				for rule in recolor_rules:
-					if not rule.before_texture.empty(): continue
-					
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(rColor, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == rColor
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[5] = new_color
-						break
-				
+				var updates = _apply_multi_color_recolor(parts, recolor_rules, [3, 4, 5], all_recolor_info)
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delim)
-					set_line(current_line_num, final_line)
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
 
-				i += 1
-
+	# [Polygons] - main=4, left=5, right=6, texture=8
 	if all_recolor_info.polygons_on:
-		var section_find = search('[Polygons]', 0, 0, 0)
-		if section_find:
-			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-				
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-				
-				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
+		var bounds = get_section_bounds("[Polygons]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 5:
+					count += 1
 					continue
-
-				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = split_line(line)
-				
-				# Polygons must have at least 5 columns (4 balls + 1 color)
-				if parsed_line.size() < 5:
-					i += 1
-					continue
-				
-				# ball1, ball2, ball3, ball4, color
-				var mainColor = parsed_line[4]
-				
-				# Optional fields: safely get them or set to null if missing
-				var lColor = parsed_line[5] if parsed_line.size() > 5 else null
-				var rColor = parsed_line[6] if parsed_line.size() > 6 else null
-				
-				var texture = ""
-				if parsed_line.size() > 8:
-					texture = parsed_line[8]
-				
-				var updates = {}
-				
-				# 1. Check Main Color (Index 4)
-				for rule in recolor_rules:
-					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not texture_match: continue
-
-					var new_color = null
-					if rule.is_ramp:
-						new_color = LnzLiveUtils.get_ramp_color(mainColor, rule)
-					else:
-						var color_match = rule.before_color.empty() or rule.before_color == mainColor
-						if color_match and not rule.after_color.empty():
-							new_color = rule.after_color
-					
-					if new_color != null:
-						updates[4] = new_color
-						if not rule.after_texture.empty() and parsed_line.size() > 8:
-							# Only update texture if the column exists to avoid index errors
-							updates[8] = rule.after_texture
-						break
-
-				# 2. Check Left Edge Color (Index 5) - Only if it exists
-				if lColor != null:
-					for rule in recolor_rules:
-						var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-						if not texture_match: continue
-						
-						var new_color = null
-						if rule.is_ramp:
-							new_color = LnzLiveUtils.get_ramp_color(lColor, rule)
-						else:
-							var color_match = rule.before_color.empty() or rule.before_color == lColor
-							if color_match and not rule.after_color.empty():
-								new_color = rule.after_color
-						
-						if new_color != null:
-							updates[5] = new_color
-							break
-
-				# 3. Check Right Edge Color (Index 6) - Only if it exists
-				if rColor != null:
-					for rule in recolor_rules:
-						var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-						if not texture_match: continue
-						
-						var new_color = null
-						if rule.is_ramp:
-							new_color = LnzLiveUtils.get_ramp_color(rColor, rule)
-						else:
-							var color_match = rule.before_color.empty() or rule.before_color == rColor
-							if color_match and not rule.after_color.empty():
-								new_color = rule.after_color
-						
-						if new_color != null:
-							updates[6] = new_color
-							break
-				
+				var texture_idx = 8 if parts.size() > 8 else -1
+				var updates = _apply_recolor_rules_to_parts(parts, recolor_rules, 4, 5, texture_idx, all_recolor_info)
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delim)
-					set_line(current_line_num, final_line)
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
+				# Also apply to right edge if it exists
+				if parts.size() > 6:
+					var updates2 = _apply_recolor_rules_to_parts(parts, recolor_rules, 6, -1, texture_idx, all_recolor_info)
+					if not updates2.empty():
+						var delim = _detect_delimiter(bounds.start, bounds.end)
+						set_line(i, _update_fields(parts, updates2, delim))
+				count += 1
 
-				i += 1
-
-	var section_find = search('[256 Eyelid Color]', 0, 0, 0)
-	if section_find:
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			var current_line_num = start_of_section + i
-			if current_line_num >= get_line_count(): break
-			
-			var line = get_line(current_line_num)
-			if line.begins_with("["): break
-			
-			if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-				i += 1
+	# [256 Eyelid Color] - left=0, right=1 (no texture)
+	var eyelid_bounds = get_section_bounds("[256 Eyelid Color]")
+	if not eyelid_bounds.empty():
+		var count = 0
+		for i in range(eyelid_bounds.start, eyelid_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+			var parts = split_line(line)
+			if parts.size() < 2:
+				count += 1
 				continue
-
-			var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-			var parsed_line = split_line(line)
-			
-			if parsed_line.size() < 2:
-				i += 1
-				continue
-			
-			var l_color = parsed_line[0]
-			var r_color = parsed_line[1]
-			var updates = {}
-			
-			for rule in recolor_rules:
-				if not rule.before_texture.empty(): continue
-
-				var new_color = null
-				if rule.is_ramp:
-					new_color = LnzLiveUtils.get_ramp_color(l_color, rule)
-				else:
-					var color_match = rule.before_color.empty() or rule.before_color == l_color
-					if color_match and not rule.after_color.empty():
-						new_color = rule.after_color
-				
-				if new_color != null:
-					updates[0] = new_color
-					break
-
-			for rule in recolor_rules:
-				if not rule.before_texture.empty(): continue
-				
-				var new_color = null
-				if rule.is_ramp:
-					new_color = LnzLiveUtils.get_ramp_color(r_color, rule)
-				else:
-					var color_match = rule.before_color.empty() or rule.before_color == r_color
-					if color_match and not rule.after_color.empty():
-						new_color = rule.after_color
-				
-				if new_color != null:
-					updates[1] = new_color
-					break
-			
+			var updates = _apply_multi_color_recolor(parts, recolor_rules, [0, 1], all_recolor_info)
 			if not updates.empty():
-				var final_line = _update_fields(parsed_line, updates, delim)
-				set_line(current_line_num, final_line)
-
-			i += 1
+				var delim = _detect_delimiter(eyelid_bounds.start, eyelid_bounds.end)
+				set_line(i, _update_fields(parts, updates, delim))
+			count += 1
 				
 	save_file(true)
 	commit_full_snapshot("Performed Color Swap")
 
 func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	save_backup()
-	var balls_to_exclude = _get_omitted_balls()
+	var balls_to_exclude: Array = _get_omitted_balls()
 	if KeyBallsData.species == KeyBallsData.Species.CAT:
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
+		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif KeyBallsData.species == KeyBallsData.Species.DOG:
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
+		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
-		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
 
-	var ballz_bounds = get_section_bounds("[Ballz Info]")
-	if not ballz_bounds.empty():
-		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
-		for i in range(ballz_bounds.start, ballz_bounds.end):
-			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"): continue
-			
-			var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
-			if ball_no != -1 and not (ball_no in balls_to_exclude):
-				var parts = split_line(line)
-				if parts.size() > 3:
-					parts[3] = str(fuzz)
-					set_line(i, _join_array(parts, delim))
+	# [Ballz Info] — field index 3
+	_for_each_matching_line_in_section_with_field("[Ballz Info]", -1, 3, balls_to_exclude, str(fuzz))
 
+	# [Add Ball] — field index 7
 	var addball_bounds = get_section_bounds("[Add Ball]")
 	if not addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
-		var current_addball_idx = 0
-
+		var count = 0
 		for i in range(addball_bounds.start, addball_bounds.end):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
-			
-			var addball_id = KeyBallsData.max_base_ball_num + current_addball_idx
-			
+			var addball_id = KeyBallsData.max_base_ball_num + count
 			var parts = split_line(line)
 			if parts.size() > 7 and not (addball_id in balls_to_exclude):
 				parts[7] = str(fuzz)
 				set_line(i, _join_array(parts, delim))
-				
-			current_addball_idx += 1
+			count += 1
 
+	# [Linez] — field index 2, check both start/end balls
 	var linez_bounds = get_section_bounds("[Linez]")
 	if not linez_bounds.empty():
 		var delim = _detect_delimiter(linez_bounds.start, linez_bounds.end)
 		for i in range(linez_bounds.start, linez_bounds.end):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
-			
 			var parts = split_line(line)
 			if parts.size() > 2:
 				var b1 = int(parts[0])
@@ -4155,6 +3668,78 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 
 	save_file(true)
 	commit_full_snapshot("Applied Global Fuzz: " + str(fuzz))
+
+func _resolve_recolor(color_str: String, is_outline: bool, rules: Array, info, texture: String):
+	for rule in rules:
+		var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+		if not texture_match: continue
+		if is_outline and not info.ball_outlines_on: continue
+		if not is_outline and not info.balls_on: continue
+		var new_color = null
+		if rule.is_ramp:
+			new_color = LnzLiveUtils.get_ramp_color(color_str, rule)
+		else:
+			var color_match = rule.before_color.empty() or rule.before_color == color_str
+			if color_match and not rule.after_color.empty():
+				new_color = rule.after_color
+		if new_color != null:
+			return new_color
+	return null
+
+func _apply_section_colors(section_name: String, color_field: int, outline_field: int, target_list: Array, color_val, outline_val, filter_mode: int = FilterMode.EXCLUDE, is_addball: bool = false) -> void:
+	var bounds = get_section_bounds(section_name)
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var min_parts = 6 if is_addball else 2
+	var item_index = 0
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+			
+		var parts = split_line(line)
+		
+		if parts.size() < min_parts:
+			continue
+			
+		var check_id = item_index
+		if is_addball:
+			check_id += KeyBallsData.max_base_ball_num
+			
+		var in_list = _idx_in_list(check_id, target_list)
+		var should_skip = false
+		
+		if filter_mode == FilterMode.EXCLUDE and in_list:
+			should_skip = true
+		elif filter_mode == FilterMode.INCLUDE and not in_list:
+			should_skip = true
+			
+		if should_skip:
+			item_index += 1
+			continue
+			
+		if not str(color_val).empty(): 
+			parts[color_field] = str(color_val)
+		if not str(outline_val).empty(): 
+			parts[outline_field] = str(outline_val)
+			
+		set_line(i, _join_array(parts, delim) + " ")
+		item_index += 1
+
+func _apply_color_to_section(section_name: String, color_field: int, outline_field: int, exclude_list: Array, color_val, outline_val) -> void:
+	_apply_section_colors(section_name, color_field, outline_field, exclude_list, color_val, outline_val, FilterMode.EXCLUDE, false)
+
+func _apply_color_to_section_addball(section_name: String, color_field: int, outline_field: int, exclude_list: Array, color_val, outline_val) -> void:
+	_apply_section_colors(section_name, color_field, outline_field, exclude_list, color_val, outline_val, FilterMode.EXCLUDE, true)
+
+func _apply_color_to_section_with_filter(section_name: String, color_field: int, outline_field: int, filter_list: Array, color_val, outline_val) -> void:
+	_apply_section_colors(section_name, color_field, outline_field, filter_list, color_val, outline_val, FilterMode.INCLUDE, false)
+
+func _apply_color_to_section_addball_with_filter(section_name: String, color_field: int, outline_field: int, filter_list: Array, color_val, outline_val) -> void:
+	_apply_section_colors(section_name, color_field, outline_field, filter_list, color_val, outline_val, FilterMode.INCLUDE, true)
 
 
 ### MIRRORING & SYMMETRY ###
@@ -4284,35 +3869,14 @@ func _mirror_l_to_r_full(reverse: bool = false):
 			is_source = false
 		elif parts.size() > 0:
 			var base_ball = parts[0].to_int()
-			
-			if base_ball in source_list:
-				is_source = true
-			elif base_ball in source_addballs_found:
-				is_source = true
-			elif base_ball in middle_balls_list:
-				var x_pos = parts[1].to_float()
-				if reverse:
-					if x_pos < -0.001:
-						is_source = true
-					else:
-						if x_pos > 0.001:
-							is_source = true
+			var x_pos = parts[1].to_float() if parts.size() > 1 else 0.0
+			is_source = _is_ball_on_source_side(base_ball, source_list, source_addballs_found, middle_balls_list, x_pos, reverse)
 		
 		if is_source:
 			source_addballs_found.append(current_scan_id)
 			
 			var old_base = parts[0].to_int()
-			var new_base = -1
-			
-			if source_to_mirror_map.has(old_base):
-				new_base = source_to_mirror_map[old_base]
-			elif base_mirror_map.has(old_base):
-				new_base = base_mirror_map[old_base]
-			elif old_base in middle_balls_list:
-				new_base = old_base
-			else:
-				if reverse: new_base = get_corresponding_left_ball(old_base)
-				else: new_base = get_corresponding_right_ball(old_base)
+			var new_base = _resolve_mirror_id(old_base, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				
 			var mirrored_parts = Array(parts)
 			mirrored_parts[0] = str(new_base)
@@ -4383,22 +3947,8 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				if (e in middle_balls_list) and s_is_src: e_is_src = true
 
 				if s_is_src or e_is_src:
-					var m_s = -1
-					var m_e = -1
-					
-					if source_to_mirror_map.has(s): m_s = source_to_mirror_map[s]
-					elif base_mirror_map.has(s): m_s = base_mirror_map[s]
-					elif s in middle_balls_list: m_s = s
-					else: 
-						if reverse: m_s = get_corresponding_left_ball(s)
-						else: m_s = get_corresponding_right_ball(s)
-
-					if source_to_mirror_map.has(e): m_e = source_to_mirror_map[e]
-					elif base_mirror_map.has(e): m_e = base_mirror_map[e]
-					elif e in middle_balls_list: m_e = e
-					else: 
-						if reverse: m_e = get_corresponding_left_ball(e)
-						else: m_e = get_corresponding_right_ball(e)
+					var m_s = _resolve_mirror_id(s, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+					var m_e = _resolve_mirror_id(e, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 					
 					if m_s != -1 and m_e != -1:
 						var mirror_parts = Array(parts)
@@ -4453,9 +4003,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				var is_src = (move_ball in source_list) or (move_ball in source_addballs_found)
 				
 				if is_src:
-					var m_move_ball = -1
-					if source_to_mirror_map.has(move_ball): m_move_ball = source_to_mirror_map[move_ball]
-					elif base_mirror_map.has(move_ball): m_move_ball = base_mirror_map[move_ball]
+					var m_move_ball = _resolve_mirror_id(move_ball, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 					
 					if m_move_ball != -1:
 						var mirror_parts = Array(parts)
@@ -4465,10 +4013,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 						
 						if mirror_parts.size() > 4:
 							var old_anchor = mirror_parts[4].to_int()
-							var new_anchor = -1
-							if source_to_mirror_map.has(old_anchor): new_anchor = source_to_mirror_map[old_anchor]
-							elif base_mirror_map.has(old_anchor): new_anchor = base_mirror_map[old_anchor]
-							elif old_anchor in middle_balls_list: new_anchor = old_anchor
+							var new_anchor = _resolve_mirror_id(old_anchor, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 							
 							if new_anchor != -1:
 								mirror_parts[4] = str(new_anchor)
@@ -4502,16 +4047,8 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				var m_is_src = (m in source_list) or (m in source_addballs_found)
 				
 				if b_is_src or m_is_src:
-					var m_b = -1
-					var m_m = -1
-					
-					if source_to_mirror_map.has(b): m_b = source_to_mirror_map[b]
-					elif base_mirror_map.has(b): m_b = base_mirror_map[b]
-					elif b in middle_balls_list: m_b = b
-					
-					if source_to_mirror_map.has(m): m_m = source_to_mirror_map[m]
-					elif base_mirror_map.has(m): m_m = base_mirror_map[m]
-					elif m in middle_balls_list: m_m = m
+					var m_b = _resolve_mirror_id(b, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+					var m_m = _resolve_mirror_id(m, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 					
 					if m_b != -1 and m_m != -1:
 						var mirror_parts = Array(parts)
@@ -4552,9 +4089,8 @@ func _mirror_l_to_r_full(reverse: bool = false):
 					if abs(x) > 0.001: is_src = true
 					
 				if is_src:
-					var m_base = -1
-					if base_mirror_map.has(base): m_base = base_mirror_map[base]
-					else: m_base = base
+					var m_base = _resolve_mirror_id(base, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+					if m_base == -1: m_base = base
 					
 					var mirror_parts = Array(parts)
 					mirror_parts[0] = str(m_base)
@@ -4910,6 +4446,35 @@ func _process_paintball_line_for_mirror(parts: Array, target_ball_no: int, mirro
 		return new_parts
 	return []
 
+func _resolve_mirror_id(ball: int, reverse: bool, base_mirror_map: Dictionary, middle_balls_list: Array, source_to_mirror_map: Dictionary = {}) -> int:
+	if source_to_mirror_map.has(ball): return source_to_mirror_map[ball]
+	if base_mirror_map.has(ball): return base_mirror_map[ball]
+	if ball in middle_balls_list: return ball
+	if reverse: return get_corresponding_left_ball(ball)
+	return get_corresponding_right_ball(ball)
+
+func _is_ball_on_source_side(ball: int, source_list: Array, source_addballs_found: Array, middle_balls_list: Array, x_pos: float = 0.0, reverse: bool = false) -> bool:
+	if ball in source_list: return true
+	if ball in source_addballs_found: return true
+	if ball in middle_balls_list:
+		if reverse:
+			return x_pos < -0.001 or x_pos > 0.001
+		return abs(x_pos) > 0.001
+	return false
+
+func _is_source_ball(ball: int, source_list: Array, source_addballs_found: Array, middle_balls_list: Array, x_pos: float = 0.0, reverse: bool = false) -> bool:
+	if ball in source_list: return true
+	if ball in source_addballs_found: return true
+	if ball in middle_balls_list:
+		if reverse:
+			return abs(x_pos) > 0.001
+		return abs(x_pos) > 0.001
+	return false
+
+func _get_mirror_direction(reverse: bool) -> String:
+	if reverse: return "left"
+	return "right"
+
 func _mirror_ball_attributes(parts: Array, is_addball: bool) -> Dictionary:
 	var mirrored_parts = {}
 	var outline_index = 4 if !is_addball else 9
@@ -5013,3 +4578,192 @@ func _mirror_paintball_processor(parts: Array, left_balls_list: Array, middle_ba
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
 	return processed_lines
+
+### BATCH OPERATIONS ###
+
+### HELPER FUNCTIONS ###
+
+func _for_each_matching_line_in_section(section_name: String, ball_no: int, callback) -> void:
+	var bounds = get_section_bounds(section_name)
+	if bounds.empty():
+		return
+
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var matched = false
+
+	if section_name == "[Ballz Info]":
+		var line_idx = find_line_in_ball_section(ball_no)
+		if line_idx != -1:
+			var line = get_line(line_idx).strip_edges()
+			var parts = split_line(line)
+			if not parts.empty():
+				callback.call(line_idx, parts, delim)
+				matched = true
+
+	elif section_name == "[Add Ball]":
+		var idx = ball_no - KeyBallsData.max_base_ball_num
+		var count = 0
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			if count == idx:
+				var parts = split_line(raw)
+				if not parts.empty():
+					callback.call(i, parts, delim)
+					matched = true
+				break
+			count += 1
+
+	elif section_name == "[Move]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Paint Ballz]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Linez]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() >= 2 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Polygons]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() >= 4 and (ball_no in [parts[0].to_int(), parts[1].to_int(), parts[2].to_int(), parts[3].to_int()]):
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Omissions]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with("["): continue
+			if raw.to_int() == ball_no:
+				var parts = Array([str(ball_no)])
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Ball Size Override]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Fuzz Override]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Color Info Override]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Outline Color Override]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 0 and parts[0].to_int() == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Add Ball Override]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			var rel = parts[0].to_int()
+			if rel + KeyBallsData.max_base_ball_num == ball_no:
+				callback.call(i, parts, delim)
+				matched = true
+
+	elif section_name == "[Project Ball]":
+		for i in range(bounds.start, bounds.end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() > 1 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
+				callback.call(i, parts, delim)
+				matched = true
+
+	if not matched:
+		print("[WARNING] LnzTextEdit: _for_each_matching_line_in_section: no matching line found for ball %d in %s" % [ball_no, section_name])
+
+func _for_each_matching_line_in_section_with_field(section_name: String, ball_no: int, field_idx: int, exclude_list: Array, value: String) -> void:
+	var bounds = get_section_bounds(section_name)
+	if bounds.empty(): return
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	
+	if section_name == "[Ballz Info]":
+		var count = 0
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+			var ball_no_check = count
+			if _idx_in_list(ball_no_check, exclude_list):
+				count += 1
+				continue
+			var parts = split_line(line)
+			if parts.size() > field_idx:
+				parts[field_idx] = value
+				set_line(i, _join_array(parts, delim))
+			count += 1
+
+	elif section_name == "[Move]":
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";"): continue
+			var parts = split_line(line)
+			if parts.size() > 0 and _idx_in_list(parts[0].to_int(), exclude_list): continue
+			if parts.size() > field_idx:
+				parts[field_idx] = value
+				set_line(i, _join_array(parts, delim))
+
+	elif section_name == "[Linez]":
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";"): continue
+			var parts = split_line(line)
+			if parts.size() >= 2 and (_idx_in_list(parts[0].to_int(), exclude_list) or _idx_in_list(parts[1].to_int(), exclude_list)): continue
+			if parts.size() > field_idx:
+				parts[field_idx] = value
+				set_line(i, _join_array(parts, delim))
+
+func _idx_in_list(idx: int, list: Array) -> bool:
+	for v in list:
+		if v == idx:
+			return true
+	return false
+	var result = ""
+	for i in range(list.size()):
+		if i > 0: result += ","
+		result += str(list[i])
+	return result

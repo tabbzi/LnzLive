@@ -810,6 +810,9 @@ func build_move_groups() -> void:
 	}
 	move_groups_bab["Head"].append_array(tongue_bab)
 
+func _init() -> void:
+	build_move_groups()
+
 func _flatten(array_of_arrays: Array) -> Array:
 	var flat: Array = []
 	for group in array_of_arrays:
