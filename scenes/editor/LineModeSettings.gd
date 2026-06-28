@@ -7,6 +7,9 @@ extends DraggablePanel
 ## 3. Retrieve all current line properties (e.g., fuzz, color, thickness) set by the user
 
 var _is_loading_settings: bool = false
+var polygon_mode: bool = false
+
+signal polygon_mode_toggled(is_on)
 
 func _ready() -> void:
 	var viewport_size: Vector2 = get_viewport().size
@@ -21,6 +24,7 @@ func _ready() -> void:
 
 	_connect_settings_signals()
 	load_settings()
+	_update_polygon_mode()
 
 func get_properties() -> Dictionary:
 	var properties: Dictionary = {}
@@ -101,8 +105,11 @@ func _connect_settings_signals() -> void:
 	replace_draw_order_node.connect("toggled", self, "_on_setting_changed")
 
 	var reset_btn: Button = find_node("ResetDefaultsButton")
+	var polygon_cb: Button = find_node("PolygonModeCheckBox")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+	if polygon_cb:
+		polygon_cb.connect("toggled", self, "_on_PolygonModeCheckBox_toggled")
 
 func _on_setting_changed(_arg = null) -> void:
 	if _is_loading_settings:
@@ -133,6 +140,7 @@ func save_settings() -> void:
 	config.set_value("LineProperties", "replace_end_thickness", find_node("ReplaceEndThickness").pressed)
 	config.set_value("LineProperties", "replace_outline_type", find_node("ReplaceOutlineType").pressed)
 	config.set_value("LineProperties", "replace_draw_order", find_node("ReplaceDrawOrder").pressed)
+	config.set_value("LineProperties", "polygon_mode", find_node("PolygonModeCheckBox").pressed)
 
 	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
@@ -163,6 +171,7 @@ func load_settings() -> void:
 	find_node("ReplaceEndThickness").pressed = config.get_value("LineProperties", "replace_end_thickness", true)
 	find_node("ReplaceOutlineType").pressed = config.get_value("LineProperties", "replace_outline_type", true)
 	find_node("ReplaceDrawOrder").pressed = config.get_value("LineProperties", "replace_draw_order", true)
+	find_node("PolygonModeCheckBox").pressed = config.get_value("LineProperties", "polygon_mode", false)
 
 	_is_loading_settings = false
 
@@ -189,3 +198,14 @@ func _on_reset_defaults_pressed() -> void:
 
 	_is_loading_settings = false
 	save_settings()
+
+func _update_polygon_mode() -> void:
+	var check_box: Button = find_node("PolygonModeCheckBox")
+	if check_box:
+		polygon_mode = check_box.pressed
+		emit_signal("polygon_mode_toggled", polygon_mode)
+
+func _on_PolygonModeCheckBox_toggled(is_on: bool) -> void:
+	polygon_mode = is_on
+	save_settings()
+	emit_signal("polygon_mode_toggled", is_on)

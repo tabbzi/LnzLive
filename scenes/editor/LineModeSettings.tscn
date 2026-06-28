@@ -97,6 +97,11 @@ margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Line Mode"
 
+[node name="PolygonModeCheckBox" type="CheckBox" parent="VBoxContainer"]
+margin_top = 25.0
+margin_right = 485.0
+text = "Polygon Mode"
+
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
 margin_right = 485.0
@@ -119,7 +124,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "Click start ball then click end ball to set or update linez between them. Unchecked properties won't change. Order of linez can be changed by clicking in reverse."
+text = "Polygon Mode: Click 4 balls in order to create a polygon. Line Mode: Click start ball then end ball to set or update linez. Polygon properties (color, edge colors, fuzz) are controlled by the fields below."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0

@@ -97,6 +97,8 @@ signal find_move(line_no)
 signal find_project_ball(line_no)
 signal file_backed_up()
 
+signal create_polygon
+
 signal ball_number_changed(ball_no)
 
 var max_move_head = 60
@@ -4747,13 +4749,85 @@ func _for_each_matching_line_in_section_with_field(section_name: String, ball_no
 				parts[field_idx] = value
 				set_line(i, _join_array(parts, delim))
 
+func write_polygon_section(ball_ids: Array) -> void:
+	if ball_ids.size() != 4:
+		return
+
+	save_backup()
+	commit_full_snapshot("Add Polygon")
+
+	var delim = _detect_delimiter(0, get_line_count())
+
+	var props: Dictionary = {}
+	if is_instance_valid(pet_view) and is_instance_valid(pet_view.line_mode_settings_instance):
+		props = pet_view.line_mode_settings_instance.get_properties()
+
+	var apply_color: bool = props.get("apply_color", true)
+	var apply_l_edge: bool = props.get("apply_left_outline", true)
+	var apply_r_edge: bool = props.get("apply_right_outline", true)
+	var apply_fuzz: bool = props.get("apply_fuzz", true)
+
+	var color_val: int = -1
+	if apply_color and props.has("color"):
+		var color_str = str(props["color"])
+		if color_str.is_valid_integer():
+			color_val = color_str.to_int()
+
+	var l_edge_val: int = -1
+	if apply_l_edge and props.has("left_outline_color"):
+		var l_str = str(props["left_outline_color"])
+		if l_str.is_valid_integer():
+			l_edge_val = l_str.to_int()
+
+	var r_edge_val: int = -1
+	if apply_r_edge and props.has("right_outline_color"):
+		var r_str = str(props["right_outline_color"])
+		if r_str.is_valid_integer():
+			r_edge_val = r_str.to_int()
+
+	var fuzz_val: int = 0
+	if apply_fuzz and props.has("fuzz"):
+		fuzz_val = int(props["fuzz"])
+
+	var poly_bounds = get_section_bounds("[Polygons]")
+	if poly_bounds.empty():
+		var first_section = search("[", 0, 0, 0)
+		if not first_section.empty():
+			var all_lines = get_text().split("\n")
+			all_lines.insert(first_section[SEARCH_RESULT_LINE], "[Polygons]")
+			text = all_lines.join("\n")
+			_set_text_preserve(text)
+		else:
+			var new_text = "[Polygons]\n"
+			if not text.strip_edges().empty():
+				new_text += text
+			text = new_text
+			_set_text_preserve(text)
+
+	poly_bounds = get_section_bounds("[Polygons]")
+	var insert_line = poly_bounds.end - 1
+	if insert_line < poly_bounds.start:
+		insert_line = poly_bounds.start
+
+	var poly_line = _join_array([
+		str(ball_ids[0]),
+		str(ball_ids[1]),
+		str(ball_ids[2]),
+		str(ball_ids[3]),
+		str(color_val),
+		str(l_edge_val),
+		str(r_edge_val),
+		str(fuzz_val),
+		"-1"
+	], delim)
+
+	_insert_text_at_cursor_at_line(insert_line, poly_line + "\n")
+
+### HELPER FUNCTIONS ###
+# _idx_in_list
+
 func _idx_in_list(idx: int, list: Array) -> bool:
 	for v in list:
 		if v == idx:
 			return true
 	return false
-	var result = ""
-	for i in range(list.size()):
-		if i > 0: result += ","
-		result += str(list[i])
-	return result

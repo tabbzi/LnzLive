@@ -114,6 +114,10 @@ var linez_mode: bool = false
 var linez_start_ball = null
 var line_mode_close: bool = false
 
+var polygon_mode: bool = false
+var polygon_balls: Array = []
+const MAX_POLYGON_BALLS: int = 4
+
 var paintball_mode: bool = false
 var project_mode: bool = false
 var auto_paintballer_mode: bool = false
@@ -302,6 +306,7 @@ func _ready() -> void:
 	variation_tree.connect("visibility_changed", self, "_on_variation_visibility_changed")
 
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
+	line_mode_settings_instance.connect("polygon_mode_toggled", self, "_on_polygon_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
 	texture_editor_mode_check_box.connect("toggled", self, "_on_texture_editor_mode_toggled")
@@ -314,6 +319,7 @@ func _ready() -> void:
 		paintball_settings_instance.connect(
 			"apply_paintballz", lnz_text_edit, "_on_apply_paintballz"
 		)
+		lnz_text_edit.connect("create_polygon", self, "_on_LnzTextEdit_create_polygon")
 	if is_instance_valid(pet_node):
 		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_pending_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
@@ -606,7 +612,12 @@ func _process(_delta: float) -> void:
 	if linez_mode:
 		var intended = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position())) 
 		
-		if is_instance_valid(linez_start_ball): 
+		if polygon_mode:
+			if polygon_balls.size() > 0:
+				body = "Polygon Mode: Click %d more ball(s) to complete polygon" % [MAX_POLYGON_BALLS - polygon_balls.size()]
+			else:
+				body = "Polygon Mode: Click 4 balls in order to create a polygon (key N to cycle ballz)"
+		elif is_instance_valid(linez_start_ball): 
 			body = "Line Mode: Left-click target to END line (key N to cycle ballz)"
 		else:
 			body = "Line Mode: Left-click target to START line (key N to cycle ballz)"
@@ -2959,8 +2970,34 @@ func _on_line_mode_toggled(is_on: bool) -> void:
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
+		if polygon_mode:
+			_clear_polygon_selection()
+			polygon_balls.clear()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	mark_ui_dirty()
+
+func _on_polygon_mode_toggled(is_on: bool) -> void:
+	polygon_mode = is_on
+	_clear_polygon_selection()
+	polygon_balls.clear()
+	mark_ui_dirty()
+
+func _clear_polygon_selection() -> void:
+	for b in polygon_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(b.OutlineState.NONE)
+	polygon_balls.clear()
+
+func _finalize_polygon() -> void:
+	if polygon_balls.size() == MAX_POLYGON_BALLS:
+		var ball_ids: Array = []
+		for b in polygon_balls:
+			if is_instance_valid(b) and "ball_no" in b:
+				ball_ids.append(b.ball_no)
+		if is_instance_valid(lnz_text_edit) and ball_ids.size() == 4:
+			lnz_text_edit.emit_signal("create_polygon", ball_ids)
+		_clear_polygon_selection()
+		polygon_balls.clear()
 
 func _on_preset_mode_toggled(is_on: bool) -> void:
 	if is_on:
@@ -3620,26 +3657,40 @@ func _on_randomize_moves(settings: Dictionary) -> void:
 
 ### LINE MODE ###
 # _handle_line_mode_input
+# _on_LnzTextEdit_create_polygon
 
 func _handle_line_mode_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		
 		if hover:
-			if !is_instance_valid(linez_start_ball):
-				linez_start_ball = hover
-				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
-				_reset_tab_state() 
-			else:
-				if hover != linez_start_ball:
-					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
-					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-					linez_start_ball = null
+			if polygon_mode:
+				if not hover in polygon_balls:
+					polygon_balls.append(hover)
+					hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
 					_reset_tab_state()
-					if line_mode_close:
-						line_mode_check_box.pressed = false
+					if polygon_balls.size() == MAX_POLYGON_BALLS:
+						_finalize_polygon()
+			else:
+				if !is_instance_valid(linez_start_ball):
+					linez_start_ball = hover
+					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+					_reset_tab_state()
+				else:
+					if hover != linez_start_ball:
+						pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+						linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+						linez_start_ball = null
+						_reset_tab_state()
+						if line_mode_close:
+							line_mode_check_box.pressed = false
 			return true
 	return false
+
+func _on_LnzTextEdit_create_polygon(ball_ids) -> void:
+	if is_instance_valid(lnz_text_edit):
+		lnz_text_edit.write_polygon_section(ball_ids)
+		lnz_text_edit.save_file(true)
 
 
 ### PRESET MODE ###
