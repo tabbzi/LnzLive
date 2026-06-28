@@ -2669,24 +2669,14 @@ func inject_single_addball(props: Dictionary, ball_no: int) -> bool:
 		return false
 	
 	var node = ball_scene.instance()
-	base_node.add_child(node)
-	node.add_to_group("addballs")
+	
+	node.species = lnz.species
 	
 	node.ball_no = ball_no
 	node.base_ball_no = addball_data.base
 	node.z_add = addball_data.size / 10.0
-	
-	if lnz.no_texture_rotate.has(addball_data.base):
-		node.set_tile_texture(false)
-		if lnz.quadrant_balls.has(ball_no):
-			node.use_quadrants = true
-	else:
-		node.set_tile_texture(true)
-	
-	node.set_species(lnz.species, is_babyz_mode)
-	
 	node.ball_size = addball_data.size
-	node.color_index = addball_data.color_index
+	node.color_index = addball_data.color_index if addball_data.color_index != -1 else 0
 	node.outline_color_index = addball_data.outline_color_index
 	node.outline = addball_data.outline
 	node.fuzz_amount = clamp(addball_data.fuzz / 2, 0, 5)
@@ -2696,6 +2686,25 @@ func inject_single_addball(props: Dictionary, ball_no: int) -> bool:
 		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list)
 		if tex:
 			node.texture = tex
+	else:
+		if base_node and base_node.has_method("get") and base_node.get("texture"):
+			node.texture = base_node.texture
+	
+	if lnz.no_texture_rotate.has(ball_no):
+		node.set_tile_texture(false)
+		if lnz.quadrant_balls.has(ball_no):
+			node.use_quadrants = true
+	else:
+		node.set_tile_texture(true)
+	
+	node.set_species(lnz.species, is_babyz_mode)
+	
+	base_node.add_child(node)
+	node.add_to_group("addballs")
+	
+	if base_node and base_node.has_node("MeshInstance") and base_node.get_node("MeshInstance").material_override:
+		node.get_node("MeshInstance").material_override = base_node.get_node("MeshInstance").material_override.duplicate()
+		node.get_node("MeshInstance").material_override.set_shader_param("ball_size", addball_data.size)
 	
 	var world_pos = base_node.global_transform.origin
 	world_pos += LnzLiveUtils.lnz_to_world_delta(addball_data.position, pixel_world_size, lnz.scales.x)
