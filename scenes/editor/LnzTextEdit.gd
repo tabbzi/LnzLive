@@ -314,41 +314,41 @@ func save_backup():
 		console_log.log_message(msg)
 
 
-func save_file(skip_history: bool = false):
-	if text.strip_edges().empty():
-		var msg = "No LNZ to save or load! Open example or paste LNZ into Text Editor first."
-		print("[STATUS] LnzTextEdit: save_file: " + msg)
-		if console_log:
-			console_log.log_message(msg)
-		return
-
+func save_file(skip_history: bool = false, silent: bool = false):
 	var t_start = OS.get_ticks_msec()
 
-	if not skip_history and history_index >= 0:
-		var last_snap_idx = _find_nearest_snapshot(history_index)
-		if last_snap_idx != -1:
-			var last_snapshot = history_stack[last_snap_idx]
-			if last_snapshot.full_text == self.text:
-				var msg = "No changes detected! Skipping LNZ save..."
-				print("[STATUS] LnzTextEdit: save_file: " + msg)
-				if console_log:
-					console_log.log_message(msg)
-				return
+	if not silent:
+		if text.strip_edges().empty():
+			var msg = "No LNZ to save or load! Open example or paste LNZ into Text Editor first."
+			print("[STATUS] LnzTextEdit: save_file: " + msg)
+			if console_log:
+				console_log.log_message(msg)
+			return
 
-	if not skip_history:
-		commit_full_snapshot("User Save")
-	
-	if filepath == null or filepath.empty():
+		if not skip_history and history_index >= 0:
+			var last_snap_idx = _find_nearest_snapshot(history_index)
+			if last_snap_idx != -1:
+				var last_snapshot = history_stack[last_snap_idx]
+				if last_snapshot.full_text == self.text:
+					var msg = "No changes detected! Skipping LNZ save..."
+					print("[STATUS] LnzTextEdit: save_file: " + msg)
+					if console_log:
+						console_log.log_message(msg)
+					return
+
+		if not skip_history:
+			commit_full_snapshot("User Save")
+
+	if filepath == null or filepath.empty() or not is_user_file:
 		var dir = Directory.new()
-		var base_path = "user://resources/"
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
 		
 		var default_name = "unnamed.lnz"
-		var possible_file_name = base_path + default_name
+		var possible_file_name = "user://resources/" + default_name
 		var counter = 1
 		while dir.file_exists(possible_file_name):
-			possible_file_name = base_path + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
+			possible_file_name = "user://resources/" + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
 			counter += 1
 		filepath = possible_file_name
 		is_user_file = true
@@ -357,52 +357,34 @@ func save_file(skip_history: bool = false):
 	dir.open("user://")
 	dir.make_dir("resources")
 	
-	if is_user_file:
-		var file = File.new()
-		var err = file.open(filepath, File.WRITE)
-		if err != OK:
+	var file = File.new()
+	var err = file.open(filepath, File.WRITE)
+
+	if err != OK:
 			printerr("Failed to open file for writing: ", filepath)
 			return
-			
-		file.store_string(text)
-		file.close()
-	else:
-		var filename = filepath.get_file()
-		var base_dir = "user://resources/"
-		var possible_file_name = base_dir + filename
-		
-		if dir.file_exists(possible_file_name):
-			possible_file_name = base_dir + filename.replace(".lnz", "_" + str(OS.get_unix_time()) + ".lnz")
-			
-		var file = File.new()
-		var err = file.open(possible_file_name, File.WRITE)
-		if err != OK:
-			printerr("Failed to open file for writing: ", possible_file_name)
-			return
-			
-		file.store_string(text)
-		file.close()
-		
-		filepath = possible_file_name
-		is_user_file = true
 
-	emit_signal("file_saved", filepath)
-	_set_text_preserve(get_text()) 
-	
-	var msg = "Saved LNZ and Applied Changes!"
-	print("[STATUS] LnzTextEdit: save_file: " + msg)
-	if console_log:
-		console_log.log_message(msg)
-	
+	file.store_string(text)
+	file.close()
+
+	if not silent:
+		var msg = "Saved LNZ and Applied Changes!"
+		print("[STATUS] LnzTextEdit: save_file: " + msg)
+		if console_log:
+			console_log.log_message(msg)
+
+		emit_signal("file_saved", filepath)
+		_set_text_preserve(get_text()) 
+
 	print("[TIME] LnzTextEdit: save_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
 func _on_Tree_backup_file():
 	save_backup()
 
-
 func _on_ApplyChangesButton_pressed():
 	save_backup()
 	save_file(false)
+
 
 ### UNDO / REDO HISTORY ###
 # commit_full_snapshot
@@ -2774,8 +2756,10 @@ func set_batch_moves(moves_dict: Dictionary):
 func _on_Node_line_created(start_ball, end_ball):
 	create_line(start_ball, end_ball)
 
-func create_line(start_ball, end_ball):
-	save_backup()
+func create_line(start_ball, end_ball, silent: bool = false):
+	if not silent:
+		save_backup()
+
 	var bounds = get_section_bounds("[Linez]")
 	var start_line = bounds.start
 	var end_line = bounds.end
@@ -2823,8 +2807,8 @@ func create_line(start_ball, end_ball):
 
 			set_line(i, parts.join(delim))
 			line_updated = true
-
-			commit_full_snapshot("Updated Linez between %d and %d" % [start_ball, end_ball])
+			if not silent:
+				commit_full_snapshot("Updated Linez between %d and %d" % [start_ball, end_ball])
 			break
 
 	if not line_updated:
@@ -2852,13 +2836,14 @@ func create_line(start_ball, end_ball):
 		new_line += "\n"
 
 		_insert_text_at_cursor_at_line(insert_line, new_line)
-		cursor_set_line(insert_line)
-		cursor_set_column(0)
-		center_viewport_to_cursor()
 
-		commit_full_snapshot("Created Linez between %d and %d" % [start_ball, end_ball])
-
-	save_file(true)
+		if not silent:
+			cursor_set_line(insert_line)
+			cursor_set_column(0)
+			center_viewport_to_cursor()
+		
+	if not silent:
+		save_file(true)
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	select_ball(section, ball_no, is_addball, max_addball_no)
@@ -3235,16 +3220,21 @@ func create_addball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
+	save_file(false,true)
+
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
+	commit_full_snapshot("Created Addballz #%d" % addball_no)
+
+	var success = pet_node.inject_single_addball(props, addball_no)
+	if not success:
+		printerr("[ERROR] LnzTextEdit: create_addball: failed to inject visual ball")
+		return
 
 	if also_connect_line:
-		_on_Node_line_created(addball_no, reference_ball.ball_no)
+		create_line(addball_no, reference_ball.ball_no, true)
 
 	if pet_view and pet_view.has_method("schedule_autodrag_for_addball"):
 		pet_view.schedule_autodrag_for_addball(addball_no)
-
-	save_file(true)
-	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
 func _on_ToolsMenu_delete_ball(ball_no: int):
 	delete_ball(ball_no)

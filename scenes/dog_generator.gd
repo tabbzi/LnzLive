@@ -122,11 +122,11 @@ signal bhd_loaded(num_of_animations)
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, is_addball)
-signal addball_deleted(ball_no)
 
 signal ball_moved(ball_no, new_position)
 signal ball_resized(ball_no, size_dif)
 
+signal addball_deleted(ball_no)
 signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
 
@@ -2657,3 +2657,154 @@ func _on_apply_auto_paintballz():
 		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
 
 	_on_clear_auto_paintballz()
+
+### ADD BALLZ ###
+
+func inject_single_addball(props: Dictionary, ball_no: int) -> bool:
+	var addball_data = apply_extensions_for_addball(props, ball_no)
+	
+	var base_node = ball_map.get(addball_data.base)
+	if not base_node:
+		printerr("[ERROR] inject_single_addball: base ball %d not found" % addball_data.base)
+		return false
+	
+	var node = ball_scene.instance()
+	base_node.add_child(node)
+	node.add_to_group("addballs")
+	
+	node.ball_no = ball_no
+	node.base_ball_no = addball_data.base
+	node.z_add = addball_data.size / 10.0
+	
+	if lnz.no_texture_rotate.has(addball_data.base):
+		node.set_tile_texture(false)
+		if lnz.quadrant_balls.has(ball_no):
+			node.use_quadrants = true
+	else:
+		node.set_tile_texture(true)
+	
+	node.set_species(lnz.species, is_babyz_mode)
+	
+	node.ball_size = addball_data.size
+	node.color_index = addball_data.color_index
+	node.outline_color_index = addball_data.outline_color_index
+	node.outline = addball_data.outline
+	node.fuzz_amount = clamp(addball_data.fuzz / 2, 0, 5)
+	node.palette = current_palette_texture
+	
+	if addball_data.texture_id >= 0:
+		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list)
+		if tex:
+			node.texture = tex
+	
+	var world_pos = base_node.global_transform.origin
+	world_pos += LnzLiveUtils.lnz_to_world_delta(addball_data.position, pixel_world_size, lnz.scales.x)
+	node.global_transform.origin = world_pos
+	
+	node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
+	node.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
+	node.connect("ball_selected", self, "signal_ball_selected")
+	
+	_orig_world_pos[ball_no] = node.global_transform.origin
+	
+	if not draw_addballs:
+		node.visible_override = false
+	
+	ball_map[ball_no] = node
+	
+	print("[STATUS] Node: inject_single_addball: created addball #%d on base ball %d" % [ball_no, addball_data.base])
+	return true
+
+func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallData:
+	var addball = AddBallData.new(
+		props.target_base_ball, ball_no, props.size, Vector3(props.position),
+		props.color, props.outline_color, props.outline,
+		props.fuzz, 0.0, -1, props.bodyarea, props.texture_id
+	)
+	
+	var base_positions = {}
+	for b in balls:
+		if b.ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		base_positions[b.ball_no] = b.position
+	
+	if lnz.species != KeyBallsData.Species.BABY:
+		var legs = KeyBallsData.legs_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.legs_cat
+		var front_legs = legs[0]
+		var back_legs = legs[1]
+		var ext_front = lnz.leg_extensions.x
+		var ext_back = lnz.leg_extensions.y
+
+		var z_front = 0.0
+		var z_back = 0.0
+		if front_legs.size() > 0 and base_positions.has(front_legs[0]):
+			z_front = base_positions[front_legs[0]].z
+		if back_legs.size() > 0 and base_positions.has(back_legs[0]):
+			z_back = base_positions[back_legs[0]].z
+		
+		var head_ext = KeyBallsData.head_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.head_ext_cat
+		var head_set = {}
+		for b in head_ext:
+			head_set[b] = true
+		
+		var t = 0.5
+		if abs(z_back - z_front) > 0.001:
+			t = (addball.position.z - z_front) / (z_back - z_front)
+		if head_set.has(addball.base) or addball.position.z < z_front:
+			t = 0.0
+		else:
+			t = clamp(t, 0.0, 1.0)
+		var lift = lerp(ext_front, ext_back, t)
+		addball.position.y -= lift
+	
+	var body_ext = KeyBallsData.body_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.body_ext_cat
+	var special_ball = body_ext[0]
+	if addball.base == special_ball:
+		addball.position.z += lnz.body_extension
+	elif addball.base in body_ext:
+		addball.position.z += lnz.body_extension * 2
+	
+	var face_ext = KeyBallsData.face_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.face_ext_cat
+	if addball.base in face_ext:
+		addball.position.z -= lnz.face_extension
+	
+	var head_ext = KeyBallsData.head_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.head_ext_cat
+	var head_ball_key = head_ext[0]
+	if base_positions.has(head_ball_key):
+		var head_pos = base_positions[head_ball_key]
+		if addball.base != head_ball_key:
+			var mod_v = addball.position - head_pos
+			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
+			mod_v += head_pos
+			addball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
+		addball.size = floor(addball.size * (lnz.head_enlargement.x / 100.0))
+		addball.size += lnz.head_enlargement.y
+	
+	var foot_ext = KeyBallsData.foot_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.foot_ext_cat
+	for foot_group in foot_ext:
+		if addball.base in foot_group:
+			var foot_pos = base_positions[foot_group[0]]
+			if addball.base != foot_group[0]:
+				var mod_v = addball.position - foot_pos
+				mod_v = mod_v * (lnz.foot_enlargement.x / 100.0)
+				mod_v += foot_pos
+				addball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
+			addball.size = floor(addball.size * (lnz.foot_enlargement.x / 100.0))
+			addball.size += lnz.foot_enlargement.y
+			break
+	
+	var ear_ext = KeyBallsData.ear_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.ear_ext_cat
+	if addball.base in ear_ext:
+		var base_ball_pos = base_positions[addball.base]
+		var vector_from_base = addball.position - base_ball_pos
+		vector_from_base *= (lnz.ear_extension / 100.0)
+		addball.position = base_ball_pos + vector_from_base
+	
+	addball.size = addball.size - 2
+	addball.size = round(addball.size * (lnz.scales[1] / 255.0))
+	addball.size = max(1, addball.size)
+	addball.size -= 1 - fmod(addball.size, 2)
+	addball.size = max(1, addball.size)
+	addball.position = addball.position * (lnz.scales[0] / 255.0)
+	
+	return addball
