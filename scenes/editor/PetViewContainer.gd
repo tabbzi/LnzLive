@@ -2009,7 +2009,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_camera_view_key_input(event):
 		return
 
-	if event.pressed and last_selected_is_valid():
+	if event.pressed and selecting_on and last_selected_is_valid():
 		last_selected._input(event)
 
 func _set_camera_view(view_name: String) -> void:
@@ -2139,7 +2139,12 @@ func _on_SelectCheckBox_pressed() -> void:
 		for b in _get_all_visual_balls():
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
+				b.select_mode_active = false
 		tex.update()
+	else:
+		for b in _get_all_visual_balls():
+			if b and b.has_method("set_select_mode_active"):
+				b.select_mode_active = true
 	mark_ui_dirty()
 
 func _on_HelpButton_pressed() -> void:
