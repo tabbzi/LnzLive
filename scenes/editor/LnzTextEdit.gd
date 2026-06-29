@@ -2830,12 +2830,8 @@ func create_line(start_ball, end_ball, silent: bool = false):
 			str(props.outline_type),
 			str(props.draw_order)
 		]
-		var new_line = ""
-		for i in range(new_line_parts.size()):
-			new_line += new_line_parts[i]
-			if i < new_line_parts.size() - 1:
-				new_line += delim
-		new_line += "\n"
+		
+		var new_line = _join_array(new_line_parts, delim) + "\n"
 
 		_insert_text_at_cursor_at_line(insert_line, new_line)
 
