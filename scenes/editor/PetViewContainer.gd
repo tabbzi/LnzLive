@@ -1928,8 +1928,19 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				return true
 	return false
 
+func _is_text_input_focused(event: InputEventKey) -> bool:
+	var focus_owner: Node = get_focus_owner()
+	if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+		if event.control or event.alt or event.shift:
+			return false
+		return true
+	return false
+
 func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
+		return
+
+	if _is_text_input_focused(event):
 		return
 
 	if event is InputEventKey:
