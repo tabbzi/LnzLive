@@ -52,9 +52,36 @@ Upload to GitHub: `git push origin feature-name`
 
 Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;) LnzLive does include a set of unit tests using [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) (see [Developer Tools](#developer-tools)).
 
-Export to Windows executable and web HTML/JS to test out as well. To test the web export, you can serve locally from the export directory using `python -m http.server 8080` and navigating to `http://localhost:8080` in your browser. It won't catch everything as itch.io may block certain elements, though.
+#### 9. **Export LnzLive**
 
-#### 9. **Submit a Pull Request**
+Export LnzLive to Windows (`.exe`), Linux (x11 64-bit executable), and web (HTML/JS that can be packaged into a `.zip` archive for itch.io) using the export templates (release and debug versions) generously compiled and provided by [Draconizations/godot-petz](https://github.com/Draconizations/godot-petz/releases/tag/v0.1.0) and copied to the `export/` folder. 
+
+Recommended export Options matching releases need to be manually set in Godot editor:
+
+```
+64_bits: true
+emned_pck: true
+s3tc: true
+no_bptc_fallbacks: true
+timestamp: true
+file_version: LnzLive_PB-beta-v###-preview-##
+product_version: PB-beta-v###
+company_name: LnzLive
+product_name: LnzLive Petz & Babyz
+file_description: A visual editor for P.F. Magic game files!
+```
+
+The following settings for Resources in export pabel are also required:
+
+```
+export_mode: Export all resources in the project
+filter_include: *.bmp,*.lnz,*.bdt,*.bhd,*.png,*.gif,*.ico,*.ttf,*.json
+filter_exclude: export/
+```
+
+To test the web export, you can serve locally from the export directory using `python -m http.server 8080` and navigating to `http://localhost:8080` in your browser. It won't catch everything as hosts or browsers may block certain elements, such as clipboard access.
+
+#### 10. **Submit a Pull Request**
 
 Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into this LnzLive repository.
 
@@ -110,35 +137,35 @@ Graphics in P.F. Magic games operate as 2D billboards in a 3D space. The vertex 
 
 The fragment shader operates per pixel:
 
-* **Step: Culling / Discarding**
+- **Step: Culling / Discarding**
     * Discards the fragment entirely based on view normals or backface logic before doing heavy math.
     * Throws away pixels early if they belong to a shape that is facing backwards or hidden from the camera.
 
-* **Step: Fuzz / Jitter Calculation**
+- **Step: Fuzz / Jitter Calculation**
     * Generates a pseudo-random value based on the fragment's screen coordinates and offsets the UV or distance coordinates to create a dithering effect.
     * Slightly scrambles the pixels along the edge to make the shape look fuzzy or hairy instead of perfectly smooth.
 
-* **Step: Shape & Outline Math**
+- **Step: Shape & Outline Math**
     * Computes distance fields (vector lengths from center) to determine if the current fragment falls within the main body, the outline, or outside the geometry.
     * Uses math to draw a perfect shape inside the invisible canvas, and figures out which pixels belong to the inside body and which belong to the border.
 
-* **Step: Texture Tiling & Rotation**
+- **Step: Texture Tiling & Rotation**
     * Maps screen-space or object-space coordinates to UVs, handling atlas rect boundaries, centering, and tiling parameters.
     * Figures out which part of an image (like a fur pattern) should be painted onto this specific pixel.
 
-* **Step: Texture & Palette Quantization**
+- **Step: Texture & Palette Quantization**
     * Samples the texture/palette, resolves transparency indices, and optionally snaps colors to the nearest target palette using Euclidean distance in RGB space.
     * Looks up the exact color for this pixel from a limited set of colors (a 256-color palette), snapping it to the closest match if necessary.
 
-* **Step: Color Sampling & Z-Shifting**
+- **Step: Color Sampling & Z-Shifting**
     * Applies the final albedo by conditionally shifting the base palette index based on Z-depths, or applying distinct edge/outline/highlight colors.
     * Paints the pixel! If it's further away, it picks a darker shade of the color; if it's an edge, it paints it the edge color.
 
-* **Step: Eyelids & Eyelashes**
+- **Step: Eyelids & Eyelashes**
     * Applies rotational matrices and trigonometric projections to mask out specific sub-regions for secondary features (eyelids/lashes).
     * Draws extra details like eyelids or eyelashes on top of the base shape by calculating angles.
 
-* **Step: Transparency & Alpha Clipping**
+- **Step: Transparency & Alpha Clipping**
     * Evaluates distance fields, highlight states, and transparency flags to output a final alpha value (0.0 or 1.0), discarding out-of-bounds fragments.
     * Makes sure the pixels outside the actual shape or marked as transparent become completely invisible.
 
@@ -146,19 +173,19 @@ The fragment shader operates per pixel:
 
 The vertex shader operates per billboard:
 
-* **Step: Billboard Transformation**
+- **Step: Billboard Transformation**
     * Transforms 3D vertices into clip/view space. Aligns the geometry to face the camera (billboarding) or projects specific 3D coordinates to screen space.
     * Figures out where the shape should be on the screen and makes sure it faces the camera perfectly flat, like a cardboard cutout.
 
-* **Step: Depth Calculation for Z-Shading**
+- **Step: Depth Calculation for Z-Shading**
     * Computes the Z-depth of the object's center in view space and compares it to the pet's root depth for dynamic palette shifting.
     * Measures how far away the shape is compared to the center of the pet so it can be darkened if it's in the background or lightened if it's in the foreground.
 
-* **Step: Screen-Space Center Calculation**
+- **Step: Screen-Space Center Calculation**
     * Projects the 3D center of the object into Normalized Device Coordinates (NDC) and computes the exact pixel coordinate on the viewport.
     * Finds the exact pixel on the screen that marks the dead center of the shape, which helps draw perfect circles or lines later.
     
-* **Step: Vertex Extrusion / Padding**
+- **Step: Vertex Extrusion / Padding**
     * Offsets the clip-space vertices outward by a calculated radius or normal to ensure the fragment shader's bounding box encompasses the entire generated shape (including fuzz).
     * Makes the invisible canvas for the shape slightly bigger than necessary so there is room to draw fuzzy edges or thick borders without cutting them off.
 
@@ -246,14 +273,38 @@ Most tools and modes have settings panels that extend `DraggablePanel.gd` to all
 
 All the static assets, examples, and original game data required to render the models.
 
-* **`animations/`**: Contains the original binary `.bhd` and `.bdt` files for standard base models (e.g., `DOG`, `CAT`, `BABY`) and toys (e.g., `BONE`, `MOUSE`). These are parsed to determine base body proportions and frame-by-frame 3D positioning.
-* **`fonts/`**: Custom fonts used throughout the editor interface, including monospaced coding fonts (`PixelCode`, `CascadiaCode`) for the text editor and retro pixel fonts for the UI labels.
-* **`icons/`**: The visual assets for the editor. This includes toolbar icons, tab graphics, and custom mouse cursors (like the paintbrush, eyedropper, and pinching hands) that swap dynamically based on the active mode.
-* **`images/`**: Graphic assets such as splash screens and launcher rolls.
-* **`lnz/`**: A library of example `.lnz` files categorized by species (`babyz/`, `catz/`, `dogz/`, `toyz/`). These serve as default templates, testing resources, and base structures for users to load and modify.
-* **`palettes/`**: The original 256-color lookup tables used by the custom shaders to accurately map LNZ color indices to RGB values.
-* **`styles/`**: Godot UI theme resources (`.tres` StyleBoxes) for panels, buttons, and text fields across the editor.
-* **`textures/` & `texture_atlas/`**: The massive collection of base `.bmp` and `.png` textures. The `texture_atlas/` folder contains pre-baked sprite sheets generated by the utility scripts to allow the shaders to sample textures efficiently without loading hundreds of individual images into memory.
+- **`animations/`**: Contains the original binary `.bhd` and `.bdt` files for standard base models (e.g., `DOG`, `CAT`, `BABY`) and toys (e.g., `BONE`, `MOUSE`). These are parsed to determine base body proportions and frame-by-frame 3D positioning.
+- **`fonts/`**: Custom fonts used throughout the editor interface, including monospaced coding fonts (`PixelCode`, `CascadiaCode`) for the text editor and retro pixel fonts for the UI labels.
+- **`icons/`**: The visual assets for the editor. This includes toolbar icons, tab graphics, and custom mouse cursors (like the paintbrush, eyedropper, and pinching hands) that swap dynamically based on the active mode.
+- **`images/`**: Graphic assets such as splash screens and launcher rolls.
+- **`lnz/`**: A library of example `.lnz` files categorized by species (`babyz/`, `catz/`, `dogz/`, `toyz/`). These serve as default templates, testing resources, and base structures for users to load and modify.
+- **`palettes/`**: The original 256-color lookup tables used by the custom shaders to accurately map LNZ color indices to RGB values.
+- **`styles/`**: Godot UI theme resources (`.tres` StyleBoxes) for panels, buttons, and text fields across the editor.
+- **`textures/` & `texture_atlas/`**: The massive collection of base `.bmp` and `.png` textures. The `texture_atlas/` folder contains pre-baked sprite sheets generated by the utility scripts to allow the shaders to sample textures efficiently without loading hundreds of individual images into memory.
+
+## Best Practices
+
+### Treat LNZ as the source of truth
+
+Currently, the data model that LnzLive builds from LNZ is temporary, and  the only persistent data exists in the LNZ text. The games are awfully (frurstratingly) flexible with what is valid LNZ, which means there is no canonical order or organization and delimiters can vary even in the same line. LnzLive allows users to modify their hex via the text editor, various modes, and visual interactions, but it all ultimately writes back to the LNZ file.
+
+The `.lnz` text file is the only thing that matters. The 3D viewport is just a visualization of that text. Never try to save changes directly to the 3D nodes and hope they stick. Always ensure your changes are serialized back to the `LnzTextEdit` script. If the text doesn't update, the visual change is temporary and will vanish on reload.
+
+### Check the Godot 3.2 documentation and use built-in linter
+
+LnzLive is basically locked to Godot version 3.2, unless someone is willing to take on migrating to Godot 4, which would be admirable but masochistic. The custom Godot engine is compiled for Windows and provided in `engine/godot.zip`, but you can compile from source in  from [mnemoli/godot-petz](https://github.com/mnemoli/godot-petz/ or [Draconizations/godot-petz](https://github.com/Draconizations/godot-petz/).
+
+If you use code assistants, then anticipate that these will likely spit out Godot 4 syntax that just won't work for Godot 3. Notably, Godot 3 does not use `@onready`, `await`, or typed signals (`signal name(arg: Type)`).
+
+The Godot editor has a good built-in linter when you use its script editor, but you can also install Godot Tools extension for VSCode. Just keep in mind that for the linter to work outside of the editor, the editor needs to be open.
+
+When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.2/)!
+
+## Helpers and utilities are your friend
+
+- Don't hardcode ball IDs but rather pull respective ballz or groups using arrays and dictionaries from `data_classes/key_balls_data.gd` specified by species using `KeyBallsData.FUNCTION()`.
+- Put code that you might reuse multiple times as static functions in `data_classes/lnzlive_utils.gd` and call as `LnzLiveUtils.FUNCTION()`. For example, there are functions for color ramp calculations, number list parsing (e.g., `"1-5"` to `[1,2,3,4,5]`), and coordinate conversions.
+- Review how data is pulled out of LNZ in `data_classes/lnz_parser.gd` and what gets stored in data classes.
 
 ## Developer Tools
 
@@ -276,3 +327,8 @@ Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/inde
    - Enter `res://test` into "Directory 0"
    - Scroll to "XML Output" and enter `res://test/test.xml` (this will save a success/fail test record)
    - Click the "Run All" button. GUT will automatically find your script and execute all functions starting with `test_`.
+
+## Helpful Links
+- [**Godot 3.2 Docs**](https://docs.godotengine.org/en/3.2/)
+- [**GUT Docs**](https://gut.readthedocs.io/en/godot_3x/index.html)
+- [**LnzLive Task Tracker**](https://github.com/users/tabbzi/projects/3)
