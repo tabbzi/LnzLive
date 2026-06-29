@@ -1713,8 +1713,10 @@ func _gui_input(event: InputEvent) -> void:
 
 		var from: Vector3 = camera.project_ray_origin(screen_pos)
 		var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 950
+		# Skip paintball colliders so hover reaches the underlying ball
+		var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
 		var result: Dictionary = camera.get_world().direct_space_state.intersect_ray(
-			from, to, [], 0x7FFFFFFF, false, true
+			from, to, paintball_nodes, 0x7FFFFFFF, false, true
 		)
 
 		if result:
@@ -2145,6 +2147,9 @@ func _on_SelectCheckBox_pressed() -> void:
 		for b in _get_all_visual_balls():
 			if b and b.has_method("set_select_mode_active"):
 				b.select_mode_active = true
+	# for pb in get_tree().get_nodes_in_group("paintballs"):
+	# 	if pb and pb.has_method("set_select_mode_active"):
+	# 		pb.select_mode_active = selecting_on
 	mark_ui_dirty()
 
 func _on_HelpButton_pressed() -> void:

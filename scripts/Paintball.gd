@@ -20,6 +20,8 @@ export var ball_no                = -1
 export var visible_override       = true               setget set_visible
 export var omitted                = false
 
+var select_mode_active            = false
+
 export var tile_texture           = true               setget set_tile_texture
 export var texture                : Texture            setget set_texture
 
@@ -321,7 +323,7 @@ func _on_Area_mouse_exited():
 	# is_over = false
 	
 func _input(event):
-	if event is InputEventKey and event.pressed and is_over:
+	if event is InputEventKey and event.pressed and is_over and select_mode_active:
 		if event.scancode == KEY_SPACE and event.control:
 			return
 			
