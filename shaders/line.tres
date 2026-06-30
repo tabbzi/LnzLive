@@ -181,8 +181,8 @@ void fragment() {
     vec3 texture_color;
     bool is_transparent = false;
 
-    bool is_right_edge = modified_uv.x < 0.25 + one_pixel;
-    bool is_left_edge  = modified_uv.x > 0.75 - one_pixel;
+    bool is_left_edge = modified_uv.x < 0.25 + one_pixel;
+    bool is_right_edge  = modified_uv.x > 0.75 - one_pixel;
     bool is_any_edge = is_right_edge || is_left_edge;
 
     if (is_right_edge && r_color_index != -1) {
