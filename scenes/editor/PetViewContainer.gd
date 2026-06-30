@@ -3686,12 +3686,11 @@ func _handle_line_mode_input(event: InputEvent) -> bool:
 		
 		if hover:
 			if polygon_mode:
-				if not hover in polygon_balls:
-					polygon_balls.append(hover)
-					hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-					_reset_tab_state()
-					if polygon_balls.size() == MAX_POLYGON_BALLS:
-						_finalize_polygon()
+				polygon_balls.append(hover)
+				hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+				_reset_tab_state()
+				if polygon_balls.size() == MAX_POLYGON_BALLS:
+					_finalize_polygon()
 			else:
 				if !is_instance_valid(linez_start_ball):
 					linez_start_ball = hover
