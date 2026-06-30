@@ -284,6 +284,8 @@ func save_backup():
 
 	var dir = Directory.new()
 	var base_path = filepath.trim_suffix(".lnz")
+	while base_path.ends_with("_backup_1") or base_path.ends_with("_backup_2") or base_path.ends_with("_backup_3"):
+		base_path = base_path.trim_suffix("_backup_1").trim_suffix("_backup_2").trim_suffix("_backup_3")
 	var backup_path1 = base_path + "_backup_1.lnz"
 	var backup_path2 = base_path + "_backup_2.lnz"
 	var backup_path3 = base_path + "_backup_3.lnz"
@@ -3216,8 +3218,7 @@ func _construct_addball_line(props: Dictionary, delim: String) -> String:
 	return _join_array(fields, delim) + "\n"
 
 func create_addball(reference_ball, also_connect_line := false):
-	save_backup()
-
+	# save_backup()
 	if reference_ball == null:
 		var msg = "No reference ball given. Cannot add new ball."
 		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
@@ -3250,7 +3251,7 @@ func create_addball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
-	save_file(false,true)
+	# save_file(false,true)
 
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
