@@ -284,6 +284,8 @@ func save_backup():
 
 	var dir = Directory.new()
 	var base_path = filepath.trim_suffix(".lnz")
+	while base_path.ends_with("_backup_1") or base_path.ends_with("_backup_2") or base_path.ends_with("_backup_3"):
+		base_path = base_path.trim_suffix("_backup_1").trim_suffix("_backup_2").trim_suffix("_backup_3")
 	var backup_path1 = base_path + "_backup_1.lnz"
 	var backup_path2 = base_path + "_backup_2.lnz"
 	var backup_path3 = base_path + "_backup_3.lnz"
@@ -346,12 +348,17 @@ func save_file(skip_history: bool = false, silent: bool = false):
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
 		
-		var default_name = "unnamed.lnz"
-		var possible_file_name = "user://resources/" + default_name
-		var counter = 1
-		while dir.file_exists(possible_file_name):
-			possible_file_name = "user://resources/" + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
-			counter += 1
+		var base_name = "unnamed"
+		if filepath:
+			var source_file = filepath.get_file()
+			if source_file.begins_with("res://"):
+				base_name = source_file.trim_suffix(".lnz")
+			else:
+				base_name = source_file.trim_suffix(".lnz")
+		
+		var possible_file_name = "user://resources/" + base_name + ".lnz"
+		if dir.file_exists(possible_file_name):
+			possible_file_name = "user://resources/" + base_name + "_" + str(OS.get_unix_time()) + ".lnz"
 		filepath = possible_file_name
 		is_user_file = true
 
@@ -3216,8 +3223,7 @@ func _construct_addball_line(props: Dictionary, delim: String) -> String:
 	return _join_array(fields, delim) + "\n"
 
 func create_addball(reference_ball, also_connect_line := false):
-	save_backup()
-
+	# save_backup()
 	if reference_ball == null:
 		var msg = "No reference ball given. Cannot add new ball."
 		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
@@ -3250,7 +3256,7 @@ func create_addball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
-	save_file(false,true)
+	# save_file(false,true)
 
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
@@ -4143,6 +4149,69 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		var ins_line = _find_insertion_line(bounds_p.start, bounds_p.end)
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_paint_lines_to_append, "\n") + "\n")
 
+	# [Polygons]
+	var final_poly_lines_to_append = []
+	var existing_poly_sigs = {}
+	var poly_bounds = get_section_bounds("[Polygons]")
+	if not poly_bounds.empty():
+		delim = _detect_delimiter(poly_bounds.start, poly_bounds.end)
+		for i in range(poly_bounds.start, poly_bounds.end):
+			var line = get_line(i).strip_edges()
+			if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
+				existing_poly_sigs[line] = true
+		
+		var poly_content = []
+		for i in range(poly_bounds.start, poly_bounds.end):
+			poly_content.append(get_line(i))
+		
+		for line in poly_content:
+			var strip = line.strip_edges()
+			if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
+				var parts = split_line(strip)
+				if parts.size() < 4: continue
+				
+				var b0 = parts[0].to_int()
+				var b1 = parts[1].to_int()
+				var b2 = parts[2].to_int()
+				var b3 = parts[3].to_int()
+				
+				var m0 = _resolve_mirror_id(b0, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				var m1 = _resolve_mirror_id(b1, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				var m2 = _resolve_mirror_id(b2, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				var m3 = _resolve_mirror_id(b3, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				
+				if m0 == -1: m0 = find_mirrored_ball(b0)
+				if m1 == -1: m1 = find_mirrored_ball(b1)
+				if m2 == -1: m2 = find_mirrored_ball(b2)
+				if m3 == -1: m3 = find_mirrored_ball(b3)
+				
+				if m0 == b0 and m1 == b1 and m2 == b2 and m3 == b3: continue
+				
+				var mirror_parts = Array(parts)
+				mirror_parts[0] = str(m0)
+				mirror_parts[1] = str(m1)
+				mirror_parts[2] = str(m2)
+				mirror_parts[3] = str(m3)
+					
+				# Swap edge colors (columns 5 and 6), same pattern as Linez
+				if mirror_parts.size() > 6:
+					var temp = mirror_parts[5]
+					mirror_parts[5] = mirror_parts[6]
+					mirror_parts[6] = temp
+				
+				var suffix = "RtoL" if reverse else "LtoR"
+				var comment = " ; copyMirr%s_poly(%s,%s,%s,%s)" % [suffix, mirror_parts[0], mirror_parts[1], mirror_parts[2], mirror_parts[3]]
+				var new_line = _join_array(mirror_parts, delim) + comment
+				
+				if !existing_poly_sigs.has(new_line):
+					final_poly_lines_to_append.append(new_line)
+					existing_poly_sigs[new_line] = true
+
+	if not final_poly_lines_to_append.empty():
+		var poly_bounds2 = get_section_bounds("[Polygons]")
+		var ins_line = poly_bounds2.end
+		_insert_text_at_cursor_at_line(ins_line, _join_array(final_poly_lines_to_append, "\n") + "\n")
+
 	save_file(true)
 	commit_full_snapshot("Mirrored L to R" if not reverse else "Mirrored R to L")
 
@@ -4257,6 +4326,84 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		if !new_lines.empty():
 			var insert_line = _find_insertion_line(bounds.start, bounds.end)
 			_insert_text_at_cursor_at_line(insert_line, _join_array(new_lines, "\n") + "\n")
+
+	# [Polygons]
+	var poly_bounds = get_section_bounds("[Polygons]")
+	if !poly_bounds.empty():
+		var delim = _detect_delimiter(poly_bounds.start, poly_bounds.end)
+		var new_poly_lines = []
+		var existing_poly_sigs = {}
+		for i in range(poly_bounds.start, poly_bounds.end):
+			var line = get_line(i).strip_edges()
+			if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
+				existing_poly_sigs[line] = true
+		
+		for i in range(poly_bounds.start, poly_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+			
+			var parts = split_line(line)
+			if parts.size() < 4: continue
+			
+			var b0 = parts[0].to_int()
+			var b1 = parts[1].to_int()
+			var b2 = parts[2].to_int()
+			var b3 = parts[3].to_int()
+			
+			var any_target = (b0 == target_ball_no) or (b1 == target_ball_no) or \
+							 (b2 == target_ball_no) or (b3 == target_ball_no)
+			
+			if !any_target:
+				for ball_id in [b0, b1, b2, b3]:
+					if ball_id >= KeyBallsData.max_base_ball_num and pet_node.lnz.addballs.has(ball_id):
+						if pet_node.lnz.addballs[ball_id].base == target_ball_no:
+							any_target = true
+							break
+			
+			if !any_target: continue
+			
+			var has_associated = (b0 in associated_left_balls) or (b1 in associated_left_balls) or \
+								 (b2 in associated_left_balls) or (b3 in associated_left_balls)
+			
+			if !has_associated:
+				for ball_id in [b0, b1, b2, b3]:
+					if ball_id >= KeyBallsData.max_base_ball_num and pet_node.lnz.addballs.has(ball_id):
+						if pet_node.lnz.addballs[ball_id].base == target_ball_no:
+							has_associated = true
+							break
+			
+			if has_associated:
+				var mirror_parts = Array(parts)
+				for col in [0, 1, 2, 3]:
+					var b = int(mirror_parts[col])
+					if b in temp_addball_map:
+						mirror_parts[col] = str(temp_addball_map[b])
+					else:
+						mirror_parts[col] = str(find_mirrored_ball(int(mirror_parts[col])))
+				
+				var all_valid = true
+				for col in [0, 1, 2, 3]:
+					if int(mirror_parts[col]) == -1:
+						all_valid = false
+						break
+				if !all_valid: continue
+				
+				if mirror_parts.size() > 6:
+					var temp = mirror_parts[5]
+					mirror_parts[5] = mirror_parts[6]
+					mirror_parts[6] = temp
+				
+				var comment = " ; copyMirrLtoR_ball%d_ball%d_poly(%s,%s,%s,%s)" % [target_ball_no, mirrored_ball_no, mirror_parts[0], mirror_parts[1], mirror_parts[2], mirror_parts[3]]
+				var new_line = _join_array(mirror_parts, delim) + comment
+				
+				if !existing_poly_sigs.has(new_line):
+					new_poly_lines.append(new_line)
+					existing_poly_sigs[new_line] = true
+		
+		if !new_poly_lines.empty():
+			var poly_bounds2 = get_section_bounds("[Polygons]")
+			var insert_line = poly_bounds2.end
+			_insert_text_at_cursor_at_line(insert_line, _join_array(new_poly_lines, "\n") + "\n")
 
 	# [Move]
 	if is_mirrored:
