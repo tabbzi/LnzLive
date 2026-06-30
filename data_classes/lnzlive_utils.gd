@@ -587,43 +587,120 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 
 
 ### COLOR UTILITIES ###
-# static func get_luminance(color: Color) -> float:
-# 	return color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+static func get_luminance(color: Color) -> float:
+	return color.r * 0.299 + color.g * 0.587 + color.b * 0.114
 
-# static func get_saturation(color: Color) -> float:
-# 	var max_c: float = max(color.r, max(color.g, color.b))
-# 	var min_c: float = min(color.r, min(color.g, color.b))
-# 	if max_c == 0.0:
-# 		return 0.0
-# 	return (max_c - min_c) / max_c
+static func get_saturation(color: Color) -> float:
+	var max_c: float = max(color.r, max(color.g, color.b))
+	var min_c: float = min(color.r, min(color.g, color.b))
+	if max_c == 0.0:
+		return 0.0
+	return (max_c - min_c) / max_c
 
-# static func get_hue(color: Color) -> float:
-# 	var max_c: float = max(color.r, max(color.g, color.b))
-# 	var min_c: float = min(color.r, min(color.g, color.b))
-# 	var delta: float = max_c - min_c
-# 	if delta == 0.0:
-# 		return 0.0
-# 	var h: float = 0.0
-# 	if max_c == color.r:
-# 		h = fmod((color.g - color.b) / delta, 6.0)
-# 	elif max_c == color.g:
-# 		h = ((color.b - color.r) / delta) + 2.0
-# 	elif max_c == color.b:
-# 		h = ((color.r - color.g) / delta) + 4.0
-# 	h *= 60.0
-# 	if h < 0.0:
-# 		h += 360.0
-# 	return h
+static func get_hue(color: Color) -> float:
+	var max_c: float = max(color.r, max(color.g, color.b))
+	var min_c: float = min(color.r, min(color.g, color.b))
+	var delta: float = max_c - min_c
+	if delta == 0.0:
+		return 0.0
+	var h: float = 0.0
+	if max_c == color.r:
+		h = fmod((color.g - color.b) / delta, 6.0)
+	elif max_c == color.g:
+		h = fmod(((color.b - color.r) / delta) + 2.0, 6.0)
+	elif max_c == color.b:
+		h = fmod(((color.r - color.g) / delta) + 4.0, 6.0)
+	h *= 60.0
+	if h < 0.0:
+		h += 360.0
+	return h
 
-# static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
-# 	if palette_colors.empty():
-# 		return 0
-# 	var best_index: int = 0
-# 	var min_dist: float = INF
-# 	for i in range(palette_colors.size()):
-# 		var c: Color = palette_colors[i]
-# 		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-# 		if dist < min_dist:
-# 			min_dist = dist
-# 			best_index = i
-# 	return best_index
+static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
+	if palette_colors.empty():
+		return 0
+	var best_index: int = 0
+	var min_dist: float = INF
+	for i in range(palette_colors.size()):
+		var c: Color = palette_colors[i]
+		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+		if dist < min_dist:
+			min_dist = dist
+			best_index = i
+	return best_index
+
+
+### WEB UTILITIES ###
+static func web_file_dialog(accept_extensions: String) -> void:
+	JavaScript.eval("""
+	window.fileUploadData = {}
+
+	let el = document.createElement("input");
+	el.type = "file"
+	el.accept = '""" + accept_extensions + """'
+	el.addEventListener("change", (e) => {
+	  if (e.target.files.length > 0) {
+		let file = e.target.files[0]
+		window.fileUploadData.name = file.name
+
+		let reader = new FileReader()
+		reader.readAsArrayBuffer(file)
+		reader.onloadend = (ev) => {
+		  window.fileUploadData.blob = ev.target.result
+		}
+	  }
+	})
+	el.click()
+	""")
+
+static func get_web_file_blob() -> Object:
+	return JavaScript.eval("window.fileUploadData.blob")
+
+static func get_web_file_name() -> String:
+	var name = JavaScript.eval("window.fileUploadData.name")
+	return name if name != null else ""
+
+static func web_download_text(filename: String, content: String) -> void:
+	var escaped = content.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n")
+	var js_code = """
+	var element = document.createElement('a');
+	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent('""" + escaped + """'));
+	element.setAttribute('download', '""" + filename + """');
+	element.style.display = 'none';
+	document.body.appendChild(element);
+	element.click();
+	document.body.removeChild(element);
+	"""
+	JavaScript.eval(js_code)
+
+static func web_download_json(filename: String, content: String) -> void:
+	var base64_content: String = Marshalls.raw_to_base64(content.to_utf8())
+	var js_code = """
+	var element = document.createElement('a');
+	element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+	element.setAttribute('download', '""" + filename + """');
+	element.style.display = 'none';
+	document.body.appendChild(element);
+	element.click();
+	document.body.removeChild(element);
+	"""
+	JavaScript.eval(js_code)
+
+static func web_prompt_import_text(callback_target: Object, callback_method: String) -> void:
+	var js_code = """
+	var input = document.createElement('input');
+	input.type = 'file';
+	input.accept = 'text/plain,.lnz,.json,.bmp,.png';
+	input.onchange = e => { 
+	   var file = e.target.files[0]; 
+	   var reader = new FileReader();
+	   reader.readAsText(file,'UTF-8');
+	   reader.onload = readerEvent => {
+		   var content = readerEvent.target.result;
+		   window.godotTextImport(content);
+	   }
+	}
+	input.click();
+	"""
+	var cb = JavaScript.create_callback(callback_target, callback_method)
+	JavaScript.get_interface("window").godotTextImport = cb
+	JavaScript.eval(js_code)
