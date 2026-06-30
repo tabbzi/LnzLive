@@ -18,6 +18,11 @@ export var pet_center             = Vector3(0, 0, 0)   setget set_pet_center
 export var visible_override       = true               setget set_visible
 export var omitted                = false
 
+var select_mode_active            = false              setget set_select_mode_active
+
+func set_select_mode_active(v: bool) -> void:
+	select_mode_active = v
+
 export var tile_texture           = true               setget set_tile_texture
 export var texture                : Texture            setget set_texture
 export var texture_size           = Vector2(256, 256)  setget set_texture_size
@@ -355,12 +360,12 @@ func selected() -> void:
 		emit_signal("ball_selected", ball_no, Section.Section.BALL)
 
 func _on_Area_input_event(camera: Node, event: InputEvent, click_position: Vector3, click_normal: Vector3, shape_idx: int) -> void:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick and select_mode_active:
 		selected()
 
 func _input(event: InputEvent) -> void:
 	var handled: bool = false
-	if event is InputEventKey and event.pressed and is_over:
+	if event is InputEventKey and event.pressed and is_over and select_mode_active:
 		if event.scancode == KEY_SPACE and event.control:
 			return
 		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:

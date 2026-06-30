@@ -1833,11 +1833,12 @@ func get_project_ball_section() -> Array:
 # set_batch_moves
 
 func _update_all_references(ball_no: int):
-	# Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
+	# Handles [Linez], [Omissions], [Project Ball], [Paint Ballz], [Polygons]
 	_update_pairwise_section("[Linez]", ball_no)
 	_update_single_number_section("[Omissions]", ball_no)
 	_update_project_ball_section("[Project Ball]", ball_no)
 	_update_paintballz_section("[Paint Ballz]", ball_no)
+	_update_polygon_section(ball_no)
 
 func _update_pairwise_section(header: String, ball_no: int):
 	# Generic for [Linez] with start/end ball pair
@@ -1938,6 +1939,37 @@ func _update_paintballz_section(header: String, ball_no: int):
 		elif b > ball_no:
 			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
 		i += 1
+
+func _update_polygon_section(ball_no: int):
+	# Replace deleted ball number in polygon lines with a fallback ball.
+	var bounds = get_section_bounds("[Polygons]")
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	for i in range(bounds.start, bounds.end):
+		var raw_line = get_line(i)
+		var parts = split_line(raw_line)
+		if parts.size() < 4: continue
+		
+		var deleted_idx = -1
+		for col in [0, 1, 2, 3]:
+			if int(parts[col]) == ball_no:
+				deleted_idx = col
+				break
+		
+		if deleted_idx == -1: continue
+		
+		# Pick fallback: if col 0, use col 1; if col 1, use col 0; if col 2, use col 1; if col 3, use col 2
+		var fallback_col = -1
+		if deleted_idx == 0: fallback_col = 1
+		elif deleted_idx == 1: fallback_col = 0
+		elif deleted_idx == 2: fallback_col = 1
+		elif deleted_idx == 3: fallback_col = 2
+		
+		if fallback_col >= 0:
+			var fallback_val = str(int(parts[fallback_col]))
+			var updates = {deleted_idx: fallback_val}
+			set_line(i, _update_fields(parts, updates, delim))
 
 func update_lnz_section_one_value(section_name, val1):
 	var bounds = get_section_bounds(section_name)
@@ -2830,12 +2862,8 @@ func create_line(start_ball, end_ball, silent: bool = false):
 			str(props.outline_type),
 			str(props.draw_order)
 		]
-		var new_line = ""
-		for i in range(new_line_parts.size()):
-			new_line += new_line_parts[i]
-			if i < new_line_parts.size() - 1:
-				new_line += delim
-		new_line += "\n"
+		
+		var new_line = _join_array(new_line_parts, delim) + "\n"
 
 		_insert_text_at_cursor_at_line(insert_line, new_line)
 
@@ -3227,7 +3255,7 @@ func create_addball(reference_ball, also_connect_line := false):
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
-	var success = pet_node.inject_single_addball(props, addball_no)
+	var success = pet_node.inject_single_addball(props, addball_no, reference_ball)
 	if not success:
 		printerr("[ERROR] LnzTextEdit: create_addball: failed to inject visual ball")
 		return

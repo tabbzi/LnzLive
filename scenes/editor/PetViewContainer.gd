@@ -1713,8 +1713,10 @@ func _gui_input(event: InputEvent) -> void:
 
 		var from: Vector3 = camera.project_ray_origin(screen_pos)
 		var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 950
+		# Skip paintball colliders so hover reaches the underlying ball
+		var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
 		var result: Dictionary = camera.get_world().direct_space_state.intersect_ray(
-			from, to, [], 0x7FFFFFFF, false, true
+			from, to, paintball_nodes, 0x7FFFFFFF, false, true
 		)
 
 		if result:
@@ -1928,8 +1930,19 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				return true
 	return false
 
+func _is_text_input_focused(event: InputEventKey) -> bool:
+	var focus_owner: Node = get_focus_owner()
+	if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+		if event.control or event.alt or event.shift:
+			return false
+		return true
+	return false
+
 func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
+		return
+
+	if _is_text_input_focused(event):
 		return
 
 	if event is InputEventKey:
@@ -1998,7 +2011,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_camera_view_key_input(event):
 		return
 
-	if event.pressed and last_selected_is_valid():
+	if event.pressed and selecting_on and last_selected_is_valid():
 		last_selected._input(event)
 
 func _set_camera_view(view_name: String) -> void:
@@ -2128,7 +2141,15 @@ func _on_SelectCheckBox_pressed() -> void:
 		for b in _get_all_visual_balls():
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
+				b.select_mode_active = false
 		tex.update()
+	else:
+		for b in _get_all_visual_balls():
+			if b and b.has_method("set_select_mode_active"):
+				b.select_mode_active = true
+	# for pb in get_tree().get_nodes_in_group("paintballs"):
+	# 	if pb and pb.has_method("set_select_mode_active"):
+	# 		pb.select_mode_active = selecting_on
 	mark_ui_dirty()
 
 func _on_HelpButton_pressed() -> void:
@@ -3665,12 +3686,11 @@ func _handle_line_mode_input(event: InputEvent) -> bool:
 		
 		if hover:
 			if polygon_mode:
-				if not hover in polygon_balls:
-					polygon_balls.append(hover)
-					hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-					_reset_tab_state()
-					if polygon_balls.size() == MAX_POLYGON_BALLS:
-						_finalize_polygon()
+				polygon_balls.append(hover)
+				hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+				_reset_tab_state()
+				if polygon_balls.size() == MAX_POLYGON_BALLS:
+					_finalize_polygon()
 			else:
 				if !is_instance_valid(linez_start_ball):
 					linez_start_ball = hover

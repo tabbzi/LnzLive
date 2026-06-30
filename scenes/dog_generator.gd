@@ -2660,7 +2660,7 @@ func _on_apply_auto_paintballz():
 
 ### ADD BALLZ ###
 
-func inject_single_addball(props: Dictionary, ball_no: int) -> bool:
+func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spatial = null) -> bool:
 	var addball_data = apply_extensions_for_addball(props, ball_no)
 	
 	var base_node = ball_map.get(addball_data.base)
@@ -2702,8 +2702,9 @@ func inject_single_addball(props: Dictionary, ball_no: int) -> bool:
 	base_node.add_child(node)
 	node.add_to_group("addballs")
 	
-	if base_node and base_node.has_node("MeshInstance") and base_node.get_node("MeshInstance").material_override:
-		node.get_node("MeshInstance").material_override = base_node.get_node("MeshInstance").material_override.duplicate()
+	var source_node = reference_ball if reference_ball and reference_ball.has_node("MeshInstance") and reference_ball.get_node("MeshInstance").material_override else base_node
+	if source_node and source_node.has_node("MeshInstance") and source_node.get_node("MeshInstance").material_override:
+		node.get_node("MeshInstance").material_override = source_node.get_node("MeshInstance").material_override.duplicate()
 		node.get_node("MeshInstance").material_override.set_shader_param("ball_size", addball_data.size)
 	
 	var world_pos = base_node.global_transform.origin

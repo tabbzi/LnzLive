@@ -378,6 +378,12 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 				var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 				pet_view.line_mode_close = true
 				pet_view.line_mode_check_box.pressed = true
+				pet_view.polygon_mode = false
+				pet_view.polygon_balls.clear()
+				if pet_view.line_mode_settings_instance:
+					var cb = pet_view.line_mode_settings_instance.find_node("PolygonModeCheckBox")
+					if cb:
+						cb.pressed = false
 				pet_view.linez_start_ball = selected_visual_ball
 				selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
 
