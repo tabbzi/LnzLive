@@ -626,6 +626,8 @@ func get_color_info_override(reader: VirtualFileLineReader) -> void:
 			var ball_data: AddBallData = addballs[line.ball]
 			if "color" in ball_data:
 				ball_data.color = line.color
+			if "color_index" in ball_data:
+				ball_data.color_index = line.color
 			if "group" in ball_data and line.has("group"):
 				ball_data.group = line.group
 			if "texture_id" in ball_data and line.has("texture"):
@@ -644,6 +646,8 @@ func get_outline_color_override(reader: VirtualFileLineReader) -> void:
 			var ball_data: AddBallData = addballs[line.ball]
 			if "outline_color" in ball_data:
 				ball_data.outline_color = line.outline_color
+			if "outline_color_index" in ball_data:
+				ball_data.outline_color_index = line.outline_color
 		else:
 			print("[WARNING] lnz_parser: get_outline_color_override: outline color override attempted for non-existent ball ", line.ball)
 
