@@ -348,12 +348,17 @@ func save_file(skip_history: bool = false, silent: bool = false):
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
 		
-		var default_name = "unnamed.lnz"
-		var possible_file_name = "user://resources/" + default_name
-		var counter = 1
-		while dir.file_exists(possible_file_name):
-			possible_file_name = "user://resources/" + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
-			counter += 1
+		var base_name = "unnamed"
+		if filepath:
+			var source_file = filepath.get_file()
+			if source_file.begins_with("res://"):
+				base_name = source_file.trim_suffix(".lnz")
+			else:
+				base_name = source_file.trim_suffix(".lnz")
+		
+		var possible_file_name = "user://resources/" + base_name + ".lnz"
+		if dir.file_exists(possible_file_name):
+			possible_file_name = "user://resources/" + base_name + "_" + str(OS.get_unix_time()) + ".lnz"
 		filepath = possible_file_name
 		is_user_file = true
 
