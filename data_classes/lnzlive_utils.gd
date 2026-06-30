@@ -704,3 +704,55 @@ static func web_prompt_import_text(callback_target: Object, callback_method: Str
 	var cb = JavaScript.create_callback(callback_target, callback_method)
 	JavaScript.get_interface("window").godotTextImport = cb
 	JavaScript.eval(js_code)
+
+static func ensure_web_ref_dir() -> void:
+	JavaScript.eval("""
+	if (!window.fileUploadData) window.fileUploadData = {}
+	""")
+
+static func web_upload_image(dest_dir: String, callback_target: Object, callback_method: String) -> void:
+	var js_code = """
+	window.refUploadData = {}
+	var el = document.createElement("input");
+	el.type = "file"
+	el.accept = '.png,.jpg,.jpeg,.gif'
+	el.addEventListener("change", (e) => {
+	  if (e.target.files.length > 0) {
+		let file = e.target.files[0]
+		window.refUploadData.name = file.name
+		let reader = new FileReader()
+		reader.readAsArrayBuffer(file)
+		reader.onloadend = (ev) => {
+		  window.refUploadData.blob = ev.target.result
+		}
+	  }
+	})
+	el.click()
+	"""
+	var cb = JavaScript.create_callback(callback_target, callback_method)
+	JavaScript.get_interface("window").godotRefUpload = cb
+	JavaScript.eval(js_code)
+
+static func get_web_ref_blob() -> Object:
+	return JavaScript.eval("window.refUploadData.blob")
+
+static func get_web_ref_name() -> String:
+	var name = JavaScript.eval("window.refUploadData.name")
+	return name if name != null else ""
+
+static func save_web_ref_to_disk(file_name: String, file_blob) -> int:
+	var dir: Directory = Directory.new()
+	var dest_dir: String = "user://resources/references/"
+	var err: int = dir.make_dir_recursive(dest_dir)
+	if err != OK:
+		print("[ERROR] LnzLiveUtils: save_web_ref_to_disk: error creating dir: ", err)
+		return err
+	var dest_path: String = dest_dir + file_name
+	var file: File = File.new()
+	err = file.open(dest_path, File.WRITE)
+	if err != OK:
+		print("[ERROR] LnzLiveUtils: save_web_ref_to_disk: error opening file: ", err)
+		return err
+	file.store_buffer(file_blob)
+	file.close()
+	return OK
