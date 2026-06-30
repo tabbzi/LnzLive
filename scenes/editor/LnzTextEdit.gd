@@ -3896,6 +3896,8 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		elif parts.size() > 0:
 			var base_ball = parts[0].to_int()
 			var x_pos = parts[1].to_float() if parts.size() > 1 else 0.0
+			var base_size: float = parts[4].to_float() if parts.size() > 4 else 0.0
+			var addball_size: float = parts[4].to_float() if parts.size() > 4 else 0.0
 			is_source = _is_ball_on_source_side(base_ball, source_list, source_addballs_found, middle_balls_list, x_pos, reverse)
 		
 		if is_source:
@@ -4625,17 +4627,8 @@ func _is_ball_on_source_side(ball: int, source_list: Array, source_addballs_foun
 	if ball in source_addballs_found: return true
 	if ball in middle_balls_list:
 		if reverse:
-			return x_pos < -0.001 or x_pos > 0.001
-		return abs(x_pos) > 0.001
-	return false
-
-func _is_source_ball(ball: int, source_list: Array, source_addballs_found: Array, middle_balls_list: Array, x_pos: float = 0.0, reverse: bool = false) -> bool:
-	if ball in source_list: return true
-	if ball in source_addballs_found: return true
-	if ball in middle_balls_list:
-		if reverse:
-			return abs(x_pos) > 0.001
-		return abs(x_pos) > 0.001
+			return x_pos < -3.0 or x_pos > 3.0
+		return abs(x_pos) > 3.0
 	return false
 
 func _get_mirror_direction(reverse: bool) -> String:
