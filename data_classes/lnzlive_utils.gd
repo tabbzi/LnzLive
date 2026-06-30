@@ -584,3 +584,46 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 	
 	lut.resize(0)
 	return new_data
+
+
+### COLOR UTILITIES ###
+# static func get_luminance(color: Color) -> float:
+# 	return color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+
+# static func get_saturation(color: Color) -> float:
+# 	var max_c: float = max(color.r, max(color.g, color.b))
+# 	var min_c: float = min(color.r, min(color.g, color.b))
+# 	if max_c == 0.0:
+# 		return 0.0
+# 	return (max_c - min_c) / max_c
+
+# static func get_hue(color: Color) -> float:
+# 	var max_c: float = max(color.r, max(color.g, color.b))
+# 	var min_c: float = min(color.r, min(color.g, color.b))
+# 	var delta: float = max_c - min_c
+# 	if delta == 0.0:
+# 		return 0.0
+# 	var h: float = 0.0
+# 	if max_c == color.r:
+# 		h = fmod((color.g - color.b) / delta, 6.0)
+# 	elif max_c == color.g:
+# 		h = ((color.b - color.r) / delta) + 2.0
+# 	elif max_c == color.b:
+# 		h = ((color.r - color.g) / delta) + 4.0
+# 	h *= 60.0
+# 	if h < 0.0:
+# 		h += 360.0
+# 	return h
+
+# static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
+# 	if palette_colors.empty():
+# 		return 0
+# 	var best_index: int = 0
+# 	var min_dist: float = INF
+# 	for i in range(palette_colors.size()):
+# 		var c: Color = palette_colors[i]
+# 		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+# 		if dist < min_dist:
+# 			min_dist = dist
+# 			best_index = i
+# 	return best_index
