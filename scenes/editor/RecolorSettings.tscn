@@ -360,6 +360,30 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Recolor"
 
+[node name="ExportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
+margin_top = 478.0
+margin_right = 458.0
+margin_bottom = 503.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Export JSON"
+
+[node name="ImportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
+margin_top = 513.0
+margin_right = 458.0
+margin_bottom = 538.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Import JSON"
+
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 492.0
 margin_right = 458.0
