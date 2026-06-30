@@ -3255,7 +3255,7 @@ func create_addball(reference_ball, also_connect_line := false):
 	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
-	var success = pet_node.inject_single_addball(props, addball_no)
+	var success = pet_node.inject_single_addball(props, addball_no, reference_ball)
 	if not success:
 		printerr("[ERROR] LnzTextEdit: create_addball: failed to inject visual ball")
 		return
