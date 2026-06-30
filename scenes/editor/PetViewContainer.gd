@@ -3486,6 +3486,13 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 	return null
 
 func _restore_auto_paintballer_selection() -> void:
+	# Double yield needed: dog_generator.generate_pet() calls init_visual_balls()
+	# which uses call_deferred("_finish_dependent_geometry"). 
+	# Frame 1: generate_pet completes, deferred geometry scheduled
+	# Frame 2: deferred geometry runs, _restore resumes (1st yield)
+	#           but ball_map may still be updating — need another frame
+	# Frame 3: _restore resumes (2nd yield), ball_map is stable
+	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	_on_affected_list_changed(_auto_paint_affected_cache)
 
