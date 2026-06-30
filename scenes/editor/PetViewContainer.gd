@@ -3105,6 +3105,13 @@ func _on_view_variations_toggled(is_on: bool) -> void:
 	if is_on and sidebar_controller:
 		sidebar_controller.switch_to_tab(variation_tree)
 
+	if is_instance_valid(variation_tree):
+		var lnz_data = pet_node.get("lnz") if is_instance_valid(pet_node) else null
+		if lnz_data:
+			variation_tree.dog_generator = pet_node
+			variation_tree.lnz_parser = lnz_data
+		variation_tree.populate_tree()
+
 func _on_variation_visibility_changed() -> void:
 	if view_variations_check_box.pressed != variation_tree.visible:
 		view_variations_check_box.pressed = variation_tree.visible
