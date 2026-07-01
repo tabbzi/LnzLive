@@ -2846,7 +2846,7 @@ func create_line(start_ball, end_ball, silent: bool = false):
 			if props.apply_outline_type: parts[8] = str(props.outline_type)
 			if props.apply_draw_order: parts[9] = str(props.draw_order)
 
-			set_line(i, parts.join(delim))
+			set_line(i, _join_array(parts, delim))
 			line_updated = true
 			if not silent:
 				commit_full_snapshot("Updated Linez between %d and %d" % [start_ball, end_ball])
