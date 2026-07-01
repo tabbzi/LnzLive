@@ -100,8 +100,27 @@ func _on_refresh_button_pressed() -> void:
 	_refresh_image_list()
 
 func _on_open_folder_button_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		LnzLiveUtils.web_upload_image("user://resources/references/", self, "_on_web_ref_upload_confirmed")
+		return
 	self.popup_exclusive = true
 	import_dialog.popup_centered()
+
+func _on_web_ref_upload_confirmed() -> void:
+	var file_blob = LnzLiveUtils.get_web_ref_blob()
+	if file_blob == null:
+		print("[ERROR] ReferenceImageSettings: web upload cancelled or failed.")
+		return
+	var file_name = LnzLiveUtils.get_web_ref_name()
+	var err = LnzLiveUtils.save_web_ref_to_disk(file_name, file_blob)
+	if err == OK:
+		_refresh_image_list()
+		var idx: int = image_paths.find("user://resources/references/" + file_name)
+		if idx != -1:
+			option_button.select(idx)
+			_on_option_button_item_selected(idx)
+	else:
+		print("[ERROR] ReferenceImageSettings: failed to save uploaded image: ", err)
 
 func _on_import_dialog_closed() -> void:
 	self.popup_exclusive = false

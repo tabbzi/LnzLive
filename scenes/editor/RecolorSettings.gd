@@ -76,6 +76,9 @@ func _ready() -> void:
 	top_row.get_node("AutofillButton").connect("pressed", self, "_on_AutofillSwap_pressed")
 	top_row.get_node("RandomizeButton").connect("pressed", self, "_on_RandomizeSwap_pressed")
 
+	find_node("ExportButton").connect("pressed", self, "export_recolor_json")
+	find_node("ImportButton").connect("pressed", self, "_on_ImportPresetButton_pressed")
+
 	if is_instance_valid(rand_after_btn):
 		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
 	
@@ -372,6 +375,192 @@ func _on_ClearSwap_pressed() -> void:
 				cb.pressed = true
 				
 	_refresh_all_previews()
+
+func _gather_swap_data() -> Array:
+	var swaps: Array = []
+	var lines: Array = swap_lines_container.get_children()
+	for l in lines:
+		if l.is_queued_for_deletion(): continue
+		var before_color: String = l.find_node("BeforeColor", true, false).text
+		var before_texture: String = l.find_node("BeforeTexture", true, false).text
+		var after_color: String = l.find_node("AfterColor", true, false).text
+		var after_texture: String = l.find_node("AfterTexture", true, false).text
+		var is_ramp: bool = l.find_node("ColorRampCheck", true, false).pressed
+		if before_color.empty() and before_texture.empty():
+			continue
+		if after_color.empty() and after_texture.empty():
+			continue
+		swaps.append({
+			"before_color": before_color,
+			"before_texture": before_texture,
+			"after_color": after_color,
+			"after_texture": after_texture,
+			"is_ramp": is_ramp
+		})
+	return swaps
+
+func _get_check_states() -> Dictionary:
+	var states: Dictionary = {}
+	for cb in color_swap_check_container.get_children():
+		if cb is CheckBox:
+			states[cb.name] = cb.pressed
+	var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
+	if check_container_2:
+		for cb in check_container_2.get_children():
+			if cb is CheckBox:
+				states[cb.name] = cb.pressed
+	return states
+
+func _apply_swap_data(data: Dictionary) -> void:
+	var swaps: Array = data.get("swaps", [])
+	for i in range(swaps.size()):
+		var swap = swaps[i]
+		if i < swap_lines_container.get_child_count():
+			var line = swap_lines_container.get_child(i)
+			line.find_node("BeforeColor", true, false).text = swap.get("before_color", "")
+			line.find_node("BeforeTexture", true, false).text = swap.get("before_texture", "")
+			line.find_node("AfterColor", true, false).text = swap.get("after_color", "")
+			line.find_node("AfterTexture", true, false).text = swap.get("after_texture", "")
+			line.find_node("ColorRampCheck", true, false).pressed = swap.get("is_ramp", false)
+		else:
+			var new_line = _add_swap_line()
+			new_line.find_node("BeforeColor", true, false).text = swap.get("before_color", "")
+			new_line.find_node("BeforeTexture", true, false).text = swap.get("before_texture", "")
+			new_line.find_node("AfterColor", true, false).text = swap.get("after_color", "")
+			new_line.find_node("AfterTexture", true, false).text = swap.get("after_texture", "")
+			new_line.find_node("ColorRampCheck", true, false).pressed = swap.get("is_ramp", false)
+
+	while swap_lines_container.get_child_count() > swaps.size():
+		var extra = swap_lines_container.get_child(swap_lines_container.get_child_count() - 1)
+		extra.find_node("BeforeColor", true, false).text = ""
+		extra.find_node("BeforeTexture", true, false).text = ""
+		extra.find_node("AfterColor", true, false).text = ""
+		extra.find_node("AfterTexture", true, false).text = ""
+		extra.find_node("ColorRampCheck", true, false).pressed = false
+		extra.queue_free()
+
+	var checks = data.get("checks", {})
+	for key in checks:
+		var found = false
+		for cb in color_swap_check_container.get_children():
+			if cb is CheckBox and cb.name == key:
+				cb.pressed = checks[key]
+				found = true
+				break
+		if not found:
+			var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
+			if check_container_2:
+				for cb in check_container_2.get_children():
+					if cb is CheckBox and cb.name == key:
+						cb.pressed = checks[key]
+						found = true
+						break
+
+	_refresh_all_previews()
+
+func export_recolor_json() -> void:
+	var swaps = _gather_swap_data()
+	var checks = _get_check_states()
+	var settings_dict: Dictionary = {
+		"swaps": swaps,
+		"checks": checks
+	}
+	var json_string: String = JSON.print(settings_dict, "  ")
+	var filename: String = "LnzLive_recolor_settings_" + str(OS.get_unix_time()) + ".json"
+	
+	if OS.has_feature("HTML5"):
+		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
+		var js_code: String = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + filename + """');
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Export Recolor Preset"
+		file_dialog.mode = FileDialog.MODE_SAVE_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.current_file = filename
+		file_dialog.connect("file_selected", self, "_save_recolor_file")
+		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_ImportPresetButton_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		var js_code: String = """
+		var input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+		input.onchange = e => { 
+		   var file = e.target.files[0]; 
+		   var reader = new FileReader();
+		   reader.readAsText(file,'UTF-8');
+		   reader.onload = readerEvent => {
+			   var content = readerEvent.target.result;
+			   window.godotRecolorImport(content);
+		   }
+		}
+		input.click();
+		"""
+		var callback = JavaScript.create_callback(self, "_on_web_import_completed")
+		JavaScript.get_interface("window").godotRecolorImport = callback
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Import Recolor Preset"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_recolor_file")
+		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_web_import_completed(args: Array) -> void:
+	var content: String = args[0]
+	var json_res = JSON.parse(content)
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		print("[STATUS] RecolorSettings: web import parsed, applying swap data")
+		_apply_swap_data(json_res.result)
+	else:
+		print("[ERROR] RecolorSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
+
+func _save_recolor_file(path: String) -> void:
+	var swaps = _gather_swap_data()
+	var checks = _get_check_states()
+	var settings_dict: Dictionary = {
+		"swaps": swaps,
+		"checks": checks
+	}
+	var json_string: String = JSON.print(settings_dict, "  ")
+	var file: File = File.new()
+	var err = file.open(path, File.WRITE)
+	if err == OK:
+		file.store_string(json_string)
+		file.close()
+		print("[STATUS] RecolorSettings: exported to ", path)
+
+func _load_recolor_file(path: String) -> void:
+	var file: File = File.new()
+	var err = file.open(path, File.READ)
+	if err == OK:
+		var text: String = file.get_as_text()
+		file.close()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+			print("[STATUS] RecolorSettings: loaded from ", path)
+			_apply_swap_data(json_res.result)
+		else:
+			print("[ERROR] RecolorSettings: failed to parse JSON from %s (Error code: %d)" % [path, json_res.error])
 
 func _on_AutofillSwap_pressed() -> void:
 	if not is_instance_valid(lnz_text_edit): return
