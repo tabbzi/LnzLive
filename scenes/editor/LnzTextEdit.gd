@@ -3516,6 +3516,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
 	elif species == KeyBallsData.Species.BABY:
 		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
+		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
 
 	# [Ballz Info] - color=0, outline=1, texture=7
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
