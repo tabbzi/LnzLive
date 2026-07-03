@@ -20,18 +20,24 @@ const KIND_PETZ: Array = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_B
 const KIND_BABYZ: Array = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses", "EarringL", "EarringR", "Tail"]
 
 func _ready() -> void:
-	dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
+	if get_tree().root.has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
+	elif get_tree().root.has_node("Root/PetRoot"):
+		dog_generator = get_tree().root.get_node("Root/PetRoot")
 
 func open(target_ball_no: int = -1) -> void:
 	popup_centered()
 	initialize_data(target_ball_no)
 
 func initialize_data(target_ball_no: int) -> void:
-	var lnz: Node = dog_generator.lnz
+	if not dog_generator:
+		return
+
+	var lnz = dog_generator.lnz
 	if not lnz:
 		return
 
-	current_species = lnz.species
+	current_species = lnz.get("species")
 
 	var species_text: String = "Petz"
 	if current_species == KeyBallsData.Species.BABY:
@@ -45,6 +51,8 @@ func initialize_data(target_ball_no: int) -> void:
 
 	for opt in options:
 		kind_option.add_item(opt)
+
+	kind_option.select(0)
 
 	_setup_base_inputs(target_ball_no)
 
@@ -109,7 +117,11 @@ func _on_CopyButton_pressed() -> void:
 	OS.set_clipboard(text_edit.text)
 
 func generate_clz() -> void:
-	var lnz: Node = dog_generator.lnz
+	if not dog_generator or not dog_generator.lnz:
+		text_edit.text = "Error: No file loaded"
+		return
+
+	var lnz = dog_generator.lnz
 
 	var dog_base: int = -1
 	var cat_base: int = -1
@@ -148,7 +160,7 @@ func generate_clz() -> void:
 	for k in sorted_keys:
 		if lnz.omissions.has(k):
 			continue
-		var ab: Dictionary = lnz.addballs[k]
+		var ab = lnz.addballs[k]
 		if ab.base == target_base:
 			relevant_addballs.append(ab)
 			old_to_new_idx[k] = next_idx
