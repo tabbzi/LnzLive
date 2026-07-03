@@ -3436,8 +3436,6 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
 		if intended_part != "NOSE":
 			for n in KeyBallsData.nose_dog: balls_to_exclude.append(n)
-		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
-		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif species == KeyBallsData.Species.BABY:
 		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
 		if intended_part != "TONGUE":
@@ -3651,8 +3649,6 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	elif KeyBallsData.species == KeyBallsData.Species.DOG:
 		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
 		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
-		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
-		for w in KeyBallsData.dog_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
 	elif KeyBallsData.species == KeyBallsData.Species.BABY:
 		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
 		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
