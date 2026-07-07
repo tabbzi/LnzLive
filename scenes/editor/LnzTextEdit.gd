@@ -2551,6 +2551,9 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 func apply_batch_moves(pending_moves: Dictionary):
 	if pending_moves.empty():
 		return
+	if pending_moves.size() > 10000:
+		printerr("[ERROR] LnzTextEdit: apply_batch_moves: %d moves exceeds 10000 limit. Aborting." % pending_moves.size())
+		return
 	
 	save_backup()
 	

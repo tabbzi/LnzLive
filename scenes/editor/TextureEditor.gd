@@ -742,6 +742,10 @@ func save_indexed_bmp(path: String) -> void:
 	var w: int = int(canvas_size.x)
 	var h: int = int(canvas_size.y)
 
+	if w > 1024 or h > 1024:
+		printerr("[ERROR] TextureEditor: canvas size %dx%d exceeds 1024x1024 limit. Aborting save." % [w, h])
+		return
+
 	var row_size = int((w + 3) / 4) * 4
 	var pixel_data_size = row_size * h
 	var palette_size = 256 * 4
