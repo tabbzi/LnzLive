@@ -645,7 +645,7 @@ func _unhandled_key_input(event):
 			redo_visual_edit() # Ctrl+Y
 
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
-		find_panel.visible = !find_panel.visible
+		find_panel.visible = not find_panel.visible
 		self.readonly = find_panel.visible
 
 		if find_panel.visible:
@@ -743,7 +743,7 @@ func _on_global_font_updated():
 	_set_text_preserve(get_text())
 
 func _on_AutowrapButton_pressed():
-	self.wrap_enabled = !self.wrap_enabled
+	self.wrap_enabled = not self.wrap_enabled
 	var button = get_node("../HBoxContainer/AutowrapButton")
 	if self.wrap_enabled:
 		button.text = "Wrap: On"
@@ -752,7 +752,7 @@ func _on_AutowrapButton_pressed():
 	update() # Force a redraw just in case
 
 func _on_FindReplaceButton_pressed():
-	find_panel.visible = !find_panel.visible
+	find_panel.visible = not find_panel.visible
 	self.readonly = find_panel.visible
 	_setup_context_menu()
 

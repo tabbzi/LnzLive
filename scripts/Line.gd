@@ -48,7 +48,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_hidden(is_hidden):
-	$MeshInstance.visible = !is_hidden
+	$MeshInstance.visible = not is_hidden
 
 func update_palette_after_added(new_palette):
 	call_deferred("set_palette", new_palette)

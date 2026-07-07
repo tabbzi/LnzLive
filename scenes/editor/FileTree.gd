@@ -1425,12 +1425,12 @@ func get_expanded_states() -> Dictionary:
 	}
 
 func set_expanded_states(states: Dictionary) -> void:
-	if examples: examples.collapsed = !states.get("Example LNZ", true)
-	if local_storage_bases: local_storage_bases.collapsed = !states.get("Base LNZ", false)
-	if local_storage: local_storage.collapsed = !states.get("User LNZ", true)
-	if res_textures: res_textures.collapsed = !states.get("Game Textures", false)
-	if local_storage_textures: local_storage_textures.collapsed = !states.get("User Textures", false)
-	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("User Palettes", false)
+	if examples: examples.collapsed = not states.get("Example LNZ", true)
+	if local_storage_bases: local_storage_bases.collapsed = not states.get("Base LNZ", false)
+	if local_storage: local_storage.collapsed = not states.get("User LNZ", true)
+	if res_textures: res_textures.collapsed = not states.get("Game Textures", false)
+	if local_storage_textures: local_storage_textures.collapsed = not states.get("User Textures", false)
+	if local_storage_palettes: local_storage_palettes.collapsed = not states.get("User Palettes", false)
 	if states.has("Subfolders"):
 		saved_subfolder_states = states.get("Subfolders")
 

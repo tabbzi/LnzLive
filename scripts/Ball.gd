@@ -107,13 +107,13 @@ func _ready() -> void:
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_hidden(is_hidden: bool) -> void:
-	$MeshInstance.visible = !is_hidden
+	$MeshInstance.visible = not is_hidden
 	$Area/CollisionShape.disabled = is_hidden
 
 func set_visible(new_value: bool) -> void:
 	visible_override = new_value
 	$MeshInstance.visible = new_value
-	$Area/CollisionShape.disabled = !new_value
+	$Area/CollisionShape.disabled = not new_value
 	$Area/CollisionShape.visible = new_value
 
 func set_render_flat_colors(new_value: bool) -> void:

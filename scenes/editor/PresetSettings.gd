@@ -308,7 +308,7 @@ func _on_EyedropperToggle_toggled(is_on: bool) -> void:
 	emit_signal("eyedropper_toggled", is_on)
 
 func _on_ShowRawButton_pressed() -> void:
-	raw_lnz_container.visible = !raw_lnz_container.visible
+	raw_lnz_container.visible = not raw_lnz_container.visible
 
 func _on_Tree_item_edited() -> void:
 	_base_paintballz_data.clear()
