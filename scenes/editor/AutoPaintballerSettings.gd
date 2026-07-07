@@ -724,6 +724,9 @@ func _generate_fractal_pattern(p: Dictionary, ball_no: int, color_list: Array, o
 		rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
 	
 	var s: String = LnzLiveUtils.generate_lsystem_string(axiom, rules, int(p["fractal_iterations"]))
+	if s.length() > 1024:
+		printerr("[ERROR] AutoPaintballerSettings: L-System string length %d exceeds 1024 limit. Aborting fractal pattern." % s.length())
+		return []
 	var pos: Vector3 = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
 	var basis: Basis = LnzLiveUtils.get_basis_from_normal(pos)
 	var state: Dictionary = {"pos": pos, "heading": basis.x}
@@ -733,6 +736,9 @@ func _generate_fractal_pattern(p: Dictionary, ball_no: int, color_list: Array, o
 	var step: float = atan(size * 0.02)
 	
 	for cmd in s:
+		if pbs.size() > 50000:
+			printerr("[ERROR] AutoPaintballerSettings: _generate_fractal_pattern: paintball count %d exceeds 50000 limit. Aborting." % pbs.size())
+			return []
 		match cmd:
 			"F", "G", "A", "B":
 				var axis: Vector3 = state["heading"].cross(state["pos"]).normalized()

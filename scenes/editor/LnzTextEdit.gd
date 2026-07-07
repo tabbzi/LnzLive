@@ -1626,8 +1626,14 @@ func get_ball_name(ball_no: int) -> String:
 				var bounds = get_section_bounds("[Add Ball]")
 				var header_idx = bounds.get("header", -1)
 				var search_idx = line_idx - 1
+				var max_search: int = line_idx - header_idx
+				var search_count: int = 0
 				
 				while search_idx > header_idx:
+					search_count += 1
+					if search_count > max_search:
+						printerr("[ERROR] LnzTextEdit: get_ball_name: search iteration %d exceeded max %d. Aborting." % [search_count, max_search])
+						return ""
 					var raw_line = get_line(search_idx).strip_edges()
 					
 					if raw_line.begins_with(";"):
@@ -1933,9 +1939,19 @@ func _update_paintballz_section(header: String, ball_no: int):
 	var bounds = get_section_bounds(header)
 	if bounds.empty(): return
 	
+	var max_iterations: int = bounds.end - bounds.start
+	if max_iterations > 10000:
+		printerr("[ERROR] LnzTextEdit: _update_paintballz_section: section has %d entries, exceeds 10000 limit. Aborting." % max_iterations)
+		return
+	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var i = bounds.start
+	var iteration: int = 0
 	while i < bounds.end:
+		iteration += 1
+		if iteration > max_iterations:
+			printerr("[ERROR] LnzTextEdit: _update_paintballz_section: iteration %d exceeded max %d. Aborting." % [iteration, max_iterations])
+			return
 		var raw_line = get_line(i)
 		var parts = split_line(raw_line)
 		if parts.size() < 1: 
