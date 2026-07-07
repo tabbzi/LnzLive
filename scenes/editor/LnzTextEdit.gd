@@ -282,6 +282,10 @@ func save_backup():
 	if not is_user_file:
 		return
 
+	if text.length() > 10 * 1024 * 1024:
+		printerr("[ERROR] LnzTextEdit: File exceeds 10 MB limit. Aborting backup.")
+		return
+
 	var dir = Directory.new()
 	var base_path = filepath.trim_suffix(".lnz")
 	while base_path.ends_with("_backup_1") or base_path.ends_with("_backup_2") or base_path.ends_with("_backup_3"):
@@ -320,6 +324,10 @@ func save_backup():
 
 func save_file(skip_history: bool = false, silent: bool = false):
 	var t_start = OS.get_ticks_msec()
+
+	if text.length() > 10 * 1024 * 1024:
+		printerr("[ERROR] LnzTextEdit: File exceeds 10 MB limit. Aborting save.")
+		return
 
 	if not silent:
 		if text.strip_edges().empty():

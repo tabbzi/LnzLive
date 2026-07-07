@@ -319,7 +319,17 @@ static func parse_lsystem_rules(rules_text: String) -> Dictionary:
 	return rules
 
 static func generate_lsystem_string(axiom: String, rules: Dictionary, iterations: int) -> String:
+	if iterations > 15:
+		print("[WARNING] LnzLiveUtils: generate_lsystem_string: iterations capped at 15 (was %d)" % iterations)
+		iterations = 15
 	var current_string: String = axiom
+	var expected_len = axiom.length()
+	for i in range(iterations):
+		expected_len *= 2
+		if expected_len > 5 * 1024 * 1024:
+			print("[WARNING] LnzLiveUtils: generate_lsystem_string: expected output exceeds 5 MB, capping at %d iterations." % i)
+			iterations = i
+			break
 	for _i in range(iterations):
 		var new_string: String = ""
 		for char_idx in range(current_string.length()):
