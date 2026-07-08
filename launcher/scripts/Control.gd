@@ -426,8 +426,8 @@ func _on_executable_changed(index: int) -> void:
 
 func _on_BtnNotes_pressed() -> void:
 	if notes_scroll and texture_rect:
-		notes_scroll.visible = !notes_scroll.visible
-		texture_rect.visible = !notes_scroll.visible
+		notes_scroll.visible = not notes_scroll.visible
+		texture_rect.visible = not notes_scroll.visible
 		btn_notes.text = "Hide Release Notes" if notes_scroll.visible else "See Release Notes"
 
 func _on_BtnAppData_pressed() -> void:

@@ -330,7 +330,7 @@ func decrease_font_size() -> void:
 		save_settings()
 
 func toggle_font_type() -> bool:
-	using_alt_font = !using_alt_font
+	using_alt_font = not using_alt_font
 	_apply_global_font_settings()
 	save_settings()
 	return using_alt_font

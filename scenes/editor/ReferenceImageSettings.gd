@@ -260,7 +260,7 @@ func toggle_reference_image() -> void:
 	if not is_active and not show_bg_checkbox.pressed and not show_popup_checkbox.pressed:
 		show_bg_checkbox.pressed = true
 		
-	is_active = !is_active
+	is_active = not is_active
 	_save_settings()
 	_emit_image_update()
 	

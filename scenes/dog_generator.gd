@@ -417,7 +417,7 @@ func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
 	_perf_texture_load_time = 0
 
-	var full_rebuild = !_skip_next_rebuild
+	var full_rebuild = not _skip_next_rebuild
 	_skip_next_rebuild = false
 
 	var lnz_info = LnzParser.new(file_path)

@@ -154,8 +154,8 @@ func _on_tab_changed(tab_index: int) -> void:
 
 func _on_collapse_pressed() -> void:
 	if tab_container:
-		tab_container.visible = !tab_container.visible
-		spacer.visible = !tab_container.visible
+		tab_container.visible = not tab_container.visible
+		spacer.visible = not tab_container.visible
 		
 		if tab_container.visible:
 			collapse_btn.text = "<< Hide Sidebar <<"

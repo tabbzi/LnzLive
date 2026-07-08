@@ -1831,67 +1831,67 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 	if event.alt:
 		match event.scancode:
 			KEY_F:
-				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_B:
-				paintball_check_box.pressed = !paintball_check_box.pressed
+				paintball_check_box.pressed = not paintball_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_L:
-				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				line_mode_check_box.pressed = not line_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_G:
-				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				preset_mode_check_box.pressed = not preset_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_M:
-				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				move_mode_check_box.pressed = not move_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_P:
-				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				project_mode_check_box.pressed = not project_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 
 	if not event.control and not event.alt and not event.shift:
 		match event.scancode:
 			KEY_S:
-				select_check_box.pressed = !select_check_box.pressed
+				select_check_box.pressed = not select_check_box.pressed
 				_on_SelectCheckBox_pressed()
 				get_tree().set_input_as_handled()
 				return true
 			KEY_W:
-				paintball_check_box.pressed = !paintball_check_box.pressed
+				paintball_check_box.pressed = not paintball_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_E:
-				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				line_mode_check_box.pressed = not line_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_R:
-				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				preset_mode_check_box.pressed = not preset_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_U:
-				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				move_mode_check_box.pressed = not move_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_D:
-				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				project_mode_check_box.pressed = not project_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_A:
-				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
+				auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_T:
-				view_palette_check_box.pressed = !view_palette_check_box.pressed
+				view_palette_check_box.pressed = not view_palette_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_G:
-				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 			KEY_H:
@@ -1899,7 +1899,7 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				get_tree().set_input_as_handled()
 				return true
 			KEY_V:
-				view_variations_check_box.pressed = !view_variations_check_box.pressed
+				view_variations_check_box.pressed = not view_variations_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 	return false

@@ -282,6 +282,10 @@ func save_backup():
 	if not is_user_file:
 		return
 
+	if text.length() > 10 * 1024 * 1024:
+		printerr("[ERROR] LnzTextEdit: File exceeds 10 MB limit. Aborting backup.")
+		return
+
 	var dir = Directory.new()
 	var base_path = filepath.trim_suffix(".lnz")
 	while base_path.ends_with("_backup_1") or base_path.ends_with("_backup_2") or base_path.ends_with("_backup_3"):
@@ -320,6 +324,10 @@ func save_backup():
 
 func save_file(skip_history: bool = false, silent: bool = false):
 	var t_start = OS.get_ticks_msec()
+
+	if text.length() > 10 * 1024 * 1024:
+		printerr("[ERROR] LnzTextEdit: File exceeds 10 MB limit. Aborting save.")
+		return
 
 	if not silent:
 		if text.strip_edges().empty():
@@ -620,7 +628,6 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 # _on_AutowrapButton_pressed
 # _on_FindReplaceButton_pressed
 # _insert_text_at_cursor_at_line
-# _insert_text_at_line
 # _get_active_line_range
 # _escape_regex
 # _wrap_angle_deg
@@ -638,7 +645,7 @@ func _unhandled_key_input(event):
 			redo_visual_edit() # Ctrl+Y
 
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
-		find_panel.visible = !find_panel.visible
+		find_panel.visible = not find_panel.visible
 		self.readonly = find_panel.visible
 
 		if find_panel.visible:
@@ -736,7 +743,7 @@ func _on_global_font_updated():
 	_set_text_preserve(get_text())
 
 func _on_AutowrapButton_pressed():
-	self.wrap_enabled = !self.wrap_enabled
+	self.wrap_enabled = not self.wrap_enabled
 	var button = get_node("../HBoxContainer/AutowrapButton")
 	if self.wrap_enabled:
 		button.text = "Wrap: On"
@@ -745,7 +752,7 @@ func _on_AutowrapButton_pressed():
 	update() # Force a redraw just in case
 
 func _on_FindReplaceButton_pressed():
-	find_panel.visible = !find_panel.visible
+	find_panel.visible = not find_panel.visible
 	self.readonly = find_panel.visible
 	_setup_context_menu()
 
@@ -754,17 +761,6 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	cursor_set_column(0)
 	select(line, 0, line, 0)
 	insert_text_at_cursor(text)
-
-func _insert_text_at_line(line_no: int, text: String):
-	var result = ""
-	var total_lines = get_line_count()
-	for i in range(total_lines):
-		if i == line_no:
-			result += text.strip_edges() + "\n"
-		result += get_line(i) + "\n"
-	if line_no >= total_lines:
-		result += text.strip_edges() + "\n"
-	set_text(result.strip_edges())
 
 func _get_active_line_range() -> Array:
 	var start_line = 0
@@ -1008,6 +1004,10 @@ func _on_ReplaceAllButton_pressed():
 
 	self.readonly = false
 
+	var estimated_matches = self.text.count(search_text)
+	if estimated_matches > 10000:
+		print("[WARNING] LnzTextEdit: Replace All found ~%d matches. This may cause performance issues." % estimated_matches)
+
 	if is_selection_active():
 		var sel_from_line = get_selection_from_line()
 		var sel_from_col = get_selection_from_column()
@@ -1016,6 +1016,10 @@ func _on_ReplaceAllButton_pressed():
 
 		var selection_text = get_selection_text()
 		var matches = regex.search_all(selection_text)
+
+		if matches.size() > 10000:
+			printerr("[ERROR] LnzTextEdit: Replace All: %d matches exceeds 10000 limit. Aborting." % matches.size())
+			return
 
 		# Iterate backwards to not mess up offsets
 		for i in range(matches.size() - 1, -1, -1):
@@ -1030,12 +1034,13 @@ func _on_ReplaceAllButton_pressed():
 	else:
 		var original_text = self.text
 		var matches = regex.search_all(original_text) 
-		var new_text = original_text
 
-		# Iterate backwards
-		for i in range(matches.size() - 1, -1, -1):
-			var this_match = matches[i]
-			new_text = new_text.substr(0, this_match.get_start()) + replace_text + new_text.substr(this_match.get_end())
+		if matches.size() > 10000:
+			printerr("[ERROR] LnzTextEdit: Replace All: %d matches exceeds 10000 limit. Aborting." % matches.size())
+			return
+
+		# Use RegEx.sub() for efficient bulk replacement instead of manual string concat
+		var new_text = regex.sub(original_text, replace_text)
 
 		if original_text != new_text:
 			_set_text_preserve(new_text)
@@ -1621,8 +1626,14 @@ func get_ball_name(ball_no: int) -> String:
 				var bounds = get_section_bounds("[Add Ball]")
 				var header_idx = bounds.get("header", -1)
 				var search_idx = line_idx - 1
+				var max_search: int = line_idx - header_idx
+				var search_count: int = 0
 				
 				while search_idx > header_idx:
+					search_count += 1
+					if search_count > max_search:
+						printerr("[ERROR] LnzTextEdit: get_ball_name: search iteration %d exceeded max %d. Aborting." % [search_count, max_search])
+						return ""
 					var raw_line = get_line(search_idx).strip_edges()
 					
 					if raw_line.begins_with(";"):
@@ -1928,9 +1939,19 @@ func _update_paintballz_section(header: String, ball_no: int):
 	var bounds = get_section_bounds(header)
 	if bounds.empty(): return
 	
+	var max_iterations: int = bounds.end - bounds.start
+	if max_iterations > 10000:
+		printerr("[ERROR] LnzTextEdit: _update_paintballz_section: section has %d entries, exceeds 10000 limit. Aborting." % max_iterations)
+		return
+	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var i = bounds.start
+	var iteration: int = 0
 	while i < bounds.end:
+		iteration += 1
+		if iteration > max_iterations:
+			printerr("[ERROR] LnzTextEdit: _update_paintballz_section: iteration %d exceeded max %d. Aborting." % [iteration, max_iterations])
+			return
 		var raw_line = get_line(i)
 		var parts = split_line(raw_line)
 		if parts.size() < 1: 
@@ -2163,6 +2184,9 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 	if properties.get("apply_paintballz", true) and properties.has("paintballz"):
 		var paintballz = properties.paintballz
 		if paintballz.size() > 0:
+			if paintballz.size() > 50000:
+				printerr("[ERROR] LnzTextEdit: write_preset_to_ball: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
+				return
 			applied_something = true
 			var bounds = get_section_bounds("[Paint Ballz]")
 			var insert_line_num
@@ -2494,6 +2518,9 @@ func capture_headshot():
 func _apply_paintball_preset_no_save(ball_no, properties):
 	var paintballz = properties.paintballz
 	if paintballz.size() > 0:
+		if paintballz.size() > 50000:
+			printerr("[ERROR] LnzTextEdit: _apply_paintball_preset_no_save: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
+			return
 		var bounds = get_section_bounds("[Paint Ballz]")
 		var insert_line_num
 
@@ -2539,6 +2566,9 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 
 func apply_batch_moves(pending_moves: Dictionary):
 	if pending_moves.empty():
+		return
+	if pending_moves.size() > 10000:
+		printerr("[ERROR] LnzTextEdit: apply_batch_moves: %d moves exceeds 10000 limit. Aborting." % pending_moves.size())
 		return
 	
 	save_backup()

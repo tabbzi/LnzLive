@@ -28,4 +28,4 @@ func _ready():
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_F1:
-		visible = !visible
+		visible = not visible

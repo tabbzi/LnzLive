@@ -1117,9 +1117,14 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 			var filepath: String = str(item_meta)
 			
 			if filepath.ends_with("/"):
+				var file_count: int = _count_files_in_dir(filepath.trim_suffix("/"))
+				if file_count > 50:
+					printerr("[ERROR] FileTree: Cannot delete '%s': contains %d files (exceeds 50 limit). Aborting entire batch." % [filepath, file_count])
+					return
+				elif file_count > 20:
+					print("[WARNING] FileTree: Deleting '%s' contains %d files." % [filepath, file_count])
 				_delete_dir_recursive(filepath.trim_suffix("/"))
 			elif dir.file_exists(filepath):
-				# FIX: Log error code on file deletion failure.
 				var err: int = dir.remove(filepath)
 				if err != OK:
 					print("[ERROR] FileTree: _on_ItemPopupMenu_id_pressed: Failed to delete ", filepath, " Error: ", err)
@@ -1284,6 +1289,22 @@ func _delete_dir_recursive(path: String, depth: int = 0) -> void:
 		if dir_err != OK:
 			print("[ERROR] FileTree: _delete_dir_recursive: Failed to delete directory ", path, " Error: ", dir_err)
 
+func _count_files_in_dir(path: String) -> int:
+	var dir: Directory = Directory.new()
+	if dir.open(path) != OK:
+		return 0
+	dir.list_dir_begin(true, true)
+	var file_name: String = dir.get_next()
+	var count: int = 0
+	while file_name != "":
+		if dir.current_is_dir():
+			count += _count_files_in_dir(path.plus_file(file_name))
+		else:
+			count += 1
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	return count
+
 func _on_SaveDialog_file_selected(path: String, content_bytes: PoolByteArray) -> void:
 	var file: File = File.new()
 	if file.open(path, File.WRITE) == OK:
@@ -1404,12 +1425,12 @@ func get_expanded_states() -> Dictionary:
 	}
 
 func set_expanded_states(states: Dictionary) -> void:
-	if examples: examples.collapsed = !states.get("Example LNZ", true)
-	if local_storage_bases: local_storage_bases.collapsed = !states.get("Base LNZ", false)
-	if local_storage: local_storage.collapsed = !states.get("User LNZ", true)
-	if res_textures: res_textures.collapsed = !states.get("Game Textures", false)
-	if local_storage_textures: local_storage_textures.collapsed = !states.get("User Textures", false)
-	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("User Palettes", false)
+	if examples: examples.collapsed = not states.get("Example LNZ", true)
+	if local_storage_bases: local_storage_bases.collapsed = not states.get("Base LNZ", false)
+	if local_storage: local_storage.collapsed = not states.get("User LNZ", true)
+	if res_textures: res_textures.collapsed = not states.get("Game Textures", false)
+	if local_storage_textures: local_storage_textures.collapsed = not states.get("User Textures", false)
+	if local_storage_palettes: local_storage_palettes.collapsed = not states.get("User Palettes", false)
 	if states.has("Subfolders"):
 		saved_subfolder_states = states.get("Subfolders")
 

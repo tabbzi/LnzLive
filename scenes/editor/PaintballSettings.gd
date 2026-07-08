@@ -1350,9 +1350,6 @@ func save_settings() -> void:
 	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
 		print("[ERROR] PaintballSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
-	else:
-		pass
-	config.save(SETTINGS_PATH)
 
 func load_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
