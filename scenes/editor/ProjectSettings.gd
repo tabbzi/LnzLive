@@ -76,14 +76,7 @@ func _populate_projections_tree() -> void:
 	projections_tree.clear()
 	var root: TreeItem = projections_tree.create_item()
 
-	var species_key: String = ""
-	var species: int = KeyBallsData.species
-	if species == KeyBallsData.Species.DOG:
-		species_key = "dog"
-	elif species == KeyBallsData.Species.CAT:
-		species_key = "cat"
-	elif species == KeyBallsData.Species.BABY:
-		species_key = "bab"
+	var species_key: String = KeyBallsData.get_projection_key(KeyBallsData.species)
 
 	if KeyBallsData.projection_standards.has(species_key):
 		var standards: Array = KeyBallsData.projection_standards[species_key]
@@ -219,14 +212,7 @@ func _on_RandomizeProjectionsButton_pressed() -> void:
 	if not root:
 		return
 
-	var species: int = KeyBallsData.species
-	var symmetry_dict: Dictionary = {}
-	if species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var symmetry_dict: Dictionary = KeyBallsData.get_symmetry_dict(KeyBallsData.species)
 
 	var processed_items: Array = []
 	var all_items: Array = []
@@ -339,14 +325,7 @@ func _on_ApplyButton_pressed() -> void:
 	if not root:
 		return
 
-	var species: int = KeyBallsData.species
-	var symmetry_dict: Dictionary = {}
-	if species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var symmetry_dict: Dictionary = KeyBallsData.get_symmetry_dict(KeyBallsData.species)
 
 	var lnz_projections: Array = []
 	

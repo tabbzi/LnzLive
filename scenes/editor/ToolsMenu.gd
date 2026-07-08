@@ -223,85 +223,21 @@ func _on_LineEdit_gui_input(event: InputEvent) -> void:
 		else:
 			var core_ball_nos: Array = []
 			if current_action == RecolorAction.LEGS:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.legs_dog[0])
-					core_ball_nos.append_array(KeyBallsData.legs_dog[1])
-					for ar in KeyBallsData.foot_ext_dog:
-						for v in ar:
-							core_ball_nos.erase(v)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.legs_cat[0])
-					core_ball_nos.append_array(KeyBallsData.legs_cat[1])
-					for ar in KeyBallsData.foot_ext_cat:
-						for v in ar:
-							core_ball_nos.erase(v)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.legs_bab[0])
-					core_ball_nos.append_array(KeyBallsData.legs_bab[1])
-					for ar in KeyBallsData.foot_ext_bab:
-						for v in ar:
-							core_ball_nos.erase(v)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "LEGS")
 			elif current_action == RecolorAction.TAIL:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.tail_dog)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.tail_cat)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.tail_bab)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "TAIL")
 			elif current_action == RecolorAction.HEAD:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.head_ext_dog)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.head_ext_cat)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.head_ext_bab)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "HEAD")
 			elif current_action == RecolorAction.SNOUT:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.face_ext_dog)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.face_ext_cat)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.face_ext_bab)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "SNOUT")
 			elif current_action == RecolorAction.EARS:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					var v = KeyBallsData.ear_ext_dog.values()
-					core_ball_nos.append_array(v[0])
-					core_ball_nos.append_array(v[1])
-					core_ball_nos.append_array(KeyBallsData.ear_ext_dog.keys())
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					var v = KeyBallsData.ear_ext_cat.values()
-					core_ball_nos.append_array(v[0])
-					core_ball_nos.append_array(v[1])
-					core_ball_nos.append_array(KeyBallsData.ear_ext_cat.keys())
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					var v = KeyBallsData.ear_ext_bab.values()
-					core_ball_nos.append_array(v[0])
-					core_ball_nos.append_array(v[1])
-					core_ball_nos.append_array(KeyBallsData.ear_ext_bab.keys())
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "EARS")
 			elif current_action == RecolorAction.PAWS:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					for ar in KeyBallsData.foot_ext_dog:
-						core_ball_nos.append_array(ar)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					for ar in KeyBallsData.foot_ext_cat:
-						core_ball_nos.append_array(ar)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					for ar in KeyBallsData.foot_ext_bab:
-						core_ball_nos.append_array(ar)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "PAWS")
 			elif current_action == RecolorAction.NOSE:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.nose_dog)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.nose_cat)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.nose_bab)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "NOSE")
 			elif current_action == RecolorAction.TONGUE:
-				if KeyBallsData.species == KeyBallsData.Species.DOG:
-					core_ball_nos.append_array(KeyBallsData.tongue_dog)
-				elif KeyBallsData.species == KeyBallsData.Species.CAT:
-					core_ball_nos.append_array(KeyBallsData.tongue_cat)
-				elif KeyBallsData.species == KeyBallsData.Species.BAB:
-					core_ball_nos.append_array(KeyBallsData.tongue_bab)
+				core_ball_nos = KeyBallsData.get_recolor_targets(KeyBallsData.species, "TONGUE")
 			var part: String = RecolorAction.keys()[RecolorAction.values()[current_action]]
 			emit_signal("color_part_pet", core_ball_nos, base_color, outline_color, part)
 
