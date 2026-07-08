@@ -684,6 +684,12 @@ func recompose_model():
 	if current_variation_config.has("Project Ball"):
 		lnz.get_project_balls(lnz.compile_section("Project Ball", current_variation_config["Project Ball"]))
 
+	# Cat without [Whiskers] section: apply default whisker connections
+	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
+		var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
+		for conn in defaults:
+			lnz.whisker_connections.append(conn)
+
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
 
@@ -1602,8 +1608,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 
 func generate_whiskers(new_create: bool):
 	var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
-	var is_cat = lnz.species == KeyBallsData.Species.CAT
-	if is_cat and lnz.whisker_connections.empty():
+	if defaults.size() == 0 and lnz.whisker_connections.empty():
 		return
 
 	var root = get_root()
