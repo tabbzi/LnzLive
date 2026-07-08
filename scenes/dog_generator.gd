@@ -1602,7 +1602,8 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 
 func generate_whiskers(new_create: bool):
 	var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
-	if defaults.size() == 0:
+	var is_cat = lnz.species == KeyBallsData.Species.CAT
+	if is_cat and lnz.whisker_connections.empty():
 		return
 
 	var root = get_root()

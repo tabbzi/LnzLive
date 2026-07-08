@@ -1,0 +1,484 @@
+; persian
+
+[Default Linez File]
+\ptzfiles\cat\catmaster.lnz
+
+[Little one]
+prkit.lnz
+
+[Sounds]
+\ptzfiles\cat\pr\prsnd.txt
+
+[Breed Name]
+Persian
+
+[256 Eyelid Color]
+18, 1
+
+[Head Enlargement]
+110               		// percent enlargement
+0				// vector expansion vs. ball size increase balance
+
+[Face Extension]		// pixels
+-8
+
+[Body Extension]		// pixels
+0
+
+[Leg Extension]			// pixels
+-3				// front leg
+-3				// hind leg
+
+[Feet Enlargement]		// percentage
+105				// total foot extension
+0				// Similar to head, vector expansion vs. ball size increase balance
+
+[Ear Extension]			// percentage
+90
+
+[Move]	
+;ears
+9,	-5, 0, -20
+11,	5, 0, -20
+;face
+4,	-2, -3, 0
+5,	2, -3, 0
+30,	0, 1, 0
+31,	0, 1, 0
+;eyes
+14,	2, 0, -5
+15,	-2, 0, -5
+27,	2, 0, 0
+28,	-2, 0, 0
+;fingers & toes
+16,	-4, 0, 0
+18,	4, 0, 0
+19,	4, 0, 0
+21,	-4, 0, 0
+49,	-4, 0, 0
+51,	4, 0, 0
+52,	4, 0, 0
+54,	-4, 0, 0
+
+
+[Project Ball]		// stationary ball, projected ball, amt
+43, 44, 100
+44, 45, 100
+45, 46, 100
+46, 47, 100
+47, 48, 100
+
+
+[Default Scales];was 113 113
+105		; normal pet scale
+105 		; normal ball scale
+
+
+[Omissions]
+65		eBall_zorient,			// 65
+66		eBall_ztrans,			// 66
+37
+67		utility addball for andrew
+68	        utility addball for andrew
+69      	utility addball for andrew
+70      	utility addball for andrew
+71      	utility addball for andrew
+72	        utility addball for andrew
+73      	utility addball for andrew
+74      	utility addball for andrew
+75      	utility addball for andrew
+76	        utility addball for andrew
+
+
+[Add Ball]
+; first ball is 67
+; GROUP ONE, containing ballz 67-76, ARE UTILITY ADDBALLZ FOR ANDREW
+;base	x	y	z	color otlnCol spckCol  fuzz   group  outline ballsize bodyarea   addGroup     texture
+; mount align ball 67
+2,	 	3,-12,-258	55		0		0		0		-1		-1		50		0			1			-1
+; steal captured toy align ball 68
+19, 	20,-20,-125	65		0		0		0		-1		-1		50		0			1			-1
+; steal toy standing align ball 69
+2,		0,0,-230	75		0		0		0		-1		-1		50		0			1			-1
+; dig align ball 70
+19, 	50,40,-60	85		0		0		0		-1		-1		50		0			1			-1
+; fill in hole align ball 71
+42, 	50,40,250	95		0		0		0		-1		-1		50		0			1			-1
+; rest on pillow align ball 72
+2,	 	0,80,0		105		0		0		0		-1		-1		50		0			1			-1
+; drop object at point align ball 73
+19, 	50,150,-80	115		0		0		0		-1		-1		50		0			1			-1
+; utility ball 74
+2,		0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; utility ball 75
+2,		0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; utility ball 76
+2,		0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; ### From here down are animator's addballz 77.
+;nose
+37, 	5, 	-5, 	-8, 	75, 	0, 	0, 	0, 	-1, 	 -2, 		18, 		0,          0,	-1 
+37, 	-5, 	-5, 	-8, 	75, 	0, 	0, 	0, 	-1, 	 0, 		18, 		0,          0,	-1 
+37, 	0, 	0, 	-8, 	75, 	0, 	0, 	0, 	-1, 	 -1, 		18, 		0,          0,	-1 
+;ears 80
+8, 	-10, 	-25, 	-8, 	19, 	0, 	0, 	0, 	0, 	 -1, 		12, 		0,          0,	1 
+8, 	10, 	-19, 	5, 	19, 	0, 	0, 	0, 	0, 	 -1, 		34, 		0,          0,	1 
+8, 	25, 	-1, 	-10, 	19, 	0, 	0, 	0, 	0, 	 -1, 		17, 		0,          0,	1 
+10, 	10, 	-25, 	-8, 	19, 	0, 	0, 	0, 	0, 	 -1, 		12, 		0,          0,	1 
+10, 	-10, 	-19, 	5, 	19, 	0, 	0, 	0, 	0, 	 -1, 		34, 		0,          0,	1 
+10, 	-25, 	-1, 	-10, 	19, 	0, 	0, 	0, 	0, 	 -1, 		17, 		0,          0,	1 
+8, 	6, 	-10, 	-8, 	19, 	0, 	0, 	0, 	0, 	 -1, 		32, 		0,          0,	1 
+9, 	-9, 	9, 	-7, 	 7, 	0, 	0, 	0, 	-1, 	 -1, 		6, 		0,          0,	1 
+10, 	-6, 	-10, 	-3, 	19, 	0, 	0, 	0, 	0, 	 -1, 		32, 		0,          0,	1 
+11, 	9, 	9, 	-9, 	 7, 	0, 	0, 	0, 	-1, 	 -1, 		6, 		0,          0,	1 
+9, 	-9, 	9, 	-7, 	19, 	0, 	0, 	0, 	0, 	 -1, 		10, 		0,          0,	1 
+11, 	9, 	9, 	-7, 	19, 	0, 	0, 	0, 	0, 	 -1, 		10, 		0,          0,	1 
+
+
+[Default Linez Thickness]
+90
+
+; -1 mean use the associated ball color
+; Only the first three fields need to be specefied
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick
+[Linez]
+2, 	3, 	3, 	-1, 	-1, 	-1,	90,	90	
+6, 	2, 	3, 	-1, 	-1, 	-1,	90,	90	
+6,   	36,	1,	-1,	-1,	-1,	95,	95	
+24,     36,	3,	-1,	244,	244,	95,	95	
+3, 	43,     3, 	-1, 	-1, 	-1,	100,	100 	
+43, 	44, 	3, 	-1, 	-1, 	-1,	100,	100  	
+44, 	45, 	3, 	-1, 	-1, 	-1,	100,	100	
+45, 	46, 	3, 	-1, 	-1, 	-1,	100,	100  	
+46, 	47, 	3, 	-1, 	-1, 	-1,	100,	100  	
+47, 	48,     3, 	-1, 	-1, 	-1,	100,	100   	
+32, 	0, 	2, 	-1, 	-1, 	-1,	100,	100	
+33, 	1,      2, 	-1, 	-1, 	-1,	100,	100	
+41, 	0,      2, 	-1, 	-1,  	-1,	90,	100	
+42, 	1,      2, 	-1, 	-1, 	-1,	90,	100	
+25, 	32, 	2, 	-1, 	-1, 	-1,	100,	100	
+26,     33,   2, 	-1, 	-1, 	-1,	100,	100 	
+12,     63,   2, 	-1, 	-1, 	-1,	100,	90 	
+13, 	64, 	2, 	-1, 	-1, 	-1,	100,	90	
+12, 	38,   2, 	-1, 	-1, 	-1,	100,	100	
+13, 	39,   2, 	-1, 	-1, 	-1,	100,	100	
+55, 	56,   1, 	-1, 	244, 	244,	100,	100  	
+40, 	77,   1, 	-1, 	-1, 	-1,	100,	100	
+40, 	78,   1, 	-1, 	-1, 	-1,	100,	100  
+7,	29,	1, 	-1, 	244, 	244,	100,	100	
+30,	24,	1, 	-1, 	244, 	244,	100,	100	
+31,	24,	1, 	-1, 	244, 	244,	100,	100	
+;left ear
+80, 	8,      1, 	-1, 	-1, 	-1,	100,	100  	
+82, 	8,     1, 	-1, 	-1, 	-1,	100,	100  	
+80, 	9,      1, 	-1, 	244, 	25,	100,	100  	
+81, 	9,     1, 	-1, 	-1, 	-1,	100,	100  	
+81, 	82,     1, 	-1, 	25, 	244,	100,	100  	
+82, 	9,     1, 	-1, 	25, 	244,	100,	100  	
+81, 	80,      1, -1, 	25, 	244,	100,	100  	
+87, 	86,      1, -1, 	-1, 	-1,	100,	100  	
+;right ear
+83, 	10,      1, -1, 	-1, 	-1,	100,	100  	
+85, 	10,     1, 	-1, 	-1, 	-1,	100,	100  	
+83, 	11,      1, -1, 	25, 	244,	100,	100  	
+84, 	11,     1, 	-1, 	-1, 	-1,	100,	100  	
+84, 	85,     1, 	-1, 	244, 	25,	100,	100  	
+85, 	11,     1, 	-1, 	244, 	25,	100,	100  	
+84, 	83,      1, -1, 	244, 	25,	100,	100  	
+89, 	88,      1, -1, 	-1, 	-1,	100,	100  	
+
+
+[Paint Ballz]
+;base ball	diameter(% of baseball)	direction	     color outlinecolor fuzz  outline  group   texture
+;paws
+16,		50			0, 1, .3		75	-1	0	-1	-1	-1
+17,		50			0, 1, .3		75	-1	0	-1	-1	-1
+18,		50			0, 1, .3		75	-1	0	-1	-1	-1
+22,		55			0, 1, 0			75	-1	0	-1	-1	-1
+19,		50			0, 1, .3		75	-1	0	-1	-1	-1
+20,		50			0, 1, .3		75	-1	0	-1	-1	-1
+21,		50			0, 1, .3		75	-1	0	-1	-1	-1
+23,		55			0, 1, 0			75	-1	0	-1	-1	-1
+49,		50			0, 1, .3		75	-1	0	-1	-1	-1
+50,		50			0, 1, .3		75	-1	0	-1	-1	-1
+51,		50			0, 1, .3		75	-1	0	-1	-1	-1
+34,		55			0, 1, 0			75	-1	0	-1	-1	-1
+52,		50			0, 1, .3		75	-1	0	-1	-1	-1
+53,		50			0, 1, .3		75	-1	0	-1	-1	-1
+54,		50			0, 1, .3		75	-1	0	-1	-1	-1
+35,		55			0, 1, 0			75	-1	0	-1	-1	-1
+
+
+[Color Info Override]
+;individual variation
+#4
+#3
+#2;blue
+3, 115
+2, 115
+6, 115
+24, 115
+36, 115
+43, 115
+44, 115
+45, 115
+46, 115
+47, 115
+48, 115
+25, 115
+26, 115
+38, 115
+39, 115
+12, 115
+13, 115
+0, 115
+1, 115
+63, 115
+64, 115
+22, 115
+23, 115
+16, 115
+17, 115
+18, 115
+19, 115
+20, 115
+21, 115
+41, 115
+42, 115
+49, 115
+50, 115
+51, 115
+52, 115
+53, 115
+54, 115
+4, 115
+5, 115
+8, 115
+9, 115
+10, 115
+11, 115
+32, 115
+33, 115
+30, 115
+31, 115
+7, 115
+29, 115
+34, 115
+35, 115
+40, 115
+80, 115
+81, 115
+82, 115
+83, 115
+84, 115
+85, 115
+86, 115
+88, 115
+90, 115
+91, 115
+57, 15
+58, 15
+59, 15
+60, 15
+61, 15
+62, 15
+#1;grey
+3, 25
+2, 25
+6, 25
+24, 25
+36, 25
+43, 25
+44, 25
+45, 25
+46, 25
+47, 25
+48, 25
+25, 25
+26, 25
+38, 25
+39, 25
+12, 25
+13, 25
+0, 25
+1, 25
+63, 25
+64, 25
+22, 25
+23, 25
+16, 25
+17, 25
+18, 25
+19, 25
+20, 25
+21, 25
+41, 25
+42, 25
+49, 25
+50, 25
+51, 25
+52, 25
+53, 25
+54, 25
+4, 25
+5, 25
+8, 25
+9, 25
+10, 25
+11, 25
+32, 25
+33, 25
+30, 25
+31, 25
+7, 25
+29, 25
+34, 25
+35, 25
+40, 25
+80, 25
+81, 25
+82, 25
+83, 25
+84, 25
+85, 25
+86, 25
+88, 25
+90, 25
+91, 25
+57, 15
+58, 15
+59, 15
+60, 15
+61, 15
+62, 15
+##
+
+
+[Thin/Fat]
+4,	-15,	16
+5,	-15,	16
+7,	0,	5
+2,	-10,	15
+6,	-10,	1
+3,	-10,	6
+43,	-5,	15
+44,	-5,	10
+45,	-5,	10
+46,	-5,	10
+47,	-5,	5
+48,	-5,	5
+36,	-10,	10
+12,	-10,	10
+13,	-10,	10
+38,	-10,	10
+39,	-10,	10
+25,	-10,	6
+26,	-10,	6
+32,	-10,	10
+33,	-10,	10
+0,	0,	5
+1,	0,	5
+
+
+[Head Shot];pr
+0			frame number
+51				rotation
+0				roll
+0				tilt
+-51				head rotation
+8				head tilt
+-11				head cock
+38, 38			R / L eyelid height
+17, 17			R / L eyelid tilt
+0, 0			(X, Y) eye target
+
+
+
+; First argument is name of texture.
+; Second argument is whether texture is single color (1) or multi-color (0)
+; This texture list is used both here and in add ballz
+[Texture List]
+\art\textures\hair10.bmp        1
+\art\textures\hair10.bmp        1
+\art\textures\hair10.bmp        1
+
+
+
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture 
+[Ballz Info]
+ 15,      244,      244,        2,        -2,       27,        3,       1    eBall_ankleL,
+ 15,      244,      244,        2,        0,       27,        3,       1    eBall_ankleR,
+ 15,      244,      244,        3,       -1,       35,        1,       1    eBall_belly,
+ 15,      244,      244,        3,        0,       21,        3,       1    eBall_butt,
+ 19,      244,      244,        3,        -2,       10,        0,       1    eBall_cheekL,
+ 19,      244,      244,        3,        0,       10,        0,       1    eBall_cheekR,
+ 15,      244,      244,        3,       -1,       40,        1,       1    eBall_chest,
+ 17,      244,      244,        3,        1,       3,        0,       1    eBall_chin,
+ 15,      244,      244,        1,       -1,      -15,        0,       1    eBall_earL1,
+ 19,      244,      244,        1,        -1,      20,        0,       1    eBall_earL2,
+ 15,      244,      244,        1,       -1,      -15,        0,       1    eBall_earR1,
+ 19,      244,      244,        1,       -1,      20,        0,       1    eBall_earR2,
+ 15,      244,      244,        2,        -2,      34,        1,       1    eBall_elbowL,
+ 15,      244,      244,        2,        0,       34,        1,       1    eBall_elbowR,
+ 201,      244,       -1,        0,        1,       10,        -1,       -1    eBall_eyeL,
+ 201,      244,       -1,        0,        1,       10,        -1,       -1    eBall_eyeR,
+ 15,      244,      244,        1,        -2,       10,        2,       1    eBall_fingerL1,
+ 15,      244,      244,        1,        0,       10,         2,       1    eBall_fingerL2,
+ 15,      244,      244,        1,        -1,       10,        2,       1    eBall_fingerL3,
+ 15,      244,      244,        1,        0,       10,         2,       1    eBall_fingerR1,
+ 15,      244,      244,        1,        -2,       10,        2,       1    eBall_fingerR2,
+ 15,      244,      244,        1,        -1,       10,        2,       1    eBall_fingerR3,
+ 15,      244,      244,        1,        -1,       10,        2,       1    eBall_handL,
+ 15,      244,      244,        1,        -1,       10,        2,       1    eBall_handR,
+ 15,      244,      244,        3,        -2,      10,        0,       1    eBall_head,
+ 15,      244,      244,        2,        0,       22,        3,       1    eBall_hipL,
+ 15,      244,      244,        2,        -2,       22,        3,       1    eBall_hipR,
+244,      115,      244,   	0,       4,       12,         -1,       1    eBall_irisL,
+244,      115,      244,   	0,       4,       12,         -1,       1    eBall_irisR,
+ 17,      244,      244,        0,        -1,        18,        0,       1    eBall_jaw,
+ 17,      244,      244,        2,        1,        4,        0,       1    eBall_jowlL,
+ 17,      244,      244,        2,        1,        4,        0,       1    eBall_jowlR,
+ 15,      244,      244,        2,        -2,       24,        3,       1    eBall_kneeL,
+ 15,      244,      244,        2,        0,       24,        3,       1    eBall_kneeR,
+ 15,      244,      244,        2,        -1,       14,        2,       1    eBall_knuckleL,
+ 15,      244,      244,        2,        -1,       14,        2,       1    eBall_knuckleR,
+ 15,      244,      244,        2,        0,      55,        1,       1    eBall_neck,
+244,      244,      244,        0,       -1,        0,        -1,       1    eBall_nose,
+ 15,      244,      244,        2,        0,       40,        1,       1    eBall_shoulderL,
+ 15,      244,      244,        2,        -2,       40,        1,       1    eBall_shoulderR,
+ 15,      244,      244,        1,       -1,      -10,        0,       1    eBall_snout,
+ 15,      244,      244,        2,        0,       13,        2,       1    eBall_soleL,
+ 15,      244,      244,        2,        0,       13,        2,       1    eBall_soleR,
+ 15,      244,      244,        3,        0,       22,        4,       1    eBall_tail1,
+ 15,      244,      244,        3,        0,       33,        4,       1    eBall_tail2,
+ 15,      244,      244,        3,        0,      55,        4,       1    eBall_tail3,
+ 15,      244,      244,        3,        0,      60,        4,       1    eBall_tail4,
+ 15,      244,      244,        3,        0,       45,        4,       1    eBall_tail5,
+ 15,      244,      244,        3,        0,       16,        4,       1    eBall_tail6,
+ 15,      244,      244,        2,        -2,       10,        2,       1    eBall_toeL1,
+ 15,      244,      244,        2,        0,       10,         2,       1    eBall_toeL2,
+ 15,      244,      244,        2,        -1,       10,        2,       1    eBall_toeL3,
+ 15,      244,      244,        2,         0,       10,        2,       1    eBall_toeR1,
+ 15,      244,      244,        2,        -2,       10,        2,       1    eBall_toeR2,
+ 15,      244,      244,        2,        -1,       10,        2,       1    eBall_toeR3,
+79,      244,      244,        0,       -1,        0,         -1,       1    eBall_tongue1,
+79,      244,      244,        0,       -1,        0,         -1,       1    eBall_tongue2,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerL1,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerL2,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerL3,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerR1,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerR2,
+25,      244,      244,        0,        0,        -10,        -1,      -1    eBall_whiskerR3,
+ 15,      244,      244,        2,        -2,       13,        2,       1    eBall_wristL,
+ 15,      244,      244,        2,        0,       13,         2,       1    eBall_wristR,
+  7,      244,      244,        0,        0,        0,        -1,      -1    eBall_zorient,
+  7,      244,      244,        0,        0,        0,        -1,      -1    eBall_ztrans,
+
+[Fur Color Areas]
+; (1-4, 5 - jowls)
+;FurColorTrait	ballWithBaseColor	colorAreas
+1				2					0, 1, 2, 3, 4
+
+[Lnz Version]
+2
