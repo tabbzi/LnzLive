@@ -3314,6 +3314,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 				var pos_normalized: Vector3 = pos_arr[i]
 				var spot_world_rel: Vector3 = pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
 				var spot_local_rel: Vector3 = target_ball.global_transform.basis.xform_inv(spot_world_rel)
+				
 				var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
 					spot_local_rel, px_scale, pet_node.lnz.scales.x
 				)
@@ -3387,9 +3388,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			texture_list.append(-1)
 
 		var local_relative_pos: Vector3 = target_ball.to_local(intersection_point)
-		var world_relative_pos: Vector3 = intersection_point - target_ball.global_transform.origin
+		# var world_relative_pos: Vector3 = intersection_point - target_ball.global_transform.origin
+		
 		var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
-			world_relative_pos, pet_node.pixel_world_size, pet_node.lnz.scales.x
+			local_relative_pos, pet_node.pixel_world_size, pet_node.lnz.scales.x
 		)
 
 		var color: int

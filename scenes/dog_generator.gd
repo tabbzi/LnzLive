@@ -2581,13 +2581,10 @@ func _on_apply_auto_paintballz():
 			continue
 
 		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
-		var world_relative_pos = (
-			base_ball_node.to_global(local_pos)
-			- base_ball_node.global_transform.origin
-		)
 
-		var lnz_scale = lnz.scales.x / 255.0
-		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
+		var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
+			local_pos, pixel_world_size, lnz.scales.x
+		)
 		relative_pos_lnz.y *= -1
 
 		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
