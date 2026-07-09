@@ -9,6 +9,9 @@
 [Num Ballz]
 5
 
+[Lnz Version]
+2
+
 ; omit all ballz but one
 ; do the rest of the blob with addballz
 [Omissions]
