@@ -78,7 +78,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
-| **Move Mode** | `ALT` + `left-click`| Select pivot ball |
+| **Move Mode** | `ALT` + `SHIFT` + `left-click drag`| Scale/Resize selected group of ballz |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
 | **Move Mode** | `X`, `Y`, and/or `Z` (hold during drag) | Lock movement to specific axis or plane |
 | **Move Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued move/scale action |
@@ -109,6 +109,29 @@ Right-click on a file in `Local Storage` for more options:
 *   **Copy Filename:** For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to get the file prefix for easy pasting into LNZ.
 *   **Export File:** Exports LNZ data to a `.lnz` text file to a save spot of your choosing. 
 
+### Side Bar
+
+The left Side Bar contains multiple tabs for different tools and viewers. The first four tabs are always visible (utility tabs), while the rest appear when their corresponding mode is active (mode tabs):
+
+**Utility Tabs:**
+
+1. **File Tree** (icon: file document) - Browse examples, local storage, textures, and palettes.
+2. **Palette Viewer** (icon: paint palette) - View the 256-color palette for the currently loaded species and palette.
+3. **Variation Viewer** (icon: three dice) - Toggle and view variations across LNZ sections.
+4. **Texture Editor** (icon: paint roller) - Edit texture files.
+
+**Mode & Tool Tabs:**
+
+5. **Recolor Mode** (icon: paint bucket) - Change and swap colors and other basic properties.
+6. **Paintball Mode** (icon: paint brush) - Design and draw paintballz on ballz.
+7. **Move Mode** (icon: xyz arrows) - Transform groups of ballz.
+8. **Line Mode** (icon: ballz-linez) - Connect ballz by linez or polygonz and set their properties.
+9. **Preset Mode** (icon: fuzzy ball) - Copy and set ballz properties and alter paintballz designs.
+10. **Auto Paintballer** (icon: starry ball) - Procedural paintball pattern generator.
+11. **Shape Mode** (icon: dog model) - Randomize and prototype body shapes via projections, extensions, scales, and moves.
+
+> **Note:** Mode tabs are hidden when a mode panel is undocked (floating). Use the `<< Hide Sidebar >>` button to collapse the entire left panel.
+
 ### Viewport (Center Panel)
 
 The 3D viewport displays the LNZ model.
@@ -124,11 +147,11 @@ The 3D viewport displays the LNZ model.
 - Use the mouse wheel to zoom in and out.
 - Press down on mouse wheel or hold space and drag to move pet around viewport.
 - Tap these numbers to perform a quick jump to various camera views:
-    - 1: Front View
-	- 2: Top View
-	- 3: Bottom View
-	- 4: Left View
-	- 5: Right View
+	- 1: Front View
+	- 2: Bottom View
+	- 3: Top View
+	- 4: Right View
+	- 5: Left View
 	- 6: Back View
 	- 7: Right-Bottom Isometric View
 	- 8: Right-Top Isometric View
@@ -149,7 +172,7 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 
 #### Features
 
-- Place the editing cursor on any line in `[Ballz Info]`, `[Add Ball]`, `[Linez]`, `[Polygons]`, `[Paintballz]`, `[Move]`, or `[Project Ball]`. You don't need to select the entire line, just place the cursor within it. Hit `CTRL` + `Q` to make affected ballz and/or linez flash in the pet view so you can locate.
+- Place the editing cursor on any line in `[Ballz Info]`, `[Add Ball]`, `[Linez]`, `[Polygons]`, `[Paint Ballz]`, `[Move]`, or `[Project Ball]`. You don't need to select the entire line, just place the cursor within it. Hit `CTRL` + `Q` to make affected ballz and/or linez flash in the pet view so you can locate.
 - The Find/Replace panel can be toggled by hitting `CTRL` + `F`, by right-click, or via the top buttons.
 - Right-clicking selected text and hitting "Toggle Comment" will prepend `;` to each line, effectively commenting those lines out.
 - Switch between Pixel and Cascadia fonts or change font size using the top buttons.
@@ -161,6 +184,8 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 - **Import LNZ**: Load `.lnz` or `.txt` files containing LNZ data into Local Storage.
 - **Import Texture**: Load `.bmp` files into Local Textures. Shows thumbnail preview and dimensions.
 - **Import Palette:** Load `.bmp` palette or `.png` color ramp files into Local Palettes. Shows thumbnail preview and double-click to apply.
+- **Reference Image:** Configure reference image overlays (background, popup, position, scale).
+- **Shader Settings:** Adjust shader rendering parameters.
 - **Open User Folder:** Opens folder used to store local files including `.lnz` generated in LnzLive.
 - **User Settings:** Store settings that will persist across LnzLive sessions including number of saved actions for undo/redo, background color, and screen resolution.
 
@@ -170,7 +195,7 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 
 ![Auto Paintballer icon](../resources/icons/ico_tab_autopaint_2x.png)
 
-The `Auto Paintballer` is tool for procedurally generating either simple spots, complex patterns, or intricate fractals using `[Paintballz]`, which get placed according to selected distribution modes.
+The `Auto Paintballer` is a tool for procedurally generating either simple spots, complex patterns, or intricate fractals using `[Paint Ballz]`, which get placed according to selected distribution modes.
 
 **Common Properties:**
 
@@ -233,6 +258,18 @@ This dropdown determines the algorithm used to place paintballs.
 
 - Wave: Generates wave-like or banded patterns using spherical harmonics. 'Degree (L)' controls vertical frequency and 'Order (M)' controls horizontal frequency.
 
+- Size Adaptive: Adapts paintball placement to the curvature and size of the target ball.
+
+- **Surprise:** Generates a random configuration for quick experimentation.
+
+- **Seed/UseSeed:** Set a seed value for reproducible patterns across runs.
+
+- **Ordered/Repeated:** Control whether colors and textures cycle in order or randomly, and whether they restart from the beginning with each stroke.
+
+- **Pixel Mode:** Snap paintball placement to a pixel grid.
+
+- **Export/Import:** Save and load Auto Paintballer presets as JSON files.
+
 #### View Palette
 
 ![Palette Viewer icon](../resources/icons/ico_tab_palette_2x.png)
@@ -259,7 +296,7 @@ Captures the current animation frame and camera angle and writes it to the `[Hea
 
 In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ text editor.
 
-- **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
+- **Z** or **B**: go directly to the LNZ line defining ballz in `[Ballz Info]` or `[Add Ball]`.
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
@@ -280,7 +317,7 @@ In `Preset Mode`, you can copy properties of existing ballz, including any appli
 
 Holding the ALT key and clicking on a ballz will copy its properties and paintballz to the panel.
 
-For applying size properties, you have three options: true, set, and sum. True size determines what size difference is needed for a base ballz to match the effective visual size, or just sets that value for add ballz. Set applies the same value to base ballz and add ballz regardless. Sum can be used to increase or decrease sizes of ballz. The default is true size. Note that resizing ballz can also be done visually by holding SHIFT + ALT + left-click and dragging a ball inward (decrease) or outward (increase), which can be faster than click through sums via `Preset Mode`.
+For applying size properties, you have three options: True, Set, and Sum. True size uses delta-based sizing (the difference needed for a base ball to match the effective visual size, or sets the value for addballz). Set applies the same absolute value to both base and add ballz regardless. Sum is additive/subtractive sizing to increase or decrease sizes. The default is True size. Note that resizing ballz can also be done visually by holding SHIFT + ALT + left-click and dragging a ball inward (decrease) or outward (increase), which can be faster than clicking through sums via `Preset Mode`.
 
 Check/Uncheck properties to apply those to ballz.
 
@@ -288,7 +325,7 @@ Previews: Now shows a visual preview of properties before applying.
 
 Multi-select and box select: Apply presets to multiple balls via CTRL+left-click, box-select or a ball range list.
 
-LNZ Input: Paste raw `[Paintballz]` LNZ text into the preset to apply it to target balls.
+LNZ Input: Paste raw `[Paint Ballz]` LNZ text into the preset to apply it to target balls.
 
 Transformations: Rotate or rescale paintballz presets before applying.
 
@@ -302,11 +339,9 @@ Coming soon!
 
 ![Line Mode icon](../resources/icons/ico_tab_line_2x.png)
 
-In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified.
+In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified. Click the first ball, then the second ball to create a line. To reorder an existing line, click the same pair in reverse order.
 
-Reordering: Reorder existing lines by selecting the same pair in reverse.
-
-Settings: More granular control over fuzz, color, and thickness when applying lines.
+More granular control over fuzz, color, and thickness is available, including separate left/right outline colors and start/end thickness (tapering).
 
 Check/uncheck to apply/not apply properties to existing linez.
 
@@ -336,7 +371,7 @@ In the Standard tab, you control the properties of individual paintballs as they
 
 *Place (`left-click-drag`):* Place one paintball at a time using randomly sampled properties.
 
-*Freeline (`SHIFT` + `left-click-drag`, or toggle `Freeline` checkbox):* Draw continuous stroke of paintballz. Enable `Tapered` to automatically shrink the start and end of a stroke. You can adjust the `Spacing` between balls and add `Jitter` offsets paintballz along rhe stroke for a more natural, hand-drawn look. The `Shuffled` checkbox reorders the layer of paintballz for better texture blending. Colors and textures are randomly sampled unless `Ordered` checkbox is toggled. The `Repeated` checkbox modifies `Ordered` by starting from the beginning of the color/texture range with each stroke. 
+*Freeline (`SHIFT` + `left-click-drag`, or toggle `Freeline` checkbox):* Draw continuous stroke of paintballz. Enable `Tapered` to automatically shrink the start and end of a stroke. You can adjust the `Spacing` between balls and add `Jitter` offsets paintballz along the stroke for a more natural, hand-drawn look. The `Shuffled` checkbox reorders the layer of paintballz for better texture blending. Colors and textures are randomly sampled unless `Ordered` checkbox is toggled. The `Repeated` checkbox modifies `Ordered` by starting from the beginning of the color/texture range with each stroke. 
 
 *Eraser (`CTRL` + `left-click`, or toggle `Eraser` checkbox):* Removing pending/queued paintballs by clicking them.
 
@@ -350,7 +385,7 @@ The Design tab introduces a "stamp" system. Instead of placing single balls, you
 
 **Symmetry Tools:** Enable `Mirror X` or `Mirror Y` to draw symmetrical patterns.
 
-**3D Preview:** As you draw on the 2D canvas, a real-time preview ballz shows how the pattern will look when applied. You can `left-click-drag` on this preview ballz to rotate.
+**3D Preview:** As you draw on the 2D canvas, a real-time preview ball shows how the pattern will look when applied. You can `left-click-drag` on this preview ball to rotate.
 
 **Stamping Controls:**
 
@@ -370,17 +405,19 @@ Coming soon!
 
 Move Mode provides advanced visual editing for multiple balls:
 
-- **Group Movement:** Select multiple balls (CTRL+left-click or Box Select) to move them as a unit.
+- **Group Movement:** Select multiple balls (`CTRL`+left-click or Box Select) to move them as a unit.
 
-- **Axis/Plane Locks:** Use the panel or hotkeys (X, Y, Z) to lock movement to specific axes or planes (X+Y, etc.).
+- **Axis/Plane Locks:** Use the constraint buttons (Free, X, Y, Z, XY, XZ, YZ) or hotkeys (X, Y, Z, and combinations) to lock movement to specific axes or planes.
 
-- **Nudging:** Use the panel buttons or hold an axis key (`X`, `Y`, `Z`) + `wheel up` / `wheel down` to move selection by precise increments.
+- **Mirroring:** Toggle `Mir X`, `Mir Y`, or `Mir Z` checkboxes to mirror movement across each axis simultaneously.
+
+- **Nudging:** Use the panel buttons or hold an axis key (`X`, `Y`, `Z`) + press `+` / `-` to apply the nudge. Hold an axis key (`X`, `Y`, `Z`) + scroll to adjust the nudge delta for that axis (the spinbox value). The "Apply Nudge" button in the panel applies all 3 axes at once.
 
 - **Rotation:** Apply Roll, Pitch, or Yaw rotations. Use `ALT`+left-click to set a Pivot Ball for the rotation.
 
-- **Mirroring:** Toggle the `Mirr` options to move corresponding left/right balls symmetrically.
+- **Flip:** Use the Flip X, Flip Y, or Flip Z buttons to mirror the selection across each axis.
 
-- **Align & Snap:** Align selection to extremes or snap them to the furthest ball on an axis.
+- **Align & Snap:** Align selection to Negative (-), Center (Average), or Positive (+) positions. Snap to Floor (max Y), Roof (min Y), Front (min Z), or Back (max Z).
 
 - **Commit:** Use `Apply` to write changes to `[Move]` or `[Add Ball]` sections, or `Clear` to reset.
 
@@ -410,11 +447,22 @@ Coming soon!
 
 ### Render
 
-Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+The Render menu accessible via the top menu dropdown contains toggles for what elements should be drawn in the viewport. Here, you will find toggles for what elements should be drawn. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render except under special circumstances but aren't explicitly omitted in `[Omissions]`.
 
-- **Hide Ballz:** Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
+- **Draw Ballz** — Toggle rendering of base ballz.
+- **Draw Addballz** — Toggle rendering of addballz.
+- **Draw Linez** — Toggle rendering of linez.
+- **Draw Paintballz** — Toggle rendering of paintballz.
+- **Draw Polygons** — Toggle rendering of polygons.
+- **Show Omitted Ballz** — Show ballz listed in `[Omissions]`.
+- **Show Special Ballz** — Show transient ballz (e.g., tears in Babyz) that don't usually render.
+- **Transparency (253)** — Toggle transparency on color index `253` (typically, magenta in the default game palette).
 
-- **Unhide Ballz:** Use the button under the Render menu to restore all hidden balls.
+Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+
+- **Hide Ballz:** Right-click a ball and select "Hide Ballz" from the Tools Menu to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!). Hidden balls can be restored from the Render menu.
+
+- **Unhide Ballz:** Open the Render menu and click "Unhide Ballz" to restore all hidden balls at once.
 
 ### Export
 
@@ -435,11 +483,11 @@ Clicking on the square after the menu options brings up a color selector, which 
 
 ### Reference Images
 
-Clicking on the picture icon will toggle the reference image, which you can control using "Reference Image" settings popup under File. You can set these images to show in the background and/or as a popup, and whether they zoom with your current zoom level.
+Clicking on the picture icon will toggle the reference image, which you can control using "Reference Image" settings popup under File. You can set images to show in the background and/or as a popup, control their position (X/Y offsets), scale, and centering.
 
 ### Eyelid Toggle
 
-Clicking on the eyeball will cycle through eyelid rendering options: neutral, none, angry, and scared.
+Clicking on the eyeball will cycle through eyelid rendering options: neutral, none, angry, and scared. The "none" state disables eyelids entirely (sets eyelid color to -1), while the other states apply the LNZ's eyelid color with varying tilt angles (neutral = 0°, angry = -30°, scared = 30°).
 
 ### Animation Controller
 
@@ -451,7 +499,7 @@ Use these controls to preview and navigate animations:
 
 ### T-Pose Toggle
 
-Poses the model using perfect symmetry rather than game animation frames.
+Forces the model into a symmetric T-pose using animation frame 0, ignoring the current animation. Useful for symmetric editing.
 
 ## Visual editing
 
@@ -477,9 +525,9 @@ The "Color..." option opens a menu of additional options for recoloring.
 
 For most of these, when you select what to recolor, two text entry boxes will appear at your cursor. The first is for the ball colour, the second is for outline color. Type a color number (e.g., 25) and hit Enter to apply. Leave a box blank if you don't want to affect the color/outline.
 
-The "Color Swap" option opens a menu can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
+The "Color Swap" option opens a menu that can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
 
-### Create Add Ballz (+ Linez)
+### Create Addballz (+ Linez)
 
 While a ball/addball is hovered or selected, use "Create Addballz" or "Create Addballz + Linez" to create a new addball and/or line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
 
@@ -491,13 +539,12 @@ While an addball is hovered or selected, use "Delete Addballz" to remove an addb
 
 While a ball/addball is hovered or selected, use "Omit Ballz" to include ballz in the `[Omissions]` list.
 
-### Connect with Linez
-
-While a ball is hovered or selected, selecting "Connect with Linez" enters Line Mode. Click another ball to connect the two with a Linez entry in the LNZ.
+### Connect by Linez
+While a ball is hovered or selected, selecting "Connect by Linez" enters Line Mode. Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy-Mirror
 
-The Copy-Mirror tool can be used to mirror changes over the X axis. When selected on the background (not a specific ball), you can choose to mirror right-to-left (R-to-L) or left-to-right (L-to-R) on all ballz which will apply all changes on the model's right (R) to the model's left (L) side (LnzLive is mirrored, so the left side of the viewport to the right side) or vice versa. This includes ballz, addballz, paintballz, linez, etc. Alternatively, if selected by right-clicking a specific ballz, then properties of that ball will be mirrored to its symmetrical equivalent. Or, if the ball is a center ball, applied to itself but mirrored on the X axis.
+The Copy-Mirror tool can be used to mirror changes over the X axis. When selected on the background (not a specific ball), you can choose to mirror right-to-left (R-to-L) or left-to-right (L-to-R). R-to-L applies all changes on the model's right (R) to the model's left (L) side, and L-to-R does the reverse (LnzLive is mirrored, so the left side of the viewport corresponds to the right side of the model). If triggered by right-clicking a specific ball, properties of that ball will be mirrored to its symmetrical equivalent. If the ball is a center ball, the properties are applied to itself but mirrored on the X axis.
 
 ### Export to Clothes CLZ
 
@@ -515,9 +562,17 @@ Set the fuzz value for all visible balls and lines at once (automatically exclud
 
 Useful for making Color Info Override sections in breeds. Not supported in all browsers.
 
+### Clear Paintballz from Ball
+
+Right-click a ball to clear all its paintballz. Technically, it will just comment out (`;`) those paintballz entries, so you can go back to the Text Editor to select, right-click, and restore.
+
+### Ball Info / Jump to #N
+
+Right-click a ball to jump directly to its LNZ entry by ball number.
+
 ## Backups
 
-Destructive tools like `Color Swap` and `Copy-Mirror` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
+Destructive tools like `Color Swap` and `Copy-Mirror` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive creates a rolling backup rotation of the 3 most recent backups (`{filename}_backup_1.lnz`, `{filename}_backup_2.lnz`, `{filename}_backup_3.lnz`).
 
 ## Textures and Palettes
 
