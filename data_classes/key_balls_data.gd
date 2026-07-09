@@ -376,7 +376,7 @@ var dog_body_part_symmetry: Dictionary = {
 		"Eyebrows": { "left": [1, 2, 3], "right": [25, 26, 27] },
 		"Jowls": { "left": [15], "right": [39] },
 		"Nostrils": { "left": [17], "right": [41] },
-		"Whiskers": { "left": [63, 64, 65], "right": [66, 67, 68] }
+		"Whiskers": { "left": [], "right": [] }
 	},
 	"Torso": {
 		"Shoulders": { "left": [18], "right": [42] },
