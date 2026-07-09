@@ -216,6 +216,22 @@ func change_nudge_value(axis: String, delta: float) -> void:
 		if sb:
 			sb.value += delta
 
+func apply_nudge_axis(axis: String, dirsign: float) -> void:
+	var node_name: String = ""
+	if axis == "x": node_name = "NudgeX"
+	elif axis == "y": node_name = "NudgeY"
+	elif axis == "z": node_name = "NudgeZ"
+	
+	if node_name != "":
+		var sb: SpinBox = find_node(node_name)
+		if sb:
+			var amount = sb.value * dirsign
+			var vector := Vector3.ZERO
+			if axis == "x": vector.x = amount
+			elif axis == "y": vector.y = amount
+			elif axis == "z": vector.z = amount
+			emit_signal("nudge_selection", vector)
+
 func _on_ApplyRotate_pressed() -> void:
 	var roll: float = find_node("RotateRoll").value
 	var pitch: float = find_node("RotatePitch").value

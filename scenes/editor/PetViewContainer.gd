@@ -1907,14 +1907,16 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 
 		if nudge_axis != "":
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD:  # + key
-				_record_move_start_state()  # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				_record_move_start_state()
+				var dirsign: float = 1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge +")
 				get_tree().set_input_as_handled()
 				return true
 			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
-				_record_move_start_state()  # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				_record_move_start_state()
+				var dirsign: float = -1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
 				mark_ui_dirty()
