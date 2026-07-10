@@ -375,7 +375,8 @@ var dog_body_part_symmetry: Dictionary = {
 		"Ears": { "left": [4, 5, 6], "right": [28, 29, 30] }, 
 		"Eyebrows": { "left": [1, 2, 3], "right": [25, 26, 27] },
 		"Jowls": { "left": [15], "right": [39] },
-		"Nostrils": { "left": [17], "right": [41] }
+		"Nostrils": { "left": [17], "right": [41] },
+		"Whiskers": { "left": [], "right": [] }
 	},
 	"Torso": {
 		"Shoulders": { "left": [18], "right": [42] },
@@ -841,3 +842,265 @@ func get_group_balls(group_name: String) -> Array:
 				result = move_groups_bab[group_name]
 				
 	return result
+
+### SPECIES GETTERS ###
+
+func get_legs(s: int) -> Array:
+	match s:
+		Species.DOG: return legs_dog
+		Species.CAT: return legs_cat
+		Species.BABY: return legs_bab
+	return []
+
+func get_body_ext(s: int) -> Array:
+	match s:
+		Species.DOG: return body_ext_dog
+		Species.CAT: return body_ext_cat
+		Species.BABY: return body_ext_bab
+	return []
+
+func get_face_ext(s: int) -> Array:
+	match s:
+		Species.DOG: return face_ext_dog
+		Species.CAT: return face_ext_cat
+		Species.BABY: return face_ext_bab
+	return []
+
+func get_head_ext(s: int) -> Array:
+	match s:
+		Species.DOG: return head_ext_dog
+		Species.CAT: return head_ext_cat
+		Species.BABY: return head_ext_bab
+	return []
+
+func get_foot_ext(s: int) -> Array:
+	match s:
+		Species.DOG: return foot_ext_dog
+		Species.CAT: return foot_ext_cat
+		Species.BABY: return foot_ext_bab
+	return []
+
+func get_ear_ext(s: int) -> Dictionary:
+	match s:
+		Species.DOG: return ear_ext_dog
+		Species.CAT: return ear_ext_cat
+		Species.BABY: return ear_ext_bab
+	return {}
+
+func get_eyes(s: int) -> Dictionary:
+	match s:
+		Species.DOG: return eyes_dog
+		Species.CAT: return eyes_cat
+		Species.BABY: return eyes_bab
+	return {}
+
+func get_nose(s: int) -> Array:
+	match s:
+		Species.DOG: return nose_dog
+		Species.CAT: return nose_cat
+		Species.BABY: return nose_bab
+	return []
+
+func get_eyebrow_bab() -> Array:
+	return eyebrow_bab
+
+func get_tail(s: int) -> Array:
+	match s:
+		Species.DOG: return tail_dog
+		Species.CAT: return tail_cat
+		Species.BABY: return tail_bab
+	return []
+
+func get_tongue(s: int) -> Array:
+	match s:
+		Species.DOG: return tongue_dog
+		Species.CAT: return tongue_cat
+		Species.BABY: return tongue_bab
+	return []
+
+func get_belly(s: int) -> int:
+	match s:
+		Species.DOG: return belly_dog
+		Species.CAT: return belly_cat
+		Species.BABY: return belly_bab
+	return -1
+
+func get_move_groups(s: int) -> Dictionary:
+	match s:
+		Species.DOG: return move_groups_dog
+		Species.CAT: return move_groups_cat
+		Species.BABY: return move_groups_bab
+	return {}
+
+func get_extensions(s: int) -> Dictionary:
+	var ext: Dictionary = {}
+	match s:
+		Species.DOG:
+			ext = {
+				legs = legs_dog,
+				body_ext = body_ext_dog,
+				face_ext = face_ext_dog,
+				head_ext = head_ext_dog,
+				foot_ext = foot_ext_dog,
+				ear_ext = ear_ext_dog
+			}
+		Species.CAT:
+			var h = head_ext_cat.duplicate()
+			for e in eyes_cat:
+				h.erase(e)
+			ext = {
+				legs = legs_cat,
+				body_ext = body_ext_cat,
+				face_ext = face_ext_cat,
+				head_ext = h,
+				foot_ext = foot_ext_cat,
+				ear_ext = ear_ext_cat
+			}
+		Species.BABY:
+			ext = {
+				legs = legs_bab,
+				body_ext = body_ext_bab,
+				face_ext = face_ext_bab,
+				head_ext = head_ext_bab,
+				foot_ext = foot_ext_bab,
+				ear_ext = ear_ext_bab
+			}
+	return ext
+
+func get_symmetry_dict(s: int) -> Dictionary:
+	match s:
+		Species.DOG: return dog_body_part_symmetry
+		Species.CAT: return cat_body_part_symmetry
+		Species.BABY: return baby_body_part_symmetry
+	return {}
+
+func get_mirror_sides(s: int) -> Dictionary:
+	var result: Dictionary = {"left": [], "right": []}
+	match s:
+		Species.CAT:
+			result = {"left": symmetry_mode_hide_balls_cat, "right": symmetry_mode_right_balls_cat}
+		Species.DOG:
+			result = {"left": symmetry_mode_hide_balls_dog, "right": symmetry_mode_right_balls_dog}
+		Species.BABY:
+			result = {"left": symmetry_mode_hide_balls_bab, "right": symmetry_mode_right_balls_bab}
+	return result
+
+func get_ball_definitions(s: int) -> Dictionary:
+	match s:
+		Species.DOG: return dog_ball_definitions
+		Species.CAT: return cat_ball_definitions
+		Species.BABY: return bab_ball_definitions
+	return {}
+
+func get_projection_key(s: int) -> String:
+	match s:
+		Species.DOG: return "dog"
+		Species.CAT: return "cat"
+		Species.BABY: return "bab"
+	return ""
+
+func get_recolor_exclusions(s: int, intended_part: String = "") -> Array:
+	var excluded: Array = []
+	match s:
+		Species.CAT:
+			for b in move_groups_cat["Eyes"]: excluded.append(b)
+			if intended_part != "NOSE":
+				for n in nose_cat: excluded.append(n)
+			if intended_part != "TONGUE":
+				for t in tongue_cat: excluded.append(t)
+			for w in cat_body_part_symmetry["Head"]["Whiskers"]["left"]: excluded.append(w)
+			for w in cat_body_part_symmetry["Head"]["Whiskers"]["right"]: excluded.append(w)
+		Species.DOG:
+			for b in move_groups_dog["Eyes"]: excluded.append(b)
+			if intended_part != "NOSE":
+				for n in nose_dog: excluded.append(n)
+			if intended_part != "TONGUE":
+				for t in tongue_dog: excluded.append(t)
+		Species.BABY:
+			for b in move_groups_bab["Eyes"]: excluded.append(b)
+			if intended_part != "TONGUE":
+				for t in tongue_bab: excluded.append(t)
+			for e in eyebrow_bab: excluded.append(e)
+	return excluded
+
+func get_recolor_targets(s: int, action: String) -> Array:
+	var result: Array = []
+	match s:
+		Species.DOG, Species.CAT, Species.BABY:
+			match action:
+				"LEGS":
+					var legs = get_legs(s)
+					result.append_array(legs[0])
+					result.append_array(legs[1])
+					var foot = get_foot_ext(s)
+					for f in foot:
+						for v in f:
+							result.erase(v)
+				"TAIL":
+					result.append_array(get_tail(s))
+				"HEAD":
+					result.append_array(get_head_ext(s))
+				"SNOUT":
+					result.append_array(get_face_ext(s))
+				"EARS":
+					var ear = get_ear_ext(s)
+					for k in ear:
+						result.append(k)
+						result.append_array(ear[k])
+				"PAWS":
+					var foot = get_foot_ext(s)
+					for f in foot:
+						result.append_array(f)
+				"NOSE":
+					result.append_array(get_nose(s))
+				"TONGUE":
+					result.append_array(get_tongue(s))
+	return result
+
+func get_fuzz_exclusions(s: int) -> Array:
+	var excluded: Array = []
+	match s:
+		Species.CAT:
+			for b in move_groups_cat["Eyes"]: excluded.append(b)
+			for t in tongue_cat: excluded.append(t)
+			for w in cat_body_part_symmetry["Head"]["Whiskers"]["left"]: excluded.append(w)
+			for w in cat_body_part_symmetry["Head"]["Whiskers"]["right"]: excluded.append(w)
+		Species.DOG:
+			for b in move_groups_dog["Eyes"]: excluded.append(b)
+			for t in tongue_dog: excluded.append(t)
+		Species.BABY:
+			for b in move_groups_bab["Eyes"]: excluded.append(b)
+			for t in tongue_bab: excluded.append(t)
+	return excluded
+
+func get_default_whisker_connections(s: int) -> Array:
+	if s != Species.CAT:
+		return []
+	var connections: Array = []
+	var jowlL: int = get_ball_id_by_name("jowlL")
+	var jowlR: int = get_ball_id_by_name("jowlR")
+	if jowlL == -1 or jowlR == -1:
+		return []
+	var whiskers: Dictionary = cat_body_part_symmetry.Head.Whiskers
+	for w in whiskers.left:
+		connections.append({"start": w, "end": jowlL})
+	for w in whiskers.right:
+		connections.append({"start": w, "end": jowlR})
+	return connections
+
+func get_species_display_name(s: int) -> String:
+	match s:
+		Species.CAT: return "Catz"
+		Species.DOG: return "Dogz"
+		Species.BABY: return "Babyz"
+	return "Petz"
+
+func get_belly_ball_id(s: int) -> int:
+	match s:
+		Species.DOG: return belly_dog
+		Species.CAT: return belly_cat
+		Species.BABY: return belly_bab
+	return -1
+
+func is_known_species(s: int) -> bool:
+	return s == Species.CAT or s == Species.DOG or s == Species.BABY

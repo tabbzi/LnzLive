@@ -895,17 +895,8 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 		bhd_size = pet_node.bhd.ball_sizes[ball_no]
 		
 		# Determine if the ball is part of an enlarged group
-		var head_ext: Array = []
-		var foot_ext: Array = []
-		if pet_node.lnz.species == KeyBallsData.Species.DOG:
-			head_ext = KeyBallsData.head_ext_dog
-			foot_ext = KeyBallsData.foot_ext_dog
-		elif pet_node.lnz.species == KeyBallsData.Species.CAT:
-			head_ext = KeyBallsData.head_ext_cat
-			foot_ext = KeyBallsData.foot_ext_cat
-		elif pet_node.lnz.species == KeyBallsData.Species.BABY:
-			head_ext = KeyBallsData.head_ext_bab
-			foot_ext = KeyBallsData.foot_ext_bab
+		var head_ext: Array = KeyBallsData.get_head_ext(pet_node.lnz.species)
+		var foot_ext: Array = KeyBallsData.get_foot_ext(pet_node.lnz.species)
 
 		if ball_no in head_ext:
 			enl_x = pet_node.lnz.head_enlargement.x
@@ -1916,14 +1907,16 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 
 		if nudge_axis != "":
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD:  # + key
-				_record_move_start_state()  # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				_record_move_start_state()
+				var dirsign: float = 1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge +")
 				get_tree().set_input_as_handled()
 				return true
 			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
-				_record_move_start_state()  # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				_record_move_start_state()
+				var dirsign: float = -1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
 				mark_ui_dirty()
@@ -2551,14 +2544,7 @@ func _on_unselect_side(side: String) -> void:
 	if selected_balls.empty():
 		return
 
-	var symmetry_dict: Dictionary = {}
-	match KeyBallsData.species:
-		KeyBallsData.Species.CAT:
-			symmetry_dict = KeyBallsData.cat_body_part_symmetry
-		KeyBallsData.Species.DOG:
-			symmetry_dict = KeyBallsData.dog_body_part_symmetry
-		KeyBallsData.Species.BABY:
-			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var symmetry_dict: Dictionary = KeyBallsData.get_symmetry_dict(KeyBallsData.species)
 
 	var left_lookup: Dictionary = {}
 	var right_lookup: Dictionary = {}
@@ -3330,6 +3316,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 				var pos_normalized: Vector3 = pos_arr[i]
 				var spot_world_rel: Vector3 = pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
 				var spot_local_rel: Vector3 = target_ball.global_transform.basis.xform_inv(spot_world_rel)
+				
 				var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
 					spot_local_rel, px_scale, pet_node.lnz.scales.x
 				)
@@ -3403,9 +3390,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			texture_list.append(-1)
 
 		var local_relative_pos: Vector3 = target_ball.to_local(intersection_point)
-		var world_relative_pos: Vector3 = intersection_point - target_ball.global_transform.origin
+		# var world_relative_pos: Vector3 = intersection_point - target_ball.global_transform.origin
+		
 		var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
-			world_relative_pos, pet_node.pixel_world_size, pet_node.lnz.scales.x
+			local_relative_pos, pet_node.pixel_world_size, pet_node.lnz.scales.x
 		)
 
 		var color: int
@@ -3582,23 +3570,10 @@ func _on_randomize_moves(settings: Dictionary) -> void:
 		unique_targets[b] = true
 	target_balls = unique_targets.keys()
 
-	var symmetry_dict: Dictionary = {}
-	if KeyBallsData.species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif KeyBallsData.species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var symmetry_dict: Dictionary = KeyBallsData.get_symmetry_dict(KeyBallsData.species)
 
+	var eye_pairs_source: Dictionary = KeyBallsData.get_eyes(KeyBallsData.species)
 	var eye_iris_pairs: Dictionary = {}  # iris_id -> eye_id
-	var eye_pairs_source: Dictionary = {}
-	if KeyBallsData.species == KeyBallsData.Species.DOG:
-		eye_pairs_source = KeyBallsData.eyes_dog
-	elif KeyBallsData.species == KeyBallsData.Species.CAT:
-		eye_pairs_source = KeyBallsData.eyes_cat
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		eye_pairs_source = KeyBallsData.eyes_bab
-
 	for iris in eye_pairs_source:
 		eye_iris_pairs[iris] = eye_pairs_source[iris]
 
@@ -4174,13 +4149,7 @@ func _on_move_mode_select_group(group_name: String) -> void:
 
 func _apply_eye_iris_binding(ball: Spatial, delta: Vector3) -> void:
 	# Check for eye -> iris binding
-	var eye_pairs_source: Dictionary = {}
-	if KeyBallsData.species == KeyBallsData.Species.DOG:
-		eye_pairs_source = KeyBallsData.eyes_dog
-	elif KeyBallsData.species == KeyBallsData.Species.CAT:
-		eye_pairs_source = KeyBallsData.eyes_cat
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		eye_pairs_source = KeyBallsData.eyes_bab
+	var eye_pairs_source: Dictionary = KeyBallsData.get_eyes(KeyBallsData.species)
 
 	for iris_id in eye_pairs_source:
 		var eye_id: int = eye_pairs_source[iris_id]

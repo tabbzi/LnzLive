@@ -385,18 +385,9 @@ func get_whiskers(reader: VirtualFileLineReader) -> void:
 	whisker_connections.clear()
 
 	if reader.get_len() == 0:
-		if species == KeyBallsData.Species.CAT:
-			var jowlL: int = KeyBallsData.get_ball_id_by_name("jowlL")
-			var jowlR: int = KeyBallsData.get_ball_id_by_name("jowlR")
-			
-			if jowlL != -1 and jowlR != -1:
-				var whiskers: Dictionary = KeyBallsData.cat_body_part_symmetry.Head.Whiskers
-				for w in whiskers.left:
-					whisker_connections.append({"start": w, "end": jowlL})
-				for w in whiskers.right:
-					whisker_connections.append({"start": w, "end": jowlR})
-		elif species == KeyBallsData.Species.DOG:
-			pass
+		var defaults = KeyBallsData.get_default_whisker_connections(species)
+		for conn in defaults:
+			whisker_connections.append(conn)
 		return
 
 	while true:

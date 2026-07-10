@@ -39,9 +39,7 @@ func initialize_data(target_ball_no: int) -> void:
 
 	current_species = lnz.get("species")
 
-	var species_text: String = "Petz"
-	if current_species == KeyBallsData.Species.BABY:
-		species_text = "Babyz"
+	var species_text: String = KeyBallsData.get_species_display_name(current_species)
 	species_label.text = species_text
 
 	kind_option.clear()
@@ -75,10 +73,10 @@ func _setup_base_inputs(target_ball_no: int) -> void:
 		baby_base_input.visible = true
 		if target_ball_no != -1:
 			baby_base_input.text = str(target_ball_no)
-			if KeyBallsData.bab_ball_definitions.has(target_ball_no):
-				baby_label.text = "Base (" + KeyBallsData.bab_ball_definitions[target_ball_no].name + "):"
+			var defs = KeyBallsData.get_ball_definitions(current_species)
+			if defs.has(target_ball_no):
+				baby_label.text = "Base (" + defs[target_ball_no].name + "):"
 	else:
-		# Petz (Dogz/Catz)
 		dog_label.visible = true
 		dog_base_input.visible = true
 		cat_label.visible = true
@@ -90,12 +88,12 @@ func _setup_base_inputs(target_ball_no: int) -> void:
 
 			if current_species == KeyBallsData.Species.DOG:
 				dog_ball = target_ball_no
-				# Find equivalent cat ball
-				cat_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.dog_ball_definitions, KeyBallsData.cat_ball_definitions)
+				var cat_defs = KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT)
+				cat_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG), cat_defs)
 			elif current_species == KeyBallsData.Species.CAT:
 				cat_ball = target_ball_no
-				# Find equivalent dog ball
-				dog_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.cat_ball_definitions, KeyBallsData.dog_ball_definitions)
+				var dog_defs = KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG)
+				dog_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT), dog_defs)
 
 			if dog_ball != -1:
 				dog_base_input.text = str(dog_ball)

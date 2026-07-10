@@ -684,6 +684,12 @@ func recompose_model():
 	if current_variation_config.has("Project Ball"):
 		lnz.get_project_balls(lnz.compile_section("Project Ball", current_variation_config["Project Ball"]))
 
+	# Cat without [Whiskers] section: apply default whisker connections
+	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
+		var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
+		for conn in defaults:
+			lnz.whisker_connections.append(conn)
+
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
 
@@ -1027,12 +1033,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	# Figure out belly position
 	var belly_position = Vector3.ZERO
-	if species == KeyBallsData.Species.DOG and ball_data.has(KeyBallsData.belly_dog):
-		belly_position = ball_data[KeyBallsData.belly_dog].position
-	elif species == KeyBallsData.Species.CAT and ball_data.has(KeyBallsData.belly_cat):
-		belly_position = ball_data[KeyBallsData.belly_cat].position
-	elif species == KeyBallsData.Species.BABY and ball_data.has(KeyBallsData.belly_bab):
-		belly_position = ball_data[KeyBallsData.belly_bab].position
+	var belly_id = KeyBallsData.get_belly(species)
+	if belly_id != -1 and ball_data.has(belly_id):
+		belly_position = ball_data[belly_id].position
 	elif ball_data.size() > 0:
 		belly_position = ball_data[ball_data.keys()[0]].position
 
@@ -1043,12 +1046,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	if lnz != null and not lnz.custom_eyes.empty():
 		eyes = lnz.custom_eyes
 	else:
-		if species == KeyBallsData.Species.DOG:
-			eyes = KeyBallsData.eyes_dog
-		elif species == KeyBallsData.Species.CAT:
-			eyes = KeyBallsData.eyes_cat
-		else:
-			eyes = KeyBallsData.eyes_bab
+		eyes = KeyBallsData.get_eyes(species)
 
 	# --- INITIALIZE ---
 	if new_create:
@@ -1609,8 +1607,8 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	# print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func generate_whiskers(new_create: bool):
-	if lnz.species != KeyBallsData.Species.CAT:
-		# print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
+	var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
+	if defaults.size() == 0 and lnz.whisker_connections.empty():
 		return
 
 	var root = get_root()
@@ -1624,8 +1622,9 @@ func generate_whiskers(new_create: bool):
 	for connection in lnz.whisker_connections:
 		used_whiskers[int(connection.start)] = true
 
-	var cat_whiskers = KeyBallsData.cat_body_part_symmetry.Head.Whiskers
-	var default_whisker_indices = cat_whiskers.left + cat_whiskers.right
+	var sym = KeyBallsData.get_symmetry_dict(lnz.species)
+	var whisker_sym = sym["Head"]["Whiskers"]
+	var default_whisker_indices = whisker_sym.left + whisker_sym.right
 
 	for b_no in default_whisker_indices:
 		if not used_whiskers.has(b_no):
@@ -1774,33 +1773,15 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 	var foot_ext
 	var ear_ext
 
-	if lnz.species == KeyBallsData.Species.DOG:
-		legs = KeyBallsData.legs_dog
-		body_ext = KeyBallsData.body_ext_dog
-		face_ext = KeyBallsData.face_ext_dog
-		head_ext = KeyBallsData.head_ext_dog
-		foot_ext = KeyBallsData.foot_ext_dog
-		ear_ext = KeyBallsData.ear_ext_dog
-	elif lnz.species == KeyBallsData.Species.CAT:
-		legs = KeyBallsData.legs_cat
-		body_ext = KeyBallsData.body_ext_cat
-		face_ext = KeyBallsData.face_ext_cat
-		head_ext = KeyBallsData.head_ext_cat.duplicate()
-		foot_ext = KeyBallsData.foot_ext_cat
-		ear_ext = KeyBallsData.ear_ext_cat
-
-		for b in KeyBallsData.eyes_cat:
-			head_ext.erase(b)
-	elif lnz.species == KeyBallsData.Species.BABY:
-		legs = KeyBallsData.legs_bab
-		body_ext = KeyBallsData.body_ext_bab
-		face_ext = KeyBallsData.face_ext_bab
-		head_ext = KeyBallsData.head_ext_bab
-		foot_ext = KeyBallsData.foot_ext_bab
-		ear_ext = KeyBallsData.ear_ext_bab
-	else:
-		# Unknown species, assume no extensions
+	var ext = KeyBallsData.get_extensions(lnz.species)
+	if ext.size() == 0:
 		return all_ball_dict
+	legs = ext["legs"]
+	body_ext = ext["body_ext"]
+	face_ext = ext["face_ext"]
+	head_ext = ext["head_ext"]
+	foot_ext = ext["foot_ext"]
+	ear_ext = ext["ear_ext"]
 
 	# legs
 	# for ball_no in legs[0]:
@@ -2106,14 +2087,8 @@ func set_frame(frame: int):
 	init_visual_balls(lnz, false)
 
 func symmetrize_skeleton():
-	var symmetry_data = {}
-	if lnz.species == KeyBallsData.Species.DOG:
-		symmetry_data = KeyBallsData.dog_body_part_symmetry
-	elif lnz.species == KeyBallsData.Species.CAT:
-		symmetry_data = KeyBallsData.cat_body_part_symmetry
-	elif lnz.species == KeyBallsData.Species.BABY:
-		symmetry_data = KeyBallsData.baby_body_part_symmetry
-	else:
+	var symmetry_data = KeyBallsData.get_symmetry_dict(lnz.species)
+	if symmetry_data.size() == 0:
 		return
 
 	for section in symmetry_data.values():
@@ -2612,13 +2587,10 @@ func _on_apply_auto_paintballz():
 			continue
 
 		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
-		var world_relative_pos = (
-			base_ball_node.to_global(local_pos)
-			- base_ball_node.global_transform.origin
-		)
 
-		var lnz_scale = lnz.scales.x / 255.0
-		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
+		var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
+			local_pos, pixel_world_size, lnz.scales.x
+		)
 		relative_pos_lnz.y *= -1
 
 		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
@@ -2739,7 +2711,7 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 		base_positions[b.ball_no] = b.position
 	
 	if lnz.species != KeyBallsData.Species.BABY:
-		var legs = KeyBallsData.legs_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.legs_cat
+		var legs = KeyBallsData.get_legs(lnz.species)
 		var front_legs = legs[0]
 		var back_legs = legs[1]
 		var ext_front = lnz.leg_extensions.x
@@ -2752,7 +2724,7 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 		if back_legs.size() > 0 and base_positions.has(back_legs[0]):
 			z_back = base_positions[back_legs[0]].z
 		
-		var head_ext = KeyBallsData.head_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.head_ext_cat
+		var head_ext = KeyBallsData.get_head_ext(lnz.species)
 		var head_set = {}
 		for b in head_ext:
 			head_set[b] = true
@@ -2767,18 +2739,18 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 		var lift = lerp(ext_front, ext_back, t)
 		addball.position.y -= lift
 	
-	var body_ext = KeyBallsData.body_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.body_ext_cat
+	var body_ext = KeyBallsData.get_body_ext(lnz.species)
 	var special_ball = body_ext[0]
 	if addball.base == special_ball:
 		addball.position.z += lnz.body_extension
 	elif addball.base in body_ext:
 		addball.position.z += lnz.body_extension * 2
 	
-	var face_ext = KeyBallsData.face_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.face_ext_cat
+	var face_ext = KeyBallsData.get_face_ext(lnz.species)
 	if addball.base in face_ext:
 		addball.position.z -= lnz.face_extension
 	
-	var head_ext = KeyBallsData.head_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.head_ext_cat
+	var head_ext = KeyBallsData.get_head_ext(lnz.species)
 	var head_ball_key = head_ext[0]
 	if base_positions.has(head_ball_key):
 		var head_pos = base_positions[head_ball_key]
@@ -2790,7 +2762,7 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 		addball.size = floor(addball.size * (lnz.head_enlargement.x / 100.0))
 		addball.size += lnz.head_enlargement.y
 	
-	var foot_ext = KeyBallsData.foot_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.foot_ext_cat
+	var foot_ext = KeyBallsData.get_foot_ext(lnz.species)
 	for foot_group in foot_ext:
 		if addball.base in foot_group:
 			var foot_pos = base_positions[foot_group[0]]
@@ -2803,7 +2775,7 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 			addball.size += lnz.foot_enlargement.y
 			break
 	
-	var ear_ext = KeyBallsData.ear_ext_dog if lnz.species == KeyBallsData.Species.DOG else KeyBallsData.ear_ext_cat
+	var ear_ext = KeyBallsData.get_ear_ext(lnz.species)
 	if addball.base in ear_ext:
 		var base_ball_pos = base_positions[addball.base]
 		var vector_from_base = addball.position - base_ball_pos

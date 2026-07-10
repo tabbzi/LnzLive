@@ -1601,11 +1601,7 @@ func get_ball_name(ball_no: int) -> String:
 	var ball_name = ""
 
 	if ball_no < max_base:
-		var definitions = {}
-		match species:
-			KeyBallsData.Species.CAT: definitions = KeyBallsData.cat_ball_definitions
-			KeyBallsData.Species.DOG: definitions = KeyBallsData.dog_ball_definitions
-			KeyBallsData.Species.BABY: definitions = KeyBallsData.bab_ball_definitions
+		var definitions = KeyBallsData.get_ball_definitions(species)
 		
 		if definitions.has(ball_no):
 			ball_name = definitions[ball_no].get("name", "")
@@ -1664,17 +1660,9 @@ func find_mirrored_ball(ball_no: int) -> int:
 		return ball_no # no mirror found, return self
 
 	var species = KeyBallsData.species 
-	var symmetry_dict = {}
-
-	match species:
-		KeyBallsData.Species.CAT: 
-			symmetry_dict = KeyBallsData.cat_body_part_symmetry
-		KeyBallsData.Species.DOG: 
-			symmetry_dict = KeyBallsData.dog_body_part_symmetry
-		KeyBallsData.Species.BABY: 
-			symmetry_dict = KeyBallsData.baby_body_part_symmetry
-		_: 
-			return ball_no
+	var symmetry_dict = KeyBallsData.get_symmetry_dict(species)
+	if symmetry_dict.size() == 0:
+		return ball_no
 
 	var mirrored_base = KeyBallsData.get_mirrored_ball(ball_no, symmetry_dict)
 	
@@ -1837,7 +1825,7 @@ func get_project_ball_section() -> Array:
 # _update_paintballz_section
 # update_lnz_section_one_value
 # update_lnz_section_two_values
-# _write_project_ball_section
+# write_project_ball_section
 # _apply_preset_to_ball
 # _write_preset_to_ball
 # apply_batch_presets
@@ -2037,7 +2025,7 @@ func update_lnz_section_two_values(section_name, val1, val2):
 		set_line(start_line, new_line)
 		return
 
-func _write_project_ball_section(projections: Array):
+func write_project_ball_section(projections: Array):
 	save_backup()
 	var bounds = get_section_bounds("[Project Ball]")
 	if bounds.empty():
@@ -3394,33 +3382,7 @@ func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 	save_backup()
 	var species = KeyBallsData.species
-	var balls_to_exclude: Array = []
-	
-	if species == KeyBallsData.Species.CAT:
-		for b in KeyBallsData.move_groups_cat["Eyes"]:
-			balls_to_exclude.append(b)
-		for n in KeyBallsData.nose_cat:
-			balls_to_exclude.append(n)
-		for t in KeyBallsData.tongue_cat:
-			balls_to_exclude.append(t)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]:
-			balls_to_exclude.append(w)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]:
-			balls_to_exclude.append(w)
-	elif species == KeyBallsData.Species.DOG:
-		for b in KeyBallsData.move_groups_dog["Eyes"]:
-			balls_to_exclude.append(b)
-		for n in KeyBallsData.nose_dog:
-			balls_to_exclude.append(n)
-		for t in KeyBallsData.tongue_dog:
-			balls_to_exclude.append(t)
-	elif species == KeyBallsData.Species.BABY:
-		for b in KeyBallsData.move_groups_bab["Eyes"]:
-			balls_to_exclude.append(b)
-		for t in KeyBallsData.tongue_bab:
-			balls_to_exclude.append(t)
-		for e in KeyBallsData.eyebrow_bab:
-			balls_to_exclude.append(e)
+	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, "")
 
 	# Find and exclude any addballs attached to the currently excluded base balls
 	var addball_bounds = get_section_bounds("[Add Ball]")
@@ -3450,27 +3412,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
 	save_backup()
 	var species = KeyBallsData.species
-	var balls_to_exclude: Array = []
-	
-	if species == KeyBallsData.Species.CAT:
-		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
-		if intended_part != "TONGUE":
-			for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
-		if intended_part != "NOSE":
-			for n in KeyBallsData.nose_cat: balls_to_exclude.append(n)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
-	elif species == KeyBallsData.Species.DOG:
-		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
-		if intended_part != "TONGUE":
-			for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
-		if intended_part != "NOSE":
-			for n in KeyBallsData.nose_dog: balls_to_exclude.append(n)
-	elif species == KeyBallsData.Species.BABY:
-		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
-		if intended_part != "TONGUE":
-			for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
-		for e in KeyBallsData.eyebrow_bab: balls_to_exclude.append(e)
+	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, intended_part)
 
 	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, core_ball_nos, color_index, outline_color_index)
 	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, core_ball_nos, color_index, outline_color_index)
@@ -3531,20 +3473,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	var recolor_rules = all_recolor_info.recolors
 	
 	var species = KeyBallsData.species
-	var balls_to_exclude: Array = []
-	if species == KeyBallsData.Species.CAT:
-		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
-		for n in KeyBallsData.nose_cat: balls_to_exclude.append(n)
-		for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
-	elif species == KeyBallsData.Species.DOG:
-		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
-		for n in KeyBallsData.nose_dog: balls_to_exclude.append(n)
-		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
-	elif species == KeyBallsData.Species.BABY:
-		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
-		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
+	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, "")
 
 	# [Ballz Info] - color=0, outline=1, texture=7
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
@@ -3671,17 +3600,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	save_backup()
 	var balls_to_exclude: Array = _get_omitted_balls()
-	if KeyBallsData.species == KeyBallsData.Species.CAT:
-		for b in KeyBallsData.move_groups_cat["Eyes"]: balls_to_exclude.append(b)
-		for t in KeyBallsData.tongue_cat: balls_to_exclude.append(t)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["left"]: balls_to_exclude.append(w)
-		for w in KeyBallsData.cat_body_part_symmetry["Head"]["Whiskers"]["right"]: balls_to_exclude.append(w)
-	elif KeyBallsData.species == KeyBallsData.Species.DOG:
-		for b in KeyBallsData.move_groups_dog["Eyes"]: balls_to_exclude.append(b)
-		for t in KeyBallsData.tongue_dog: balls_to_exclude.append(t)
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		for b in KeyBallsData.move_groups_bab["Eyes"]: balls_to_exclude.append(b)
-		for t in KeyBallsData.tongue_bab: balls_to_exclude.append(t)
+	balls_to_exclude.append_array(KeyBallsData.get_fuzz_exclusions(KeyBallsData.species))
 
 	# [Ballz Info] — field index 3
 	_for_each_matching_line_in_section_with_field("[Ballz Info]", -1, 3, balls_to_exclude, str(fuzz))
@@ -3816,18 +3735,9 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	var target_list = []
 	var middle_balls_list = []
 	
-	var s_left = []
-	var s_right = []
-	
-	if KeyBallsData.species == KeyBallsData.Species.CAT:
-		s_left = KeyBallsData.symmetry_mode_hide_balls_cat.duplicate()
-		s_right = KeyBallsData.symmetry_mode_right_balls_cat.duplicate()
-	elif KeyBallsData.species == KeyBallsData.Species.DOG:
-		s_left = KeyBallsData.symmetry_mode_hide_balls_dog.duplicate()
-		s_right = KeyBallsData.symmetry_mode_right_balls_dog.duplicate()
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		s_left = KeyBallsData.symmetry_mode_hide_balls_bab.duplicate()
-		s_right = KeyBallsData.symmetry_mode_right_balls_bab.duplicate()
+	var mirror_sides = KeyBallsData.get_mirror_sides(KeyBallsData.species)
+	var s_left = mirror_sides["left"]
+	var s_right = mirror_sides["right"]
 	
 	if reverse:
 		source_list = s_right

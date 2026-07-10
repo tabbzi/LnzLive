@@ -1,0 +1,421 @@
+;scotty
+
+[Default Linez File]
+\ptzfiles\dog\dogmaster.lnz
+
+[Sounds]
+\ptzfiles\dog\sc\scsnd.txt
+
+[Little one]
+scpup.lnz
+
+[256 Eyelid Color]
+28
+
+
+[Default Scales];150 130
+135 	normal pet scale
+130 	normal ball scale
+		
+[Leg Extension]
+-10
+-10
+
+[Body Extension];old -5
+#2.A
+-5
+#1
+-15
+##
+
+[Face Extension];old 6
+#2.B
+6
+#1
+0
+##
+
+[Ear Extension]			
+100
+
+[Head Enlargement]; old 103
+103              		
+0								
+
+[Feet Enlargement]; old 120, 0
+#2.C
+125
+0
+#1
+120				
+0
+##
+
+[Move]			
+;48,	0,	-3,	0	
+;49,	0,	-3,	0
+
+[Project Ball]		
+;eyebrows
+8, 1, 80
+8, 2, 85
+8, 3, 80
+32, 1, 80
+32, 25, 80
+32, 26, 85
+32, 27, 80
+8, 25, 80
+;ears
+52, 6, 79
+52, 30, 79
+38, 6, 120
+14, 30, 120 
+;tongue
+63, 64, 85
+64, 83, 50
+56, 63, 70
+52, 63, 130
+53, 63, 80
+;mouth corners
+15, 84, 86
+39, 85, 86
+;tail
+49, 57, 30
+57, 58, 30
+58, 59, 30
+59, 60, 30
+60, 61, 30
+61, 62, 30
+
+
+[Add Ball]
+; first ball is 67
+; GROUP ONE, containing ballz 67-76, ARE UTILITY ADDBALLZ FOR ANDREW
+;base	x	y	z	color otlnCol spckCol  fuzz  group   outline ballsize bodyarea  addGroup     texture
+; mount align ball 67
+48, 	3,-12,-258	55		0		0		0		-1		-1		50		0			1			-1
+; steal captured toy align ball 68
+33, 	20,-20,-125	65		0		0		0		-1		-1		50		0			1			-1
+; steal toy standing align ball 69
+48, 	0,0,-230	75		0		0		0		-1		-1		50		0			1			-1
+; dig align ball 70
+33, 	50,40,-60	85		0		0		0		-1		-1		50		0			1			-1
+; fill in hole align ball 71
+36, 	50,40,250	95		0		0		0		-1		-1		50		0			1			-1
+; rest on pillow align ball 72
+48, 	0,80,0		105		0		0		0		-1		-1		50		0			1			-1
+; drop object at point align ball 73
+33, 	50,150,-80	115		0		0		0		-1		-1		50		0			1			-1
+; utility ball 74
+48, 	0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; utility ball 75
+48, 	0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; utility ball 76
+48, 	0,0,0		15		0		0		0		-1		-1		50		0			1			-1
+; ### From here down are animator's addballz 77.
+;ears 77
+6, 	6, 	-10,	-1, 	35, 	0, 	0, 	0, 	0, 	-1, 	25, 	0,	    0, 		1
+30, 	-6, 	-10,	-1, 	35, 	0, 	0, 	0, 	0,      -1, 	25, 	0,	    0,	 	1
+6, 	6, 	-18,	-3, 	35, 	0, 	0, 	0, 	0,	-1, 	19, 	0,	    0, 		1
+30, 	-6, 	-18,	-3, 	35, 	0, 	0, 	0, 	0, 	-1, 	19, 	0,	    0,	 	1
+6, 	7, 	-27,	-8, 	35, 	0, 	0, 	0, 	0, 	-1, 	10, 	0,	    0, 		1
+30,  	-4, 	-27,	-8, 	35, 	0, 	0, 	0, 	0, 	-1, 	10, 	0,	    0, 		1
+;tongue 83
+63, 	0, 	0, 	0, 	1, 	0, 	0, 	-1, 	-1, 	-1, 	-1, 	0,          0,		1,	63 
+;jowls 84
+56, 	20, 	25, 	6, 	35, 	25, 	0, 	4, 	0, 	 0, 	30, 	0,          0,		1 
+56, 	-20, 	25, 	6, 	35, 	25, 	0, 	4, 	0, 	 0, 	30, 	0,          0,		1 
+;cheeks 86
+51, 	20, 	-25, 	23, 	35, 	25, 	0, 	4, 	0, 	-2, 	30, 	0,          0,		1 
+51, 	-20, 	-25, 	23, 	35, 	25, 	0, 	4, 	0, 	 0, 	30, 	0,          0,		1 
+;mouth corners 88
+51, 	8, 	-3, 	5, 	35, 	0, 	0, 	0, 	0,  	-1, 	22, 	0,          0,		1 
+51, 	-8, 	-3, 	5, 	35, 	0, 	0, 	0, 	0, 	-1, 	22, 	0,          0,		1 
+
+
+[Omissions]
+65		zorient
+66		ztrans
+67		utility addball for andrew
+68      utility addball for andrew
+69      utility addball for andrew
+70      utility addball for andrew
+71      utility addball for andrew
+72      utility addball for andrew
+73      utility addball for andrew
+74      utility addball for andrew
+75      utility addball for andrew
+76      utility addball for andrew
+4
+5
+28
+29
+
+
+; -1 mean use the associated ball color
+; Only the first three fields need to be specefied
+;srt	end	fuzz	col	lfCol	rtCol	sThck	eThick
+[Linez]		
+56, 	52, 	1,	-1,	244, 	244,	95,	95		;snout, head
+52, 	54, 	1,	-1,	25, 	25,	95,	85		;head/neck
+50, 	54, 	1,	-1,	25, 	25,	85,	95		;chest/neck
+50, 	48, 	1,	-1,	25, 	25,	95,	90		;chest/belly
+48, 	49, 	1,	-1,	25, 	25,	95,	90		;belly/butt
+49, 	19, 	1,	-1,	-1, 	-1,	95,	95		;butt/hip
+49, 	43, 	1,	-1,	-1, 	-1,	95,	95		;butt/hip
+50, 	18, 	1,	-1,	-1, 	-1,	95,	95		;chest/shoulder
+50, 	42, 	1,	-1,	-1, 	-1,	95,	95		;chest/shoulder
+62, 	61, 	4,	-1,	25, 	 25,	100,	100		;tail
+61, 	60, 	4,	-1,	25,  	25,	100,	100		;tail
+60, 	59, 	4,	-1,	25, 	25,	100,	100		;tail
+59, 	58, 	4,	-1,	25, 	25,	100,	100		;tail
+58, 	57, 	4,	-1,	25, 	25,	100,	100		;tail
+57, 	49, 	4,	-1,	25, 	25,	100,	40		;tail/butt
+18, 	7, 	3,	-1,	25, 	25,	95,	95		;LShoulder/Lelbow
+7, 	23, 	2,	-1,	25, 	25,	95,	95		;Lelbow/Lwrist
+13, 	23,	1,	-1,	25, 	25,	75,	95		;Lwrist /Lhand
+42, 	31,	3,	-1,	25, 	25,	95,	95		;RShoulder/Relbow
+31, 	47,	2,	-1,	25, 	25,	95,	95		;Relbow/Rwrist
+37, 	47,	1,	-1,	25, 	25,	75,	95		;Rwrist/Rhand
+19, 	16,	3,	-1,	25, 	25,	95,	95		;Lthigh/Lknee
+16, 	0, 	2,	-1,	25, 	25,	95,	95		;Lknee/Lankle
+0, 	12, 	1,	-1,	25, 	25,	95,	75		;Lankle/Lfoot
+43, 	40,	3,	-1,	25, 	25,	95,	95		;Rthigh/Rknee
+40, 	24,	2,	-1,	25, 	25,	95,	95		;RKnee/Rankle
+24, 	36,	1,	-1,	25, 	25,	95,	75		;Rankle/Rfoot
+1, 	2, 	0,	-1,	244, 	244,	95,	95		;brow
+2, 	3, 	0,	-1,	244, 	244,	95,	95		;brow
+25, 	26,	0,	-1,	244, 	244,	95,	95		;brow
+26, 	27, 	0,	-1,	244, 	244,	95,	95		;brow
+63, 	83, 	0,	-1,	244, 	244,	100,	100		;tongue
+83, 	64, 	0,	-1,	244, 	244,	100,	100		;tongue
+53, 	51, 	1,	-1,	-1, 	-1,	95,	75		;jaw/chin
+10, 	11, 	0,	-1,	25, 	25,	95,	95		;BULLshit
+56, 	17, 	1,	-1,	25, 	25,	95,	95		
+56, 	41, 	1,	-1,	25, 	25,	95,	95		
+81, 	79, 	1,	-1,	25, 	25,	95,	100		;ear
+79, 	6, 	1,	-1,	25,	25,	100,	100		;ear
+80,	30, 	1,	-1,	25, 	25,	100,	100		;ear
+82, 	80, 	1,	-1,	25, 	25,	95,	100		;ear
+77, 	6, 	1,	-1,	25, 	25,	100,	100		
+78, 	30, 	1,	-1,	25, 	25,	100,	100		
+;toes & fingers
+13, 	9, 	1,	-1,	-1, 	-1,	100,	100		
+13, 	10, 	1,	-1,	-1, 	-1,	100,	100		
+13, 	11, 	1,	-1,	-1, 	-1,	100,	100		
+37, 	33, 	1,	-1,	-1, 	-1,	100,	100		
+37, 	34, 	1,	-1,	-1, 	-1,	100,	100		
+37, 	35, 	1,	-1,	-1, 	-1,	100,	100		
+36, 	44, 	1,	-1,	-1, 	-1,	100,	100		
+36, 	45, 	1,	-1,	-1, 	-1,	100,	100		
+36, 	46, 	1,	-1,	-1, 	-1,	100,	100		
+12, 	20, 	1,	-1,	-1, 	-1,	100,	100		
+12, 	21, 	1,	-1,	-1, 	-1,	100,	100		
+12, 	22, 	1,	-1,	-1, 	-1,	100,	100		
+;face
+86, 	84, 	0,	-1,	-1, 	-1,	95,	45
+87, 	85, 	0,	-1,	-1, 	-1,	95,	45
+53, 	88, 	0,	-1,	-1, 	-1,	100,	100
+53, 	89, 	0,	-1,	-1, 	-1,	100,	100
+88,	 51, 	0,	-1,	-1, 	-1,	100,	100
+89,	 51, 	0,	-1,	-1, 	-1,	100,	100
+51, 	56, 	0,	244,	25, 	25,	0,	100	
+86, 	15, 	0,	-1,	-1, 	-1,	100,	70	
+87,	39, 	0,	-1,	-1, 	-1,	100,	70	
+86, 	 88, 	0,	-1,	-1, 	-1,	95,	95	
+87,	 89, 	0,	-1,	-1, 	-1,	95,	95	
+84,	 15, 	0,	-1,	25, 	25,	95,	95
+85,	 39, 	0,	-1,	25, 	25,	95,	95
+6,	 52, 	0,	-1,	-1, 	-1,	95,	95
+30,	 52, 	0,	-1,	-1,	-1,	95,	95
+
+
+[Paint Ballz]
+;base ball	diameter(% of baseball)	direction	     color outlinecolor fuzz  outline group  texture
+;paws
+9,		52			0, 1, .3		39	-1	0	-1	-1	-1
+10,		52			0, 1, .3		39	-1	0	-1	-1	-1
+11,		52			0, 1, .3		39	-1	0	-1	-1	-1
+13,		55			0, 1, 0			39	-1	0	-1	-1	-1
+33,		52			0, 1, .3		39	-1	0	-1	-1	-1
+34,		52			0, 1, .3		39	-1	0	-1	-1	-1
+35,		52			0, 1, .3		39	-1	0	-1	-1	-1
+37,		55			0, 1, 0			39	-1	0	-1	-1	-1
+44,		52			0, 1, .3		39	-1	0	-1	-1	-1
+45,		52			0, 1, .3		39	-1	0	-1	-1	-1
+46,		52			0, 1, .3		39	-1	0	-1	-1	-1
+36,		55			0, 1, 0			39	-1	0	-1	-1	-1
+20,		52			0, 1, .3		39	-1	0	-1	-1	-1
+21,		52			0, 1, .3		39	-1	0	-1	-1	-1
+22,		52			0, 1, .3		39	-1	0	-1	-1	-1
+12,		55			0, 1, 0			39	-1	0	-1	-1	-1
+
+
+[Outline Color Override]
+#6
+#5
+14,	6
+38,	6
+#4
+14,	2
+38,	6
+#3
+14,	6
+38,	2
+#2
+14,	2
+38,	2
+#1
+14,	2
+38,	2
+##
+
+[Ball Size Override]
+;48,	-40
+
+
+[Thin/Fat]
+50,	-10,	10
+54,	-10,	5
+48,	-5,	18
+49,	-5,	18
+57,	0,	3
+58,	0,	5
+59,	0,	5
+60,	0,	8
+61,	0,	8
+62,	0,	8
+19,	-10,	5
+43,	-10,	5
+18,	-10,	3
+42,	-10,	3
+7,	-3,	3
+31,	-3,	3
+16,	-8,	3
+40,	-8,	3
+23,	-2,	3
+47,	-2,	3
+0,	-3,	3
+24,	-3,	3
+86,	0,	28
+87,	0,	28
+
+[Head Shot];sc
+0			frame number
+51				rotation
+0				roll
+3				tilt
+-51				head rotation
+10				head tilt
+0				head cock
+35, 35			R / L eyelid height
+15, 15			R / L eyelid tilt
+0, 0			(X, Y) eye target
+
+
+
+; First argument is name of texture.
+; Second argument is whether texture is single color (1) or multi-color (0)
+; This texture list is used both here and in add ballz
+[Texture List]
+\art\textures\hair3.bmp        1
+\art\textures\hair3.bmp        1
+
+;FUZZ --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;OUTLINE --> -1 = no outline, 0 = half outline, > 0 = outline thickness
+;col       outCol    spklCl    fuzz      otlntTyp  sizeDif   group     texture  ball#	
+[Ballz Info]
+ 35,      25,       -1,        5,       -1,       3,          4,       	1	0	;L ankle
+244,      25,       -1,        4,       -1,        4,        2,       1	1	;L eyebrow1
+244,      25,       -1,        4,       -1,        4,        2,       1        2   	;L eyebrow2
+244,      25,       -1,        4,       -1,        4,        2,       1        3  	;L eyebrow3
+ 35,      25,       -1,        0,        -1,        0,        0,       1        4  	;L ear1
+ 35,      25,       -1,        0,       -1,        0,        0,       1         5  	;L ear2
+ 35,      25,       -1,        0,        0,        5,        0,       1         6  	;L ear3
+ 35,      25,       -1,        5,       -1,        2,        3,       1         7   	;L elbow
+ 245,      25,       -1,        0,        1,       -1,        -1,       -1         8    	;L eye
+244,      25,       -1,        0,        1,       -3,        2,       1        9   	;L finger1
+244,      25,       -1,       0,         1,       -3,        2,       1        10   	;L finger2
+244,      25,       -1,        0,        1,       -3,        2,       1        11  	;L finger3
+ 35,      25,       -1,        5,        0,       -11,        1,       1        12  	;L foot
+ 35,      25,       -1,        5,        0,       -14,        1,       1        13 	;L hand
+244,     6,         -1,        0,        4,       7,         -1,        1      	14 	;L iris
+ 35,      25,       -1,        5,        0,        5,        0,       1         15	;L jowl
+ 35,      25,       -1,        5,       -1,        0,        4,       1   	16	;L knee
+244,      25,       -1,        0,       -3,      2,         -1,       1         17	;L nostril
+ 35,      25,       -1,        5,        0,       -3,        3,       1         18	;L shoulder
+ 35,      25,       -1,        5,        0,        0,        4,       1         19	;L hip
+244,      25,       -1,       0,         1,        -3,       2,       1       20	;L toe1
+244,      25,       -1,        0,        1,       -5,        2,       1        21	;L toe2
+244,      25,       -1,        0,        1,       -3,        2,       1        22	;L toe3
+ 35,      25,       -1,        5,       -1,       9,        3,       1          23	;L wrist
+ 35,      25,       -1,        5,       -1,       3,        4,       1          24	;R ankle
+244,      25,       -1,        4,       -1,        4,        2,       1        25	;R eyebrow1
+244,      25,       -1,        4,       -1,        4,        2,       1        26	;R eyebrow2
+244,      25,       -1,        4,       -1,        4,        2,       1        27	;R eyebrow3
+ 35,      25,       -1,        0,        -1,        0,        0,       1        28	;R ear1
+ 35,      25,       -1,        0,       -1,        0,        0,       1		29	;R ear2
+ 35,      25,       -1,        0,        0,        6,        0,       1		30	;R ear3
+ 35,      25,       -1,        5,       -1,        2,        3,       1		31	;R elbow	
+ 245,      25,       -1,        0,        1,       -1,        -1,       -1	32	;R eye
+244,      25,       -1,        0,        1,       -3,        2,       1		33	;R finger1
+244,      25,       -1,        0,        1,       -3,        2,       1		34	;R finger2
+244,      25,       -1,        0,        1,       -3,        2,       1		35	;R finger3
+ 35,      25,       -1,        5,        0,       -8,        1,       1		36	;R foot
+ 35,      25,       -1,        5,        0,       -14,        1,       1	37	;R hand
+244,      6,       -1,        0,       4,          7,        -1,        1	38	;R iris
+ 35,      25,       -1,        1,        0,        5,        0,       1		39	;R jowl
+ 35,      25,       -1,        5,       -1,        0,        4,       1		40	;R knee
+244,      25,       -1,        0,       -3,       2,        -1,       1		41	;R nostril
+ 35,      25,       -1,        5,        0,       -3,        3,       1		42	;R shoulder
+ 35,      25,       -1,        5,        0,        0,        4,       1		43	;R hip
+244,      25,       -1,        0,        1,       -3,        2,       1	44	;R toe1
+244,      25,       -1,        0,        1,       -5,        2,       1	45	;R toe2
+244,      25,       -1,        0,        1,       -3,        2,       1	46	;R toe3
+ 35,      25,       -1,        5,       -1,       9,        3,       1		47	;R wrist
+ 35,      25,       -1,        4,        -1,       -11,        3,       1	48	;belly
+ 35,      25,       -1,        4,        -1,      -11,         4,       1	49	;butt
+ 35,      25,       -1,         4,       -1,        9,        3,       1		50	;chest
+ 35,      25,       -1,        5,        -1,        0,        0,       1	51	;chin
+ 35,      25,       -1,        4,        0,        0,        0,       1		52	;head
+ 35,      25,       -1,        5,       -1,        5,        0,       1		53	;jaw
+ 35,      25,       -1,        4,       -1,        0,        3,       1		54	;neck
+ 244,    25,       -1,        0,       -1,       2,          -1,       1	55	;nose (bottom)
+ 35,      25,       -1,        5,       -1,         0,         0,         1	56	;snout
+ 35,      25,       -1,        3,       -1,        14,        4,       1	57	;tail1	
+ 35,      25,       -1,        2,       -1,        12,        4,       1	58	;tail2
+ 35,      25,       -1,        2,       -1,        10,        5,       1	59	;tail3	
+ 35,      25,       -1,        2,       -1,        4,        5,       1		60	;tail4
+ 35,      25,       -1,        1,       -1,        2,        5,       1		61	;tail5
+ 35,      25,       -1,        1,       -1,        2,        5,       1		62	;tail6
+  1,      244,       -1,        0,       -1,       -1,       -1,       1	63	;tongue1
+  1,      244,       -1,        0,       -1,       -1,       -1,       1	64	;tongue2
+  4,      244,       -1,        0,       -1,       -1,       -1,       1	65	;Z-trans
+  4,      244,       -1,        0,       -1,       -1,       -1,       1	66	;Z-orient
+
+[Flat Clothing]
+#5.D
+#4
+#3
+#2
+#1
+; scottish plaid sweater
+; kind: Shirt,Pant,Sock_FrontL,Sock_FrontR,Sock_BackL,Sock_BackR,Tail,Hat,Hat2,EarringL,EarringR,NoseThing,NoseThing2,Glasses
+; kind         toy_dll                                 lnz file
+Shirt          "\Resource\Clothes\Plaid Sweater.clo"   "\art\Sprites\Toyz\Clot_SweaterPlaid\Clot_SweaterPlaid.clz"
+##
+
+[Fur Color Areas]
+; (1-4, 5 - jowls)
+;FurColorTrait	ballWithBaseColor	colorAreas
+1				48					0, 1, 3, 4, 5
+; rampbase: only works currently with black balls
+2				34	rampbase: 1		2
+
+[Lnz Version]
+2
+
+[Adjust Clothing]
+; kind: Shirt,Pant,Sock_FrontL,Sock_FrontR,Sock_BackL,Sock_BackR,Tail,Hat,EarringL,EarringR,NoseThing,Glasses
+; kind  offset      scale (floating point, 1.0 is no change in size)
+Hat     0,0,-2      1.0
