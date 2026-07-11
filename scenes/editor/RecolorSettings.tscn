@@ -427,6 +427,7 @@ margin_left = 88.0
 margin_right = 430.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
+max_length = 3
 custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 55"
 
@@ -451,6 +452,7 @@ margin_top = 31.0
 margin_right = 430.0
 margin_bottom = 58.0
 size_flags_horizontal = 3
+max_length = 3
 custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 245"
 
