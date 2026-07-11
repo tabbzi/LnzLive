@@ -9,22 +9,22 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Reference",
+"base": "Node",
 "class": "AddBallData",
 "language": "GDScript",
 "path": "res://data_classes/addball_data.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "BallData",
 "language": "GDScript",
 "path": "res://data_classes/ball_data.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "BdtParser",
 "language": "GDScript",
 "path": "res://data_classes/bdt_parser.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "BhdParser",
 "language": "GDScript",
 "path": "res://data_classes/bhd_parser.gd"
@@ -49,7 +49,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/gut/test.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "LineData",
 "language": "GDScript",
 "path": "res://data_classes/line_data.gd"
@@ -64,12 +64,12 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/lnz_parser.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "PaintBallData",
 "language": "GDScript",
 "path": "res://data_classes/paintball_data.gd"
 }, {
-"base": "Reference",
+"base": "Node",
 "class": "PolyData",
 "language": "GDScript",
 "path": "res://data_classes/polygon_data.gd"
