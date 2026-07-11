@@ -88,12 +88,14 @@ func _setup_base_inputs(target_ball_no: int) -> void:
 
 			if current_species == KeyBallsData.Species.DOG:
 				dog_ball = target_ball_no
-				var cat_defs = KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT)
-				cat_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG), cat_defs)
+				cat_ball = KeyBallsData.convert_ball(current_species, target_ball_no, KeyBallsData.Species.CAT)
+				if cat_ball == -1:
+					cat_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG), KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT))
 			elif current_species == KeyBallsData.Species.CAT:
 				cat_ball = target_ball_no
-				var dog_defs = KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG)
-				dog_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT), dog_defs)
+				dog_ball = KeyBallsData.convert_ball(current_species, target_ball_no, KeyBallsData.Species.DOG)
+				if dog_ball == -1:
+					dog_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.get_ball_definitions(KeyBallsData.Species.CAT), KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG))
 
 			if dog_ball != -1:
 				dog_base_input.text = str(dog_ball)
@@ -101,11 +103,14 @@ func _setup_base_inputs(target_ball_no: int) -> void:
 				cat_base_input.text = str(cat_ball)
 
 func _find_equivalent_ball(src_ball: int, src_defs: Dictionary, dest_defs: Dictionary) -> int:
-	if src_defs.has(src_ball):
-		var name: String = src_defs[src_ball].name
-		for k in dest_defs:
-			if dest_defs[k].name == name:
-				return k
+	if not src_defs.has(src_ball):
+		return -1
+	var name: String = src_defs[src_ball].name
+	for k in dest_defs:
+		if k == src_ball:
+			continue
+		if dest_defs[k].name == name:
+			return k
 	return -1
 
 func _on_GenerateButton_pressed() -> void:
