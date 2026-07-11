@@ -3414,8 +3414,35 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	var species = KeyBallsData.species
 	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, intended_part)
 
-	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, core_ball_nos, color_index, outline_color_index)
-	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, core_ball_nos, color_index, outline_color_index)
+	var addball_bounds = get_section_bounds("[Add Ball]")
+	if not addball_bounds.empty():
+		var count = 0
+		for i in range(addball_bounds.start, addball_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): 
+				continue
+			
+			var parts = split_line(line)
+			if parts.size() > 0:
+				var base_ball_id = parts[0].to_int()
+				
+				if base_ball_id in core_ball_nos:
+					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+					if not absolute_addball_id in core_ball_nos:
+						core_ball_nos.append(absolute_addball_id)
+				
+				if base_ball_id in balls_to_exclude:
+					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+					balls_to_exclude.append(absolute_addball_id)
+			count += 1
+
+	var filtered_balls: Array = []
+	for ball in core_ball_nos:
+		if not ball in balls_to_exclude:
+			filtered_balls.append(ball)
+
+	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, filtered_balls, color_index, outline_color_index)
+	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, filtered_balls, color_index, outline_color_index)
 	
 	save_file(true)
 	commit_full_snapshot("Applied Colors")
