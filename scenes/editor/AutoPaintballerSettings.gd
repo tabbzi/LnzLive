@@ -40,6 +40,78 @@ signal affected_list_changed(ball_ids)
 signal unselect_all
 
 onready var params_container: Control = find_node("ParamsContainer")
+onready var _randomize_button: Button = find_node("RandomizeButton")
+onready var _affected_ballz: Control = find_node("AffectedBallz")
+onready var _unselect_button: Button = find_node("UnselectButton")
+onready var _apply_button: Button = find_node("ApplyButton")
+onready var _clear_button: Button = find_node("ClearButton")
+onready var _surprise_button: Button = find_node("SurpriseButton")
+onready var _distribution: OptionButton = find_node("Distribution")
+onready var _use_seed: CheckBox = find_node("UseSeed")
+onready var _seed_edit: LineEdit = find_node("Seed")
+onready var _fractal_preset: OptionButton = find_node("FractalPreset")
+onready var _fractal_axiom: LineEdit = find_node("FractalAxiom")
+onready var _fractal_rules: TextEdit = find_node("FractalRules")
+onready var _fractal_angle: SpinBox = find_node("FractalAngle")
+onready var _random_system_button: Button = find_node("RandomSystemButton")
+onready var _spiral_turns: SpinBox = find_node("SpiralTurns")
+onready var _star_points: SpinBox = find_node("StarPoints")
+onready var _star_point_size: SpinBox = find_node("StarPointSize")
+onready var _ray_length: SpinBox = find_node("RayLength")
+onready var _num_bands: SpinBox = find_node("NumBands")
+onready var _band_spacing: SpinBox = find_node("BandSpacing")
+onready var _band_offset: SpinBox = find_node("BandOffset")
+onready var _band_angle: SpinBox = find_node("BandAngle")
+onready var _band_direction: OptionButton = find_node("BandDirection")
+onready var _noise_scale: SpinBox = find_node("NoiseScale")
+onready var _noise_threshold: SpinBox = find_node("NoiseThreshold")
+onready var _noise_octaves: SpinBox = find_node("NoiseOctaves")
+onready var _grid_size: SpinBox = find_node("GridSize")
+onready var _num_clusters: SpinBox = find_node("NumClusters")
+onready var _num_rings: SpinBox = find_node("NumRings")
+onready var _voronoi_cells: SpinBox = find_node("VoronoiCells")
+onready var _voronoi_edge_size: SpinBox = find_node("VoronoiEdgeSize")
+onready var _wave_degree_l: SpinBox = find_node("WaveDegreeL")
+onready var _wave_order_m: SpinBox = find_node("WaveOrderM")
+onready var _wave_threshold: SpinBox = find_node("WaveThreshold")
+onready var _stripe_feed_rate: SpinBox = find_node("StripeFeedRate")
+onready var _stripe_kill_rate: SpinBox = find_node("StripeKillRate")
+onready var _stripe_timestep: SpinBox = find_node("StripeTimestep")
+onready var _diffusion_activator: SpinBox = find_node("DiffusionActivator")
+onready var _diffusion_inhibitor: SpinBox = find_node("DiffusionInhibitor")
+onready var _size_adaptive: CheckButton = find_node("SizeAdaptive")
+onready var _leopard_radius_min: SpinBox = find_node("LeopardRadiusMin")
+onready var _leopard_radius_max: SpinBox = find_node("LeopardRadiusMax")
+onready var _leopard_irregularity: SpinBox = find_node("LeopardIrregularity")
+onready var _leopard_completeness: SpinBox = find_node("LeopardCompleteness")
+onready var _leopard_paired_colors: CheckBox = find_node("LeopardPairedColors")
+onready var _rainbow_angle: SpinBox = find_node("RainbowAngle")
+onready var _rainbow_curvature: SpinBox = find_node("RainbowCurvature")
+onready var _rainbow_width: SpinBox = find_node("RainbowWidth")
+onready var _rainbow_length: SpinBox = find_node("RainbowLength")
+onready var _fractal_iterations: SpinBox = find_node("FractalIterations")
+onready var _halfie_axis: OptionButton = find_node("HalfieAxis")
+onready var _halfie_side: OptionButton = find_node("HalfieSide")
+onready var _size_min: SpinBox = find_node("SizeMin")
+onready var _size_max: SpinBox = find_node("SizeMax")
+onready var _outline_type_min: SpinBox = find_node("OutlineTypeMin")
+onready var _outline_type_max: SpinBox = find_node("OutlineTypeMax")
+onready var _fuzz_min: SpinBox = find_node("FuzzMin")
+onready var _fuzz_max: SpinBox = find_node("FuzzMax")
+onready var _texture_list: Control = find_node("TextureList")
+onready var _group: SpinBox = find_node("Group")
+onready var _anchored: CheckBox = find_node("Anchored")
+onready var _ordered: CheckBox = find_node("Ordered")
+onready var _description_label: RichTextLabel = find_node("DescriptionLabel")
+onready var _num_spots: SpinBox = find_node("NumSpots")
+onready var _color_list: Control = find_node("ColorList", true, false)
+var _color_list_preview: Control = null
+onready var _outline_color_list: Control = find_node("OutlineColorList", true, false)
+var _outline_color_list_preview: Control = null
+onready var _reset_defaults: Button = find_node("ResetDefaultsButton")
+onready var _export_settings: Button = find_node("ExportSettingsButton")
+onready var _import_settings: Button = find_node("ImportSettingsButton")
+onready var _pixel_mode: CheckBox = find_node("PixelMode")
 var pet_node: Node = null
 
 var _is_loading_settings: bool = false
@@ -70,22 +142,22 @@ func _ready() -> void:
 	
 	panel.restore_position(default_pos)
 	
-	find_node("RandomizeButton").connect("pressed", self, "_on_RandomizeButton_pressed")
-	find_node("AffectedBallz").connect("text_changed", self, "_on_AffectedBallz_text_changed")
-	find_node("UnselectButton").connect("pressed", self, "_on_UnselectButton_pressed")
-	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
-	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
-	find_node("SurpriseButton").connect("pressed", self, "_on_SurpriseButton_pressed")
-	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
-	find_node("UseSeed").connect("toggled", self, "_on_UseSeed_toggled")
-
-	find_node("FractalPreset").connect("item_selected", self, "_on_FractalPreset_item_selected")
-	find_node("FractalAxiom").connect("text_changed", self, "_on_FractalAxiom_text_changed")
-
-	find_node("RandomSystemButton").connect("pressed", self, "_on_RandomSystemButton_pressed")
+	_randomize_button.connect("pressed", self, "_on_RandomizeButton_pressed")
+	_affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
+	_unselect_button.connect("pressed", self, "_on_UnselectButton_pressed")
+	_apply_button.connect("pressed", self, "_on_ApplyButton_pressed")
+	_clear_button.connect("pressed", self, "_on_ClearButton_pressed")
+	_surprise_button.connect("pressed", self, "_on_SurpriseButton_pressed")
+	_distribution.connect("item_selected", self, "_on_Distribution_item_selected")
+	_use_seed.connect("toggled", self, "_on_UseSeed_toggled")
+ 
+	_fractal_preset.connect("item_selected", self, "_on_FractalPreset_item_selected")
+	_fractal_axiom.connect("text_changed", self, "_on_FractalAxiom_text_changed")
+ 
+	_random_system_button.connect("pressed", self, "_on_RandomSystemButton_pressed")
 	
 	_on_Distribution_item_selected(0)
-	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
+	_on_FractalPreset_item_selected(_fractal_preset.selected)
 
 	_setup_color_previews()
 	_connect_settings_signals()
@@ -95,6 +167,9 @@ func _ready() -> void:
 func _setup_color_previews() -> void:
 	_setup_preview_wrapper("ColorList")
 	_setup_preview_wrapper("OutlineColorList")
+	
+	_color_list_preview = find_node("ColorList_Preview", true, false)
+	_outline_color_list_preview = find_node("OutlineColorList_Preview", true, false)
 
 func _setup_preview_wrapper(le_name: String) -> void:
 	var le = find_node(le_name, true, false)
@@ -134,15 +209,11 @@ func _on_color_list_text_changed(new_text: String, le_name: String) -> void:
 	_update_previews_inner(new_text, find_node(le_name + "_Preview", true, false))
 
 func _refresh_all_previews() -> void:
-	var color_node = find_node("ColorList", true, false)
-	var color_prev: Control = find_node("ColorList_Preview", true, false)
-	if color_node and color_prev:
-		_update_previews_inner(color_node.text, color_prev)
+	if _color_list and _color_list_preview:
+		_update_previews_inner(_color_list.text, _color_list_preview)
 		
-	var out_node = find_node("OutlineColorList", true, false)
-	var out_prev: Control = find_node("OutlineColorList_Preview", true, false)
-	if out_node and out_prev:
-		_update_previews_inner(out_node.text, out_prev)
+	if _outline_color_list and _outline_color_list_preview:
+		_update_previews_inner(_outline_color_list.text, _outline_color_list_preview)
 
 func _update_previews_inner(text: String, container: Container) -> void:
 	LnzLiveUtils.update_color_list_previews(container, text, cached_palette_colors)
@@ -190,50 +261,39 @@ func get_color_from_index(index: int) -> Color:
 	return Color.white
 
 func _on_UseSeed_toggled(button_pressed: bool) -> void:
-	var seed_edit = find_node("Seed")
-	seed_edit.editable = button_pressed
+	_seed_edit.editable = button_pressed
 
 func _on_RandomSystemButton_pressed() -> void:
-	var axiom_edit = find_node("FractalAxiom")
-	var rules_edit: TextEdit = find_node("FractalRules")
-	var angle_edit: SpinBox = find_node("FractalAngle")
-	
 	var random_system: Dictionary = LnzLiveUtils.generate_random_lsystem()
-	axiom_edit.text = random_system["axiom"]
-	rules_edit.text = random_system["rules_text"]
-	angle_edit.value = [30, 45, 60, 90, 120][randi() % 5]
+	_fractal_axiom.text = random_system["axiom"]
+	_fractal_rules.text = random_system["rules_text"]
+	_fractal_angle.value = [30, 45, 60, 90, 120][randi() % 5]
 
 func _on_FractalPreset_item_selected(index: int) -> void:
-	var axiom_edit = find_node("FractalAxiom")
-	var rules_edit: TextEdit = find_node("FractalRules")
-	var angle_edit: SpinBox = find_node("FractalAngle")
-	var random_button: Button = find_node("RandomSystemButton")
-
-	axiom_edit.editable = false
-	rules_edit.readonly = true
-	random_button.hide()
+	_fractal_axiom.editable = false
+	_fractal_rules.readonly = true
+	_random_system_button.hide()
 	
 	match index:
 		FractalPreset.DRAGON_CURVE:
-			axiom_edit.text = "F"
-			rules_edit.text = "F=F+G\nG=F-G"
-			angle_edit.value = 90.0
+			_fractal_axiom.text = "F"
+			_fractal_rules.text = "F=F+G\nG=F-G"
+			_fractal_angle.value = 90.0
 		FractalPreset.SIERPINSKI:
-			axiom_edit.text = "A"
-			rules_edit.text = "A=B-A-B\nB=A+B+A"
-			angle_edit.value = 60.0
+			_fractal_axiom.text = "A"
+			_fractal_rules.text = "A=B-A-B\nB=A+B+A"
+			_fractal_angle.value = 60.0
 		FractalPreset.BARNSLEY_FERN:
-			axiom_edit.text = "X"
-			rules_edit.text = "X=F+[[X]-X]-F[-FX]+X\nF=FF"
-			angle_edit.value = 25.0
+			_fractal_axiom.text = "X"
+			_fractal_rules.text = "X=F+[[X]-X]-F[-FX]+X\nF=FF"
+			_fractal_angle.value = 25.0
 		FractalPreset.CUSTOM:
-			axiom_edit.editable = true
-			rules_edit.readonly = false
-			random_button.show()
+			_fractal_axiom.editable = true
+			_fractal_rules.readonly = false
+			_random_system_button.show()
 			pass
 
 func _on_FractalAxiom_text_changed(new_text: String) -> void:
-	var axiom_edit = find_node("FractalAxiom")
 	var sanitized_text: String = ""
 	
 	for current_char in new_text:
@@ -241,9 +301,9 @@ func _on_FractalAxiom_text_changed(new_text: String) -> void:
 			sanitized_text += current_char
 			
 	if sanitized_text != new_text:
-		var cursor_pos: int = axiom_edit.caret_position
-		axiom_edit.text = sanitized_text
-		axiom_edit.caret_position = min(cursor_pos, sanitized_text.length())
+		var cursor_pos: int = _fractal_axiom.caret_position
+		_fractal_axiom.text = sanitized_text
+		_fractal_axiom.caret_position = min(cursor_pos, sanitized_text.length())
 
 func _on_AffectedBallz_text_changed(new_text: String) -> void:
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
@@ -253,7 +313,7 @@ func _on_Distribution_item_selected(index: int) -> void:
 	for child in params_container.get_children():
 		child.hide()
 
-	var description_label: RichTextLabel = find_node("DescriptionLabel")
+	var description_label: RichTextLabel = _description_label
 	var description: String = ""
 
 	match index:
@@ -330,7 +390,7 @@ func _on_Distribution_item_selected(index: int) -> void:
 		Distribution.WAVE: # 18
 			params_container.get_node("WaveContainer").show()
 
-	var num_spots_edit = find_node("NumSpots")
+	var num_spots_edit = _num_spots
 	if num_spots_edit:
 		var current_val = num_spots_edit.value
 		var new_val = 25.0
@@ -359,17 +419,17 @@ func _on_RandomizeButton_pressed() -> void:
 	var affected_ballz: Array = LnzLiveUtils.parse_number_list(properties["affected_ballz"])
 	if affected_ballz.empty():
 		affected_ballz = [0]
-		find_node("AffectedBallz").text = "0"
+		_affected_ballz.text = "0"
 
 	var color_list: Array = LnzLiveUtils.parse_number_list(properties["color_list"])
 	if color_list.empty():
 		color_list = [105]
-		find_node("ColorList").text = "105"
+		_color_list.text = "105"
 
 	var outline_color_list: Array = LnzLiveUtils.parse_number_list(properties["outline_color_list"])
 	if outline_color_list.empty():
 		outline_color_list = [244]
-		find_node("OutlineColorList").text = "244"
+		_outline_color_list.text = "244"
 
 	var texture_list_str: String = properties["texture_list"]
 	var texture_list: Array = LnzLiveUtils.parse_number_list(texture_list_str, true) # Allow negatives
@@ -383,7 +443,7 @@ func _on_RandomizeButton_pressed() -> void:
 	var distribution_mode: int = properties["distribution"]
 
 	var base_seed: int = int(properties["seed"]) if (properties["use_seed"] and properties["seed"].is_valid_integer()) else OS.get_ticks_usec()
-	if !properties["use_seed"]: find_node("Seed").text = str(base_seed)
+	if !properties["use_seed"]: _seed_edit.text = str(base_seed)
 
 	var global_data = null
 	if distribution_mode == Distribution.STRIPES:
@@ -801,152 +861,148 @@ func _create_paintball(pos: Vector3, size: float, ball_no: int, properties: Dict
 
 func get_properties() -> Dictionary:
 	var properties: Dictionary = {}
-	properties["affected_ballz"] = find_node("AffectedBallz").text
-	properties["distribution"] = find_node("Distribution").selected
-	properties["num_spots"] = find_node("NumSpots").value
-	properties["spiral_turns"] = find_node("SpiralTurns").value
-	properties["star_points"] = find_node("StarPoints").value
-	properties["star_point_size"] = find_node("StarPointSize").value
-	properties["num_bands"] = find_node("NumBands").value
-	properties["band_spacing"] = find_node("BandSpacing").value
-	properties["band_offset"] = find_node("BandOffset").value
-	properties["band_angle"] = find_node("BandAngle").value
-	properties["band_direction"] = find_node("BandDirection").selected 
-	properties["noise_scale"] = find_node("NoiseScale").value
-	properties["noise_threshold"] = find_node("NoiseThreshold").value
-	properties["noise_octaves"] = find_node("NoiseOctaves").value
-	properties["voronoi_cells"] = find_node("VoronoiCells").value
-	properties["voronoi_edge_size"] = find_node("VoronoiEdgeSize").value
-	properties["wave_degree_l"] = find_node("WaveDegreeL").value
-	properties["wave_order_m"] = find_node("WaveOrderM").value
-	properties["wave_threshold"] = find_node("WaveThreshold").value
+	properties["affected_ballz"] = _affected_ballz.text
+	properties["distribution"] = _distribution.selected
+	properties["num_spots"] = _num_spots.value
+	properties["spiral_turns"] = _spiral_turns.value
+	properties["star_points"] = _star_points.value
+	properties["star_point_size"] = _star_point_size.value
+	properties["num_bands"] = _num_bands.value
+	properties["band_spacing"] = _band_spacing.value
+	properties["band_offset"] = _band_offset.value
+	properties["band_angle"] = _band_angle.value
+	properties["band_direction"] = _band_direction.selected 
+	properties["noise_scale"] = _noise_scale.value
+	properties["noise_threshold"] = _noise_threshold.value
+	properties["noise_octaves"] = _noise_octaves.value
+	properties["voronoi_cells"] = _voronoi_cells.value
+	properties["voronoi_edge_size"] = _voronoi_edge_size.value
+	properties["wave_degree_l"] = _wave_degree_l.value
+	properties["wave_order_m"] = _wave_order_m.value
+	properties["wave_threshold"] = _wave_threshold.value
 	
-	properties["grid_size"] = find_node("GridSize").value
-	properties["num_clusters"] = find_node("NumClusters").value
-	properties["ray_length"] = find_node("RayLength").value
-	properties["stripe_feed_rate"] = find_node("StripeFeedRate").value
-	properties["stripe_kill_rate"] = find_node("StripeKillRate").value
-	properties["diffusion_b"] = find_node("DiffusionActivator").value
-	properties["diffusion_a"] = find_node("DiffusionInhibitor").value
-	properties["stripe_timestep"] = find_node("StripeTimestep").value
-	properties["size_adaptive"] = find_node("SizeAdaptive").pressed
-	properties["leopard_radius_min"] = find_node("LeopardRadiusMin").value
-	properties["leopard_radius_max"] = find_node("LeopardRadiusMax").value
-	properties["leopard_irregularity"] = find_node("LeopardIrregularity").value
-	properties["leopard_completeness"] = find_node("LeopardCompleteness").value
-	properties["leopard_use_paired_colors"] = find_node("LeopardPairedColors").pressed
-	properties["rainbow_angle"] = find_node("RainbowAngle").value
-	properties["rainbow_curvature"] = find_node("RainbowCurvature").value
-	properties["rainbow_width"] = find_node("RainbowWidth").value
-	properties["rainbow_length"] = find_node("RainbowLength").value
-	properties["fractal_iterations"] = find_node("FractalIterations").value
-	properties["fractal_angle"] = find_node("FractalAngle").value
-	properties["fractal_preset"] = find_node("FractalPreset").selected
-	properties["fractal_axiom"] = find_node("FractalAxiom").text
-	properties["fractal_rules"] = find_node("FractalRules").text
-	properties["halfie_axis"] = find_node("HalfieAxis").selected
-	properties["halfie_side"] = find_node("HalfieSide").selected
-	properties["num_rings"] = find_node("NumRings").value
-	properties["size_min"] = find_node("SizeMin").value
-	properties["size_max"] = find_node("SizeMax").value
+	properties["grid_size"] = _grid_size.value
+	properties["num_clusters"] = _num_clusters.value
+	properties["ray_length"] = _ray_length.value
+	properties["stripe_feed_rate"] = _stripe_feed_rate.value
+	properties["stripe_kill_rate"] = _stripe_kill_rate.value
+	properties["diffusion_b"] = _diffusion_activator.value
+	properties["diffusion_a"] = _diffusion_inhibitor.value
+	properties["stripe_timestep"] = _stripe_timestep.value
+	properties["size_adaptive"] = _size_adaptive.pressed
+	properties["leopard_radius_min"] = _leopard_radius_min.value
+	properties["leopard_radius_max"] = _leopard_radius_max.value
+	properties["leopard_irregularity"] = _leopard_irregularity.value
+	properties["leopard_completeness"] = _leopard_completeness.value
+	properties["leopard_use_paired_colors"] = _leopard_paired_colors.pressed
+	properties["rainbow_angle"] = _rainbow_angle.value
+	properties["rainbow_curvature"] = _rainbow_curvature.value
+	properties["rainbow_width"] = _rainbow_width.value
+	properties["rainbow_length"] = _rainbow_length.value
+	properties["fractal_iterations"] = _fractal_iterations.value
+	properties["fractal_angle"] = _fractal_angle.value
+	properties["fractal_preset"] = _fractal_preset.selected
+	properties["fractal_axiom"] = _fractal_axiom.text
+	properties["fractal_rules"] = _fractal_rules.text
+	properties["halfie_axis"] = _halfie_axis.selected
+	properties["halfie_side"] = _halfie_side.selected
+	properties["num_rings"] = _num_rings.value
+	properties["size_min"] = _size_min.value
+	properties["size_max"] = _size_max.value
 	
-	var color_list_node: Control = find_node("ColorList", true, false)
-	properties["color_list"] = color_list_node.text if color_list_node else ""
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	properties["outline_color_list"] = outline_color_list_node.text if outline_color_list_node else ""
+	properties["color_list"] = _color_list.text if _color_list else ""
+	properties["outline_color_list"] = _outline_color_list.text if _outline_color_list else ""
 	
-	properties["outline_type_min"] = find_node("OutlineTypeMin").value
-	properties["outline_type_max"] = find_node("OutlineTypeMax").value
-	properties["fuzz_min"] = find_node("FuzzMin").value
-	properties["fuzz_max"] = find_node("FuzzMax").value
-	properties["texture_list"] = find_node("TextureList").text
-	properties["group"] = find_node("Group").value
-	properties["anchored"] = find_node("Anchored").pressed
-	properties["ordered"] = find_node("Ordered").pressed
-	properties["use_seed"] = find_node("UseSeed").pressed
-	properties["seed"] = find_node("Seed").text
-	properties["pixel_mode"] = find_node("PixelMode").pressed
+	properties["outline_type_min"] = _outline_type_min.value
+	properties["outline_type_max"] = _outline_type_max.value
+	properties["fuzz_min"] = _fuzz_min.value
+	properties["fuzz_max"] = _fuzz_max.value
+	properties["texture_list"] = _texture_list.text
+	properties["group"] = _group.value
+	properties["anchored"] = _anchored.pressed
+	properties["ordered"] = _ordered.pressed
+	properties["use_seed"] = _use_seed.pressed
+	properties["seed"] = _seed_edit.text
+	properties["pixel_mode"] = _pixel_mode.pressed
 	return properties
 
 func _apply_settings_dict(data: Dictionary) -> void:
 	_is_loading_settings = true
 	
-	if data.has("affected_ballz"): find_node("AffectedBallz").text = str(data["affected_ballz"])
-	if data.has("distribution"): find_node("Distribution").selected = data["distribution"]
-	if data.has("num_spots"): find_node("NumSpots").value = data["num_spots"]
-	if data.has("spiral_turns"): find_node("SpiralTurns").value = data["spiral_turns"]
-	if data.has("star_points"): find_node("StarPoints").value = data["star_points"]
-	if data.has("star_point_size"): find_node("StarPointSize").value = data["star_point_size"]
-	if data.has("num_bands"): find_node("NumBands").value = data["num_bands"]
-	if data.has("band_spacing"): find_node("BandSpacing").value = data["band_spacing"]
-	if data.has("band_offset"): find_node("BandOffset").value = data["band_offset"]
-	if data.has("band_angle"): find_node("BandAngle").value = data["band_angle"]
-	if data.has("band_direction"): find_node("BandDirection").selected = data["band_direction"]
+	if data.has("affected_ballz"): _affected_ballz.text = str(data["affected_ballz"])
+	if data.has("distribution"): _distribution.selected = data["distribution"]
+	if data.has("num_spots"): _num_spots.value = data["num_spots"]
+	if data.has("spiral_turns"): _spiral_turns.value = data["spiral_turns"]
+	if data.has("star_points"): _star_points.value = data["star_points"]
+	if data.has("star_point_size"): _star_point_size.value = data["star_point_size"]
+	if data.has("num_bands"): _num_bands.value = data["num_bands"]
+	if data.has("band_spacing"): _band_spacing.value = data["band_spacing"]
+	if data.has("band_offset"): _band_offset.value = data["band_offset"]
+	if data.has("band_angle"): _band_angle.value = data["band_angle"]
+	if data.has("band_direction"): _band_direction.selected = data["band_direction"]
 	
-	if data.has("noise_scale"): find_node("NoiseScale").value = data["noise_scale"]
-	if data.has("noise_threshold"): find_node("NoiseThreshold").value = data["noise_threshold"]
-	if data.has("noise_octaves"): find_node("NoiseOctaves").value = data["noise_octaves"]
+	if data.has("noise_scale"): _noise_scale.value = data["noise_scale"]
+	if data.has("noise_threshold"): _noise_threshold.value = data["noise_threshold"]
+	if data.has("noise_octaves"): _noise_octaves.value = data["noise_octaves"]
 	
-	if data.has("voronoi_cells"): find_node("VoronoiCells").value = data["voronoi_cells"]
-	if data.has("voronoi_edge_size"): find_node("VoronoiEdgeSize").value = data["voronoi_edge_size"]
+	if data.has("voronoi_cells"): _voronoi_cells.value = data["voronoi_cells"]
+	if data.has("voronoi_edge_size"): _voronoi_edge_size.value = data["voronoi_edge_size"]
 	
-	if data.has("wave_degree_l"): find_node("WaveDegreeL").value = data["wave_degree_l"]
-	if data.has("wave_order_m"): find_node("WaveOrderM").value = data["wave_order_m"]
-	if data.has("wave_threshold"): find_node("WaveThreshold").value = data["wave_threshold"]
+	if data.has("wave_degree_l"): _wave_degree_l.value = data["wave_degree_l"]
+	if data.has("wave_order_m"): _wave_order_m.value = data["wave_order_m"]
+	if data.has("wave_threshold"): _wave_threshold.value = data["wave_threshold"]
 	
-	if data.has("grid_size"): find_node("GridSize").value = data["grid_size"]
-	if data.has("num_clusters"): find_node("NumClusters").value = data["num_clusters"]
-	if data.has("ray_length"): find_node("RayLength").value = data["ray_length"]
+	if data.has("grid_size"): _grid_size.value = data["grid_size"]
+	if data.has("num_clusters"): _num_clusters.value = data["num_clusters"]
+	if data.has("ray_length"): _ray_length.value = data["ray_length"]
 	
-	if data.has("stripe_feed_rate"): find_node("StripeFeedRate").value = data["stripe_feed_rate"]
-	if data.has("stripe_kill_rate"): find_node("StripeKillRate").value = data["stripe_kill_rate"]
-	if data.has("stripe_timestep"): find_node("StripeTimestep").value = data["stripe_timestep"]
-	if data.has("diffusion_b"): find_node("DiffusionActivator").value = data["diffusion_b"]
-	if data.has("diffusion_a"): find_node("DiffusionInhibitor").value = data["diffusion_a"]
-	if data.has("size_adaptive"): find_node("SizeAdaptive").pressed = data["size_adaptive"]
+	if data.has("stripe_feed_rate"): _stripe_feed_rate.value = data["stripe_feed_rate"]
+	if data.has("stripe_kill_rate"): _stripe_kill_rate.value = data["stripe_kill_rate"]
+	if data.has("stripe_timestep"): _stripe_timestep.value = data["stripe_timestep"]
+	if data.has("diffusion_b"): _diffusion_activator.value = data["diffusion_b"]
+	if data.has("diffusion_a"): _diffusion_inhibitor.value = data["diffusion_a"]
+	if data.has("size_adaptive"): _size_adaptive.pressed = data["size_adaptive"]
 
 	
-	if data.has("leopard_radius_min"): find_node("LeopardRadiusMin").value = data["leopard_radius_min"]
-	if data.has("leopard_radius_max"): find_node("LeopardRadiusMax").value = data["leopard_radius_max"]
-	if data.has("leopard_irregularity"): find_node("LeopardIrregularity").value = data["leopard_irregularity"]
-	if data.has("leopard_completeness"): find_node("LeopardCompleteness").value = data["leopard_completeness"]
-	if data.has("leopard_use_paired_colors"): find_node("LeopardPairedColors").pressed = data["leopard_use_paired_colors"]
+	if data.has("leopard_radius_min"): _leopard_radius_min.value = data["leopard_radius_min"]
+	if data.has("leopard_radius_max"): _leopard_radius_max.value = data["leopard_radius_max"]
+	if data.has("leopard_irregularity"): _leopard_irregularity.value = data["leopard_irregularity"]
+	if data.has("leopard_completeness"): _leopard_completeness.value = data["leopard_completeness"]
+	if data.has("leopard_use_paired_colors"): _leopard_paired_colors.pressed = data["leopard_use_paired_colors"]
 	
-	if data.has("rainbow_angle"): find_node("RainbowAngle").value = data["rainbow_angle"]
-	if data.has("rainbow_curvature"): find_node("RainbowCurvature").value = data["rainbow_curvature"]
-	if data.has("rainbow_width"): find_node("RainbowWidth").value = data["rainbow_width"]
-	if data.has("rainbow_length"): find_node("RainbowLength").value = data["rainbow_length"]
+	if data.has("rainbow_angle"): _rainbow_angle.value = data["rainbow_angle"]
+	if data.has("rainbow_curvature"): _rainbow_curvature.value = data["rainbow_curvature"]
+	if data.has("rainbow_width"): _rainbow_width.value = data["rainbow_width"]
+	if data.has("rainbow_length"): _rainbow_length.value = data["rainbow_length"]
 	
-	if data.has("fractal_iterations"): find_node("FractalIterations").value = data["fractal_iterations"]
-	if data.has("fractal_angle"): find_node("FractalAngle").value = data["fractal_angle"]
-	if data.has("fractal_preset"): find_node("FractalPreset").selected = data["fractal_preset"]
-	if data.has("fractal_axiom"): find_node("FractalAxiom").text = str(data["fractal_axiom"])
-	if data.has("fractal_rules"): find_node("FractalRules").text = str(data["fractal_rules"])
+	if data.has("fractal_iterations"): _fractal_iterations.value = data["fractal_iterations"]
+	if data.has("fractal_angle"): _fractal_angle.value = data["fractal_angle"]
+	if data.has("fractal_preset"): _fractal_preset.selected = data["fractal_preset"]
+	if data.has("fractal_axiom"): _fractal_axiom.text = str(data["fractal_axiom"])
+	if data.has("fractal_rules"): _fractal_rules.text = str(data["fractal_rules"])
 	
-	if data.has("halfie_axis"): find_node("HalfieAxis").selected = data["halfie_axis"]
-	if data.has("halfie_side"): find_node("HalfieSide").selected = data["halfie_side"]
+	if data.has("halfie_axis"): _halfie_axis.selected = data["halfie_axis"]
+	if data.has("halfie_side"): _halfie_side.selected = data["halfie_side"]
 	
-	if data.has("num_rings"): find_node("NumRings").value = data["num_rings"]
-	if data.has("size_min"): find_node("SizeMin").value = data["size_min"]
-	if data.has("size_max"): find_node("SizeMax").value = data["size_max"]
+	if data.has("num_rings"): _num_rings.value = data["num_rings"]
+	if data.has("size_min"): _size_min.value = data["size_min"]
+	if data.has("size_max"): _size_max.value = data["size_max"]
 	
-	var color_list_node: Control = find_node("ColorList", true, false)
-	if data.has("color_list") and color_list_node: color_list_node.text = str(data["color_list"])
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	if data.has("outline_color_list") and outline_color_list_node: outline_color_list_node.text = str(data["outline_color_list"])
+	if data.has("color_list"): _color_list.text = str(data["color_list"])
+	if data.has("outline_color_list"): _outline_color_list.text = str(data["outline_color_list"])
 	
-	if data.has("outline_type_min"): find_node("OutlineTypeMin").value = data["outline_type_min"]
-	if data.has("outline_type_max"): find_node("OutlineTypeMax").value = data["outline_type_max"]
-	if data.has("fuzz_min"): find_node("FuzzMin").value = data["fuzz_min"]
-	if data.has("fuzz_max"): find_node("FuzzMax").value = data["fuzz_max"]
-	if data.has("texture_list"): find_node("TextureList").text = str(data["texture_list"])
+	if data.has("outline_type_min"): _outline_type_min.value = data["outline_type_min"]
+	if data.has("outline_type_max"): _outline_type_max.value = data["outline_type_max"]
+	if data.has("fuzz_min"): _fuzz_min.value = data["fuzz_min"]
+	if data.has("fuzz_max"): _fuzz_max.value = data["fuzz_max"]
+	if data.has("texture_list"): _texture_list.text = str(data["texture_list"])
 	
-	if data.has("group"): find_node("Group").value = data["group"]
-	if data.has("anchored"): find_node("Anchored").pressed = data["anchored"]
-	if data.has("ordered"): find_node("Ordered").pressed = data["ordered"]
-	if data.has("use_seed"): find_node("UseSeed").pressed = data["use_seed"]
-	if data.has("seed"): find_node("Seed").text = str(data["seed"])
-	if data.has("pixel_mode"): find_node("PixelMode").pressed = data["pixel_mode"]
+	if data.has("group"): _group.value = data["group"]
+	if data.has("anchored"): _anchored.pressed = data["anchored"]
+	if data.has("ordered"): _ordered.pressed = data["ordered"]
+	if data.has("use_seed"): _use_seed.pressed = data["use_seed"]
+	if data.has("seed"): _seed_edit.text = str(data["seed"])
+	if data.has("pixel_mode"): _pixel_mode.pressed = data["pixel_mode"]
 	
 	_is_loading_settings = false
 	_on_setting_changed()
@@ -1038,27 +1094,25 @@ func _load_preset_file(path: String) -> void:
 		file.close()
 
 func add_affected_ball(ball_no: int) -> void:
-	var line_edit: Control = find_node("AffectedBallz")
-	var current_text: String = line_edit.text
+	var current_text: String = _affected_ballz.text
 	var current_list: Array = LnzLiveUtils.parse_number_list(current_text)
 
 	if ball_no in current_list:
 		return
 
 	if current_text.strip_edges() == "":
-		line_edit.text = str(ball_no)
+		_affected_ballz.text = str(ball_no)
 	else:
-		line_edit.text += "," + str(ball_no)
+		_affected_ballz.text += "," + str(ball_no)
 		
-	_on_AffectedBallz_text_changed(line_edit.text)
+	_on_AffectedBallz_text_changed(_affected_ballz.text)
 
 func update_selected_balls_text(ball_ids: Array) -> void:
-	var affected_edit: Control = find_node("AffectedBallz")
-	if not affected_edit or affected_edit.has_focus():
+	if not _affected_ballz or _affected_ballz.has_focus():
 		return
 
 	if ball_ids.empty():
-		affected_edit.text = ""
+		_affected_ballz.text = ""
 		return
 
 	ball_ids.sort()
@@ -1084,47 +1138,44 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 		ranges.append(str(start) + "-" + str(prev))
 		
 	var temp_pool: PoolStringArray = PoolStringArray(ranges)
-	affected_edit.text = temp_pool.join(",")
+	_affected_ballz.text = temp_pool.join(",")
 	temp_pool.resize(0)
 	
-	_on_AffectedBallz_text_changed(affected_edit.text)
+	_on_AffectedBallz_text_changed(_affected_ballz.text)
 
 func _on_UnselectButton_pressed() -> void:
 	emit_signal("unselect_all")
 
 func _connect_settings_signals() -> void:
-	find_node("AffectedBallz").connect("text_changed", self, "_on_setting_changed")
+	_affected_ballz.connect("text_changed", self, "_on_setting_changed")
 	
-	var color_list_node: Control = find_node("ColorList", true, false)
-	if color_list_node: color_list_node.connect("text_changed", self, "_on_setting_changed")
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	if outline_color_list_node: outline_color_list_node.connect("text_changed", self, "_on_setting_changed")
+	if _color_list: _color_list.connect("text_changed", self, "_on_setting_changed")
+	if _outline_color_list: _outline_color_list.connect("text_changed", self, "_on_setting_changed")
 	
-	find_node("TextureList").connect("text_changed", self, "_on_setting_changed")
-	find_node("FractalAxiom").connect("text_changed", self, "_on_setting_changed")
-	find_node("Seed").connect("text_changed", self, "_on_setting_changed")
+	if _texture_list: _texture_list.connect("text_changed", self, "_on_setting_changed")
+	_fractal_axiom.connect("text_changed", self, "_on_setting_changed")
+	_seed_edit.connect("text_changed", self, "_on_setting_changed")
 
-	find_node("FractalRules").connect("text_changed", self, "_on_setting_changed")
+	_fractal_rules.connect("text_changed", self, "_on_setting_changed")
 
-	find_node("Distribution").connect("item_selected", self, "_on_setting_changed")
-	find_node("BandDirection").connect("item_selected", self, "_on_setting_changed")
-	find_node("FractalPreset").connect("item_selected", self, "_on_setting_changed")
-	find_node("HalfieAxis").connect("item_selected", self, "_on_setting_changed")
-	find_node("HalfieSide").connect("item_selected", self, "_on_setting_changed")
+	_distribution.connect("item_selected", self, "_on_setting_changed")
+	_band_direction.connect("item_selected", self, "_on_setting_changed")
+	_fractal_preset.connect("item_selected", self, "_on_setting_changed")
+	_halfie_axis.connect("item_selected", self, "_on_setting_changed")
+	_halfie_side.connect("item_selected", self, "_on_setting_changed")
 
-	find_node("Ordered").connect("toggled", self, "_on_setting_changed")
-	find_node("UseSeed").connect("toggled", self, "_on_setting_changed")
-	find_node("Anchored").connect("toggled", self, "_on_setting_changed")
-	find_node("LeopardPairedColors").connect("toggled", self, "_on_setting_changed")
+	_ordered.connect("toggled", self, "_on_setting_changed")
+	_use_seed.connect("toggled", self, "_on_setting_changed")
+	_anchored.connect("toggled", self, "_on_setting_changed")
+	_leopard_paired_colors.connect("toggled", self, "_on_setting_changed")
 
 	_connect_spinboxes_recursive(self)
 
-	var reset_btn: Button = find_node("ResetDefaultsButton")
-	if reset_btn:
-		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+	if _reset_defaults:
+		_reset_defaults.connect("pressed", self, "_on_reset_defaults_pressed")
 
-	find_node("ExportSettingsButton").connect("pressed", self, "export_autopaintballer_json")
-	find_node("ImportSettingsButton").connect("pressed", self, "_on_ImportPresetButton_pressed")
+	if _export_settings: _export_settings.connect("pressed", self, "export_autopaintballer_json")
+	if _import_settings: _import_settings.connect("pressed", self, "_on_ImportPresetButton_pressed")
 
 func _connect_spinboxes_recursive(node: Node) -> void:
 	for child in node.get_children():
@@ -1160,81 +1211,79 @@ func load_settings() -> void:
 
 	_is_loading_settings = true
 
-	find_node("AffectedBallz").text = config.get_value("AutoPaintballer", "affected_ballz", "")
-	find_node("Distribution").selected = config.get_value("AutoPaintballer", "distribution", 0)
-	find_node("NumSpots").value = config.get_value("AutoPaintballer", "num_spots", 25.0)
-	find_node("Ordered").pressed = config.get_value("AutoPaintballer", "ordered", false)
-	find_node("UseSeed").pressed = config.get_value("AutoPaintballer", "use_seed", false)
-	find_node("Seed").text = config.get_value("AutoPaintballer", "seed", "")
+	_affected_ballz.text = config.get_value("AutoPaintballer", "affected_ballz", "")
+	_distribution.selected = config.get_value("AutoPaintballer", "distribution", 0)
+	_num_spots.value = config.get_value("AutoPaintballer", "num_spots", 25.0)
+	_ordered.pressed = config.get_value("AutoPaintballer", "ordered", false)
+	_use_seed.pressed = config.get_value("AutoPaintballer", "use_seed", false)
+	_seed_edit.text = config.get_value("AutoPaintballer", "seed", "")
 
-	find_node("SizeMin").value = config.get_value("AutoPaintballer", "size_min", 10.0)
-	find_node("SizeMax").value = config.get_value("AutoPaintballer", "size_max", 20.0)
-	find_node("PixelMode").pressed = config.get_value("AutoPaintballer", "pixel_mode", false)
+	_size_min.value = config.get_value("AutoPaintballer", "size_min", 10.0)
+	_size_max.value = config.get_value("AutoPaintballer", "size_max", 20.0)
+	_pixel_mode.pressed = config.get_value("AutoPaintballer", "pixel_mode", false)
 	
-	var color_list_node: Control = find_node("ColorList", true, false)
-	if color_list_node: color_list_node.text = config.get_value("AutoPaintballer", "color_list", "")
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	if outline_color_list_node: outline_color_list_node.text = config.get_value("AutoPaintballer", "outline_color_list", "244")
+	if _color_list: _color_list.text = config.get_value("AutoPaintballer", "color_list", "")
+	if _outline_color_list: _outline_color_list.text = config.get_value("AutoPaintballer", "outline_color_list", "244")
 	
-	find_node("TextureList").text = config.get_value("AutoPaintballer", "texture_list", "0")
-	find_node("OutlineTypeMin").value = config.get_value("AutoPaintballer", "outline_type_min", -1.0)
-	find_node("OutlineTypeMax").value = config.get_value("AutoPaintballer", "outline_type_max", -1.0)
-	find_node("FuzzMin").value = config.get_value("AutoPaintballer", "fuzz_min", 0.0)
-	find_node("FuzzMax").value = config.get_value("AutoPaintballer", "fuzz_max", 0.0)
-	find_node("Group").value = config.get_value("AutoPaintballer", "group", 0.0)
-	find_node("Anchored").pressed = config.get_value("AutoPaintballer", "anchored", true)
+	_texture_list.text = config.get_value("AutoPaintballer", "texture_list", "0")
+	_outline_type_min.value = config.get_value("AutoPaintballer", "outline_type_min", -1.0)
+	_outline_type_max.value = config.get_value("AutoPaintballer", "outline_type_max", -1.0)
+	_fuzz_min.value = config.get_value("AutoPaintballer", "fuzz_min", 0.0)
+	_fuzz_max.value = config.get_value("AutoPaintballer", "fuzz_max", 0.0)
+	_group.value = config.get_value("AutoPaintballer", "group", 0.0)
+	_anchored.pressed = config.get_value("AutoPaintballer", "anchored", true)
 
-	find_node("SpiralTurns").value = config.get_value("AutoPaintballer", "spiral_turns", 5.0)
-	find_node("StarPointSize").value = config.get_value("AutoPaintballer", "star_point_size", 4.0)
-	find_node("StarPoints").value = config.get_value("AutoPaintballer", "star_points", 5.0)
-	find_node("RayLength").value = config.get_value("AutoPaintballer", "ray_length", 4.0)
-	find_node("RainbowAngle").value = config.get_value("AutoPaintballer", "rainbow_angle", 0.0)
-	find_node("RainbowCurvature").value = config.get_value("AutoPaintballer", "rainbow_curvature", 0.0)
-	find_node("RainbowWidth").value = config.get_value("AutoPaintballer", "rainbow_width", 0.5)
-	find_node("RainbowLength").value = config.get_value("AutoPaintballer", "rainbow_length", 1.0)
+	_spiral_turns.value = config.get_value("AutoPaintballer", "spiral_turns", 5.0)
+	_star_point_size.value = config.get_value("AutoPaintballer", "star_point_size", 4.0)
+	_star_points.value = config.get_value("AutoPaintballer", "star_points", 5.0)
+	_ray_length.value = config.get_value("AutoPaintballer", "ray_length", 4.0)
+	_rainbow_angle.value = config.get_value("AutoPaintballer", "rainbow_angle", 0.0)
+	_rainbow_curvature.value = config.get_value("AutoPaintballer", "rainbow_curvature", 0.0)
+	_rainbow_width.value = config.get_value("AutoPaintballer", "rainbow_width", 0.5)
+	_rainbow_length.value = config.get_value("AutoPaintballer", "rainbow_length", 1.0)
 
-	find_node("BandDirection").selected = config.get_value("AutoPaintballer", "band_direction", 0)
-	find_node("NumBands").value = config.get_value("AutoPaintballer", "num_bands", 5.0)
-	find_node("BandSpacing").value = config.get_value("AutoPaintballer", "band_spacing", 0.5)
-	find_node("BandOffset").value = config.get_value("AutoPaintballer", "band_offset", 0.0)
-	find_node("BandAngle").value = config.get_value("AutoPaintballer", "band_angle", 0.0)
-	find_node("GridSize").value = config.get_value("AutoPaintballer", "grid_size", 5.0)
-	find_node("NumClusters").value = config.get_value("AutoPaintballer", "num_clusters", 3.0)
-	find_node("NumRings").value = config.get_value("AutoPaintballer", "num_rings", 3.0)
+	_band_direction.selected = config.get_value("AutoPaintballer", "band_direction", 0)
+	_num_bands.value = config.get_value("AutoPaintballer", "num_bands", 5.0)
+	_band_spacing.value = config.get_value("AutoPaintballer", "band_spacing", 0.5)
+	_band_offset.value = config.get_value("AutoPaintballer", "band_offset", 0.0)
+	_band_angle.value = config.get_value("AutoPaintballer", "band_angle", 0.0)
+	_grid_size.value = config.get_value("AutoPaintballer", "grid_size", 5.0)
+	_num_clusters.value = config.get_value("AutoPaintballer", "num_clusters", 3.0)
+	_num_rings.value = config.get_value("AutoPaintballer", "num_rings", 3.0)
 
-	find_node("NoiseScale").value = config.get_value("AutoPaintballer", "noise_scale", 10.0)
-	find_node("NoiseThreshold").value = config.get_value("AutoPaintballer", "noise_threshold", 0.5)
-	find_node("NoiseOctaves").value = config.get_value("AutoPaintballer", "noise_octaves", 3.0)
-	find_node("VoronoiCells").value = config.get_value("AutoPaintballer", "voronoi_cells", 5.0)
-	find_node("VoronoiEdgeSize").value = config.get_value("AutoPaintballer", "voronoi_edge_size", 0.05)
-	find_node("WaveDegreeL").value = config.get_value("AutoPaintballer", "wave_degree_l", 2.0)
-	find_node("WaveOrderM").value = config.get_value("AutoPaintballer", "wave_order_m", 1.0)
-	find_node("WaveThreshold").value = config.get_value("AutoPaintballer", "wave_threshold", 0.6)
+	_noise_scale.value = config.get_value("AutoPaintballer", "noise_scale", 10.0)
+	_noise_threshold.value = config.get_value("AutoPaintballer", "noise_threshold", 0.5)
+	_noise_octaves.value = config.get_value("AutoPaintballer", "noise_octaves", 3.0)
+	_voronoi_cells.value = config.get_value("AutoPaintballer", "voronoi_cells", 5.0)
+	_voronoi_edge_size.value = config.get_value("AutoPaintballer", "voronoi_edge_size", 0.05)
+	_wave_degree_l.value = config.get_value("AutoPaintballer", "wave_degree_l", 2.0)
+	_wave_order_m.value = config.get_value("AutoPaintballer", "wave_order_m", 1.0)
+	_wave_threshold.value = config.get_value("AutoPaintballer", "wave_threshold", 0.6)
 
-	find_node("StripeFeedRate").value = config.get_value("AutoPaintballer", "stripe_feed_rate", 0.07)
-	find_node("StripeKillRate").value = config.get_value("AutoPaintballer", "stripe_kill_rate", 0.05)
-	find_node("DiffusionActivator").value = config.get_value("AutoPaintballer", "diffusion_b", 0.5)
-	find_node("DiffusionInhibitor").value = config.get_value("AutoPaintballer", "diffusion_a", 1.0)
-	find_node("StripeTimestep").value = config.get_value("AutoPaintballer", "stripe_timestep", 1.0)
+	_stripe_feed_rate.value = config.get_value("AutoPaintballer", "stripe_feed_rate", 0.07)
+	_stripe_kill_rate.value = config.get_value("AutoPaintballer", "stripe_kill_rate", 0.05)
+	_diffusion_activator.value = config.get_value("AutoPaintballer", "diffusion_b", 0.5)
+	_diffusion_inhibitor.value = config.get_value("AutoPaintballer", "diffusion_a", 1.0)
+	_stripe_timestep.value = config.get_value("AutoPaintballer", "stripe_timestep", 1.0)
 
-	find_node("LeopardRadiusMin").value = config.get_value("AutoPaintballer", "leopard_radius_min", 0.05)
-	find_node("LeopardRadiusMax").value = config.get_value("AutoPaintballer", "leopard_radius_max", 0.1)
-	find_node("LeopardIrregularity").value = config.get_value("AutoPaintballer", "leopard_irregularity", 0.3)
-	find_node("LeopardCompleteness").value = config.get_value("AutoPaintballer", "leopard_completeness", 0.75)
-	find_node("LeopardPairedColors").pressed = config.get_value("AutoPaintballer", "leopard_use_paired_colors", false)
+	_leopard_radius_min.value = config.get_value("AutoPaintballer", "leopard_radius_min", 0.05)
+	_leopard_radius_max.value = config.get_value("AutoPaintballer", "leopard_radius_max", 0.1)
+	_leopard_irregularity.value = config.get_value("AutoPaintballer", "leopard_irregularity", 0.3)
+	_leopard_completeness.value = config.get_value("AutoPaintballer", "leopard_completeness", 0.75)
+	_leopard_paired_colors.pressed = config.get_value("AutoPaintballer", "leopard_use_paired_colors", false)
 
-	find_node("FractalIterations").value = config.get_value("AutoPaintballer", "fractal_iterations", 5.0)
-	find_node("FractalAngle").value = config.get_value("AutoPaintballer", "fractal_angle", 90.0)
-	find_node("FractalPreset").selected = config.get_value("AutoPaintballer", "fractal_preset", 0)
-	find_node("FractalAxiom").text = config.get_value("AutoPaintballer", "fractal_axiom", "F")
-	find_node("FractalRules").text = config.get_value("AutoPaintballer", "fractal_rules", "")
+	_fractal_iterations.value = config.get_value("AutoPaintballer", "fractal_iterations", 5.0)
+	_fractal_angle.value = config.get_value("AutoPaintballer", "fractal_angle", 90.0)
+	_fractal_preset.selected = config.get_value("AutoPaintballer", "fractal_preset", 0)
+	_fractal_axiom.text = config.get_value("AutoPaintballer", "fractal_axiom", "F")
+	_fractal_rules.text = config.get_value("AutoPaintballer", "fractal_rules", "")
 
-	find_node("HalfieAxis").selected = config.get_value("AutoPaintballer", "halfie_axis", 0)
-	find_node("HalfieSide").selected = config.get_value("AutoPaintballer", "halfie_side", 0)
+	_halfie_axis.selected = config.get_value("AutoPaintballer", "halfie_axis", 0)
+	_halfie_side.selected = config.get_value("AutoPaintballer", "halfie_side", 0)
 
-	_on_Distribution_item_selected(find_node("Distribution").selected)
-	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
-	_on_UseSeed_toggled(find_node("UseSeed").pressed)
+	_on_Distribution_item_selected(_distribution.selected)
+	_on_FractalPreset_item_selected(_fractal_preset.selected)
+	_on_UseSeed_toggled(_use_seed.pressed)
 
 	_is_loading_settings = false
 	_refresh_all_previews()
@@ -1242,77 +1291,75 @@ func load_settings() -> void:
 func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = true
 
-	find_node("AffectedBallz").text = ""
-	find_node("Distribution").selected = 0
-	find_node("NumSpots").value = 25.0
-	find_node("Ordered").pressed = false
-	find_node("UseSeed").pressed = false
-	find_node("Seed").text = ""
+	_affected_ballz.text = ""
+	_distribution.selected = 0
+	_num_spots.value = 25.0
+	_ordered.pressed = false
+	_use_seed.pressed = false
+	_seed_edit.text = ""
 
-	find_node("SizeMin").value = 10.0
-	find_node("SizeMax").value = 20.0
+	_size_min.value = 10.0
+	_size_max.value = 20.0
 	
-	var color_list_node: Control = find_node("ColorList", true, false)
-	if color_list_node: color_list_node.text = ""
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	if outline_color_list_node: outline_color_list_node.text = "244"
+	if _color_list: _color_list.text = ""
+	if _outline_color_list: _outline_color_list.text = "244"
 	
-	find_node("TextureList").text = "0"
-	find_node("OutlineTypeMin").value = -1.0
-	find_node("OutlineTypeMax").value = -1.0
-	find_node("FuzzMin").value = 0.0
-	find_node("FuzzMax").value = 0.0
-	find_node("Group").value = 0.0
-	find_node("Anchored").pressed = true
+	_texture_list.text = "0"
+	_outline_type_min.value = -1.0
+	_outline_type_max.value = -1.0
+	_fuzz_min.value = 0.0
+	_fuzz_max.value = 0.0
+	_group.value = 0.0
+	_anchored.pressed = true
 
-	find_node("WaveDegreeL").value = 2.0
-	find_node("WaveOrderM").value = 1.0
-	find_node("WaveThreshold").value = 0.6
-	find_node("VoronoiCells").value = 5.0
-	find_node("VoronoiEdgeSize").value = 0.05
+	_wave_degree_l.value = 2.0
+	_wave_order_m.value = 1.0
+	_wave_threshold.value = 0.6
+	_voronoi_cells.value = 5.0
+	_voronoi_edge_size.value = 0.05
 
-	find_node("NoiseScale").value = 10.0
-	find_node("NoiseThreshold").value = 0.5
-	find_node("NoiseOctaves").value = 3.0
-	find_node("FractalPreset").selected = 0
-	find_node("FractalAxiom").text = ""
-	find_node("FractalRules").text = ""
-	find_node("FractalIterations").value = 5.0
-	find_node("FractalAngle").value = 90.0
+	_noise_scale.value = 10.0
+	_noise_threshold.value = 0.5
+	_noise_octaves.value = 3.0
+	_fractal_preset.selected = 0
+	_fractal_axiom.text = ""
+	_fractal_rules.text = ""
+	_fractal_iterations.value = 5.0
+	_fractal_angle.value = 90.0
 
-	find_node("SpiralTurns").value = 5.0
-	find_node("StarPointSize").value = 4.0
-	find_node("StarPoints").value = 5.0
-	find_node("RayLength").value = 4.0
+	_spiral_turns.value = 5.0
+	_star_point_size.value = 4.0
+	_star_points.value = 5.0
+	_ray_length.value = 4.0
 
-	find_node("RainbowAngle").value = 0.0
-	find_node("RainbowCurvature").value = 0.0
-	find_node("RainbowWidth").value = 0.5
-	find_node("RainbowLength").value = 1.0
-	find_node("BandDirection").selected = 0
-	find_node("NumBands").value = 5.0
-	find_node("BandSpacing").value = 0.5
-	find_node("BandOffset").value = 0.0
-	find_node("BandAngle").value = 0.0
+	_rainbow_angle.value = 0.0
+	_rainbow_curvature.value = 0.0
+	_rainbow_width.value = 0.5
+	_rainbow_length.value = 1.0
+	_band_direction.selected = 0
+	_num_bands.value = 5.0
+	_band_spacing.value = 0.5
+	_band_offset.value = 0.0
+	_band_angle.value = 0.0
 
-	find_node("GridSize").value = 5.0
-	find_node("NumClusters").value = 3.0
-	find_node("NumRings").value = 3.0
+	_grid_size.value = 5.0
+	_num_clusters.value = 3.0
+	_num_rings.value = 3.0
 
-	find_node("StripeFeedRate").value = 0.07
-	find_node("StripeKillRate").value = 0.05
-	find_node("DiffusionActivator").value = 0.5
-	find_node("DiffusionInhibitor").value = 1.0
-	find_node("StripeTimestep").value = 1.0
+	_stripe_feed_rate.value = 0.07
+	_stripe_kill_rate.value = 0.05
+	_diffusion_activator.value = 0.5
+	_diffusion_inhibitor.value = 1.0
+	_stripe_timestep.value = 1.0
 
-	find_node("LeopardRadiusMin").value = 0.05
-	find_node("LeopardRadiusMax").value = 0.1
-	find_node("LeopardIrregularity").value = 0.3
-	find_node("LeopardCompleteness").value = 0.75
-	find_node("LeopardPairedColors").pressed = false
+	_leopard_radius_min.value = 0.05
+	_leopard_radius_max.value = 0.1
+	_leopard_irregularity.value = 0.3
+	_leopard_completeness.value = 0.75
+	_leopard_paired_colors.pressed = false
 
-	find_node("HalfieAxis").selected = 0
-	find_node("HalfieSide").selected = 0
+	_halfie_axis.selected = 0
+	_halfie_side.selected = 0
 
 	_on_Distribution_item_selected(0)
 	_on_FractalPreset_item_selected(0)
@@ -1327,44 +1374,42 @@ func _on_SurpriseButton_pressed() -> void:
 
 	var total_modes: int = Distribution.size()
 	var random_mode: int = randi() % total_modes
-	find_node("Distribution").selected = random_mode
+	_distribution.selected = random_mode
 	_on_Distribution_item_selected(random_mode)
 
 	if random_mode == Distribution.RAINBOW or random_mode == Distribution.FRACTAL:
-		find_node("NumSpots").value = (randi() % 2) + 1
+		_num_spots.value = (randi() % 2) + 1
 	elif random_mode == Distribution.STAR:
-		find_node("NumSpots").value = (randi() % 40) + 1
+		_num_spots.value = (randi() % 40) + 1
 	elif random_mode == Distribution.LEOPARD:
-		find_node("NumSpots").value = (randi() % 50) + 1
+		_num_spots.value = (randi() % 50) + 1
 	else:
-		find_node("NumSpots").value = int(rand_range(20, 150))
+		_num_spots.value = int(rand_range(20, 150))
 	
 	var size_base: float = rand_range(2, 12)
-	find_node("SizeMin").value = size_base
-	find_node("SizeMax").value = min(50, size_base + rand_range(5, 25))
+	_size_min.value = size_base
+	_size_max.value = min(50, size_base + rand_range(5, 25))
 	
-	find_node("PixelMode").pressed = randf() > 0.5
+	_pixel_mode.pressed = randf() > 0.5
 
 	if randf() > 0.6: 
 		var fuzz_base: int = randi() % 4
-		find_node("FuzzMin").value = fuzz_base
-		find_node("FuzzMax").value = int(min(5, fuzz_base + randi() % 3))
+		_fuzz_min.value = fuzz_base
+		_fuzz_max.value = int(min(5, fuzz_base + randi() % 3))
 	else:
-		find_node("FuzzMin").value = 0
-		find_node("FuzzMax").value = 0
+		_fuzz_min.value = 0
+		_fuzz_max.value = 0
 
-	var color_list_node: Control = find_node("ColorList", true, false)
-	if color_list_node: color_list_node.text = _generate_surprise_color_string()
-	var outline_color_list_node: Control = find_node("OutlineColorList", true, false)
-	if outline_color_list_node: outline_color_list_node.text = _get_random_static_accent()
+	if _color_list: _color_list.text = _generate_surprise_color_string()
+	if _outline_color_list: _outline_color_list.text = _get_random_static_accent()
 	
-	find_node("TextureList").text = _generate_surprise_texture_string()
+	_texture_list.text = _generate_surprise_texture_string()
 	
 	var out_type: int = -1
 	if randf() < 0.3:
 		out_type = randi() % 4 - 2 
-	find_node("OutlineTypeMin").value = out_type
-	find_node("OutlineTypeMax").value = out_type
+	_outline_type_min.value = out_type
+	_outline_type_max.value = out_type
 
 	_randomize_mode_params(random_mode)
 
@@ -1377,60 +1422,60 @@ func _randomize_mode_params(mode: int) -> void:
 	match mode:
 		Distribution.FRACTAL:
 			if randf() > 0.4:
-				find_node("FractalPreset").selected = FractalPreset.CUSTOM
+				_fractal_preset.selected = FractalPreset.CUSTOM
 				_on_FractalPreset_item_selected(FractalPreset.CUSTOM)
 				_on_RandomSystemButton_pressed()
 			else:
 				var preset: int = (randi() % 3) + 1
-				find_node("FractalPreset").selected = preset
+				_fractal_preset.selected = preset
 				_on_FractalPreset_item_selected(preset)
 			
-			find_node("FractalIterations").value = (randi() % 3) + 2
+			_fractal_iterations.value = (randi() % 3) + 2
 			
 		Distribution.SPIRAL:
-			find_node("SpiralTurns").value = rand_range(1.0, 15.0) 
+			_spiral_turns.value = rand_range(1.0, 15.0) 
 		Distribution.STAR:
-			find_node("StarPoints").value = randi() % 7 + 3
-			find_node("StarPointSize").value = rand_range(2.0, 8.0)
-			find_node("RayLength").value = randi() % 6 + 2
+			_star_points.value = randi() % 7 + 3
+			_star_point_size.value = rand_range(2.0, 8.0)
+			_ray_length.value = randi() % 6 + 2
 		Distribution.BANDS:
-			find_node("BandDirection").selected = randi() % 2
-			find_node("NumBands").value = randi() % 8 + 2
-			find_node("BandSpacing").value = rand_range(0.1, 0.8)
-			find_node("BandOffset").value = rand_range(-0.5, 0.5)
-			find_node("BandAngle").value = [0, 45, 90, 135][randi() % 4]
+			_band_direction.selected = randi() % 2
+			_num_bands.value = randi() % 8 + 2
+			_band_spacing.value = rand_range(0.1, 0.8)
+			_band_offset.value = rand_range(-0.5, 0.5)
+			_band_angle.value = [0, 45, 90, 135][randi() % 4]
 		Distribution.NOISE_FIELD:
-			find_node("NoiseScale").value = rand_range(2.0, 20.0)
-			find_node("NoiseThreshold").value = rand_range(0.3, 0.7)
-			find_node("NoiseOctaves").value = randi() % 4 + 1
+			_noise_scale.value = rand_range(2.0, 20.0)
+			_noise_threshold.value = rand_range(0.3, 0.7)
+			_noise_octaves.value = randi() % 4 + 1
 		Distribution.GRID, Distribution.CHECKERBOARD:
-			find_node("GridSize").value = randi() % 10 + 3
+			_grid_size.value = randi() % 10 + 3
 		Distribution.CLUSTERED:
-			find_node("NumClusters").value = randi() % 5 + 1
+			_num_clusters.value = randi() % 5 + 1
 		Distribution.BULLSEYE:
-			find_node("NumRings").value = randi() % 5 + 2
+			_num_rings.value = randi() % 5 + 2
 		Distribution.LEOPARD:
-			find_node("LeopardRadiusMin").value = rand_range(0.02, 0.08)
-			find_node("LeopardRadiusMax").value = rand_range(0.09, 0.2) 
-			find_node("LeopardIrregularity").value = rand_range(0.1, 0.5)
-			find_node("LeopardCompleteness").value = rand_range(0.4, 1.0) 
-			find_node("LeopardPairedColors").pressed = randf() > 0.5
+			_leopard_radius_min.value = rand_range(0.02, 0.08)
+			_leopard_radius_max.value = rand_range(0.09, 0.2) 
+			_leopard_irregularity.value = rand_range(0.1, 0.5)
+			_leopard_completeness.value = rand_range(0.4, 1.0) 
+			_leopard_paired_colors.pressed = randf() > 0.5
 		Distribution.RAINBOW:
-			find_node("RainbowAngle").value = rand_range(-180, 180)
-			find_node("RainbowCurvature").value = rand_range(0.0, 1.0)
-			find_node("RainbowWidth").value = rand_range(0.5, 5.0)
-			find_node("RainbowLength").value = rand_range(0.5, 2.5)
+			_rainbow_angle.value = rand_range(-180, 180)
+			_rainbow_curvature.value = rand_range(0.0, 1.0)
+			_rainbow_width.value = rand_range(0.5, 5.0)
+			_rainbow_length.value = rand_range(0.5, 2.5)
 		Distribution.STRIPES:
-			find_node("StripeFeedRate").value = rand_range(0.01, 0.09) 
-			find_node("StripeKillRate").value = rand_range(0.03, 0.07) 
-			find_node("StripeTimestep").value = 1.0
+			_stripe_feed_rate.value = rand_range(0.01, 0.09) 
+			_stripe_kill_rate.value = rand_range(0.03, 0.07) 
+			_stripe_timestep.value = 1.0
 		Distribution.VORONOI:
-			find_node("VoronoiCells").value = randi() % 12 + 3 
-			find_node("VoronoiEdgeSize").value = rand_range(0.01, 0.1) 
+			_voronoi_cells.value = randi() % 12 + 3 
+			_voronoi_edge_size.value = rand_range(0.01, 0.1) 
 		Distribution.WAVE:
-			find_node("WaveDegreeL").value = randi() % 4 
-			find_node("WaveOrderM").value = randi() % 4 
-			find_node("WaveThreshold").value = rand_range(0.4, 0.8)
+			_wave_degree_l.value = randi() % 4 
+			_wave_order_m.value = randi() % 4 
+			_wave_threshold.value = rand_range(0.4, 0.8)
 
 func _generate_surprise_color_string() -> String:
 	if cached_palette_colors.empty() and is_instance_valid(pet_node) and "current_palette_texture" in pet_node:
