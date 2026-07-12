@@ -37,6 +37,22 @@ Updated: 2026-07-07
 
 #### `AutoPaintballerSettings.gd` & `PaintballSettings.gd`
 
+## Open Issues
+
+Updated: 2026-07-11
+
+#### #53 Parse and render `[Z Shade Slope]` arguments
+- **Status:** parsing drafted, rendering missing
+
+#### #89 Add `Apply as Overrides` option to Recolor Menu
+- **Status:** not started
+
+#### #165 Allow addballz (+ linez) creation from Move Mode
+- **Status:** not started
+
+#### #36 Add function to apply overrides to base data
+- **Status:** parser drafted
+
 ## Bugs
 
 Recording observations about bugs here... making issues when the problem and solution are more clear...
