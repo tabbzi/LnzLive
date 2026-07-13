@@ -39,79 +39,79 @@ signal clear_auto_paintballz
 signal affected_list_changed(ball_ids)
 signal unselect_all
 
-onready var params_container: Control = find_node("ParamsContainer")
-onready var _randomize_button: Button = find_node("RandomizeButton")
-onready var _affected_ballz: Control = find_node("AffectedBallz")
-onready var _unselect_button: Button = find_node("UnselectButton")
-onready var _apply_button: Button = find_node("ApplyButton")
-onready var _clear_button: Button = find_node("ClearButton")
-onready var _surprise_button: Button = find_node("SurpriseButton")
-onready var _distribution: OptionButton = find_node("Distribution")
-onready var _use_seed: CheckBox = find_node("UseSeed")
-onready var _seed_edit: LineEdit = find_node("Seed")
-onready var _fractal_preset: OptionButton = find_node("FractalPreset")
-onready var _fractal_axiom: LineEdit = find_node("FractalAxiom")
-onready var _fractal_rules: TextEdit = find_node("FractalRules")
-onready var _fractal_angle: SpinBox = find_node("FractalAngle")
-onready var _random_system_button: Button = find_node("RandomSystemButton")
-onready var _spiral_turns: SpinBox = find_node("SpiralTurns")
-onready var _star_points: SpinBox = find_node("StarPoints")
-onready var _star_point_size: SpinBox = find_node("StarPointSize")
-onready var _ray_length: SpinBox = find_node("RayLength")
-onready var _num_bands: SpinBox = find_node("NumBands")
-onready var _band_spacing: SpinBox = find_node("BandSpacing")
-onready var _band_offset: SpinBox = find_node("BandOffset")
-onready var _band_angle: SpinBox = find_node("BandAngle")
-onready var _band_direction: OptionButton = find_node("BandDirection")
-onready var _noise_scale: SpinBox = find_node("NoiseScale")
-onready var _noise_threshold: SpinBox = find_node("NoiseThreshold")
-onready var _noise_octaves: SpinBox = find_node("NoiseOctaves")
-onready var _grid_size: SpinBox = find_node("GridSize")
-onready var _num_clusters: SpinBox = find_node("NumClusters")
-onready var _num_rings: SpinBox = find_node("NumRings")
-onready var _voronoi_cells: SpinBox = find_node("VoronoiCells")
-onready var _voronoi_edge_size: SpinBox = find_node("VoronoiEdgeSize")
-onready var _wave_degree_l: SpinBox = find_node("WaveDegreeL")
-onready var _wave_order_m: SpinBox = find_node("WaveOrderM")
-onready var _wave_threshold: SpinBox = find_node("WaveThreshold")
-onready var _stripe_feed_rate: SpinBox = find_node("StripeFeedRate")
-onready var _stripe_kill_rate: SpinBox = find_node("StripeKillRate")
-onready var _stripe_timestep: SpinBox = find_node("StripeTimestep")
-onready var _diffusion_activator: SpinBox = find_node("DiffusionActivator")
-onready var _diffusion_inhibitor: SpinBox = find_node("DiffusionInhibitor")
-onready var _size_adaptive: CheckButton = find_node("SizeAdaptive")
-onready var _leopard_radius_min: SpinBox = find_node("LeopardRadiusMin")
-onready var _leopard_radius_max: SpinBox = find_node("LeopardRadiusMax")
-onready var _leopard_irregularity: SpinBox = find_node("LeopardIrregularity")
-onready var _leopard_completeness: SpinBox = find_node("LeopardCompleteness")
-onready var _leopard_paired_colors: CheckBox = find_node("LeopardPairedColors")
-onready var _rainbow_angle: SpinBox = find_node("RainbowAngle")
-onready var _rainbow_curvature: SpinBox = find_node("RainbowCurvature")
-onready var _rainbow_width: SpinBox = find_node("RainbowWidth")
-onready var _rainbow_length: SpinBox = find_node("RainbowLength")
-onready var _fractal_iterations: SpinBox = find_node("FractalIterations")
-onready var _halfie_axis: OptionButton = find_node("HalfieAxis")
-onready var _halfie_side: OptionButton = find_node("HalfieSide")
-onready var _size_min: SpinBox = find_node("SizeMin")
-onready var _size_max: SpinBox = find_node("SizeMax")
-onready var _outline_type_min: SpinBox = find_node("OutlineTypeMin")
-onready var _outline_type_max: SpinBox = find_node("OutlineTypeMax")
-onready var _fuzz_min: SpinBox = find_node("FuzzMin")
-onready var _fuzz_max: SpinBox = find_node("FuzzMax")
-onready var _texture_list: Control = find_node("TextureList")
-onready var _group: SpinBox = find_node("Group")
-onready var _anchored: CheckBox = find_node("Anchored")
-onready var _ordered: CheckBox = find_node("Ordered")
-onready var _description_label: RichTextLabel = find_node("DescriptionLabel")
-onready var _num_spots: SpinBox = find_node("NumSpots")
-onready var _color_list: Control = find_node("ColorList", true, false)
+onready var params_container: Control = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer
+onready var _randomize_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/RandomizeButton
+onready var _affected_ballz: Control = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/AffectedBallz
+onready var _unselect_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/UnselectButton
+onready var _apply_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ApplyButton
+onready var _clear_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/ClearButton
+onready var _surprise_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/SurpriseButton
+onready var _distribution: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3/Distribution
+onready var _use_seed: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions/UseSeed
+onready var _seed_edit: LineEdit = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions/Seed
+onready var _fractal_preset: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer/FractalPreset
+onready var _fractal_axiom: LineEdit = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer/FractalAxiom
+onready var _fractal_rules: TextEdit = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer/FractalRules
+onready var _fractal_angle: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer/FractalAngle
+onready var _random_system_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer/RandomSystemButton
+onready var _spiral_turns: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/SpiralTurnsContainer/SpiralTurns
+onready var _star_points: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer/StarPoints
+onready var _star_point_size: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer/StarPointSize
+onready var _ray_length: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RayLengthContainer/RayLength
+onready var _num_bands: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/BandsHBox/NumBands
+onready var _band_spacing: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/SpacingHBox/BandSpacing
+onready var _band_offset: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/OffsetHBox/BandOffset
+onready var _band_angle: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/AngleHBox/BandAngle
+onready var _band_direction: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/DirectionHBox/BandDirection
+onready var _noise_scale: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ScaleHBox/NoiseScale
+onready var _noise_threshold: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ThresholdHBox/NoiseThreshold
+onready var _noise_octaves: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/OctavesHBox/NoiseOctaves
+onready var _grid_size: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/GridSizeContainer/GridSize
+onready var _num_clusters: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NumClustersContainer/NumClusters
+onready var _num_rings: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BullseyeContainer/NumRings
+onready var _voronoi_cells: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/CellsHBox/VoronoiCells
+onready var _voronoi_edge_size: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/EdgeSizeHBox/VoronoiEdgeSize
+onready var _wave_degree_l: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/DegreeHBox/WaveDegreeL
+onready var _wave_order_m: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/OrderHBox/WaveOrderM
+onready var _wave_threshold: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/ThresholdHBox/WaveThreshold
+onready var _stripe_feed_rate: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/FeedRateHBox/StripeFeedRate
+onready var _stripe_kill_rate: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/KillRateHBox/StripeKillRate
+onready var _stripe_timestep: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/TimestepHBox/StripeTimestep
+onready var _diffusion_activator: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox/DiffusionActivator
+onready var _diffusion_inhibitor: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox/DiffusionInhibitor
+onready var _size_adaptive: CheckButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/SizeAdaptiveHBox/SizeAdaptive
+onready var _leopard_radius_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMinContainer/LeopardRadiusMin
+onready var _leopard_radius_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMaxContainer/LeopardRadiusMax
+onready var _leopard_irregularity: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/IrregularityContainer/LeopardIrregularity
+onready var _leopard_completeness: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/CompletenessContainer/LeopardCompleteness
+onready var _leopard_paired_colors: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/PairedColorsContainer/LeopardPairedColors
+onready var _rainbow_angle: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer/RainbowAngle
+onready var _rainbow_curvature: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer/RainbowCurvature
+onready var _rainbow_width: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer/RainbowWidth
+onready var _rainbow_length: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer/RainbowLength
+onready var _fractal_iterations: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer/FractalIterations
+onready var _halfie_axis: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer/HalfieAxis
+onready var _halfie_side: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer2/HalfieSide
+onready var _size_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4/SizeMin
+onready var _size_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4/SizeMax
+onready var _outline_type_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7/OutlineTypeMin
+onready var _outline_type_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7/OutlineTypeMax
+onready var _fuzz_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8/FuzzMin
+onready var _fuzz_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8/FuzzMax
+onready var _texture_list: Control = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9/TextureList
+onready var _group: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10/Group
+onready var _anchored: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11/Anchored
+onready var _ordered: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions/Ordered
+onready var _description_label: RichTextLabel = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/DescriptionLabel
+onready var _num_spots: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12/NumSpots
+onready var _color_list: Control = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5/ColorList
 var _color_list_preview: Control = null
-onready var _outline_color_list: Control = find_node("OutlineColorList", true, false)
+onready var _outline_color_list: Control = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6/OutlineColorList
 var _outline_color_list_preview: Control = null
-onready var _reset_defaults: Button = find_node("ResetDefaultsButton")
-onready var _export_settings: Button = find_node("ExportSettingsButton")
-onready var _import_settings: Button = find_node("ImportSettingsButton")
-onready var _pixel_mode: CheckBox = find_node("PixelMode")
+onready var _reset_defaults: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ResetDefaultsButton
+onready var _export_settings: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11/ExportSettingsButton
+onready var _import_settings: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11/ImportSettingsButton
+onready var _pixel_mode: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerPixel/PixelMode
 var pet_node: Node = null
 
 var _is_loading_settings: bool = false
@@ -704,18 +704,26 @@ func _generate_rainbow_pattern(p: Dictionary, ball_no: int, num_rainbows: int, c
 func _generate_voronoi_pattern(properties: Dictionary, ball_no: int, spots_to_make: int, color_list: Array, outline_color_list: Array, texture_list: Array) -> Array:
 	var paintballz: Array = []
 	var centers: Array = []
-	for i in range(int(properties["voronoi_cells"])):
+	var cell_count: int = max(int(properties["voronoi_cells"]), 2)
+	for i in range(cell_count):
 		centers.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
 
 	var attempts: int = 0
 	while paintballz.size() < spots_to_make and attempts < spots_to_make * 10:
 		attempts += 1
 		var pos: Vector3 = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		var dists: Array = []
-		for c in centers: dists.append(pos.distance_squared_to(c))
-		dists.sort()
 		
-		var edge_val: float = (dists[1] - dists[0]) / (dists[0] + dists[1] + 0.001)
+		var d0: float = INF
+		var d1: float = INF
+		for c in centers:
+			var d: float = pos.distance_squared_to(c)
+			if d < d0:
+				d1 = d0
+				d0 = d
+			elif d < d1:
+				d1 = d
+		
+		var edge_val: float = (d1 - d0) / (d0 + d1 + 0.001)
 		if edge_val < properties["voronoi_edge_size"]:
 			var size: float = rand_range(properties["size_min"], properties["size_max"])
 			paintballz.append(_create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list))
