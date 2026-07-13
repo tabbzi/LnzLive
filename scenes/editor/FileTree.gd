@@ -52,7 +52,7 @@ onready var rename_dialog: AcceptDialog = get_tree().root.get_node("Root/SceneRo
 onready var upload_popup: AcceptDialog = get_tree().root.get_node("Root/SceneRoot/WebFileUploadPopup") as AcceptDialog
 onready var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
-onready var import_lnz_button: Button = get_node("../FileNavHBox2/ImportButtonLNZ")
+onready var import_lnz_button: Button = get_node("../FileNavHBox1/ImportButtonLNZ")
 onready var import_tex_button: Button = get_node("../FileNavHBox1/ImportButtonTexBMP")
 onready var import_pal_button: Button = get_node("../FileNavHBox1/ImportButtonPalPNG")
 onready var open_user_folder_button: Button = get_node("../FileNavHBox2/OpenUserFolder")
