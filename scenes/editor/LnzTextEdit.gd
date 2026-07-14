@@ -54,6 +54,7 @@ var filepath: String
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
 var _last_compiled_pattern: String = ""
+var _last_replace_pattern: String = ""
 
 var set_column_popup: ConfirmationDialog
 var col_input
@@ -962,16 +963,18 @@ func _on_ReplaceButton_pressed():
 		# Anchor the pattern to ensure the whole selection matches
 		var anchored_pattern = "^" + pattern + "$"
 
-		var regex = RegEx.new()
-		
-		var error = regex.compile(anchored_pattern) 
+		var regex = _search_regex
+		if _last_replace_pattern != anchored_pattern:
+			var err = regex.compile(anchored_pattern)
+			if err != OK:
+				return
+			_last_replace_pattern = anchored_pattern 
 
-		if error == OK:
-			var this_match = regex.search(selected_text, 0) 
-			if this_match != null:
-				self.readonly = false
-				insert_text_at_cursor(replace_text)
-				self.readonly = true
+		var this_match = regex.search(selected_text, 0) 
+		if this_match != null:
+			self.readonly = false
+			insert_text_at_cursor(replace_text)
+			self.readonly = true
 
 	# After attempting a replace, find the next occurrence.
 	_find_text(true)
@@ -992,10 +995,14 @@ func _on_ReplaceAllButton_pressed():
 	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
 		pattern = "(?i)" + pattern
 
-	var regex = RegEx.new()
-	
-	# compile() only takes 1 argument
-	var error = regex.compile(pattern) 
+	var regex: RegEx = _search_regex
+	if _last_replace_pattern != pattern:
+		var err = regex.compile(pattern)
+		if err != OK:
+			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+			return
+		_last_replace_pattern = pattern
+	var error = OK 
 	if error != OK:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
