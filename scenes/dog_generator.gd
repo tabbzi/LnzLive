@@ -425,6 +425,13 @@ func generate_pet(file_path):
 	lnz.get_species()
 
 	if file_path != last_loaded_filepath:
+
+		# TBD: May be helpful to clear caches when switching models (not on every reload)
+		# clear_texture_cache()
+		# _atlas_textures.clear()
+		# _orig_lnz_pos.clear()
+		# _orig_world_pos.clear()
+
 		last_loaded_filepath = file_path
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
