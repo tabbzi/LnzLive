@@ -100,16 +100,15 @@ LnzLive renders models from P.F. Magic games using LNZ data and game resources. 
 The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
 
 1. **Text Input (`scenes/editor/LnzTextEdit.gd`)**: The user loads an LNZ file. This script manages the raw string representation, regex searching, and maintains the undo/redo history states.  
-2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in specialized, typed memory structures that map to their respective `.lnz` sections. The raw text array is scanned, delimited into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), and compiled into a structured memory map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse the model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
+2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in structures that map to respective LNZ sections. The raw text is scanned and parsed into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), then compiled into a structured map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
 3. **Model Generator (`scenes/dog_generator.gd`)**: Process takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
 4. **Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
 
 ### Logic
 
 1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into LNZ integer units.  
-2. **Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly.
-3. **Text Editor triggers Model Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator`.gd that the file content has changed, which triggers a reload of the visual model.
-4. **Model Generator reconstructs visual model:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
+2. **Viewport signals Text Editor:** PetViewContainer calls a targeted function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`) to update the LNZ text. It does *not* modify the visual 3D nodes directly except for preview visuals prior to applying changes to LNZ.
+3. **Text Editor triggers Model Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator.gd` that the file content has changed, which triggers a reload of the visual model. This is why LnzLive isn't exactly *live*...
 
 ## Resources
 
@@ -121,9 +120,9 @@ The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-
 
 ### Textures
 
-#### Texture BMP files
+#### Texture (BMP) files
 
-#### Atlas PNG files
+#### Atlas (PNG) files
 
 ### Palettes
 
@@ -131,7 +130,7 @@ The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-
 
 ### Shaders
 
-Graphics in P.F. Magic games operate as 2D billboards in a 3D space. The vertex shaders forcefully align these shapes to always face the camera, a technique known as billboarding. These are projected into 3D space, like a collection of cardboard cutouts moving in a 3D world. Because the shapes are perfectly flat, traditional 3D lighting wouldn't work. Instead, the engine uses z-shading which calculates how far each object is from the viewer compared to the absolute center point. If a ball or line is pushed into the background, the shader shifts its color to a darker palette index. If it is pulled to the foreground, it shifts to a lighter index. This creates the illusion of volume and depth in a palette limited to 256 indexed colors.
+Graphics in P.F. Magic games operate as 2D billboards in a 3D space. The vertex shaders orient these shapes to always face the camera, a technique known as billboarding. These are projected into 3D space, like a collection of cardboard cutouts moving in a 3D world. Because the shapes are perfectly flat, traditional 3D lighting wouldn't work, which is why z-shading is applied to adjust colors in textures by distance of ballz to viewer.
 
 #### Fragment Shader
 
@@ -142,31 +141,30 @@ The fragment shader operates per pixel:
     * Throws away pixels early if they belong to a shape that is facing backwards or hidden from the camera.
 
 - **Step: Fuzz / Jitter Calculation**
-    * Generates a pseudo-random value based on the fragment's screen coordinates and offsets the UV or distance coordinates to create a dithering effect.
-    * Slightly scrambles the pixels along the edge to make the shape look fuzzy or hairy instead of perfectly smooth.
+    * Generates a pseudo-random value based on the fragment's screen coordinates and offsets the UV to produce a jitter.
+    * Slightly scrambles the pixels along the edge to make the shape look fuzzy instead of smooth.
 
 - **Step: Shape & Outline Math**
-    * Computes distance fields (vector lengths from center) to determine if the current fragment falls within the main body, the outline, or outside the geometry.
-    * Uses math to draw a perfect shape inside the invisible canvas, and figures out which pixels belong to the inside body and which belong to the border.
+    * Computes distance fields (vector lengths from center) to determine if the current fragment falls within the geometry, on the outline, or outside the geometry.
+    * Draws a perfect shape inside the invisible canvas, and figures out which pixels are fill versus outline.
 
 - **Step: Texture Tiling & Rotation**
     * Maps screen-space or object-space coordinates to UVs, handling atlas rect boundaries, centering, and tiling parameters.
-    * Figures out which part of an image (like a fur pattern) should be painted onto this specific pixel.
+    * Figures out which part of a texture should be painted onto each specific pixel.
 
-- **Step: Texture & Palette Quantization**
-    * Samples the texture/palette, resolves transparency indices, and optionally snaps colors to the nearest target palette using Euclidean distance in RGB space.
-    * Looks up the exact color for this pixel from a limited set of colors (a 256-color palette), snapping it to the closest match if necessary.
+- **Step: Palette Quantization**
+    * Samples the texture and palette, resolves transparency color index, and resolves palette colors.
+    * Looks up exact color for each pixel from a limited set of colors (a 256-color palette).
 
 - **Step: Color Sampling & Z-Shifting**
-    * Applies the final albedo by conditionally shifting the base palette index based on Z-depths, or applying distinct edge/outline/highlight colors.
-    * Paints the pixel! If it's further away, it picks a darker shade of the color; if it's an edge, it paints it the edge color.
+    * Conditionally shifts the base palette index based on texture argument and Z-depth.
+    * Paints the pixel! If it's further away, it picks a darker shade of the color; if it's an outline, it paints it the outline color.
 
 - **Step: Eyelids & Eyelashes**
-    * Applies rotational matrices and trigonometric projections to mask out specific sub-regions for secondary features (eyelids/lashes).
+    * Applies rotational matrices and trigonometric projections to mask out specific pixels for eyelids and eyelashes.
     * Draws extra details like eyelids or eyelashes on top of the base shape by calculating angles.
 
 - **Step: Transparency & Alpha Clipping**
-    * Evaluates distance fields, highlight states, and transparency flags to output a final alpha value (0.0 or 1.0), discarding out-of-bounds fragments.
     * Makes sure the pixels outside the actual shape or marked as transparent become completely invisible.
 
 #### Vertex Shader
@@ -178,11 +176,11 @@ The vertex shader operates per billboard:
     * Figures out where the shape should be on the screen and makes sure it faces the camera perfectly flat, like a cardboard cutout.
 
 - **Step: Depth Calculation for Z-Shading**
-    * Computes the Z-depth of the object's center in view space and compares it to the pet's root depth for dynamic palette shifting.
+    * Computes the Z-depth of the object's center in view space and compares it to the pet's depth for dynamic palette shifting.
     * Measures how far away the shape is compared to the center of the pet so it can be darkened if it's in the background or lightened if it's in the foreground.
 
 - **Step: Screen-Space Center Calculation**
-    * Projects the 3D center of the object into Normalized Device Coordinates (NDC) and computes the exact pixel coordinate on the viewport.
+    * Projects the 3D center of the object into normalized device coordinates (NDC) and computes the exact pixel coordinate on the viewport.
     * Finds the exact pixel on the screen that marks the dead center of the shape, which helps draw perfect circles or lines later.
     
 - **Step: Vertex Extrusion / Padding**
@@ -198,38 +196,37 @@ Below is a breakdown of the scripts and shaders organized by directory.
 This directory holds the parsers, utils, and memory structures that bridge raw text and the 3D generator.
 
 * `lnz_parser.gd`: The core text parser for extracting information from LNZ sections.
-* `bhd_parser.gd`: Parses binary .bhd animation headers to extract metadata (number of ballz, default sizes) and the specific memory offset ranges mapping to .bdt frames. Uses heuristic fallback scanning for custom/non-standard files.
-* `bdt_parser.gd`: Parses binary .bdt animation frames to extract precise Vector3 position and rotation data for every ball at a given frame. Relies heavily on exact byte-level struct unpacking.
-* `key_balls_data.gd`: A Singleton/Autoload acting as the central anatomy metadata repository. Maps hardcoded integer IDs to semantic names (e.g., 48: belly), symmetry pairs, and body groups. Critical for Mirror and Group operations.
+* `bhd_parser.gd`: Parses binary `.bhd` animation headers to extract metadata (number of ballz, default sizes) and the specific memory offset ranges mapping to `.bdt` frames. Uses heuristic fallback scanning for custom/non-standard files.
+* `bdt_parser.gd`: Parses binary `.bdt` animation frames to extract precise Vector3 position and rotation data for every ball at a given frame. Relies heavily on exact byte-level struct unpacking.
+* `key_balls_data.gd`: A Singleton/Autoload acting as the central anatomy metadata repository. Maps hardcoded integer ball IDs to semantic names (e.g., 48: belly), assigns mirror/symmetry pairs, and body groups. Used for Mirror and Group operations.
 * `lnzlive_utils.gd`: Static utility class providing regex number list parsing (expanding "1-5" to `[1,2,3,4,5]`), Petz-specific color ramp calculation logic, and 3D raycast math.
-* `ball_data.gd`: Memory structure for `[Ballz Info]` attributes (size, position, rotation, color index, fuzz).
-* `addball_data.gd`: Extends ball data for `[Add Ball]`, including properties specific to relative attachments (base ball, body area).
-* `paintball_data.gd`: Memory structure for `[Paint Ballz]`. Pre-calculates normalised_position which is required for spherical wrapping onto base ballz.
-* `line_data.gd`: Memory structure for `[Linez]`, storing start/end node indices, thicknesses, and distinct left/right edge colors.  
-* `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat colored/textured 2D surfaces connecting 3 or 4 ballz.
-* `section_enum.gd`: Simple enum defining basic LNZ sections (`BALL`, `MOVE`, `PROJECT`, `LINE`).
+* `ball_data.gd`: Memory structure for `[Ballz Info]` attributes.
+* `addball_data.gd`: Extends ball data for `[Add Ball]`, including properties specific to addballz (e.g., base ball, body area).
+* `paintball_data.gd`: Memory structure for `[Paint Ballz]`. Pre-calculates `normalised_position` which is required for placing paintballz on surface of base ballz.
+* `line_data.gd`: Memory structure for `[Linez]`, storing start/end ballz IDs and linez properties (e.g., left/right edge outline colors).
+* `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat 2D rectangles connecting 3 or 4 ballz.
 
 ### `scripts/`
 Core scripts that attach directly to the 3D visual nodes and manage their spatial properties for the shaders.
 
-* `Ball.gd`, `Line.gd`, `Paintball.gd`, `Polygon.gd`: The scripts attached to their respective `Spatial` scenes. They act as receptors, taking the properties assigned by `dog_generator.gd` (size, color, fuzz) and feeding them directly into the shader parameters (`.tres` materials) so the visual representation updates instantly.
+* `Ball.gd`, `Line.gd`, `Paintball.gd`, `Polygon.gd`: The scripts attached to their respective `Spatial` scenes. They act as receptors, taking the properties assigned by `dog_generator.gd` and feeding them directly into the shader parameters (`.tres`).
 * `texture_atlas_baker.gd`, `texture_reimporter.gd`, `thumbnail_baker.gd`: Utility scripts used to generate and format base game resource files. Contributors will rarely need to run or modify these.
 
 ### `shaders/`
 
-Custom Spatial shaders (`.tres`) designed to emulate P.F. Magic games rendering logic inside Godot's 3D engine.
+Custom Spatial shaders (`.tres`) designed to emulate P.F. Magic games rendering logic inside Godot visual 3D engine.
 
-* `ball.tres`: Highly complex unshaded shader for LNZ ballz. Uses VERTEX billboarding so spheres always face the camera. Employs a 256-pixel wide lookup texture to map 8-bit palette indices to RGB. Includes math for pixelated outlines, fuzz jitter, "eyelash" projection via polar coordinates, and dynamic Z-shading logic to darken/lighten colors based on camera distance.  
-* `line.tres`: Renders 3D Linez connecting two nodes. Modifies mesh vertices to form a 2D strip facing the camera. Calculates true screen-space distance to construct linez of proper thickness regardless of camera angle. Handles distinct retro "left edge" and "right edge" coloring.  
-* `paintball.tres`: Handles decals anchored to base ballz. Heavily utilizes z_add depth offsetting to float perfectly above the sphere. Calculates view_normal to immediately discard fragments facing away from the camera, maintaining the illusion of a solid 3D object without z-fighting.  
-* `polygon.tres`: Renders `[Polygons]`. Unlike ballz/linez, these are flat 3D planes (not billboarded). Uses CULL_DISABLED and calculates face normal directions to apply distinct left/right shading based on camera viewing angles.
+* `ball.tres`
+* `line.tres`
+* `paintball.tres`
+* `polygon.tres`
 
 ### `scenes/`
 
 Root controllers and initialization scripts.
 
-* `dog_generator.gd`: **"Model Generator"**. The massive central controller coordinating the entire app. It takes structured LNZ data and .bhd/.bdt animations, computes extensions and scales, and generates actual Godot spatial nodes (Ball.tscn, Paintball.tscn). It maintains dictionaries mapping LNZ IDs to actual nodes (e.g., ball_map`[48]` \= \<Node\>) allowing the UI to cross-reference 3D clicks back to text IDs. Rebuilds the visual tree when `recompose_model()` is called.  
-* `bootsplash.tscn / bootsplash.gd`: Handles the initial loading screen, restoring persistent window positions/sizes from user://settings.cfg before launching the main editor scene.
+* `dog_generator.gd`: **"Model Generator"**. Central script generating model visuals. It takes structured LNZ data and `.bhd`/`.bdt` animations, computes extensions and scales, and generates spatial nodes (`Ball.tscn`, `Paintball.tscn`). Sets up dictionaries mapping LNZ IDs to actual nodes (e.g., ball_map`[48]` \= \<Node\>) allowing the UI to cross-reference 3D clicks back to text IDs.
+* `bootsplash.tscn / bootsplash.gd`: Handles the initial loading screen, restores persistent window positions/sizes from `user://settings.cfg` before launching the editor scene.
 
 ### `scenes/editor/`
 
@@ -237,9 +234,9 @@ The core UI, Viewport, and Text Editor functionalities.
 
 #### **Core Editors & Interaction**
 
-* `LnzTextEdit.gd`: The textual source of truth. Manages the raw string array, handles file saving, backup creation, and undo/redo history (differentiating between full "Snapshots" and rapid "Logical Commits"). Exposes an API allowing visual 3D interactions to safely rewrite specific .lnz text blocks using precise regex line-number tracking.  
-* `PetViewContainer.gd`: The 2D viewport overlay translating mouse inputs (clicks, drags) into 3D raycasts. It acts as a massive state machine for "Tool Modes" (Select, Move, Recolor, Paintball). Calculates 3D-to-2D dragging math and commits visual modifications back to `LnzTextEdit.gd` via strictly formatted string update signals.  
-* `editor.tscn`: The root UI scene containing all layouts, panels, and viewports.
+* `LnzTextEdit.gd`: Manages LNZ text as the source of truth. Manages the raw string array, handles file saving, backup creation, and undo/redo history. Helps commit visual 3D interactions to LNZ text blocks.  
+* `PetViewContainer.gd`: The 2D viewport overlay translating mouse inputs (clicks, drags) into 3D raycasts. It also manages all the Tools / Modes (Select, Move, Recolor, Paintball). Calculates 3D-to-2D dragging math and commits visual edits to `LnzTextEdit.gd`.  
+* `editor.tscn`: The root UI scene containing all layouts, panels, buttons, and viewports.
 
 #### **User Interface**
 
