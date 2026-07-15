@@ -313,15 +313,16 @@ static func calculate_gray_scott_grid(size: int, iterations: int, diff_a: float,
 			grid_a[i] = next_a[i]
 			grid_b[i] = next_b[i]
 	
+	var final_grid: Array = []
+	final_grid.resize(total_cells)
+	for i in range(total_cells):
+		final_grid[i] = {"a": grid_a[i], "b": grid_b[i]}
+	
 	grid_a.resize(0)
 	grid_b.resize(0)
 	next_a.resize(0)
 	next_b.resize(0)
 	
-	var final_grid: Array = []
-	final_grid.resize(total_cells)
-	for i in range(total_cells):
-		final_grid[i] = {"a": grid_a[i], "b": grid_b[i]}
 	return final_grid
 
 static func parse_lsystem_rules(rules_text: String) -> Dictionary:
