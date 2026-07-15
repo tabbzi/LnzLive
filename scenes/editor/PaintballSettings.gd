@@ -13,79 +13,71 @@ signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
 var _is_loading_settings: bool = false
-#var _preview_ball_rotation = Vector3.ZERO
-#var _is_dragging_preview = false
-#var _last_mouse_pos = Vector2.ZERO
 
-onready var paintballz_tree: Tree = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotsTree
-onready var _apply_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10/ApplyButton
-onready var _clear_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10/ClearButton
-onready var _eraser_checkbox: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10/EraserCheckBox
-onready var _tab_container: TabContainer = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer
-onready var _brush_space_slider: HSlider = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions/BrushSpaceSlider
-onready var _diameter_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/DiameterMin
-onready var _diameter_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/DiameterMax
-onready var _tapered: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerDiameterOptions/Tapered
-onready var _pixel_mode: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerDiameterOptions/PixelMode
-onready var _color: Control = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer2/Color
+onready var paintballz_tree: Tree = find_node("PaintballzTree")
+onready var _apply_button: Button = find_node("ApplyButton")
+onready var _clear_button: Button = find_node("ClearButton")
+onready var _eraser_checkbox: CheckBox = find_node("EraserCheckBox")
+onready var _tab_container: TabContainer = find_node("TabContainer")
+onready var _brush_space_slider: HSlider = find_node("BrushSpaceSlider")
+onready var _diameter_min: SpinBox = find_node("DiameterMin")
+onready var _diameter_max: SpinBox = find_node("DiameterMax")
+onready var _tapered: CheckBox = find_node("Tapered")
+onready var _pixel_mode: CheckBox = find_node("PixelMode")
+
+onready var _color: Control = find_node("Color")
 var _color_preview: Control = null
-onready var _outline_color: Control = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer3/OutlineColor
+
+onready var _outline_color: Control = find_node("OutlineColor")
 var _outline_color_preview: Control = null
-onready var _outline_type_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4/OutlineTypeMin
-onready var _outline_type_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4/OutlineTypeMax
-onready var _fuzz_min: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5/FuzzMin
-onready var _fuzz_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5/FuzzMax
-onready var _texture: Control = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer6/Texture
-onready var _group: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer7/Group
-onready var _anchored: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer8/Anchored
-onready var _target: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer9/Target
-onready var _freeline_checkbox: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/FreelineCheckBox
-onready var _spacing: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer/Spacing
-onready var _jitter: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer2/Jitter
-onready var _ordered: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions/Ordered
-onready var _repeat: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions/Repeat
-onready var _shuffle: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions/Shuffle
-onready var _random_walk_checkbox: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced/RandomWalkCheckBox
-onready var _walk_steps: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced/HBoxContainerWalkSteps/WalkStepsSpinBox
-onready var _walk_spread: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced/HBoxContainerWalkSpread/WalkSpreadSpinBox
-onready var _design_canvas: Control = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/DesignCanvas
-onready var _design_total_diameter: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions/DesignTotalDiameter
-onready var _design_total_diameter_max: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions/DesignTotalDiameterMax
-onready var _design_pixel_mode: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions/DesignPixelMode
-onready var _design_jitter: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer/DesignJitter
-onready var _brush_size_slider: HSlider = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions/BrushSizeSlider
-onready var _brush_size_label: Label = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions/BrushSizeLabel
-onready var _brush_space_label: Label = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions/BrushSpaceLabel
-onready var _mirror_x: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignTools/MirrorX
-onready var _mirror_y: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignTools/MirrorY
-onready var _canvas_eraser: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignTools/CanvasEraser
-onready var _rotate_fixed: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer/RotateFixed
-onready var _rotate_jitter: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer/RotateJitter
-onready var _spread_jitter: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer/SpreadJitter
-onready var _slots_tree: Tree = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotsTree
-onready var _add_slot_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer/AddSlotButton
-onready var _remove_slot_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer/RemoveSlotButton
-onready var _clear_grid_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions/ClearGridButton
-onready var _export_settings_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PresetContainer/ExportSettingsButton
-onready var _import_settings_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PresetContainer/ImportSettingsButton
-onready var _reset_defaults_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ResetDefaultsButton
-onready var _interpolate_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp/InterpolateButton
-onready var _interpolate_steps: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp/InterpolateStepsSpinBox
-onready var _gen_palette_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette/GenPaletteButton
-onready var _gen_palette_type_select: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette/GenPaletteTypeSelect
-onready var _gen_palette_base_input: Control = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette/GenPaletteBaseInput
-onready var _pattern_info_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer/PatternInfoButton
-onready var _pattern_info_dialog: WindowDialog = $VBoxContainer/ScrollContainer/VBoxContainer/PatternInfoDialog
-onready var _import_pattern_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer/ImportPatternButton
-onready var _export_pattern_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer/ExportPatternButton
 
-#onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
-#onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
-#onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
-#onready var preview_camera = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld/Camera
-
-#var ball_scene = preload("res://Ball.tscn")
-#var paintball_scene = preload("res://Paintball.tscn")
+onready var _outline_type_min: SpinBox = find_node("OutlineTypeMin")
+onready var _outline_type_max: SpinBox = find_node("OutlineTypeMax")
+onready var _fuzz_min: SpinBox = find_node("FuzzMin")
+onready var _fuzz_max: SpinBox = find_node("FuzzMax")
+onready var _texture: Control = find_node("Texture")
+onready var _group: SpinBox = find_node("Group")
+onready var _anchored: CheckBox = find_node("Anchored")
+onready var _target: OptionButton = find_node("Target")
+onready var _freeline_checkbox: CheckBox = find_node("FreelineCheckBox")
+onready var _spacing: SpinBox = find_node("Spacing")
+onready var _jitter: SpinBox = find_node("Jitter")
+onready var _ordered: CheckBox = find_node("Ordered")
+onready var _repeat: CheckBox = find_node("Repeat")
+onready var _shuffle: CheckBox = find_node("Shuffle")
+onready var _random_walk_checkbox: CheckBox = find_node("RandomWalkCheckBox")
+onready var _walk_steps: SpinBox = find_node("WalkStepsSpinBox")
+onready var _walk_spread: SpinBox = find_node("WalkSpreadSpinBox")
+onready var _design_canvas: Control = find_node("DesignCanvas")
+onready var _design_total_diameter: SpinBox = find_node("DesignTotalDiameter")
+onready var _design_total_diameter_max: SpinBox = find_node("DesignTotalDiameterMax")
+onready var _design_pixel_mode: CheckBox = find_node("DesignPixelMode")
+onready var _design_jitter: SpinBox = find_node("DesignJitter")
+onready var _brush_size_slider: HSlider = find_node("BrushSizeSlider")
+onready var _brush_size_label: Label = find_node("BrushSizeLabel")
+onready var _brush_space_label: Label = find_node("BrushSpaceLabel")
+onready var _mirror_x: CheckBox = find_node("MirrorX")
+onready var _mirror_y: CheckBox = find_node("MirrorY")
+onready var _canvas_eraser: CheckBox = find_node("CanvasEraser")
+onready var _rotate_fixed: CheckBox = find_node("RotateFixed")
+onready var _rotate_jitter: SpinBox = find_node("RotateJitter")
+onready var _spread_jitter: SpinBox = find_node("SpreadJitter")
+onready var _slots_tree: Tree = find_node("SlotsTree")
+onready var _add_slot_button: Button = find_node("AddSlotButton")
+onready var _remove_slot_button: Button = find_node("RemoveSlotButton")
+onready var _clear_grid_button: Button = find_node("ClearGridButton")
+onready var _export_settings_btn: Button = find_node("ExportSettingsButton")
+onready var _import_settings_btn: Button = find_node("ImportSettingsButton")
+onready var _reset_defaults_btn: Button = find_node("ResetDefaultsButton")
+onready var _interpolate_button: Button = find_node("InterpolateButton")
+onready var _interpolate_steps: SpinBox = find_node("InterpolateStepsSpinBox")
+onready var _gen_palette_button: Button = find_node("GenPaletteButton")
+onready var _gen_palette_type_select: OptionButton = find_node("GenPaletteTypeSelect")
+onready var _gen_palette_base_input: Control = find_node("GenPaletteBaseInput")
+onready var _pattern_info_button: Button = find_node("PatternInfoButton")
+onready var _pattern_info_dialog: WindowDialog = find_node("PatternInfoDialog")
+onready var _import_pattern_button: Button = find_node("ImportPatternButton")
+onready var _export_pattern_button: Button = find_node("ExportPatternButton")
 
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
@@ -384,20 +376,6 @@ func _process(delta: float) -> void:
 		if is_instance_valid(pvc) and "pending_paintballs" in pvc:
 			raw_array = pvc.get("pending_paintballs")
 
-#	call_deferred("update_preview")
-
-#func _on_PreviewContainer_gui_input(event):
-#	if event is InputEventMouseButton:
-#		if event.button_index == BUTTON_LEFT:
-#			_is_dragging_preview = event.pressed
-#			_last_mouse_pos = event.position
-#
-#	elif event is InputEventMouseMotion and _is_dragging_preview:
-#		var diff: Vector2 = event.position - _last_mouse_pos
-#		_preview_ball_rotation.y += diff.x * 0.01
-#		_preview_ball_rotation.x += diff.y * 0.01
-#		_last_mouse_pos = event.position
-#		update_preview()
 	if typeof(raw_array) != TYPE_ARRAY or raw_array.empty():
 		return
 
@@ -885,7 +863,6 @@ func _connect_design_signals() -> void:
 	_rotate_jitter.connect("value_changed", self, "_on_setting_changed")
 	_spread_jitter.connect("value_changed", self, "_on_setting_changed")
 
-	# find_node("ImportTatButton").connect("pressed", self, "_on_import_tat_pressed")
 	_pattern_info_button.connect("pressed", self, "_on_pattern_info_pressed")
 	_pattern_info_dialog.find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
 
@@ -1010,11 +987,7 @@ func _on_clear_design_pressed() -> void:
 			"display_color": Color(0, 0, 1)
 		}
 	]
-	
-	# find_node("PatternInfoDialog").find_node("AuthorEdit").text = ""
-	# find_node("PatternInfoDialog").find_node("WebsiteEdit").text = ""
-	# find_node("PatternInfoDialog").find_node("DescEdit").text = ""
-	
+
 	_refresh_slot_buttons()
 	_design_canvas.emit_signal("design_changed")
 	_on_palette_changed()
