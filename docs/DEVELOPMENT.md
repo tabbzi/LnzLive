@@ -305,12 +305,12 @@ When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.
 
 ## Style Guide
 
-Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency, maintainability, or preference.
+Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency, maintainability, or preference. There is also the [official GDScript style guide](https://docs.godotengine.org/en/3.2/getting/workflow/project_setup/editor_styleguide.html) which has good practices.
 
 - Use tabs for indentation
 - Use `not` over `!` for conditionals as these are easier to read and spot
 - Declare and enforce type on variables *unless* these can ever assume a `null` value
-- Declare variables for nodes at the top of scripts to make easier to call elsewhere, e.g., `onready var node_variable: NodeType = find_node("NodeName")`
+- Use `onready var` for node references at the top of scripts to make easier to call elsewhere, e.g., `onready var node_variable: NodeType = find_node("NodeName")`; also, `onready` defers initialization until `_ready()` is called
 - Use `enums` and `match` instead of long `if`/`elif`/`else` blocks
 - Use `enums` also for index items that may change in the future (makes easier to reorder later! see `ToolsMenu.gd` for examples)
 - Use `snake_case` for variables and functions, `PascalCase` for classes and node types
