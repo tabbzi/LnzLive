@@ -412,6 +412,7 @@ func _get_check_states() -> Dictionary:
 	return states
 
 func _apply_swap_data(data: Dictionary) -> void:
+	if typeof(data) != TYPE_DICTIONARY: return
 	var swaps: Array = data.get("swaps", [])
 	for i in range(swaps.size()):
 		var swap = swaps[i]
@@ -462,11 +463,12 @@ func export_recolor_json() -> void:
 	var swaps = _gather_swap_data()
 	var checks = _get_check_states()
 	var settings_dict: Dictionary = {
+		"exporter": "LnzLive",
 		"swaps": swaps,
 		"checks": checks
 	}
 	var json_string: String = JSON.print(settings_dict, "  ")
-	var filename: String = "LnzLive_recolor_settings_" + str(OS.get_unix_time()) + ".json"
+	var filename: String = str("LnzLive_recolor_preset_", OS.get_unix_time(), ".json")
 	
 	if OS.has_feature("HTML5"):
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
@@ -538,6 +540,7 @@ func _save_recolor_file(path: String) -> void:
 	var swaps = _gather_swap_data()
 	var checks = _get_check_states()
 	var settings_dict: Dictionary = {
+		"exporter": "LnzLive",
 		"swaps": swaps,
 		"checks": checks
 	}

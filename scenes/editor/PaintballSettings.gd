@@ -582,8 +582,9 @@ func export_paintball_json() -> void:
 	print("[STATUS] PaintballSettings: started exporting paintball JSON (HTML5 feature: %s)" % OS.has_feature("HTML5"))
 	if OS.has_feature("HTML5"):
 		var settings_dict: Dictionary = get_properties()
+		settings_dict["exporter"] = "LnzLive"
 		var json_string: String = JSON.print(settings_dict, "  ")
-		var filename: String = "LnzLive_paintball-mode_settings_" + str(OS.get_unix_time()) + ".json"
+		var filename: String = str("LnzLive_paintball_preset_", OS.get_unix_time(), ".json")
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
 		var js_code: String = """
 		var element = document.createElement('a');
@@ -603,7 +604,7 @@ func export_paintball_json() -> void:
 		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		file_dialog.filters = ["*.json ; JSON Preset"]
 		file_dialog.rect_min_size = Vector2(400, 400)
-		file_dialog.current_file = "LnzLive_paintball-mode_settings_" + str(OS.get_unix_time()) + ".json"
+		file_dialog.current_file = str("LnzLive_paintball_preset_", OS.get_unix_time(), ".json")
 		file_dialog.connect("file_selected", self, "_save_settings_file")
 		file_dialog.connect("popup_hide", file_dialog, "queue_free")
 		get_tree().root.add_child(file_dialog)
@@ -611,6 +612,7 @@ func export_paintball_json() -> void:
 
 func _save_settings_file(path: String) -> void:
 	var settings_dict: Dictionary = get_properties()
+	settings_dict["exporter"] = "LnzLive"
 	var json_string: String = JSON.print(settings_dict, "  ")
 	var file: File = File.new()
 	if file.open(path, File.WRITE) == OK:
@@ -919,7 +921,7 @@ func _load_pattern_file(path: String) -> void:
 							s.erase("display_color_b")
 						design_color_slots.append(s)
 
-				if data.has("info"):
+				if data.has("info") and data["info"] is Dictionary:
 					var info: Dictionary = data["info"]
 					_pattern_info_dialog.find_node("AuthorEdit").text = info.get("author", "")
 					_pattern_info_dialog.find_node("WebsiteEdit").text = info.get("website", "")
@@ -994,10 +996,10 @@ func _on_clear_design_pressed() -> void:
 
 func _on_export_pattern_pressed() -> void:
 	var author: String = _pattern_info_dialog.find_node("AuthorEdit").text.strip_edges()
-	var filename: String = "LnzLive_paintball-mode_design_"
+	var filename: String = "LnzLive_paintball_pattern_"
 	if not author.empty():
-		filename += author.replace(" ", "_") + "_"
-	filename += str(OS.get_unix_time()) + ".json"
+		filename = str(filename, author.replace(" ", "_"), "_")
+	filename = str(filename, OS.get_unix_time(), ".json")
 
 	print("[STATUS] PaintballSettings: generating export for pattern, filename: %s" % filename)
 	if OS.has_feature("HTML5"):
@@ -1029,7 +1031,7 @@ func _on_export_pattern_pressed() -> void:
 
 func _get_pattern_data_dict() -> Dictionary:
 	var data: Dictionary = {
-		"header": "LnzLive Stampz Design",
+		"exporter": "LnzLive",
 		"info": {
 			"time_generated": OS.get_datetime(),
 			"author": _pattern_info_dialog.find_node("AuthorEdit").text,

@@ -1022,8 +1022,12 @@ func _apply_settings_dict(data: Dictionary) -> void:
 
 func export_autopaintballer_json() -> void:
 	var settings_dict: Dictionary = get_properties()
+	settings_dict["format"] = "LnzLive Preset"
+	settings_dict["version"] = 1
+	settings_dict["exporter"] = "LnzLive"
+	settings_dict["exporter_version"] = "3.2"
 	var json_string: String = JSON.print(settings_dict, "  ")
-	var filename: String = "LnzLive_autopaintballer_settings_" + str(OS.get_unix_time()) + ".json"
+	var filename: String = str("LnzLive_autopaintballer_preset_", OS.get_unix_time(), ".json")
 
 	if OS.has_feature("HTML5"):
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
@@ -1052,6 +1056,7 @@ func export_autopaintballer_json() -> void:
 
 func _save_settings_file(path: String) -> void:
 	var settings_dict: Dictionary = get_properties()
+	settings_dict["exporter"] = "LnzLive"
 	var json_string: String = JSON.print(settings_dict, "  ")
 	var file: File = File.new()
 	if file.open(path, File.WRITE) == OK:
