@@ -305,7 +305,7 @@ When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.
 
 ## Style guide
 
-Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency or preference.
+Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency, maintainability, or preference.
 
 - Use `not` over `!` for conditionals as these are easier to read and spot
 - Declare and enforce type on variables *unless* these can ever assume a `null` value
