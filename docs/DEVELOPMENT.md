@@ -303,6 +303,16 @@ When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.
 - Put code that you might reuse multiple times as static functions in `data_classes/lnzlive_utils.gd` and call as `LnzLiveUtils.FUNCTION()`. For example, there are functions for color ramp calculations, number list parsing (e.g., `"1-5"` to `[1,2,3,4,5]`), and coordinate conversions.
 - Review how data is pulled out of LNZ in `data_classes/lnz_parser.gd` and what gets stored in data classes.
 
+## Style guide
+
+Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency or preference.
+
+- Use `not` over `!` for conditionals as these are easier to read and spot
+- Declare and enforce type on variables *unless* these can ever assume a `null` value
+- Declare variables for nodes at the top of scripts to make easier to call elsewhere, e.g., `onready var node_variable: NodeType = find_node("NodeName")`
+- Use `enums` and `match` instead of long `if`/`elif`/`else` blocks
+- Use `enums` also for index items that may change in the future (makes easier to reorder later! see `ToolsMenu.gd` for examples)
+
 ## Developer Tools
 
 ### Godot Unit Testing (GUT)
