@@ -2638,7 +2638,10 @@ func apply_batch_moves(pending_moves: Dictionary):
 				var raw = get_line(i).strip_edges()
 				if raw == "" or raw.begins_with(";"): continue
 				var parts = split_line(raw)
-				if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+					if not parts[1].is_valid_float() or not parts[2].is_valid_float() or not parts[3].is_valid_float():
+						print("[WARNING] LnzTextEdit: Skipping invalid move line: " + raw)
+						continue
 					var nx = int(round(parts[1].to_float() + lnz_delta.x))
 					var ny = int(round(parts[2].to_float() + lnz_delta.y))
 					var nz = int(round(parts[3].to_float() + lnz_delta.z))
@@ -3090,7 +3093,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 			if raw == "" or raw.begins_with(";"): continue
 			var parts = split_line(raw)
 			
-			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 				var old_line = get_line(i)
 				
 				var nx = parts[1].to_int() + new_pos.x
