@@ -303,15 +303,29 @@ When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.
 - Put code that you might reuse multiple times as static functions in `data_classes/lnzlive_utils.gd` and call as `LnzLiveUtils.FUNCTION()`. For example, there are functions for color ramp calculations, number list parsing (e.g., `"1-5"` to `[1,2,3,4,5]`), and coordinate conversions.
 - Review how data is pulled out of LNZ in `data_classes/lnz_parser.gd` and what gets stored in data classes.
 
-## Style guide
+## Style Guide
 
 Godot has a few ways to do the same operation. Usually, these do not have performance differences, so the below recommendations are largely for consistency, maintainability, or preference.
 
+- Use tabs for indentation
 - Use `not` over `!` for conditionals as these are easier to read and spot
 - Declare and enforce type on variables *unless* these can ever assume a `null` value
 - Declare variables for nodes at the top of scripts to make easier to call elsewhere, e.g., `onready var node_variable: NodeType = find_node("NodeName")`
 - Use `enums` and `match` instead of long `if`/`elif`/`else` blocks
 - Use `enums` also for index items that may change in the future (makes easier to reorder later! see `ToolsMenu.gd` for examples)
+- Use `snake_case` for variables and functions, `PascalCase` for classes and node types
+- Place `export` and `signal` declarations at the top of scripts, followed by `var` declarations, then functions
+- Use consistent array/dictionary spacing: `[1, 2, 3]` and `{key = value}`
+
+## Console and Debug Messages
+
+Use the following method to send messages to both the debug window and in-editor ConsoleLog UI panel (`ConsoleLog.gd`):
+
+1. **Cache the reference** at the top of your script: `onready var console_log = find_node("ConsoleLog")`
+2. **Use `print()`** for the debug window: `print("[STATUS] Loading file...")`
+3. **Call `console_log.log_message()`** for the UI panel: `if console_log: console_log.log_message("[STATUS] Loading file...")`
+
+Use descriptive prefixes to categorize messages: `[STATUS]`, `[ERROR]`, `[WARNING]`, `[TIME]`, `[HELPER]`, and also note the script from which the message originated (helps pinpoint bugs later, too!)
 
 ## Developer Tools
 
