@@ -210,7 +210,9 @@ func load_settings() -> void:
 		elif is_maximized:
 			OS.window_maximized = true
 
-		preferred_delimiter = config.get_value("LNZOptions", "preferred_delimiter", "auto-detect")
+		preferred_delimiter = config.get_value("LNZOptions", "preferred_delimiter", "comma_space")
+		if not preferred_delimiter in [", ", ",", ",\t", "\t", " "]:
+			preferred_delimiter = "comma_space"
 		max_history_size = config.get_value("LNZOptions", "max_history_size", 50)
 		if lnz_text_edit:
 			lnz_text_edit.max_history_size = max_history_size
