@@ -19,7 +19,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/ball_data.gd"
 }, {
-"base": "Node",
+"base": "Reference",
 "class": "BdtParser",
 "language": "GDScript",
 "path": "res://data_classes/bdt_parser.gd"
