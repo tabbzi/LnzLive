@@ -433,6 +433,10 @@ func _update_reference_image_bg() -> void:
 	if _last_attempted_path != current_path:
 		_last_attempted_path = current_path
 		
+		if bg.texture != null:
+			bg.texture.unreference()
+			bg.texture = null
+		
 		var image: Image = Image.new()
 		var err: int = image.load(current_path, false, false)
 		if err == OK:
@@ -2459,9 +2463,9 @@ func _restore_all_balls() -> void:
 	camera.cull_mask = 1048575
 
 	if is_instance_valid(_overlay_viewport_container):
-		_overlay_viewport_container.queue_free()
+		_overlay_viewport_container.free()
 	if is_instance_valid(_dimmer_rect):
-		_dimmer_rect.queue_free()
+		_dimmer_rect.free()
 
 func _create_overlay() -> void:
 	var scene_root: Node = tex.get_parent()
@@ -3228,7 +3232,7 @@ func _finalize_freeline() -> void:
 
 	var added_paintballs: Array = []
 	for data in stroke:
-		var result: Dictionary = _create_paintball_at_position(data.pos, data.ball, data.diam)
+		var result = _create_paintball_at_position(data.pos, data.ball, data.diam)
 		if result:
 			added_paintballs.append(result)
 
@@ -3376,13 +3380,11 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 		var color_list: Array = LnzLiveUtils.parse_number_list(props.color)
 		if color_list.empty():
 			print("[ERROR] PetViewContainer: invalid color list format for paintball")
-			push_warning("Invalid color list format.")
 			return null
 
 		var outline_color_list: Array = LnzLiveUtils.parse_number_list(props.outline_color, true)
 		if outline_color_list.empty():
 			print("[ERROR] PetViewContainer: invalid outline color list format for paintball")
-			push_warning("Invalid outline color list format.")
 			return null
 
 		var texture_list: Array = LnzLiveUtils.parse_number_list(props.texture, true)

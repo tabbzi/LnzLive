@@ -425,6 +425,13 @@ func generate_pet(file_path):
 	lnz.get_species()
 
 	if file_path != last_loaded_filepath:
+
+		# TBD: May be helpful to clear caches when switching models (not on every reload)
+		# clear_texture_cache()
+		# _atlas_textures.clear()
+		# _orig_lnz_pos.clear()
+		# _orig_world_pos.clear()
+
 		last_loaded_filepath = file_path
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
@@ -2588,9 +2595,8 @@ func _on_apply_auto_paintballz():
 
 		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
 
-		var relative_pos_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(
-			local_pos, pixel_world_size, lnz.scales.x
-		)
+		var lnz_scale = lnz.scales[0] / 255.0
+		var relative_pos_lnz = local_pos / (pixel_world_size * lnz_scale)
 		relative_pos_lnz.y *= -1
 
 		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
@@ -2680,7 +2686,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 		node.get_node("MeshInstance").material_override.set_shader_param("ball_size", addball_data.size)
 	
 	var world_pos = base_node.global_transform.origin
-	world_pos += LnzLiveUtils.lnz_to_world_delta(addball_data.position, pixel_world_size, lnz.scales.x)
+	world_pos += LnzLiveUtils.lnz_to_world_delta(addball_data.position, pixel_world_size, lnz.scales[0])
 	node.global_transform.origin = world_pos
 	
 	node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")

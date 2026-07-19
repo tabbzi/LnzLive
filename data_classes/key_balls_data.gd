@@ -1104,3 +1104,93 @@ func get_belly_ball_id(s: int) -> int:
 
 func is_known_species(s: int) -> bool:
 	return s == Species.CAT or s == Species.DOG or s == Species.BABY
+
+# Dogz-Catz ballz map
+const dog_cat_ball_map: Dictionary = {
+	48: 2,   # belly → belly
+	50: 6,   # chest → chest
+	49: 3,   # butt → butt
+	54: 36,  # neck → neck
+	53: 29,  # jaw → jaw
+	52: 24,  # head → head
+	18: 38,  # shoulderL → shoulderL
+	42: 39,  # shoulderR → shoulderR
+	7: 12,   # elbowL → elbowL
+	31: 13,  # elbowR → elbowR
+	13: 22,  # handL → handL
+	37: 23,  # handR → handR
+	9: 16,   # fingerL1 → fingerL1
+	10: 17,  # fingerL2 → fingerL2
+	11: 18,  # fingerL3 → fingerL3
+	33: 19,  # fingerR1 → fingerR1
+	34: 20,  # fingerR2 → fingerR2
+	35: 21,  # fingerR3 → fingerR3
+	19: 25,  # hipL → hipL
+	43: 26,  # hipR → hipR
+	16: 32,  # kneeL → kneeL
+	40: 33,  # kneeR → kneeR
+	0: 32,   # ankleL → kneeL (no ankle in cat)
+	24: 33,  # ankleR → kneeR (no ankle in cat)
+	12: 41,  # footL → soleL
+	36: 42,  # footR → soleR
+	20: 49,  # toeL1 → toeL1
+	21: 50,  # toeL2 → toeL2
+	22: 51,  # toeL3 → toeL3
+	44: 52,  # toeR1 → toeR1
+	45: 53,  # toeR2 → toeR2
+	46: 54,  # toeR3 → toeR3
+	56: 40,  # snout → snout
+	55: 7,   # nose_bottom → chin
+	17: 37,  # nostrilL → nose
+	41: 37,  # nostrilR → nose
+	8: 14,   # eyeL → eyeL
+	32: 15,  # eyeR → eyeR
+	14: 27,  # irisL → irisL
+	38: 28,  # irisR → irisR
+	15: 30,  # jowlL → jowlL
+	39: 31,  # jowlR → jowlR
+	4: 8,    # earL1 → earL1
+	5: 9,    # earL2 → earL2
+	28: 10,  # earR1 → earR1
+	29: 11,  # earR2 → earR2
+	6: 11,   # earL3 → earR2 (cat has 2 ear balls per side)
+	30: 10,  # earR3 → earR1 (cat has 2 ear balls per side)
+	57: 43,  # tail1 → tail1
+	58: 44,  # tail2 → tail2
+	59: 45,  # tail3 → tail3
+	60: 46,  # tail4 → tail4
+	61: 47,  # tail5 → tail5
+	62: 48,  # tail6 → tail6
+	63: 55,  # tongue1 → tongue1
+	64: 56,  # tongue2 → tongue2
+}
+
+func get_dog_to_cat_ball(dog_ball: int) -> int:
+	if dog_cat_ball_map.has(dog_ball):
+		return dog_cat_ball_map[dog_ball]
+	return -1
+
+func get_cat_to_dog_ball(cat_ball: int) -> int:
+	for k in dog_cat_ball_map:
+		if dog_cat_ball_map[k] == cat_ball:
+			return k
+	return -1
+
+func convert_ball(src_species: int, ball_no: int, dest_species: int) -> int:
+	if src_species == dest_species:
+		return ball_no
+	if src_species == Species.DOG and dest_species == Species.CAT:
+		return get_dog_to_cat_ball(ball_no)
+	if src_species == Species.CAT and dest_species == Species.DOG:
+		return get_cat_to_dog_ball(ball_no)
+	return -1
+
+func get_ball_name_by_species(species: int, ball_no: int) -> String:
+	var defs: Dictionary = {}
+	match species:
+		Species.CAT: defs = cat_ball_definitions
+		Species.DOG: defs = dog_ball_definitions
+		Species.BABY: defs = bab_ball_definitions
+	if defs.has(ball_no) and defs[ball_no].has("name"):
+		return defs[ball_no].name
+	return ""

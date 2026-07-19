@@ -54,6 +54,7 @@ var filepath: String
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
 var _last_compiled_pattern: String = ""
+var _last_replace_pattern: String = ""
 
 var set_column_popup: ConfirmationDialog
 var col_input
@@ -962,16 +963,18 @@ func _on_ReplaceButton_pressed():
 		# Anchor the pattern to ensure the whole selection matches
 		var anchored_pattern = "^" + pattern + "$"
 
-		var regex = RegEx.new()
-		
-		var error = regex.compile(anchored_pattern) 
+		var regex = _search_regex
+		if _last_replace_pattern != anchored_pattern:
+			var err = regex.compile(anchored_pattern)
+			if err != OK:
+				return
+			_last_replace_pattern = anchored_pattern 
 
-		if error == OK:
-			var this_match = regex.search(selected_text, 0) 
-			if this_match != null:
-				self.readonly = false
-				insert_text_at_cursor(replace_text)
-				self.readonly = true
+		var this_match = regex.search(selected_text, 0) 
+		if this_match != null:
+			self.readonly = false
+			insert_text_at_cursor(replace_text)
+			self.readonly = true
 
 	# After attempting a replace, find the next occurrence.
 	_find_text(true)
@@ -992,10 +995,14 @@ func _on_ReplaceAllButton_pressed():
 	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
 		pattern = "(?i)" + pattern
 
-	var regex = RegEx.new()
-	
-	# compile() only takes 1 argument
-	var error = regex.compile(pattern) 
+	var regex: RegEx = _search_regex
+	if _last_replace_pattern != pattern:
+		var err = regex.compile(pattern)
+		if err != OK:
+			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+			return
+		_last_replace_pattern = pattern
+	var error = OK 
 	if error != OK:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
@@ -2631,7 +2638,10 @@ func apply_batch_moves(pending_moves: Dictionary):
 				var raw = get_line(i).strip_edges()
 				if raw == "" or raw.begins_with(";"): continue
 				var parts = split_line(raw)
-				if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+					if not parts[1].is_valid_float() or not parts[2].is_valid_float() or not parts[3].is_valid_float():
+						print("[WARNING] LnzTextEdit: Skipping invalid move line: " + raw)
+						continue
 					var nx = int(round(parts[1].to_float() + lnz_delta.x))
 					var ny = int(round(parts[2].to_float() + lnz_delta.y))
 					var nz = int(round(parts[3].to_float() + lnz_delta.z))
@@ -3083,7 +3093,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 			if raw == "" or raw.begins_with(";"): continue
 			var parts = split_line(raw)
 			
-			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 				var old_line = get_line(i)
 				
 				var nx = parts[1].to_int() + new_pos.x
@@ -3414,8 +3424,35 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	var species = KeyBallsData.species
 	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, intended_part)
 
-	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, core_ball_nos, color_index, outline_color_index)
-	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, core_ball_nos, color_index, outline_color_index)
+	var addball_bounds = get_section_bounds("[Add Ball]")
+	if not addball_bounds.empty():
+		var count = 0
+		for i in range(addball_bounds.start, addball_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";") or line.begins_with("["): 
+				continue
+			
+			var parts = split_line(line)
+			if parts.size() > 0:
+				var base_ball_id = parts[0].to_int()
+				
+				if base_ball_id in core_ball_nos:
+					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+					if not absolute_addball_id in core_ball_nos:
+						core_ball_nos.append(absolute_addball_id)
+				
+				if base_ball_id in balls_to_exclude:
+					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+					balls_to_exclude.append(absolute_addball_id)
+			count += 1
+
+	var filtered_balls: Array = []
+	for ball in core_ball_nos:
+		if not ball in balls_to_exclude:
+			filtered_balls.append(ball)
+
+	_apply_color_to_section_with_filter("[Ballz Info]", 0, 1, filtered_balls, color_index, outline_color_index)
+	_apply_color_to_section_addball_with_filter("[Add Ball]", 4, 5, filtered_balls, color_index, outline_color_index)
 	
 	save_file(true)
 	commit_full_snapshot("Applied Colors")

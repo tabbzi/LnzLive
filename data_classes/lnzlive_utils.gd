@@ -279,31 +279,51 @@ static func generate_surface_walk(start_pos: Vector3, center: Vector3, step_scal
 	return path
 
 static func calculate_gray_scott_grid(size: int, iterations: int, diff_a: float, diff_b: float, feed: float, kill: float, timestep: float) -> Array:
-	var grid: Array = []
-	grid.resize(size * size)
-	for i in range(size * size): 
-		grid[i] = {"a": 1.0, "b": 0.0}
-	grid[(size/2) * size + (size/2)].b = 1.0
+	var total_cells: int = size * size
+	var grid_a: PoolRealArray = PoolRealArray()
+	var grid_b: PoolRealArray = PoolRealArray()
+	grid_a.resize(total_cells)
+	grid_b.resize(total_cells)
+	
+	for i in range(total_cells): 
+		grid_a[i] = 1.0
+		grid_b[i] = 0.0
+	grid_b[(size/2) * size + (size/2)] = 1.0
+	
+	var next_a: PoolRealArray = PoolRealArray()
+	var next_b: PoolRealArray = PoolRealArray()
+	next_a.resize(total_cells)
+	next_b.resize(total_cells)
 	
 	for _t in range(iterations):
-		var next: Array = []
-		next.resize(size * size)
 		for x in range(1, size - 1):
 			for y in range(1, size - 1):
 				var i: int = y * size + x
-				var a: float = grid[i].a
-				var b: float = grid[i].b
-				var lp_a: float = (grid[i-1].a + grid[i+1].a + grid[i-size].a + grid[i+size].a) - 4 * a
-				var lp_b: float = (grid[i-1].b + grid[i+1].b + grid[i-size].b + grid[i+size].b) - 4 * b
+				var a: float = grid_a[i]
+				var b: float = grid_b[i]
+				
+				var lp_a: float = (grid_a[i-1] + grid_a[i+1] + grid_a[i-size] + grid_a[i+size]) - 4 * a
+				var lp_b: float = (grid_b[i-1] + grid_b[i+1] + grid_b[i-size] + grid_b[i+size]) - 4 * b
 				var r: float = a * b * b
-				next[i] = {
-					"a": clamp(a + (diff_a * lp_a - r + feed * (1.0 - a)) * timestep, 0.0, 1.0),
-					"b": clamp(b + (diff_b * lp_b + r - (kill + feed) * b) * timestep, 0.0, 1.0)
-				}
-		for i in range(size * size): 
-			if next[i] != null: 
-				grid[i] = next[i]
-	return grid
+				
+				next_a[i] = clamp(a + (diff_a * lp_a - r + feed * (1.0 - a)) * timestep, 0.0, 1.0)
+				next_b[i] = clamp(b + (diff_b * lp_b + r - (kill + feed) * b) * timestep, 0.0, 1.0)
+		
+		for i in range(total_cells):
+			grid_a[i] = next_a[i]
+			grid_b[i] = next_b[i]
+	
+	var final_grid: Array = []
+	final_grid.resize(total_cells)
+	for i in range(total_cells):
+		final_grid[i] = {"a": grid_a[i], "b": grid_b[i]}
+	
+	grid_a.resize(0)
+	grid_b.resize(0)
+	next_a.resize(0)
+	next_b.resize(0)
+	
+	return final_grid
 
 static func parse_lsystem_rules(rules_text: String) -> Dictionary:
 	var rules: Dictionary = {}
@@ -323,7 +343,7 @@ static func generate_lsystem_string(axiom: String, rules: Dictionary, iterations
 		print("[WARNING] LnzLiveUtils: generate_lsystem_string: iterations capped at 15 (was %d)" % iterations)
 		iterations = 15
 	var current_string: String = axiom
-	var expected_len = axiom.length()
+	var expected_len: int = axiom.length()
 	for i in range(iterations):
 		expected_len *= 2
 		if expected_len > 5 * 1024 * 1024:
@@ -331,14 +351,19 @@ static func generate_lsystem_string(axiom: String, rules: Dictionary, iterations
 			iterations = i
 			break
 	for _i in range(iterations):
-		var new_string: String = ""
+		var next_parts: PoolStringArray = PoolStringArray()
 		for char_idx in range(current_string.length()):
 			var current_char: String = current_string[char_idx]
 			if rules.has(current_char):
-				new_string += rules[current_char]
+				for rule_char in rules[current_char]:
+					next_parts.append(rule_char)
 			else:
-				new_string += current_char
-		current_string = new_string
+				next_parts.append(current_char)
+		current_string = next_parts.join("")
+		next_parts.resize(0)
+		if current_string.length() > 5 * 1024 * 1024:
+			print("[WARNING] LnzLiveUtils: generate_lsystem_string: string too large, capping iterations.")
+			break
 	return current_string
 
 static func generate_random_lsystem() -> Dictionary:

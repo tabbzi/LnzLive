@@ -336,6 +336,7 @@ margin_top = 34.0
 margin_right = 424.0
 margin_bottom = 58.0
 text = "0"
+max_length = 3
 placeholder_text = "color"
 
 [node name="IncludeColorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
@@ -358,6 +359,7 @@ margin_top = 66.0
 margin_right = 424.0
 margin_bottom = 90.0
 text = "0"
+max_length = 3
 placeholder_text = "outcol"
 
 [node name="IncludeOutlineColorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]

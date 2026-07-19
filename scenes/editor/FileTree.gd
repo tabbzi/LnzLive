@@ -52,10 +52,11 @@ onready var rename_dialog: AcceptDialog = get_tree().root.get_node("Root/SceneRo
 onready var upload_popup: AcceptDialog = get_tree().root.get_node("Root/SceneRoot/WebFileUploadPopup") as AcceptDialog
 onready var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
-onready var import_lnz_button: Button = get_node("../FileNavHBox2/ImportButtonLNZ")
+onready var import_lnz_button: Button = get_node("../FileNavHBox1/ImportButtonLNZ")
 onready var import_tex_button: Button = get_node("../FileNavHBox1/ImportButtonTexBMP")
 onready var import_pal_button: Button = get_node("../FileNavHBox1/ImportButtonPalPNG")
 onready var open_user_folder_button: Button = get_node("../FileNavHBox2/OpenUserFolder")
+onready var rescan_button: Button = get_node("../FileNavHBox2/RescanButton")
 
 onready var menu_import_lnz: Button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/MenuImportLNZ")
 onready var menu_import_tex: Button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/MenuImportTexture")
@@ -93,11 +94,17 @@ func _ready() -> void:
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	
+	var config: ConfigFile = ConfigFile.new()
+	if config.load("user://settings.cfg") == OK:
+		current_sort_mode = config.get_value("Display", "file_tree_sort_mode", SortMode.ALPHABETICAL)
+	
 	scan_local_bases()
 	scan_local_storage(null)
 	scan_res_textures()
 	scan_local_textures()
 	scan_local_palettes()
+	
+	_setup_sort_ui()
 	
 	import_lnz_button.connect("pressed", self, "_on_ImportLNZ_pressed")
 	import_tex_button.connect("pressed", self, "_on_ImportTexture_pressed")
@@ -158,12 +165,6 @@ func _ready() -> void:
 		dir.list_dir_end()
 
 	_setup_dynamic_dialogs()
-
-	var config: ConfigFile = ConfigFile.new()
-	if config.load("user://settings.cfg") == OK:
-		current_sort_mode = config.get_value("Display", "file_tree_sort_mode", SortMode.ALPHABETICAL)
-
-	_setup_sort_ui()
 
 	# rescan(null)
 	# rescan_textures(true)
@@ -554,7 +555,7 @@ func _on_Tree_item_activated() -> void:
 		
 	release_focus()
 
-func rescan(selected_filepath) -> void:
+func rescan(selected_filepath = null) -> void:
 	var t_start: int = OS.get_ticks_msec()
 	var was_collapsed: bool = true
 	if local_storage != null:
@@ -1340,7 +1341,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray) -> void:
 		var save_dialog: FileDialog = FileDialog.new()
 		
 		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
-		save_dialog.connect("popup_hide", save_dialog, "queue_free")
+		save_dialog.connect("popup_hide", save_dialog, "free")
 		
 		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
 		save_dialog.mode = FileDialog.MODE_SAVE_FILE

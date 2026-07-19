@@ -412,6 +412,7 @@ func _get_check_states() -> Dictionary:
 	return states
 
 func _apply_swap_data(data: Dictionary) -> void:
+	if typeof(data) != TYPE_DICTIONARY: return
 	var swaps: Array = data.get("swaps", [])
 	for i in range(swaps.size()):
 		var swap = swaps[i]
@@ -462,11 +463,12 @@ func export_recolor_json() -> void:
 	var swaps = _gather_swap_data()
 	var checks = _get_check_states()
 	var settings_dict: Dictionary = {
+		"exporter": "LnzLive",
 		"swaps": swaps,
 		"checks": checks
 	}
 	var json_string: String = JSON.print(settings_dict, "  ")
-	var filename: String = "LnzLive_recolor_settings_" + str(OS.get_unix_time()) + ".json"
+	var filename: String = str("LnzLive_recolor_preset_", OS.get_unix_time(), ".json")
 	
 	if OS.has_feature("HTML5"):
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
@@ -489,7 +491,7 @@ func export_recolor_json() -> void:
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.current_file = filename
 		file_dialog.connect("file_selected", self, "_save_recolor_file")
-		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		file_dialog.connect("popup_hide", file_dialog, "free")
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
 
@@ -521,7 +523,7 @@ func _on_ImportPresetButton_pressed() -> void:
 		file_dialog.filters = ["*.json ; JSON Preset"]
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.connect("file_selected", self, "_load_recolor_file")
-		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		file_dialog.connect("popup_hide", file_dialog, "free")
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
 
@@ -538,6 +540,7 @@ func _save_recolor_file(path: String) -> void:
 	var swaps = _gather_swap_data()
 	var checks = _get_check_states()
 	var settings_dict: Dictionary = {
+		"exporter": "LnzLive",
 		"swaps": swaps,
 		"checks": checks
 	}
