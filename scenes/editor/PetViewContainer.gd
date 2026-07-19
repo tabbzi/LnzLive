@@ -762,43 +762,6 @@ func _draw() -> void:
 	# if reference_ball:
 	# 	_draw_axis_gizmos(reference_ball)
 
-func _exit_tree() -> void:
-	# TRYING TO CLEANUP MEMORYALLOCS ON EXIT
-	print("[INFO] PetViewContainer: Exiting tree, cleaning up resources...")
-
-	if is_instance_valid(hotkey_overlay_instance):
-		hotkey_overlay_instance.queue_free()
-		hotkey_overlay_instance = null
-	
-	if is_instance_valid(gizmo_3d_root):
-		if gizmo_3d_root.is_inside_tree():
-			gizmo_3d_root.queue_free()
-		gizmo_3d_root = null
-		gizmo_x = null
-		gizmo_y = null
-		gizmo_z = null
-	
-	if is_instance_valid(palette_viewer_instance):
-		palette_viewer_instance.queue_free()
-	if is_instance_valid(recolor_settings_instance):
-		recolor_settings_instance.queue_free()
-	if is_instance_valid(paintball_settings_instance):
-		paintball_settings_instance.queue_free()
-	if is_instance_valid(move_mode_settings_instance):
-		move_mode_settings_instance.queue_free()
-	if is_instance_valid(line_mode_settings_instance):
-		line_mode_settings_instance.queue_free()
-	if is_instance_valid(project_settings_instance):
-		project_settings_instance.queue_free()
-	if is_instance_valid(preset_settings_instance):
-		preset_settings_instance.queue_free()
-	if is_instance_valid(auto_paintballer_settings_instance):
-		auto_paintballer_settings_instance.queue_free()
-	if is_instance_valid(texture_editor_settings_instance):
-		texture_editor_settings_instance.queue_free()
-	if is_instance_valid(shader_settings_instance):
-		shader_settings_instance.queue_free()
-
 func _setup_3d_gizmos() -> void:
 	gizmo_3d_root = Spatial.new()
 	pet_node.add_child(gizmo_3d_root)
