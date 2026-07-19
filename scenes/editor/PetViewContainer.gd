@@ -2463,9 +2463,9 @@ func _restore_all_balls() -> void:
 	camera.cull_mask = 1048575
 
 	if is_instance_valid(_overlay_viewport_container):
-		_overlay_viewport_container.queue_free()
+		_overlay_viewport_container.free()
 	if is_instance_valid(_dimmer_rect):
-		_dimmer_rect.queue_free()
+		_dimmer_rect.free()
 
 func _create_overlay() -> void:
 	var scene_root: Node = tex.get_parent()

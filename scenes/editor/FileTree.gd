@@ -1341,7 +1341,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray) -> void:
 		var save_dialog: FileDialog = FileDialog.new()
 		
 		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
-		save_dialog.connect("popup_hide", save_dialog, "queue_free")
+		save_dialog.connect("popup_hide", save_dialog, "free")
 		
 		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
 		save_dialog.mode = FileDialog.MODE_SAVE_FILE
