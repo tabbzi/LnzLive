@@ -560,6 +560,518 @@ func test_lnz_parser_get_eyes():
 	assert_eq(parser.custom_eyes[12], 10, "Should explicitly map left iris to left eye (10).")
 	assert_eq(parser.custom_eyes[13], 11, "Should explicitly map right iris to right eye (11).")
 
+func test_lnz_get_color_info_override_balls():
+	# Verify that get_color_info_override correctly updates ball color properties.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Color Info]\n0 200 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Color Info", [0])
+	
+	parser.get_color_info_override(reader)
+	
+	assert_eq(parser.balls[0].color_index, 200, "Ball color_index should be updated to 200.")
+
+func test_lnz_get_color_info_override_addballs():
+	# Verify that get_color_info_override correctly updates addball color properties.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 1 0 0\n[Color Info]\n1 150 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Color Info", [0])
+	
+	parser.get_color_info_override(reader)
+	
+	assert_eq(parser.addballs[1].color_index, 150, "AddBall color_index should be updated to 150.")
+
+func test_lnz_get_color_info_override_nonexistent_ball():
+	# Verify that get_color_info_override silently ignores non-existent ball IDs.
+	var content = "[Color Info]\n999 200 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Color Info", [0])
+	
+	# Should not crash
+	parser.get_color_info_override(reader)
+	assert_false(parser.balls.has(999), "Non-existent ball should not be created.")
+
+func test_lnz_get_outline_color_override_balls():
+	# Verify that get_outline_color_override updates outline_color_index on balls.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Outline Color]\n0 50"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Outline Color", [0])
+	
+	parser.get_outline_color_override(reader)
+	
+	assert_eq(parser.balls[0].outline_color_index, 50, "Ball outline_color_index should be 50.")
+
+func test_lnz_get_outline_color_override_addballs():
+	# Verify that get_outline_color_override updates outline_color_index on addballs.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 1 0 0\n[Outline Color]\n1 75"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Outline Color", [0])
+	
+	parser.get_outline_color_override(reader)
+	
+	assert_eq(parser.addballs[1].outline_color_index, 75, "AddBall outline_color_index should be 75.")
+
+func test_lnz_get_fuzz_override_balls():
+	# Verify that get_fuzz_override updates fuzz on balls.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Fuzz]\n0 25"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Fuzz", [0])
+	
+	parser.get_fuzz_override(reader)
+	
+	assert_eq(parser.balls[0].fuzz, 25, "Ball fuzz should be updated to 25.")
+
+func test_lnz_get_fuzz_override_addballs():
+	# Verify that get_fuzz_override updates fuzz on addballs.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 1 0 0\n[Fuzz]\n1 30"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Fuzz", [0])
+	
+	parser.get_fuzz_override(reader)
+	
+	assert_eq(parser.addballs[1].fuzz, 30, "AddBall fuzz should be updated to 30.")
+
+func test_lnz_get_ball_size_override_balls():
+	# Verify that get_ball_size_override updates ball size.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Size Override]\n0 100"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Size Override", [0])
+	
+	parser.get_ball_size_override(reader)
+	
+	assert_eq(parser.balls[0].size, 100, "Ball size should be updated to 100.")
+
+func test_lnz_get_ball_size_override_addballs():
+	# Verify that get_ball_size_override updates addball size.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 1 0 0\n[Size Override]\n1 80"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Size Override", [0])
+	
+	parser.get_ball_size_override(reader)
+	
+	assert_eq(parser.addballs[1].size, 80, "AddBall size should be updated to 80.")
+
+func test_lnz_get_add_ball_override():
+	# Verify that get_add_ball_override updates addball position.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 1 0 0\n[Add Ball Override]\n1 200 50 30"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Add Ball Override", [0])
+	
+	parser.get_add_ball_override(reader)
+	
+	assert_eq(parser.addballs[1].position.x, 200, "AddBall X should be 200.")
+	assert_eq(parser.addballs[1].position.y, 50, "AddBall Y should be 50.")
+	assert_eq(parser.addballs[1].position.z, 30, "AddBall Z should be 30.")
+
+func test_lnz_get_eyelash_info():
+	# Verify that get_eyelash_info correctly parses eyelash data.
+	var content = "[Eyelash Info]\n10 20 30\n15\n50\n244"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Eyelash Info", [0])
+	
+	parser.get_eyelash_info(reader)
+	
+	assert_eq(parser.eyelash_lengths.size(), 3, "Should parse 3 eyelash lengths.")
+	assert_eq(parser.eyelash_lengths[0], 10, "First eyelash length should be 10.")
+	assert_eq(parser.eyelash_angle, 15, "Eyelash angle should be 15.")
+	assert_eq(parser.eyelash_spacing, 50, "Eyelash spacing should be 50.")
+	assert_eq(parser.eyelash_color, 244, "Eyelash color should be 244.")
+
+func test_lnz_get_eyelash_info_few_lines():
+	# Verify that get_eyelash_info handles fewer than 4 lines (defaults not applied by production code).
+	var content = "[Eyelash Info]\n10 20"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Eyelash Info", [0])
+	
+	parser.get_eyelash_info(reader)
+	
+	# Production code only applies defaults when raw_lines.size() >= 4
+	# So with < 4 lines, values remain at their initialized state
+	assert_eq(parser.eyelash_lengths.size(), 0, "Eyelash lengths should be empty with < 4 lines.")
+	assert_eq(parser.eyelash_angle, 0, "Angle should remain at default (0) with < 4 lines.")
+	assert_eq(parser.eyelash_spacing, 0, "Spacing should remain at default (0) with < 4 lines.")
+	assert_eq(parser.eyelash_color, -1, "Color should remain at default (-1) with < 4 lines.")
+
+func test_lnz_get_omissions():
+	# Verify that get_omissions correctly populates the omissions dictionary.
+	var content = "[Omissions]\n5\n10\n15"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Omissions", [0])
+	
+	parser.get_omissions(reader)
+	
+	assert_true(parser.omissions.has(5), "Ball 5 should be in omissions.")
+	assert_true(parser.omissions.has(10), "Ball 10 should be in omissions.")
+	assert_true(parser.omissions.has(15), "Ball 15 should be in omissions.")
+
+func test_lnz_get_z_shade_slope():
+	# Verify that get_z_shade_slope updates the slope value.
+	var content = "[Z Shade]\n150"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Z Shade", [0])
+	
+	parser.get_z_shade_slope(reader)
+	
+	assert_eq(parser.z_shade_slope, 150, "Z shade slope should be 150.")
+
+func test_lnz_get_z_shade_slope_empty():
+	# Verify that get_z_shade_slope does nothing with empty reader.
+	var content = "[Z Shade]"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Z Shade", [0])
+	
+	parser.get_z_shade_slope(reader)
+	
+	assert_eq(parser.z_shade_slope, 100, "Default z_shade_slope should remain 100.")
+
+func test_lnz_get_balls():
+	# Verify that get_balls correctly creates BallData objects.
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n20 0 0 0 0 60 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls.size(), 2, "Should parse 2 balls.")
+	assert_eq(parser.balls[0].size, 50, "First ball size should be 50.")
+	assert_eq(parser.balls[1].size, 60, "Second ball size should be 60.")
+
+func test_lnz_get_balls_empty():
+	# Verify that get_balls handles empty section.
+	var content = "[Ballz Info]"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls.size(), 0, "Empty section should produce no balls.")
+
+func test_lnz_get_addballs():
+	# Verify that get_addballs correctly creates AddBallData objects.
+	# Keys order: base, x, y, z, color, outline_color, speckle, fuzz, group, outline, size, body_area, add_group, texture, anchor_ball
+	var content = "[Ballz Info]\n10 0 0 0 0 50 0 0\n[Add Ball]\n1 100 10 0 0 0 0 0 0 0 30 1 5 0 0\n2 100 10 0 0 0 0 0 0 0 40 1 7 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	
+	parser.get_addballs(addball_reader)
+	
+	assert_eq(parser.addballs.size(), 2, "Should parse 2 addballs.")
+	# Addballs start at max_ball_num (balls.keys().max() + 1 = 1)
+	assert_eq(parser.addballs[1].size, 30, "First addball size should be 30.")
+	assert_eq(parser.addballs[1].add_group, 5, "First addball group should be 5.")
+	assert_eq(parser.addballs[2].add_group, 7, "Second addball group should be 7.")
+
+func test_lnz_get_lines():
+	# Verify that get_lines correctly creates LineData objects.
+	var content = "[Linez]\n1 2 0 100 50 60 100 100 -1 -1"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Linez", [0])
+	
+	parser.get_lines(reader)
+	
+	assert_eq(parser.lines.size(), 1, "Should parse 1 line.")
+	var line_data = parser.lines[0]
+	assert_eq(line_data.start, 1, "Line start should be 1.")
+	assert_eq(line_data.end, 2, "Line end should be 2.")
+	assert_eq(line_data.s_thick, 100, "Start thickness should be 100.")
+	assert_eq(line_data.l_color_index, 50, "Left color should be 50.")
+	assert_eq(line_data.r_color_index, 60, "Right color should be 60.")
+
+func test_lnz_get_lines_multiple():
+	# Verify that get_lines parses multiple lines correctly.
+	var content = "[Linez]\n1 2 0 100 50 60 100 100 -1 -1\n3 4 0 80 70 80 100 100 -1 -1"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Linez", [0])
+	
+	parser.get_lines(reader)
+	
+	assert_eq(parser.lines.size(), 2, "Should parse 2 lines.")
+
+func test_lnz_get_polygons():
+	# Verify that get_polygons correctly creates PolyData objects.
+	var content = "[Polygons]\n1 2 3 4 100 50 60 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Polygons", [0])
+	
+	parser.get_polygons(reader)
+	
+	assert_eq(parser.polygons.size(), 1, "Should parse 1 polygon.")
+	var poly = parser.polygons[0]
+	assert_eq(poly.ball1, 1, "First ball should be 1.")
+	assert_eq(poly.ball2, 2, "Second ball should be 2.")
+	assert_eq(poly.ball3, 3, "Third ball should be 3.")
+	assert_eq(poly.ball4, 4, "Fourth ball should be 4.")
+	assert_eq(poly.color, 100, "Color should be 100.")
+
+func test_lnz_get_polygons_multiple():
+	# Verify that get_polygons parses multiple polygons correctly.
+	var content = "[Polygons]\n1 2 3 4 100 50 60 0 0\n5 6 7 8 200 70 80 0 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Polygons", [0])
+	
+	parser.get_polygons(reader)
+	
+	assert_eq(parser.polygons.size(), 2, "Should parse 2 polygons.")
+
+func test_lnz_get_texture_list():
+	# Verify that get_texture_list correctly parses texture entries.
+	var content = "[Textures]\nres://textures/eye.png 0 256 256"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Textures", [0])
+	
+	parser.get_texture_list(reader)
+	
+	assert_eq(parser.texture_list.size(), 1, "Should parse 1 texture entry.")
+	assert_eq(parser.texture_list[0]["filename"], "eye.png", "Filename should be eye.png.")
+	assert_eq(str(parser.texture_list[0]["transparent_color"]), "0", "Transparent color should be '0'.")
+
+func test_lnz_get_texture_list_multiple():
+	# Verify that get_texture_list parses multiple entries.
+	var content = "[Textures]\nres://textures/eye.png 0 256 256\nres://textures/skin.png 253 512 512"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Textures", [0])
+	
+	parser.get_texture_list(reader)
+	
+	assert_eq(parser.texture_list.size(), 2, "Should parse 2 texture entries.")
+
+func test_lnz_get_palette():
+	# Verify that get_palette extracts the palette filename.
+	var content = "[Palette]\nmy_palette"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Palette", [0])
+	
+	parser.get_palette(reader)
+	
+	assert_eq(parser.palette, "my_palette.png", "Palette should have .png appended.")
+
+func test_lnz_get_palette_empty():
+	# Verify that get_palette returns null for empty palette section.
+	var content = "[Palette]"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Palette", [0])
+	
+	parser.get_palette(reader)
+	
+	assert_null(parser.palette, "Empty palette should be null.")
+
+func test_lnz_get_project_balls():
+	# Verify that get_project_balls correctly parses projection entries.
+	var content = "[Project]\n10 20 100"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Project", [0])
+	
+	parser.get_project_balls(reader)
+	
+	assert_eq(parser.project_ball.size(), 1, "Should parse 1 project entry.")
+	var proj = parser.project_ball[0]
+	assert_eq(proj["fixed_ball"], 10, "Fixed ball should be 10.")
+	assert_eq(proj["project_ball"], 20, "Project ball should be 20.")
+	assert_eq(proj["min_projection"], 50, "Min projection should be 100-50=50.")
+	assert_eq(proj["max_projection"], 150, "Max projection should be 100+50=150.")
+
+func test_lnz_get_no_texture_rotate():
+	# Verify that get_no_texture_rotate parses ball IDs and quadrant flags.
+	var content = "[No Texture Rotate]\n5 0\n10 1"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("No Texture Rotate", [0])
+	
+	parser.get_no_texture_rotate(reader)
+	
+	assert_true(5 in parser.no_texture_rotate, "Ball 5 should be in no_texture_rotate.")
+	assert_true(10 in parser.no_texture_rotate, "Ball 10 should be in no_texture_rotate.")
+	assert_true(10 in parser.quadrant_balls, "Ball 10 should be in quadrant_balls.")
+	assert_false(5 in parser.quadrant_balls, "Ball 5 should not be in quadrant_balls.")
+
+# ------------------------------------------------------------------------------
+# data_classes/*_data.gd (BallData, AddBallData, LineData, PaintBallData, PolyData)
+# ------------------------------------------------------------------------------
+
+func test_ball_data_constructor():
+	# Verify that BallData constructor initializes all properties correctly.
+	var bd = BallData.new(50, Vector3(1, 2, 3), 10, Vector3(0, 45, 0), 100, 50, 5, 10, 0.5, 1, 3)
+	
+	assert_eq(bd.size, 50, "BallData size should be 50.")
+	assert_eq(bd.position, Vector3(1, 2, 3), "BallData position should be Vector3(1,2,3).")
+	assert_eq(bd.ball_no, 10, "BallData ball_no should be 10.")
+	assert_almost_eq(bd.rotation.y, 45.0, 0.01, "BallData rotation Y should be 45.")
+	assert_eq(bd.color_index, 100, "BallData color_index should be 100.")
+	assert_eq(bd.outline_color_index, 50, "BallData outline_color_index should be 50.")
+	assert_eq(bd.outline, 5, "BallData outline should be 5.")
+	assert_eq(bd.fuzz, 10, "BallData fuzz should be 10.")
+	assert_almost_eq(bd.z_add, 0.5, 0.01, "BallData z_add should be 0.5.")
+	assert_eq(bd.group, 1, "BallData group should be 1.")
+	assert_eq(bd.texture_id, 3, "BallData texture_id should be 3.")
+
+func test_ball_data_defaults():
+	# Verify that BallData uses correct default values when not specified.
+	var bd = BallData.new(50, Vector3.ZERO, 0)
+	
+	assert_eq(bd.ball_no, 0, "Default ball_no should be 0.")
+	assert_almost_eq(bd.rotation.x, 0.0, 0.01, "Default rotation should be zero.")
+	assert_eq(bd.color_index, 0, "Default color_index should be 0.")
+	assert_eq(bd.outline, -1, "Default outline should be -1.")
+	assert_eq(bd.fuzz, 0, "Default fuzz should be 0.")
+	assert_eq(bd.group, -1, "Default group should be -1.")
+	assert_eq(bd.texture_id, -1, "Default texture_id should be -1.")
+
+func test_addball_data_constructor():
+	# Verify that AddBallData constructor initializes all properties correctly.
+	var abd = AddBallData.new(1, 2, 30, Vector3(1, 2, 3), 100, 50, 5, 10, 0.5, 2, 3, 4, 1, 5)
+	
+	assert_eq(abd.base, 1, "AddBallData base should be 1.")
+	assert_eq(abd.ball_no, 2, "AddBallData ball_no should be 2.")
+	assert_eq(abd.size, 30, "AddBallData size should be 30.")
+	assert_eq(abd.position, Vector3(1, 2, 3), "AddBallData position should be Vector3(1,2,3).")
+	assert_eq(abd.color_index, 100, "AddBallData color_index should be 100.")
+	assert_eq(abd.outline_color_index, 50, "AddBallData outline_color_index should be 50.")
+	assert_eq(abd.outline, 5, "AddBallData outline should be 5.")
+	assert_eq(abd.fuzz, 10, "AddBallData fuzz should be 10.")
+	assert_almost_eq(abd.z_add, 0.5, 0.01, "AddBallData z_add should be 0.5.")
+	assert_eq(abd.group, 2, "AddBallData group should be 2.")
+	assert_eq(abd.body_area, 3, "AddBallData body_area should be 3.")
+	assert_eq(abd.texture_id, 4, "AddBallData texture_id should be 4.")
+	assert_eq(abd.add_group, 1, "AddBallData add_group should be 1.")
+	assert_eq(abd.anchor_ball, 5, "AddBallData anchor_ball should be 5.")
+
+func test_addball_data_defaults():
+	# Verify that AddBallData uses correct default values when not specified.
+	var abd = AddBallData.new(1, 2, 30, Vector3.ZERO)
+	
+	assert_eq(abd.color_index, -1, "Default color_index should be -1.")
+	assert_eq(abd.outline_color_index, 0, "Default outline_color_index should be 0.")
+	assert_eq(abd.outline, -1, "Default outline should be -1.")
+	assert_eq(abd.fuzz, 0, "Default fuzz should be 0.")
+	assert_almost_eq(abd.z_add, 0.0, 0.01, "Default z_add should be 0.0.")
+	assert_eq(abd.group, -1, "Default group should be -1.")
+	assert_eq(abd.body_area, 1, "Default body_area should be 1.")
+	assert_eq(abd.texture_id, -1, "Default texture_id should be -1.")
+	assert_eq(abd.add_group, 0, "Default add_group should be 0.")
+	assert_eq(abd.anchor_ball, -1, "Default anchor_ball should be -1.")
+	
+func test_line_data_constructor():
+	# Verify that LineData constructor initializes all properties correctly.
+	var ld = LineData.new(5, 10, 80, 60, 5, 100, 50, 60, 3, 1)
+	
+	assert_eq(ld.start, 5, "LineData start should be 5.")
+	assert_eq(ld.end, 10, "LineData end should be 10.")
+	assert_eq(ld.s_thick, 80, "LineData start thickness should be 80.")
+	assert_eq(ld.e_thick, 60, "LineData end thickness should be 60.")
+	assert_eq(ld.fuzz, 5, "LineData fuzz should be 5.")
+	assert_eq(ld.color_index, 100, "LineData color should be 100.")
+	assert_eq(ld.l_color_index, 50, "LineData left color should be 50.")
+	assert_eq(ld.r_color_index, 60, "LineData right color should be 60.")
+	assert_eq(ld.full_outline, 3, "LineData full_outline should be 3.")
+	assert_eq(ld.draw_order, 1, "LineData draw_order should be 1.")
+
+func test_line_data_defaults():
+	# Verify that LineData uses correct default values.
+	var ld = LineData.new(5, 10)
+	
+	assert_eq(ld.s_thick, 100, "Default s_thick should be 100.")
+	assert_eq(ld.e_thick, 100, "Default e_thick should be 100.")
+	assert_eq(ld.fuzz, 0, "Default fuzz should be 0.")
+	assert_eq(ld.color_index, 0, "Default color should be 0.")
+	assert_eq(ld.full_outline, -1, "Default full_outline should be -1.")
+	assert_eq(ld.draw_order, -1, "Default draw_order should be -1.")
+
+func test_paintball_data_constructor():
+	# Verify that PaintBallData constructor initializes all properties correctly.
+	var pb = PaintBallData.new(5, 30, Vector3(1, 2, 3), 100, 50, 5, 10, 0.5, 3, 1, 2)
+	
+	assert_eq(pb.base, 5, "PaintBallData base should be 5.")
+	assert_eq(pb.size, 30, "PaintBallData size should be 30.")
+	assert_eq(pb.position, Vector3(1, 2, 3), "PaintBallData position should be Vector3(1,2,3).")
+	assert_almost_eq(pb.normalised_position.length(), 1.0, 0.01, "PaintBallData normalised_position should be unit length.")
+	assert_eq(pb.color_index, 100, "PaintBallData color should be 100.")
+	assert_eq(pb.outline_color_index, 50, "PaintBallData outline color should be 50.")
+	assert_eq(pb.outline, 5, "PaintBallData outline should be 5.")
+	assert_almost_eq(pb.z_add, 0.5, 0.01, "PaintBallData z_add should be 0.5.")
+	assert_eq(pb.texture_id, 3, "PaintBallData texture_id should be 3.")
+	assert_eq(pb.anchored, 1, "PaintBallData anchored should be 1.")
+	assert_eq(pb.group, 2, "PaintBallData group should be 2.")
+
+func test_paintball_data_defaults():
+	# Verify that PaintBallData uses correct default values.
+	var pb = PaintBallData.new(5, 30, Vector3.ZERO, 0, 0)
+	
+	assert_eq(pb.outline, -1, "Default outline should be -1.")
+	assert_eq(pb.fuzz, 0, "Default fuzz should be 0.")
+	assert_eq(pb.texture_id, -1, "Default texture_id should be -1.")
+	assert_eq(pb.anchored, 0, "Default anchored should be 0.")
+	assert_eq(pb.group, 0, "Default group should be 0.")
+
+func test_poly_data_constructor():
+	# Verify that PolyData constructor initializes all properties correctly.
+	var pd = PolyData.new(1, 2, 3, 4, 100, 50, 60, 5, 3)
+	
+	assert_eq(pd.ball1, 1, "PolyData ball1 should be 1.")
+	assert_eq(pd.ball2, 2, "PolyData ball2 should be 2.")
+	assert_eq(pd.ball3, 3, "PolyData ball3 should be 3.")
+	assert_eq(pd.ball4, 4, "PolyData ball4 should be 4.")
+	assert_eq(pd.color, 100, "PolyData color should be 100.")
+	assert_eq(pd.l_edge_color, 50, "PolyData left edge color should be 50.")
+	assert_eq(pd.r_edge_color, 60, "PolyData right edge color should be 60.")
+	assert_eq(pd.fuzz, 5, "PolyData fuzz should be 5.")
+	assert_eq(pd.texture_id, 3, "PolyData texture_id should be 3.")
+
 # ------------------------------------------------------------------------------
 # dog_generator.gd
 # ------------------------------------------------------------------------------
@@ -980,4 +1492,5 @@ func test_petview_freeline_paintball_interpolation():
 	assert_eq(calculated_diams[0], 10, "First step of freeline tapered size should match min parameter.")
 	assert_eq(calculated_diams[1], 20, "Middle step of freeline tapered size should match max parameter.")
 	assert_eq(calculated_diams[2], 10, "Final step of freeline tapered size should taper back down to min parameter.")
+
 
