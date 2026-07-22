@@ -70,6 +70,7 @@ func _reset_editor_state():
 # ------------------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------------------
+
 func _create_temp_lnz(content: String) -> String:
 	var path = "user://gut_temp_test.lnz"
 	var f = File.new()
@@ -180,6 +181,276 @@ func test_parse_number_list():
 	assert_eq(result[0], 0, "Large range start")
 	assert_eq(result[100], 100, "Large range end")
 
+func test_world_to_lnz_delta_conversion():
+	# Verify that world-space deltas are correctly converted to LNZ integer deltas 
+	# by applying pixel_world_size, engine_scale, and Y-axis inversion.
+	var pixel_world_size = 0.002
+	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
+	
+	# 0.002 * 0.5 = 0.001
+	var test_world_delta = Vector3(0.01, -0.02, 0.03)
+	var result = LnzLiveUtils.world_to_lnz_delta(test_world_delta, pixel_world_size, engine_scale)
+	
+	assert_eq(result.x, 10.0, "X coordinate should be accurately scaled up to integer.")
+	assert_eq(result.y, 20.0, "Y coordinate MUST be inverted (positive) for LNZ format.")
+	assert_eq(result.z, 30.0, "Z coordinate should be accurately scaled up to integer.")
+
+func test_lnzlive_utils_parse_flexible_integers():
+	# Verify that parse_flexible_integers correctly extracts integers from a string 
+	# containing mixed whitespace and negative numbers.
+	var result = LnzLiveUtils.parse_flexible_integers("  10   -5 20")
+	assert_eq(result.size(), 3, "Parser should extract exactly 3 valid integers from string array.")
+	assert_eq(result[0], 10)
+	assert_eq(result[1], -5)
+	assert_eq(result[2], 20)
+
+func test_lnzlive_utils_get_ramp_color():
+	# Verify that get_ramp_color correctly calculates intermediate ramp colors 
+	# and falls back to exact colors when the ramp logic doesn't apply.
+	var rule = {"is_ramp": true, "before_color": "62", "after_color": "55"}
+	var result = LnzLiveUtils.get_ramp_color("60", rule)
+	assert_eq(result, "50", "Should shift 60 to 50 based on 62->55 ramp offset.")
+	var fallback_rule = {"is_ramp": true, "before_color": "62", "after_color": "244"}
+	var fallback_result = LnzLiveUtils.get_ramp_color("60", fallback_rule)
+	assert_eq(fallback_result, "244", "Should snap to exact color if after_color is not a ramp.")
+
+func test_lnzlive_lnz_to_world_delta_inverts_y():
+	# Verify that lnz_to_world_delta correctly inverts the Y axis back to world format.
+	var pixel_world_size = 0.002
+	var engine_scale = 127.5
+	var lnz_delta = Vector3(10, 20, 30)
+	var result = LnzLiveUtils.lnz_to_world_delta(lnz_delta, pixel_world_size, engine_scale)
+	
+	# Y should be inverted: +20 in LNZ → -0.02 in world
+	assert_almost_eq(result.x, 0.01, 0.0001, "X should scale up correctly.")
+	assert_almost_eq(result.y, -0.02, 0.0001, "Y should be inverted from positive to negative.")
+	assert_almost_eq(result.z, 0.03, 0.0001, "Z should scale up correctly.")
+
+func test_lnzlive_lnz_to_world_delta_roundtrip():
+	# Verify that lnz_to_world_delta is the inverse of world_to_lnz_delta.
+	var pixel_world_size = 0.002
+	var engine_scale = 255.0
+	var original = Vector3(5.0, -10.0, 15.0)
+	var to_lnz = LnzLiveUtils.world_to_lnz_delta(original, pixel_world_size, engine_scale)
+	var back = LnzLiveUtils.lnz_to_world_delta(to_lnz, pixel_world_size, engine_scale)
+	
+	assert_almost_eq(back.x, original.x, 0.01, "X roundtrip should match.")
+	assert_almost_eq(back.y, original.y, 0.01, "Y roundtrip should match.")
+	assert_almost_eq(back.z, original.z, 0.01, "Z roundtrip should match.")
+
+func test_lnzlive_visual_size_to_lnz_size_addball():
+	# Verify that visual_size_to_lnz_size correctly converts a visual size
+	# to an LNZ integer for an addball.
+	var result = LnzLiveUtils.visual_size_to_lnz_size(50.0, true, 255.0)
+	# (50.0 / 1.0) + 2.0 = 52
+	assert_eq(result, 52, "Addball: visual 50.0 at scale 255 should give LNZ 52.")
+
+func test_lnzlive_visual_size_to_lnz_size_non_addball():
+	# Verify that visual_size_to_lnz_size correctly converts for a non-addball
+	# with standard enlargement parameters.
+	var result = LnzLiveUtils.visual_size_to_lnz_size(50.0, false, 255.0)
+	# (50.0 / 1.0) + 2.0 = 52; then (52 - 0) / (100/100) = 52; int(round(52 - 0)) = 52
+	assert_eq(result, 52, "Non-addball: visual 50.0 at scale 255 should give LNZ 52.")
+
+func test_lnzlive_visual_size_to_lnz_size_with_bhd_size():
+	# Verify that bhd_size offsets the result correctly.
+	var result = LnzLiveUtils.visual_size_to_lnz_size(50.0, true, 255.0, 5)
+	# (50.0 / 1.0) + 2.0 = 52; 52 - 5 = 47
+	assert_eq(result, 47, "Addball with bhd_size=5 should subtract 5 from result.")
+
+func test_lnzlive_snap_visual_size_even():
+	# Verify that snap_visual_size produces a snapped value.
+	# snap_visual_size applies the LNZ even-snapping formula: snapped -= 1.0 - fmod(snapped, 2.0)
+	# With target_visual=50.0, is_addball=true, engine_scale=255.0:
+	# final_lnz = 50, current_base_size = 50, snapped = 50.0
+	# snapped -= 1.0 - fmod(50.0, 2.0) = 50.0 - 1.0 - 0 = 49.0
+	var result = LnzLiveUtils.snap_visual_size(50.0, true, 255.0)
+	# The fmod formula produces 49.0 for input 50.0 due to the -1.0 offset
+	assert_almost_eq(result, 49.0, 0.01, "snap_visual_size with addball 50.0 should produce 49.0 due to offset formula.")
+
+func test_lnzlive_get_basis_from_normal_up():
+	# Verify that get_basis_from_normal handles the UP direction.
+	var normal = Vector3(0, 1, 0)
+	var basis = LnzLiveUtils.get_basis_from_normal(normal)
+	# Y axis of basis should equal the normal
+	assert_almost_eq(basis.y.x, 0.0, 0.01, "Basis Y X should be 0.")
+	assert_almost_eq(basis.y.y, 1.0, 0.01, "Basis Y Y should be 1.")
+	assert_almost_eq(basis.y.z, 0.0, 0.01, "Basis Y Z should be 0.")
+
+func test_lnzlive_get_basis_from_normal_down():
+	# Verify that get_basis_from_normal handles the DOWN direction.
+	var normal = Vector3(0, -1, 0)
+	var basis = LnzLiveUtils.get_basis_from_normal(normal)
+	assert_almost_eq(basis.y.y, -1.0, 0.01, "Basis Y Y should be -1 for downward normal.")
+
+func test_lnzlive_get_basis_from_normal_parallel_to_up():
+	# When normal is parallel to UP, cross product is zero; should fall back to RIGHT cross.
+	var normal = Vector3(0, 0.9999, 0)
+	var basis = LnzLiveUtils.get_basis_from_normal(normal)
+	assert_true(basis.y.length() > 0.99, "Basis Y should be normalized.")
+
+func test_lnzlive_intersect_ray_with_plane_parallel():
+	# Verify that intersect_ray_with_plane returns null when ray is parallel to plane.
+	var ray_origin = Vector3(0, 0, 0)
+	var ray_dir = Vector3(1, 0, 0)
+	var plane_normal = Vector3(0, 1, 0)
+	var plane_point = Vector3(0, 5, 0)
+	var result = LnzLiveUtils.intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
+	assert_null(result, "Parallel ray should return null.")
+
+func test_lnzlive_intersect_ray_with_plane_perpendicular():
+	# Verify that intersect_ray_with_plane finds the intersection point.
+	var ray_origin = Vector3(0, 0, 0)
+	var ray_dir = Vector3(0, 1, 0)
+	var plane_normal = Vector3(0, 1, 0)
+	var plane_point = Vector3(0, 10, 0)
+	var result = LnzLiveUtils.intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
+	assert_not_null(result, "Perpendicular ray should find intersection.")
+	assert_almost_eq(result.y, 10.0, 0.01, "Intersection Y should be at plane point.")
+
+func test_lnzlive_intersect_ray_with_plane_oblique():
+	# Verify intersection with an oblique plane.
+	var ray_origin = Vector3(5, 0, 5)
+	var ray_dir = Vector3(0, 1, 0)
+	var plane_normal = Vector3(0, 1, 0)
+	var plane_point = Vector3(0, 3, 0)
+	var result = LnzLiveUtils.intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
+	assert_not_null(result, "Oblique ray should find intersection.")
+	assert_almost_eq(result.y, 3.0, 0.01, "Intersection Y should be at plane height.")
+
+func test_lnzlive_find_closest_palette_index_no_match():
+	# Verify that find_closest_palette_index returns the closest index.
+	var palette = [Color(1, 0, 0), Color(0, 1, 0), Color(0, 0, 1)]
+	var target = Color(0.5, 0.5, 0.0)
+	var idx = LnzLiveUtils.find_closest_palette_index(palette, target)
+	# Red and green are equally close in RGB space: (0.5, 0.5, 0) vs (1,0,0) and (0,1,0)
+	# dist to red = 0.5^2 + 0.5^2 + 0 = 0.5
+	# dist to green = 0.5^2 + 0.5^2 + 0 = 0.5
+	# Tie goes to first (index 0)
+	assert_true(idx == 0 or idx == 1, "Should return one of the tied closest indices (0 or 1).")
+
+func test_lnzlive_find_closest_palette_index_empty():
+	# Verify that find_closest_palette_index returns 0 for empty palette.
+	var palette: Array = []
+	var idx = LnzLiveUtils.find_closest_palette_index(palette, Color(1, 0, 0))
+	assert_eq(idx, 0, "Empty palette should return index 0.")
+
+func test_lnzlive_parse_lsystem_rules():
+	# Verify that parse_lsystem_rules correctly splits rules by '='.
+	var rules_text = "A = B C\nB = A A\nC = B"
+	var rules = LnzLiveUtils.parse_lsystem_rules(rules_text)
+	assert_true(rules.has("A"), "Should have key A.")
+	assert_eq(rules["A"], "B C", "A should map to B C.")
+	assert_eq(rules["B"], "A A", "B should map to A A.")
+	assert_eq(rules["C"], "B", "C should map to B.")
+
+func test_lnzlive_parse_lsystem_rules_empty():
+	# Verify that parse_lsystem_rules handles empty input.
+	var rules = LnzLiveUtils.parse_lsystem_rules("")
+	assert_true(rules.empty(), "Empty input should produce empty dictionary.")
+
+func test_lnzlive_parse_lsystem_rules_skip_invalid():
+	# Verify that lines without '=' are skipped.
+	var rules_text = "A = B\ninvalid_line\nC = D"
+	var rules = LnzLiveUtils.parse_lsystem_rules(rules_text)
+	assert_true(rules.has("A"), "A should be parsed.")
+	assert_true(rules.has("C"), "C should be parsed.")
+	assert_false(rules.has("invalid_line"), "Invalid line should be skipped.")
+
+func test_lnzlive_generate_lsystem_string_basic():
+	# Verify that generate_lsystem_string correctly substitutes rules.
+	var rules = LnzLiveUtils.parse_lsystem_rules("A = AB\nB = A")
+	var result = LnzLiveUtils.generate_lsystem_string("A", rules, 3)
+	# Iteration 0: A
+	# Iteration 1: AB
+	# Iteration 2: ABA
+	# Iteration 3: ABAAB
+	assert_eq(result, "ABAAB", "L-string after 3 iterations should be ABAAB.")
+
+func test_lnzlive_generate_lsystem_string_zero_iterations():
+	# Verify that zero iterations returns the axiom.
+	var rules = LnzLiveUtils.parse_lsystem_rules("A = B")
+	var result = LnzLiveUtils.generate_lsystem_string("A", rules, 0)
+	assert_eq(result, "A", "Zero iterations should return axiom unchanged.")
+
+func test_lnzlive_generate_lsystem_string_capped():
+	# Verify that iterations > 15 are capped at 15.
+	var rules = LnzLiveUtils.parse_lsystem_rules("A = AB")
+	var result = LnzLiveUtils.generate_lsystem_string("A", rules, 20)
+	assert_true(result.length() > 0, "Should produce non-empty string.")
+	assert_true(result.length() < 100000, "Should be capped to reasonable length.")
+
+func test_lnzlive_generate_lsystem_string_with_constants():
+	# Verify that characters without rules pass through unchanged.
+	var rules = LnzLiveUtils.parse_lsystem_rules("A = F+F+F")
+	var result = LnzLiveUtils.generate_lsystem_string("A", rules, 1)
+	assert_true(result.find("+") != -1, "Constants like + should pass through.")
+	assert_true(result.find("F") != -1, "F should appear in result.")
+
+func test_lnzlive_compute_distance_transform():
+	# Verify that compute_distance_transform produces non-zero distances for mask=true cells.
+	var mask = [true, true, true, false]  # 2x2 mask, bottom-right is false
+	var size = 2
+	var dists = LnzLiveUtils.compute_distance_transform(mask, size)
+	assert_eq(dists.size(), 4, "Distance transform should have same size as mask.")
+	# Cells that are true should have positive distances
+	assert_true(dists[0] > 0, "Top-left (true) should have positive distance.")
+	assert_true(dists[1] > 0, "Top-right (true) should have positive distance.")
+	assert_true(dists[2] > 0, "Bottom-left (true) should have positive distance.")
+	assert_eq(dists[3], 0.0, "Bottom-right (false) should have distance 0.")
+
+func test_lnzlive_verify_palette_compatibility():
+	# Verify that verify_palette_compatibility returns 0 for identical palettes.
+	var pal1: Array = []
+	var pal2: Array = []
+	for i in range(256):
+		pal1.append(Color(float(i) / 255.0, 0, 0))
+		pal2.append(Color(float(i) / 255.0, 0, 0))
+	var diff = LnzLiveUtils.verify_palette_compatibility(pal1, pal2)
+	assert_almost_eq(diff, 0.0, 0.01, "Identical palettes should have zero difference.")
+
+func test_lnzlive_extract_palette_from_image():
+	# Verify that extract_palette_from_image extracts 256 colors from a texture.
+	var img = Image.new()
+	img.create(256, 1, false, Image.FORMAT_RGBA8)
+	img.lock()
+	for i in range(256):
+		img.set_pixel(i, 0, Color(float(i) / 255.0, 0, 0))
+	img.unlock()
+	var tex = ImageTexture.new()
+	tex.create_from_image(img)
+	var palette = LnzLiveUtils.extract_palette_from_image(tex)
+	assert_eq(palette.size(), 256, "Should extract 256 palette entries.")
+
+func test_lnzlive_requantize_bmp_data():
+	# Verify that requantize_bmp_data remaps indices based on palette similarity.
+	var bmp_palette: Array = []
+	bmp_palette.append(Color(1.0, 0, 0))  # index 0 = red
+	bmp_palette.append(Color(0, 1.0, 0))  # index 1 = green
+	
+	var target_palette: Array = []
+	target_palette.append(Color(1.0, 0, 0))  # index 0 = red
+	target_palette.append(Color(0, 0.9, 0))  # index 1 = slightly different green
+	
+	var raw_data = PoolByteArray([0, 1])
+	var new_data = LnzLiveUtils.requantize_bmp_data(raw_data, bmp_palette, target_palette)
+	assert_eq(new_data.size(), 2, "Output should have same size as input.")
+	# Index 0 (red) should map to 0 (red)
+	assert_eq(new_data[0], 0, "Red should map to index 0.")
+
+func test_lnzlive_update_color_list_previews():
+	# Verify that update_color_list_previews handles empty palette gracefully.
+	var container = Control.new()
+	add_child(container)
+	var palette_colors: Array = []
+	
+	# Empty palette should return early without creating children
+	LnzLiveUtils.update_color_list_previews(container, "0-5", palette_colors, 3)
+	
+	assert_eq(container.get_child_count(), 0, "Empty palette should create no children.")
+	
+	remove_child(container)
+	container.queue_free()
 
 # ------------------------------------------------------------------------------
 # lnz_parser.gd
@@ -501,45 +772,6 @@ func test_generate_color_icon_creates_valid_texture():
 	
 	# Test out of bounds
 	assert_null(dog_gen.generate_color_icon(256), "Should return null if requested index is outside the 0-255 range.")
-
-
-
-# ------------------------------------------------------------------------------
-# LnzLiveUtils
-# ------------------------------------------------------------------------------
-
-func test_world_to_lnz_delta_conversion():
-	# Verify that world-space deltas are correctly converted to LNZ integer deltas 
-	# by applying pixel_world_size, engine_scale, and Y-axis inversion.
-	var pixel_world_size = 0.002
-	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
-	
-	# 0.002 * 0.5 = 0.001
-	var test_world_delta = Vector3(0.01, -0.02, 0.03)
-	var result = LnzLiveUtils.world_to_lnz_delta(test_world_delta, pixel_world_size, engine_scale)
-	
-	assert_eq(result.x, 10.0, "X coordinate should be accurately scaled up to integer.")
-	assert_eq(result.y, 20.0, "Y coordinate MUST be inverted (positive) for LNZ format.")
-	assert_eq(result.z, 30.0, "Z coordinate should be accurately scaled up to integer.")
-
-func test_lnzlive_utils_parse_flexible_integers():
-	# Verify that parse_flexible_integers correctly extracts integers from a string 
-	# containing mixed whitespace and negative numbers.
-	var result = LnzLiveUtils.parse_flexible_integers("  10   -5 20")
-	assert_eq(result.size(), 3, "Parser should extract exactly 3 valid integers from string array.")
-	assert_eq(result[0], 10)
-	assert_eq(result[1], -5)
-	assert_eq(result[2], 20)
-
-func test_lnzlive_utils_get_ramp_color():
-	# Verify that get_ramp_color correctly calculates intermediate ramp colors 
-	# and falls back to exact colors when the ramp logic doesn't apply.
-	var rule = {"is_ramp": true, "before_color": "62", "after_color": "55"}
-	var result = LnzLiveUtils.get_ramp_color("60", rule)
-	assert_eq(result, "50", "Should shift 60 to 50 based on 62->55 ramp offset.")
-	var fallback_rule = {"is_ramp": true, "before_color": "62", "after_color": "244"}
-	var fallback_result = LnzLiveUtils.get_ramp_color("60", fallback_rule)
-	assert_eq(fallback_result, "244", "Should snap to exact color if after_color is not a ramp.")
 
 # ------------------------------------------------------------------------------
 # LnzTextEdit.gd

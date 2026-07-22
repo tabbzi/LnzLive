@@ -427,18 +427,6 @@ static func compute_distance_transform(mask: Array, size: int) -> Array:
 		dists[i] = min_d
 	return dists
 
-static func clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float) -> int:
-	var cleared: int = 0
-	for y in range(size):
-		for x in range(size):
-			var idx: int = y * size + x
-			if mask[idx]:
-				var d: float = sqrt(pow(x - cx, 2) + pow(y - cy, 2))
-				if d <= radius:
-					mask[idx] = false
-					cleared += 1
-	return cleared
-
 static func verify_palette_compatibility(bmp_palette: Array, palette: Array) -> float:
 	var total_diff: float = 0.0
 	var samples: int = 0
