@@ -2568,6 +2568,9 @@ func apply_batch_moves(pending_moves: Dictionary):
 	
 	save_backup()
 	
+	var head_id = KeyBallsData.get_ball_id_by_name("head")
+	var head_group = KeyBallsData.get_group_balls("Head")
+	
 	var size_changes = {}
 	var paintball_transforms = {}
 
@@ -2615,62 +2618,100 @@ func apply_batch_moves(pending_moves: Dictionary):
 	var add_sec = search(add_ball_section_tag, 0, 0, 0)
 	var add_start = -1
 	var add_end = -1
-	if !add_sec.empty():
+	if not add_sec.empty():
 		add_start = add_sec[SEARCH_RESULT_LINE] + 1
 		add_end = search("[", 0, add_start, 0)[SEARCH_RESULT_LINE]
 		if add_end == -1: add_end = get_line_count()
 	
+	var old_anchor_lines: Array = []
+	for ball_no in pending_moves.keys():
+		if ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		var data = pending_moves[ball_no]
+		var world_delta = data.new_pos - data.orig_pos
+		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
+		for i in range(move_start, move_end):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"): continue
+			var parts = split_line(raw)
+			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+				var ny = int(round(parts[2].to_float() + lnz_delta.y))
+				var nz = int(round(parts[3].to_float() + lnz_delta.z))
+				if head_group.has(ball_no) and head_id != -1 and parts.size() >= 5 and (abs(ny) > 25 or abs(nz) > 25):
+					old_anchor_lines.append({line_idx = i, old_text = get_line(i).strip_edges()})
+				break
+	
+	if not old_anchor_lines.empty():
+		var comment_block = "; OLD [Move] entries before head group move\n"
+		for entry in old_anchor_lines:
+			comment_block += "; " + entry.old_text + " ; OLD group head move\n"
+		_insert_text_at_cursor_at_line(move_start, comment_block)
+		move_start += comment_block.split("\n").size() - 1
+		move_end += comment_block.split("\n").size() - 1
+	
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
-		var orig_pos = data.orig_pos
-		var final_pos = data.new_pos
-		var world_delta = final_pos - orig_pos
-
+		var world_delta = data.new_pos - data.orig_pos
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 		
 		if ball_no < KeyBallsData.max_base_ball_num:
 			var delim = _detect_delimiter(move_start, move_end)
 			var updated = false
-			var head_id = KeyBallsData.get_ball_id_by_name("head")
-			var head_group = KeyBallsData.get_group_balls("Head")
+			var insert_new_line = false
+			var new_parts = []
 			
-			for i in range(move_start, move_end):
-				var raw = get_line(i).strip_edges()
-				if raw == "" or raw.begins_with(";"): continue
-				var parts = split_line(raw)
-				if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
-					if not parts[1].is_valid_float() or not parts[2].is_valid_float() or not parts[3].is_valid_float():
-						print("[WARNING] LnzTextEdit: Skipping invalid move line: " + raw)
-						continue
-					var nx = int(round(parts[1].to_float() + lnz_delta.x))
-					var ny = int(round(parts[2].to_float() + lnz_delta.y))
-					var nz = int(round(parts[3].to_float() + lnz_delta.z))
-					
-					parts[1] = str(nx)
-					parts[2] = str(ny)
-					parts[3] = str(nz)
-					
-					if head_group.has(ball_no) and head_id != -1:
-						if parts.size() < 5:
-							if abs(ny) > 25 or abs(nz) > 25:
-								if parts.size() < 5: parts.resize(5)
-								parts[4] = str(head_id)
-					
-					set_line(i, _join_array(parts, delim))
-					updated = true
+			var had_old_anchor = false
+			var old_parts_check = []
+			for entry in old_anchor_lines:
+				old_parts_check = split_line(entry.old_text)
+				if old_parts_check.size() >= 1 and old_parts_check[0].is_valid_integer() and old_parts_check[0].to_int() == ball_no:
+					had_old_anchor = true
 					break
-					
-			if !updated:
-				var nx = int(round(lnz_delta.x))
-				var ny = int(round(lnz_delta.y))
-				var nz = int(round(lnz_delta.z))
-				var parts = [str(ball_no), str(nx), str(ny), str(nz)]
-				
-				if head_group.has(ball_no) and head_id != -1:
-					if abs(ny) > 25 or abs(nz) > 25:
-						parts.append(str(head_id))
-				
-				var line_txt = _join_array(parts, delim)
+			
+			var nx = int(round(lnz_delta.x))
+			var ny = int(round(lnz_delta.y))
+			var nz = int(round(lnz_delta.z))
+			
+			if had_old_anchor:
+				# Old anchor commented out; insert new line with head anchor using old coordinates + delta
+				nx = int(round(old_parts_check[1].to_float() + lnz_delta.x))
+				ny = int(round(old_parts_check[2].to_float() + lnz_delta.y))
+				nz = int(round(old_parts_check[3].to_float() + lnz_delta.z))
+				new_parts = [str(ball_no), str(nx), str(ny), str(nz), str(head_id)]
+				insert_new_line = true
+			else:
+				# Find and update active line
+				for i in range(move_start, move_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					var parts = split_line(raw)
+					if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+						if not parts[1].is_valid_float() or not parts[2].is_valid_float() or not parts[3].is_valid_float():
+							print("[WARNING] LnzTextEdit: Skipping invalid move line: " + raw)
+							continue
+						
+						parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+						parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+						parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+						
+						if head_group.has(ball_no) and head_id != -1:
+							if abs(parts[2].to_float()) > 25 or abs(parts[3].to_float()) > 25:
+								parts.resize(5)
+								parts[4] = str(head_id)
+						
+						set_line(i, _join_array(parts, delim))
+						updated = true
+						break
+						
+				if not updated:
+					# Ball wasn't in move section at all; prep new line
+					new_parts = [str(ball_no), str(nx), str(ny), str(nz)]
+					if head_group.has(ball_no) and head_id != -1 and (abs(ny) > 25 or abs(nz) > 25):
+						new_parts.append(str(head_id))
+					insert_new_line = true
+			
+			if insert_new_line:
+				var line_txt = _join_array(new_parts, delim)
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 				move_end += 1
@@ -2688,21 +2729,20 @@ func apply_batch_moves(pending_moves: Dictionary):
 					if count == idx:
 						var parts = split_line(raw)
 						if parts.size() >= 4:
+							var applied_rel = false
 							var moved_ball_node = pet_node.ball_map.get(ball_no)
+							
 							if is_instance_valid(moved_ball_node) and "base_ball_no" in moved_ball_node:
-								var base_ball_no = moved_ball_node.base_ball_no
-								var base_ball_node = pet_node.ball_map.get(base_ball_no)
+								var base_ball_node = pet_node.ball_map.get(moved_ball_node.base_ball_no)
 								if is_instance_valid(base_ball_node):
 									var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
 									var new_rel = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 									parts[1] = str(int(round(new_rel.x)))
 									parts[2] = str(int(round(new_rel.y)))
 									parts[3] = str(int(round(new_rel.z)))
-								else:
-									parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
-									parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
-									parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
-							else:
+									applied_rel = true
+
+							if not applied_rel:
 								parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
 								parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
 								parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
