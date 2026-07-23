@@ -1050,9 +1050,13 @@ func export_autopaintballer_json() -> void:
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.current_file = filename
 		file_dialog.connect("file_selected", self, "_save_settings_file")
-		file_dialog.connect("popup_hide", file_dialog, "free")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
+
+func _on_file_dialog_closed(dialog: FileDialog) -> void:
+	if is_instance_valid(dialog):
+		dialog.queue_free()
 
 func _save_settings_file(path: String) -> void:
 	var settings_dict: Dictionary = get_properties()
@@ -1091,7 +1095,7 @@ func _on_ImportPresetButton_pressed() -> void:
 		file_dialog.filters = ["*.json ; JSON Preset"]
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.connect("file_selected", self, "_load_preset_file")
-		file_dialog.connect("popup_hide", file_dialog, "free")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
 

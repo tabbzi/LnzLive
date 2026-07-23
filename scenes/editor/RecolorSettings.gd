@@ -491,7 +491,7 @@ func export_recolor_json() -> void:
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.current_file = filename
 		file_dialog.connect("file_selected", self, "_save_recolor_file")
-		file_dialog.connect("popup_hide", file_dialog, "free")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
 
@@ -523,7 +523,7 @@ func _on_ImportPresetButton_pressed() -> void:
 		file_dialog.filters = ["*.json ; JSON Preset"]
 		file_dialog.rect_min_size = Vector2(400, 400)
 		file_dialog.connect("file_selected", self, "_load_recolor_file")
-		file_dialog.connect("popup_hide", file_dialog, "free")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
 		get_tree().root.add_child(file_dialog)
 		file_dialog.popup_centered_ratio(0.6)
 
@@ -535,6 +535,10 @@ func _on_web_import_completed(args: Array) -> void:
 		_apply_swap_data(json_res.result)
 	else:
 		print("[ERROR] RecolorSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
+
+func _on_file_dialog_closed(dialog: FileDialog) -> void:
+	if is_instance_valid(dialog):
+		dialog.queue_free()
 
 func _save_recolor_file(path: String) -> void:
 	var swaps = _gather_swap_data()
