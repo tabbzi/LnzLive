@@ -2954,27 +2954,41 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	select_ball(section, ball_no, is_addball, max_addball_no)
 
 func select_ball(section, ball_no, is_addball, max_addball_no):
-	var actual_start_point
+	var actual_start_point = -1
 	var current_line = cursor_get_line()
-
+	var target_section_name = ""
+	
 	if section == Section.Section.BALL:
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+			target_section_name = "[Add Ball]"
 		else:
 			actual_start_point = find_line_in_ball_section(ball_no)
+			target_section_name = "[Ballz Info]"
 	elif section == Section.Section.MOVE:
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+			target_section_name = "[Add Ball]"
 		else:
 			actual_start_point = find_line_in_move_section(ball_no, current_line)
+			target_section_name = "[Move]"
 	elif section == Section.Section.PROJECT:
 		actual_start_point = find_line_in_project_section(ball_no, current_line)
+		target_section_name = "[Project Ball]"
 	elif section == Section.Section.LINE:
 		actual_start_point = find_line_in_linez_section(ball_no, current_line)
-
+		target_section_name = "[Linez]"
+	
 	if actual_start_point == -1:
-		return
-
+		if target_section_name != "":
+			var bounds = get_section_bounds(target_section_name)
+			if not bounds.empty() and bounds.has("header"):
+				actual_start_point = bounds.header
+			else:
+				return
+		else:
+			return
+		
 	cursor_set_line(actual_start_point)
 	cursor_set_column(0)
 	center_viewport_to_cursor()

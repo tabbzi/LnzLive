@@ -1717,8 +1717,14 @@ func _gui_input(event: InputEvent) -> void:
 		if result:
 			ball_label.show()
 			deal_with_last_selected()
-			result.collider.get_parent()._on_Area_mouse_entered()
-			last_selected = result.collider.get_parent()
+			
+			var hit_ball = result.collider.get_parent()
+			
+			if hit_ball.has_method("set_select_mode_active"):
+				hit_ball.select_mode_active = true
+				
+			hit_ball._on_Area_mouse_entered()
+			last_selected = hit_ball
 		else:
 			deal_with_last_selected()
 			last_selected = null
@@ -2370,6 +2376,9 @@ func _cycle_nearby_ballz() -> void:
 
 	if _nearby_balls_cache.size() > 0:
 		var target_ball: Spatial = _nearby_balls_cache[_current_tab_index]
+
+		if selecting_on and target_ball.has_method("set_select_mode_active"):
+			target_ball.select_mode_active = true
 
 		# Set new selection state (updates last_selected)
 		last_selected = target_ball
