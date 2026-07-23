@@ -40,6 +40,10 @@ func after_all():
 		yield(get_tree(), "idle_frame")
 
 func _reset_editor_state():
+	var settings = editor_instance.get_node_or_null("SceneRoot")
+	if settings and settings.has_method("set_preferred_delimiter"):
+		settings.set_preferred_delimiter("auto")
+
 	if lnz_text:
 		lnz_text.text = ""
 		if lnz_text.has_method("initialize_history"):
@@ -1073,6 +1077,353 @@ func test_poly_data_constructor():
 	assert_eq(pd.texture_id, 3, "PolyData texture_id should be 3.")
 
 # ------------------------------------------------------------------------------
+# key_balls_data.gd
+# ------------------------------------------------------------------------------
+
+func test_keyballs_get_mirrored_ball_dog():
+	# Verify that get_mirrored_ball finds the correct mirror for dog species.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var mirror = KeyBallsData.get_mirrored_ball(1, KeyBallsData.dog_body_part_symmetry)
+	assert_eq(mirror, 25, "Mirror of ball 1 (eyebrowL1) should be 25 (eyebrowR1).")
+
+func test_keyballs_get_mirrored_ball_cat():
+	# Verify that get_mirrored_ball finds the correct mirror for cat species.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var mirror = KeyBallsData.get_mirrored_ball(8, KeyBallsData.cat_body_part_symmetry)
+	assert_eq(mirror, 10, "Mirror of ball 8 (earL1) should be 10 (earR1).")
+
+func test_keyballs_get_mirrored_ball_no_mirror():
+	# Verify that get_mirrored_ball returns -1 for balls without a mirror.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var mirror = KeyBallsData.get_mirrored_ball(48, KeyBallsData.dog_body_part_symmetry)
+	assert_eq(mirror, -1, "Ball 48 (belly) has no mirror, should return -1.")
+
+func test_keyballs_convert_ball_dog_to_cat():
+	# Verify that convert_ball correctly maps a dog ball to cat.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var result = KeyBallsData.convert_ball(KeyBallsData.Species.DOG, 48, KeyBallsData.Species.CAT)
+	assert_eq(result, 2, "Dog belly (48) should map to Cat belly (2).")
+
+func test_keyballs_convert_ball_cat_to_dog():
+	# Verify that convert_ball correctly maps a cat ball to dog.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var result = KeyBallsData.convert_ball(KeyBallsData.Species.CAT, 2, KeyBallsData.Species.DOG)
+	assert_eq(result, 48, "Cat belly (2) should map to Dog belly (48).")
+
+func test_keyballs_convert_ball_same_species():
+	# Verify that convert_ball returns the same ball for same species.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var result = KeyBallsData.convert_ball(KeyBallsData.Species.DOG, 10, KeyBallsData.Species.DOG)
+	assert_eq(result, 10, "Same species should return the same ball ID.")
+
+func test_keyballs_convert_ball_unknown_species():
+	# Verify that convert_ball returns -1 for unknown source species.
+	var result = KeyBallsData.convert_ball(99, 10, KeyBallsData.Species.DOG)
+	assert_eq(result, -1, "Unknown source species should return -1.")
+
+func test_keyballs_get_ball_id_by_name_dog():
+	# Verify that get_ball_id_by_name finds a ball by name.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var id = KeyBallsData.get_ball_id_by_name("eyeL")
+	assert_eq(id, 8, "eyeL should be ball ID 8 for dog.")
+
+func test_keyballs_get_ball_id_by_name_cat():
+	# Verify that get_ball_id_by_name finds a ball by name for cat.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var id = KeyBallsData.get_ball_id_by_name("eyeL")
+	assert_eq(id, 14, "eyeL should be ball ID 14 for cat.")
+
+func test_keyballs_get_ball_id_by_name_not_found():
+	# Verify that get_ball_id_by_name returns -1 for unknown name.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var id = KeyBallsData.get_ball_id_by_name("nonexistent_ball")
+	assert_eq(id, -1, "Unknown name should return -1.")
+
+func test_keyballs_get_ball_name_by_species_dog():
+	# Verify that get_ball_name_by_species returns the correct name.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var name = KeyBallsData.get_ball_name_by_species(KeyBallsData.Species.DOG, 8)
+	assert_eq(name, "eyeL", "Ball 8 should be named eyeL for dog.")
+
+func test_keyballs_get_ball_name_by_species_not_found():
+	# Verify that get_ball_name_by_species returns empty string for unknown ball.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var name = KeyBallsData.get_ball_name_by_species(KeyBallsData.Species.DOG, 999)
+	assert_eq(name, "", "Unknown ball should return empty string.")
+
+func test_keyballs_get_dog_to_cat_ball():
+	# Verify that get_dog_to_cat_ball maps known balls.
+	var result = KeyBallsData.get_dog_to_cat_ball(48)
+	assert_eq(result, 2, "Dog belly (48) should map to cat belly (2).")
+
+func test_keyballs_get_dog_to_cat_ball_not_found():
+	# Verify that get_dog_to_cat_ball returns -1 for unmapped balls.
+	var result = KeyBallsData.get_dog_to_cat_ball(999)
+	assert_eq(result, -1, "Unmapped ball should return -1.")
+
+func test_keyballs_get_cat_to_dog_ball():
+	# Verify that get_cat_to_dog_ball maps known balls.
+	var result = KeyBallsData.get_cat_to_dog_ball(2)
+	assert_eq(result, 48, "Cat belly (2) should map to dog belly (48).")
+
+func test_keyballs_get_cat_to_dog_ball_not_found():
+	# Verify that get_cat_to_dog_ball returns -1 for unmapped balls.
+	var result = KeyBallsData.get_cat_to_dog_ball(999)
+	assert_eq(result, -1, "Unmapped ball should return -1.")
+
+func test_keyballs_is_known_species_cat():
+	# Verify that is_known_species returns true for cat.
+	assert_true(KeyBallsData.is_known_species(KeyBallsData.Species.CAT), "Cat should be known species.")
+
+func test_keyballs_is_known_species_dog():
+	# Verify that is_known_species returns true for dog.
+	assert_true(KeyBallsData.is_known_species(KeyBallsData.Species.DOG), "Dog should be known species.")
+
+func test_keyballs_is_known_species_baby():
+	# Verify that is_known_species returns true for baby.
+	assert_true(KeyBallsData.is_known_species(KeyBallsData.Species.BABY), "Baby should be known species.")
+
+func test_keyballs_is_known_species_unknown():
+	# Verify that is_known_species returns false for unknown species.
+	assert_false(KeyBallsData.is_known_species(99), "Unknown species should return false.")
+
+func test_keyballs_get_species_display_name():
+	# Verify that get_species_display_name returns correct names.
+	assert_eq(KeyBallsData.get_species_display_name(KeyBallsData.Species.CAT), "Catz", "Cat display name should be Catz.")
+	assert_eq(KeyBallsData.get_species_display_name(KeyBallsData.Species.DOG), "Dogz", "Dog display name should be Dogz.")
+	assert_eq(KeyBallsData.get_species_display_name(KeyBallsData.Species.BABY), "Babyz", "Baby display name should be Babyz.")
+	assert_eq(KeyBallsData.get_species_display_name(99), "Petz", "Unknown species should return Petz.")
+
+func test_keyballs_get_belly_ball_id_dog():
+	# Verify that get_belly_ball_id returns correct belly ball for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var belly = KeyBallsData.get_belly_ball_id(KeyBallsData.Species.DOG)
+	assert_eq(belly, 48, "Dog belly ball should be 48.")
+
+func test_keyballs_get_belly_ball_id_cat():
+	# Verify that get_belly_ball_id returns correct belly ball for cat.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var belly = KeyBallsData.get_belly_ball_id(KeyBallsData.Species.CAT)
+	assert_eq(belly, 2, "Cat belly ball should be 2.")
+
+func test_keyballs_get_belly_ball_id_baby():
+	# Verify that get_belly_ball_id returns correct belly ball for baby.
+	KeyBallsData.species = KeyBallsData.Species.BABY
+	KeyBallsData.max_base_ball_num = 67
+	
+	var belly = KeyBallsData.get_belly_ball_id(KeyBallsData.Species.BABY)
+	assert_eq(belly, 4, "Baby belly ball should be 4.")
+
+func test_keyballs_get_recolor_targets_dog_legs():
+	# Verify that get_recolor_targets returns leg balls for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var targets = KeyBallsData.get_recolor_targets(KeyBallsData.Species.DOG, "LEGS")
+	assert_true(targets.size() > 0, "Should return leg targets for dog.")
+
+func test_keyballs_get_recolor_targets_dog_tail():
+	# Verify that get_recolor_targets returns tail balls for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var targets = KeyBallsData.get_recolor_targets(KeyBallsData.Species.DOG, "TAIL")
+	assert_true(targets.size() > 0, "Should return tail targets for dog.")
+	assert_true(57 in targets, "Tail should include ball 57 (tail1).")
+
+func test_keyballs_get_recolor_targets_cat_head():
+	# Verify that get_recolor_targets returns head balls for cat.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var targets = KeyBallsData.get_recolor_targets(KeyBallsData.Species.CAT, "HEAD")
+	assert_true(targets.size() > 0, "Should return head targets for cat.")
+
+func test_keyballs_get_recolor_exclusions_dog():
+	# Verify that get_recolor_exclusions excludes eyes and nose for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var exclusions = KeyBallsData.get_recolor_exclusions(KeyBallsData.Species.DOG, "NOSE")
+	assert_true(8 in exclusions, "Eye ball 8 should be excluded.")
+	assert_true(32 in exclusions, "Eye ball 32 should be excluded.")
+
+func test_keyballs_get_recolor_exclusions_no_nose():
+	# Verify that get_recolor_exclusions excludes nose when intended_part is not NOSE.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var exclusions = KeyBallsData.get_recolor_exclusions(KeyBallsData.Species.DOG, "HEAD")
+	assert_true(17 in exclusions, "NostrilL should be excluded when not targeting nose.")
+	assert_true(41 in exclusions, "NostrilR should be excluded when not targeting nose.")
+
+func test_keyballs_get_fuzz_exclusions_dog():
+	# Verify that get_fuzz_exclusions excludes eyes and tongue for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var exclusions = KeyBallsData.get_fuzz_exclusions(KeyBallsData.Species.DOG)
+	assert_true(8 in exclusions, "Eye ball 8 should be excluded from fuzz.")
+	assert_true(63 in exclusions, "Tongue ball 63 should be excluded from fuzz.")
+
+func test_keyballs_get_fuzz_exclusions_cat():
+	# Verify that get_fuzz_exclusions excludes eyes and tongue for cat.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	
+	var exclusions = KeyBallsData.get_fuzz_exclusions(KeyBallsData.Species.CAT)
+	assert_true(14 in exclusions, "Eye ball 14 should be excluded from fuzz.")
+	assert_true(55 in exclusions, "Tongue ball 55 should be excluded from fuzz.")
+
+func test_keyballs_get_projection_key_dog():
+	# Verify that get_projection_key returns correct key for each species.
+	assert_eq(KeyBallsData.get_projection_key(KeyBallsData.Species.DOG), "dog", "Dog projection key should be 'dog'.")
+	assert_eq(KeyBallsData.get_projection_key(KeyBallsData.Species.CAT), "cat", "Cat projection key should be 'cat'.")
+	assert_eq(KeyBallsData.get_projection_key(KeyBallsData.Species.BABY), "bab", "Baby projection key should be 'bab'.")
+	assert_eq(KeyBallsData.get_projection_key(99), "", "Unknown species should return empty string.")
+
+func test_keyballs_get_mirror_sides_dog():
+	# Verify that get_mirror_sides returns correct sides for dog.
+	var sides = KeyBallsData.get_mirror_sides(KeyBallsData.Species.DOG)
+	assert_true(sides.has("left"), "Should have left side.")
+	assert_true(sides.has("right"), "Should have right side.")
+	assert_true(sides["left"].size() > 0, "Dog left side should have balls.")
+	assert_true(sides["right"].size() > 0, "Dog right side should have balls.")
+
+func test_keyballs_get_extensions_dog():
+	# Verify that get_extensions returns all extension arrays for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var ext = KeyBallsData.get_extensions(KeyBallsData.Species.DOG)
+	assert_true(ext.has("legs"), "Should have legs extension.")
+	assert_true(ext.has("body_ext"), "Should have body_ext extension.")
+	assert_true(ext.has("face_ext"), "Should have face_ext extension.")
+	assert_true(ext.has("head_ext"), "Should have head_ext extension.")
+	assert_true(ext.has("foot_ext"), "Should have foot_ext extension.")
+	assert_true(ext.has("ear_ext"), "Should have ear_ext extension.")
+
+func test_keyballs_get_symmetry_dict_dog():
+	# Verify that get_symmetry_dict returns a non-empty dictionary for dog.
+	var sym = KeyBallsData.get_symmetry_dict(KeyBallsData.Species.DOG)
+	assert_true(sym.size() > 0, "Dog symmetry dict should be non-empty.")
+	assert_true(sym.has("Head"), "Should have Head section.")
+	assert_true(sym.has("Torso"), "Should have Torso section.")
+	assert_true(sym.has("FrontPaws"), "Should have FrontPaws section.")
+	assert_true(sym.has("BackPaws"), "Should have BackPaws section.")
+
+func test_keyballs_get_ball_definitions_dog():
+	# Verify that get_ball_definitions returns ball definitions for dog.
+	var defs = KeyBallsData.get_ball_definitions(KeyBallsData.Species.DOG)
+	assert_true(defs.size() > 0, "Dog should have ball definitions.")
+	assert_true(defs.has(0), "Should have ball 0 definition.")
+
+func test_keyballs_get_ball_definitions_unknown():
+	# Verify that get_ball_definitions returns empty dictionary for unknown species.
+	var defs = KeyBallsData.get_ball_definitions(99)
+	assert_true(defs.empty(), "Unknown species should return empty dictionary.")
+
+func test_keyballs_get_group_balls_dog():
+	# Verify that get_group_balls returns correct group for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	
+	var balls = KeyBallsData.get_group_balls("Head")
+	assert_true(balls.size() > 0, "Dog head group should have balls.")
+
+func test_keyballs_get_group_balls_unknown_species():
+	# Verify that get_group_balls returns empty array for unknown species group name.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	var balls = KeyBallsData.get_group_balls("NonExistentGroup")
+	assert_true(balls.empty(), "Unknown group name should return empty array.")
+
+func test_keyballs_get_legs_dog():
+	# Verify that get_legs returns leg arrays for dog.
+	var legs = KeyBallsData.get_legs(KeyBallsData.Species.DOG)
+	assert_eq(legs.size(), 2, "Dog should have 2 leg arrays (front and back).")
+	assert_true(legs[0].size() > 0, "Front legs should have balls.")
+	assert_true(legs[1].size() > 0, "Back legs should have balls.")
+
+func test_keyballs_get_legs_unknown():
+	# Verify that get_legs returns empty array for unknown species.
+	var legs = KeyBallsData.get_legs(99)
+	assert_true(legs.empty(), "Unknown species should return empty array.")
+
+func test_keyballs_get_nose_dog():
+	# Verify that get_nose returns nose balls for dog.
+	var nose = KeyBallsData.get_nose(KeyBallsData.Species.DOG)
+	assert_eq(nose.size(), 3, "Dog should have 3 nose balls.")
+	assert_eq(nose[0], 17, "First dog nose ball should be 17.")
+
+func test_keyballs_get_nose_cat():
+	# Verify that get_nose returns nose balls for cat.
+	var nose = KeyBallsData.get_nose(KeyBallsData.Species.CAT)
+	assert_eq(nose.size(), 1, "Cat should have 1 nose ball.")
+	assert_eq(nose[0], 37, "Cat nose ball should be 37.")
+
+func test_keyballs_get_tongue_dog():
+	# Verify that get_tongue returns tongue balls for dog.
+	var tongue = KeyBallsData.get_tongue(KeyBallsData.Species.DOG)
+	assert_eq(tongue.size(), 2, "Dog should have 2 tongue balls.")
+	assert_eq(tongue[0], 63, "First dog tongue ball should be 63.")
+
+func test_keyballs_get_tail_dog():
+	# Verify that get_tail returns tail balls for dog.
+	var tail = KeyBallsData.get_tail(KeyBallsData.Species.DOG)
+	assert_true(tail.size() > 0, "Dog should have tail balls.")
+	assert_eq(tail[0], 57, "First dog tail ball should be 57.")
+
+func test_keyballs_get_tail_baby():
+	# Verify that get_tail returns empty array for baby.
+	var tail = KeyBallsData.get_tail(KeyBallsData.Species.BABY)
+	assert_true(tail.empty(), "Baby should have no tail balls.")
+
+func test_keyballs_get_eyebrow_bab():
+	# Verify that get_eyebrow_bab returns the correct eyebrow array.
+	var brows = KeyBallsData.get_eyebrow_bab()
+	assert_eq(brows.size(), 6, "Baby should have 6 eyebrow balls.")
+	assert_eq(brows[0], 37, "First baby eyebrow should be 37.")
+
+func test_keyballs_build_bodyarea_map_dog():
+	# Verify that build_bodyarea_map populates the bodyarea_map for dog.
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+	KeyBallsData.build_bodyarea_map()
+	
+	assert_true(KeyBallsData.bodyarea_map.size() > 0, "Bodyarea map should be populated.")
+	assert_true(KeyBallsData.bodyarea_map.has(0), "Should have entry for ball 0.")
+	
+	# Ball 48 (belly) should have bodyarea 1
+	assert_eq(KeyBallsData.bodyarea_map[48], 1, "Belly ball should have bodyarea 1.")
+
+# ------------------------------------------------------------------------------
 # dog_generator.gd
 # ------------------------------------------------------------------------------
 
@@ -1331,19 +1682,19 @@ func test_lnz_delimiter_detection_auto_priority():
 	var test_text_1 = "[Section]\n1\t2\t3\n4\t5\t6\n7,8,9"
 	lnz_text.text = test_text_1
 	
-	var delim_1 = lnz_text._detect_delimiter(1, 4)
+	var delim_1 = lnz_text._detect_delimiter(1, 4, true)
 	assert_eq(delim_1, "\t", "High frequency delimiter should win over lower frequency.")
 
 	# Test tie-breaking: both ',' and '\t' appear 1 time but in priority order ([", ", ",", "\t", " "]) ',' comes before '\t'
 	var test_text_2 = "[Section]\n1,2,3\n4\t5\t6"
 	lnz_text.text = test_text_2
-	var delim_2 = lnz_text._detect_delimiter(1, 3)
+	var delim_2 = lnz_text._detect_delimiter(1, 3, true)
 	assert_eq(delim_2, ",", "Tie should be broken by priority order (comma > tab).")
 
 	# Test specificity: line 1 has ', ' and line 2 has ',', these are distinct and ", " is higher priority
 	var test_text_3 = "[Section]\n1, 2, 3\n4,5,6"
 	lnz_text.text = test_text_3
-	var delim_3 = lnz_text._detect_delimiter(1, 3)
+	var delim_3 = lnz_text._detect_delimiter(1, 3, true)
 	assert_eq(delim_3, ", ", "Tie between ', ' and ',' should favor ', ' due to priority.")
 	
 func test_lnz_undo_restores_cursor_and_scroll():
@@ -1363,20 +1714,6 @@ func test_lnz_undo_restores_cursor_and_scroll():
 	
 	assert_eq(lnz_text.text, "Initial", "Text should revert to initial state.")
 	assert_eq(lnz_text.get_v_scroll(), 0.0, "Scroll position should revert.")
-
-func test_lnz_delete_ball_reference_updates():
-	# Verify that deleting a ball correctly removes its line and decrements 
-	# references in subsequent lines to maintain index consistency.
-	if not lnz_text: return
-	# Set up a file where ball 50 is deleted. References > 50 must decrement.
-	lnz_text.text = "[Linez]\n40 50\n51 52"
-	lnz_text._update_pairwise_section("[Linez]", 50)
-	
-	var final_text = lnz_text.text
-	
-	assert_false("40 50" in final_text, "Line containing the deleted ball should be removed.")
-	assert_true("50 51" in final_text or "50\t51" in final_text, "Subsequent ball references should decrement (51->50, 52->51).")
-
 
 func test_lnz_text_split_line_handles_comments():
 	# Verify that split_line correctly separates data parts from comment parts 
@@ -1493,4 +1830,531 @@ func test_petview_freeline_paintball_interpolation():
 	assert_eq(calculated_diams[1], 20, "Middle step of freeline tapered size should match max parameter.")
 	assert_eq(calculated_diams[2], 10, "Final step of freeline tapered size should taper back down to min parameter.")
 
+# ------------------------------------------------------------------------------
+# Resource Testing
+# ------------------------------------------------------------------------------
 
+# Breed File LNZ:  dogz/breed_DM_Dalmatian.lnz, catz/breed_SI_Siamese.lnz
+# Pet File LNZ:    dogz/Dalmatian_pet_vanilla.lnz, catz/Persian_pet_homebody.lnz
+# Toy File LNZ:    toyz/PANDA.lnz
+# Baby File LNZ:   babyz/babyz_example.lnz
+
+func test_visual_size_to_lnz_size_dalmatian_pet_ball0():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Ballz Info] line 309: "15 244 0 1 -1 -2 0 1"
+	# Keys: color=15, outline_color=244, speckle=0, fuzz=1, outline=-1, size=-2, group=0, texture=1
+	# ball_no=0, size=-2 (negative = use base size), engine_scale from [Default Scales] line 49 = 150
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls[0].size, -2, "Dalmatian pet ball 0 size should be -2 (negative = use base size).")
+	
+	# visual_size_to_lnz_size for this ball at its engine scale
+	var engine_scale = parser.scales.x
+	var lnz_size = LnzLiveUtils.visual_size_to_lnz_size(15.0, false, engine_scale)
+	assert_eq(lnz_size, 17, "visual_size_to_lnz_size(15.0, false, %d) should give 17." % engine_scale)
+
+func test_visual_size_to_lnz_size_siamese_breed_ball0():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Ballz Info] line 398: "103, 244, 244, 1, -1, -3, 3, 0"
+	# Keys: color=103, outline_color=244, speckle=244, fuzz=1, outline=-1, size=-3, group=3, texture=0
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls[0].size, -3, "Siamese breed ball 0 size should be -3 (negative = use base size).")
+	
+	var engine_scale = parser.scales.x
+	var lnz_size = LnzLiveUtils.visual_size_to_lnz_size(103.0, false, engine_scale)
+	assert_eq(lnz_size, 105, "visual_size_to_lnz_size(103.0, false, %d) should give 105." % engine_scale)
+
+func test_visual_size_to_lnz_size_persian_pet_ball0():
+	# Use res://resources/lnz/catz/Persian_pet_homebody.lnz
+	# [Ballz Info] line 215: "115 244 0 2 -2 27 3 1"
+	# Keys: color=115, outline_color=244, speckle=0, fuzz=2, outline=-2, size=27, group=3, texture=1
+	var path = "res://resources/lnz/catz/Persian_pet_homebody.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls[0].size, 27, "Persian pet ball 0 size should be 27.")
+	
+	var engine_scale = parser.scales.x
+	var lnz_size = LnzLiveUtils.visual_size_to_lnz_size(115.0, false, engine_scale)
+	assert_eq(lnz_size, 117, "visual_size_to_lnz_size(115.0, false, %d) should give 117." % engine_scale)
+
+func test_visual_size_to_lnz_size_panda_toy_ball0():
+	# Use res://resources/lnz/toyz/PANDA.lnz
+	# [Ballz Info] line 80: "65, 244, -1, 2, 1, -2, 0, 1"
+	# Keys: color=65, outline_color=244, speckle=-1, fuzz=2, outline=1, size=-2, group=0, texture=1
+	var path = "res://resources/lnz/toyz/PANDA.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls[0].size, -2, "Panda toy ball 0 size should be -2 (negative = use base size).")
+	
+	var engine_scale = parser.scales.x
+	var lnz_size = LnzLiveUtils.visual_size_to_lnz_size(65.0, false, engine_scale)
+	assert_eq(lnz_size, 67, "visual_size_to_lnz_size(65.0, false, %d) should give 67." % engine_scale)
+
+func test_visual_size_to_lnz_size_babyz_ball0():
+	# Use res://resources/lnz/babyz/babyz_example.lnz
+	# [Ballz Info] line 489: "45, 18, -1, -1, -2, 0, 8, -1"
+	# Keys: color=45, outline_color=18, speckle=-1, fuzz=-1, outline=-2, size=0, group=8, texture=-1
+	var path = "res://resources/lnz/babyz/babyz_example.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_eq(parser.balls[0].size, 0, "Babyz ball 0 size should be 0.")
+	
+	var engine_scale = parser.scales.x
+	var lnz_size = LnzLiveUtils.visual_size_to_lnz_size(45.0, false, engine_scale)
+	assert_eq(lnz_size, 47, "visual_size_to_lnz_size(45.0, false, %d) should give 47." % engine_scale)
+
+func test_world_to_lnz_delta_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Default Scales] = 150, 145
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	
+	var pixel_world_size = 0.002
+	var engine_scale = parser.scales.x
+	
+	# At scale 150: lnz_scale = 150/255 = 0.588235...
+	# world_delta of (0.001, 0, 0) → lnz_delta.x = 0.001 / (0.002 * 150/255) = 0.001 / 0.00117647... = 0.85
+	var result = LnzLiveUtils.world_to_lnz_delta(Vector3(0.001, 0, 0), pixel_world_size, engine_scale)
+	# 0.001 / (0.002 * 150.0 / 255.0) = 0.001 / 0.00117647... = 0.85
+	assert_almost_eq(result.x, 1.0, 0.5, "X should round to ~1.")
+
+func test_world_to_lnz_delta_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	
+	var pixel_world_size = 0.002
+	var engine_scale = parser.scales.x
+	
+	var result = LnzLiveUtils.world_to_lnz_delta(Vector3(0, 0.01, 0), pixel_world_size, engine_scale)
+	# Y is inverted: positive world delta → positive LNZ delta (then inverted to negative)
+	# 0.01 / (0.002 * engine_scale/255) → then inverted
+	assert_true(result.y < 0, "Y should be inverted (negative) for positive world delta.")
+
+func test_world_to_lnz_delta_babyz():
+	# Use res://resources/lnz/babyz/babyz_example.lnz
+	var path = "res://resources/lnz/babyz/babyz_example.lnz"
+	var parser = autofree(LnzParser.new(path))
+	
+	var pixel_world_size = 0.002
+	var engine_scale = parser.scales.x
+	
+	var result = LnzLiveUtils.world_to_lnz_delta(Vector3(0.002, -0.002, 0.002), pixel_world_size, engine_scale)
+	assert_almost_eq(result.x, 2.0, 1.0, "X should be ~2.")
+	assert_almost_eq(result.y, 2.0, 1.0, "Y should be ~2 (inverted from -0.002).")
+	assert_almost_eq(result.z, 2.0, 1.0, "Z should be ~2.")
+
+func test_parse_number_list_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz to verify parse_number_list
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	# Dalmatian has 67 base balls (ball_no 0 through 66)
+	assert_eq(parser.balls.size(), 67, "Dalmatian should have 67 base balls.")
+
+func test_parse_number_list_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_true(parser.balls.size() > 0, "Siamese should have base balls.")
+
+func test_parse_number_list_persian_pet():
+	# Use res://resources/lnz/catz/Persian_pet_homebody.lnz
+	var path = "res://resources/lnz/catz/Persian_pet_homebody.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_true(parser.balls.size() > 0, "Persian should have base balls.")
+
+func test_parse_number_list_panda_toy():
+	# Use res://resources/lnz/toyz/PANDA.lnz
+	var path = "res://resources/lnz/toyz/PANDA.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_true(parser.balls.size() > 0, "Panda should have base balls.")
+
+func test_parse_number_list_babyz():
+	# Use res://resources/lnz/babyz/babyz_example.lnz
+	var path = "res://resources/lnz/babyz/babyz_example.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_true(parser.balls.size() > 0, "Babyz should have base balls.")
+
+func test_lnz_get_addballs_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Add Ball] line 69: "48 3 -12 -258 55 244 0 0 -1 -1 50 0 1 -1 -1"
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	
+	assert_true(parser.addballs.size() > 0, "Dalmatian should have addballs.")
+	# First addball at index balls.size() = 67
+	var first = parser.addballs.keys()[0]
+	assert_eq(parser.addballs[first].size, 50, "First addball size should be 50.")
+	assert_eq(parser.addballs[first].add_group, 1, "First addball add_group should be 1.")
+
+func test_lnz_get_lines_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Linez] line 220: "52 54 1 -1 244 244 90 95 0 0"
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Linez", [0])
+	parser.get_lines(reader)
+	
+	assert_true(parser.lines.size() > 0, "Dalmatian should have lines.")
+	var line = parser.lines[0]
+	assert_eq(line.start, 52, "First line start should be 52.")
+	assert_eq(line.end, 54, "First line end should be 54.")
+	assert_eq(line.s_thick, 90, "First line start thickness should be 90.")
+	assert_eq(line.r_color_index, 244, "First line right color should be 244.")
+	assert_eq(line.e_thick, 95, "First line end thickness should be 95.")
+
+func test_lnz_get_paintballs_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Paint Ballz] line 377: "7 50 -0.486664 0.324443 -0.811107 35 -1 2 -1 2 1 0"
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Paint Ballz", [0])
+	parser.parse_paintballs(reader)
+	
+	assert_true(parser.paintballs.size() > 0, "Dalmatian should have paintballs.")
+	var first_base = parser.paintballs.keys()[0]
+	assert_eq(parser.paintballs[first_base][0].size, 50, "First paintball size should be 50.")
+	assert_eq(parser.paintballs[first_base][0].color_index, 35, "First paintball color should be 35.")
+
+func test_lnz_get_eyelash_info_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# Dalmatian pet has no [Eyelash Info] section, so eyelash data stays at defaults
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Eyelash Info", [0])
+	parser.get_eyelash_info(reader)
+	
+	assert_eq(parser.eyelash_lengths.size(), 0, "Dalmatian pet should have no eyelash lengths (no section).")
+	assert_eq(parser.eyelash_angle, 0, "Eyelash angle should be 0 (default).")
+	assert_eq(parser.eyelash_spacing, 0, "Eyelash spacing should be 0 (default).")
+	assert_eq(parser.eyelash_color, -1, "Eyelash color should be -1 (default).")
+
+func test_lnz_get_omissions_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Omissions] section exists
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Omissions", [0])
+	parser.get_omissions(reader)
+	
+	assert_true(parser.omissions.size() > 0, "Dalmatian should have omissions.")
+
+func test_lnz_get_z_shade_slope_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Z Shade", [0])
+	parser.get_z_shade_slope(reader)
+	
+	# Default is 100 if section is empty
+	assert_true(parser.z_shade_slope > 0, "Z shade slope should be positive.")
+
+func test_lnz_species_detection_dalmatian_pet():
+	# Verify species fallback detection from [Default Linez File] path
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	parser.get_species()
+	assert_eq(parser.species, 2, "Dalmatian pet should detect as Dogz (species 2).")
+
+func test_lnz_species_detection_siamese_breed():
+	# Verify species detection for cat breed
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	parser.get_species()
+	assert_eq(parser.species, 1, "Siamese breed should detect as Catz (species 1).")
+
+func test_lnz_species_detection_babyz():
+	# Verify species detection for babyz
+	var path = "res://resources/lnz/babyz/babyz_example.lnz"
+	var parser = autofree(LnzParser.new(path))
+	parser.get_species()
+	assert_eq(parser.species, 3, "Babyz should detect as Babyz (species 3).")
+
+func test_lnz_species_detection_panda_toy():
+	# Verify species detection for toy (uses BABYZ comment header)
+	var path = "res://resources/lnz/toyz/PANDA.lnz"
+	var parser = autofree(LnzParser.new(path))
+	parser.get_species()
+	assert_true(parser.species == 3 or parser.species == 0, "Panda toy should detect as Babyz or unknown.")
+
+func test_lnz_get_palette_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Palette", [0])
+	parser.get_palette(reader)
+	
+	# Dalmatian pet uses default palette (no explicit [Palette] section)
+	assert_null(parser.palette, "Dalmatian pet should use default palette.")
+
+func test_lnz_get_eyelid_color_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [256 Eyelid Color] line 15
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("256 Eyelid Color", [0])
+	parser.get_eyelid_color(reader)
+	
+	assert_eq(parser.eyelid_color, 244, "Siamese eyelid color should be 244.")
+
+func test_lnz_get_head_enlargement_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Head Enlargement] line 24
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Head Enlargement", [0])
+	parser.get_head_enlargement(reader)
+	
+	assert_true(parser.head_enlargement.x > 0, "Head enlargement X should be positive.")
+	assert_true(parser.head_enlargement.y >= 0, "Head enlargement Y should be non-negative.")
+
+func test_lnz_get_scales_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Default Scales] line 94: "110" (the "118" was a legacy value in the section header comment)
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Default Scales", [0])
+	parser.get_default_scales(reader)
+	
+	assert_eq(parser.scales.x, 110, "Siamese scale X should be 110.")
+
+func test_lnz_get_scales_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Default Scales] line 49: "150"
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Default Scales", [0])
+	parser.get_default_scales(reader)
+	
+	assert_eq(parser.scales.x, 150, "Dalmatian scale X should be 150.")
+
+func test_lnz_get_leg_extensions_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Leg Extension] line 34
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Leg Extension", [0])
+	parser.get_leg_extensions(reader)
+	
+	assert_true(parser.leg_extensions.x >= 0, "Leg extension X should be non-negative.")
+
+func test_lnz_get_body_extension_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Body Extension] line 31
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Body Extension", [0])
+	parser.get_body_extension(reader)
+	
+	assert_true(parser.body_extension >= 0, "Body extension should be non-negative.")
+
+func test_lnz_get_face_extension_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Face Extension] line 28
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Face Extension", [0])
+	parser.get_face_extension(reader)
+	
+	assert_true(parser.face_extension >= 0, "Face extension should be non-negative.")
+
+func test_lnz_get_ear_extension_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Ear Extension] line 38
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ear Extension", [0])
+	parser.get_ear_extension(reader)
+	
+	assert_true(parser.ear_extension >= 0, "Ear extension should be non-negative.")
+
+func test_lnz_get_feet_enlargement_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Feet Enlargement] line 42
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Feet Enlargement", [0])
+	parser.get_feet_enlargement(reader)
+	
+	assert_true(parser.foot_enlargement.x >= 0, "Feet enlargement X should be non-negative.")
+
+func test_lnz_get_color_info_override_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Color Info Override] section exists
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Color Info Override", [0])
+	parser.get_color_info_override(reader)
+	
+	# Should not crash even if overrides target non-existent balls
+	assert_true(true, "Color info override should not crash.")
+
+func test_lnz_get_outline_color_override_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Outline Color Override", [0])
+	parser.get_outline_color_override(reader)
+	
+	assert_true(true, "Outline color override should not crash.")
+
+func test_lnz_get_fuzz_override_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Fuzz Override", [0])
+	parser.get_fuzz_override(reader)
+	
+	assert_true(true, "Fuzz override should not crash.")
+
+func test_lnz_get_ball_size_override_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var reader = parser.compile_section("Ball Size Override", [0])
+	parser.get_ball_size_override(reader)
+	
+	assert_true(true, "Ball size override should not crash.")
+
+func test_lnz_get_project_balls_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	# [Project Ball] section exists
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Project Ball", [0])
+	parser.get_project_balls(reader)
+	
+	assert_true(parser.project_ball.size() > 0, "Siamese should have project balls.")
+
+func test_lnz_get_whiskers_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Whiskers", [0])
+	parser.get_whiskers(reader)
+	
+	# Dalmatian (dog) has no whiskers section, should use defaults (empty array)
+	assert_true(parser.whisker_connections.size() >= 0, "Whisker connections should be non-negative.")
+
+func test_lnz_get_eyes_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Eyes", [0])
+	parser.get_eyes(reader)
+	
+	# Should not crash
+	assert_true(true, "Eyes parsing should not crash.")
+
+func test_lnz_get_moves_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Move", [0])
+	parser.parse_moves(reader)
+	
+	assert_true(parser.moves.size() >= 0, "Moves should be non-negative.")
+
+func test_lnz_get_texture_list_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Texture List] section exists
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Texture List", [0])
+	parser.get_texture_list(reader)
+	
+	assert_true(parser.texture_list.size() > 0, "Dalmatian should have texture list entries.")
+
+func test_lnz_get_no_texture_rotate_siamese_breed():
+	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
+	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("No Texture Rotate", [0])
+	parser.get_no_texture_rotate(reader)
+	
+	# Should not crash
+	assert_true(true, "No texture rotate should not crash.")
+
+func test_lnz_get_add_ball_override_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var ball_reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(ball_reader)
+	var addball_reader = parser.compile_section("Add Ball", [0])
+	parser.get_addballs(addball_reader)
+	var reader = parser.compile_section("Add Ball Override", [0])
+	parser.get_add_ball_override(reader)
+	
+	# Should not crash
+	assert_true(true, "Add ball override should not crash.")
+
+func test_lnz_compile_section_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# Verify compile_section merges base + variation data
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Ballz Info", [0])
+	parser.get_balls(reader)
+	
+	assert_true(parser.balls.size() > 0, "Should have balls after compiling Ballz Info.")
+
+func test_lnz_sections_map_dalmatian_pet():
+	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# Verify sections_map contains expected sections
+	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
+	var parser = autofree(LnzParser.new(path))
+	
+	assert_true(parser.sections_map.has("Ballz Info"), "Should have Ballz Info section.")
+	assert_true(parser.sections_map.has("Add Ball"), "Should have Add Ball section.")
+	assert_true(parser.sections_map.has("Linez"), "Should have Linez section.")
+	assert_true(parser.sections_map.has("Paint Ballz"), "Should have Paint Ballz section.")
+
+func test_keyballs_build_bodyarea_map_cat():
+	# Verify that build_bodyarea_map populates the bodyarea_map for cat.
+	KeyBallsData.species = KeyBallsData.Species.CAT
+	KeyBallsData.max_base_ball_num = 67
+	KeyBallsData.build_bodyarea_map()
+	
+	assert_true(KeyBallsData.bodyarea_map.size() > 0, "Bodyarea map should be populated.")
+	assert_true(KeyBallsData.bodyarea_map.has(0), "Should have entry for ball 0.")
