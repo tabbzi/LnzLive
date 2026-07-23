@@ -168,7 +168,6 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray) -> void:
 
 		save_dialog.rect_min_size = Vector2(400, 400)
 
-		save_dialog.connect("popup_hide", save_dialog, "free")
 		add_child(save_dialog)
 		save_dialog.popup_centered()
 
