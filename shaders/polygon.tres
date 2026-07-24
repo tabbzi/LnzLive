@@ -44,19 +44,29 @@ float random(float x) {
     return fract(sin(dot(vec2(x), vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
+// Apply z-based palette shifts (z-shading)
 vec3 get_shifted_color(int palette_index) {
     int new_palette_index;
+    
+    // Calculate base decade
+    int base_decade = color_index - int(mod(float(color_index), 10.0));
 
-    if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
-        int base_decade = color_index - int(mod(float(color_index), 10.0));
+    if (transparent_index == 1 && (palette_index <= 9 || palette_index >= 150)) {
+        // Group out-of-bounds ranges together
         if (palette_index == 0) {
             new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
         } else {
-            new_palette_index = (base_decade - 10) + palette_index;
+            // Apply raw offset and wrap around 256
+            int offset = base_decade - 10;
+            new_palette_index = (palette_index + offset) % 256;
+            
+            // Handle negative wrap in case base decade is 0
+            if (new_palette_index < 0) {
+                new_palette_index += 256;
+            }
         }
     } else {
-        int base_decade = color_index - int(mod(float(color_index), 10.0));
-        
+        // Default z-shading fallback for the 10-149 range
         int ramp_offset = int(mod(float(palette_index), 10.0));
 
         if (z_center_line < z_center_pet) {
