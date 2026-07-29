@@ -77,7 +77,6 @@ onready var apply_recolor_btn: Button = scroll_vbox.get_node("RecolorActions/App
 onready var clear_recolor_btn: Button = scroll_vbox.get_node("RecolorActions/ClearRecolorsButton")
 
 var _base_paintballz_data: Array = []
-var _ignore_ui_changes: bool = false
 var source_ball_reference_size: float = 10
 
 const SizeMode = {
@@ -280,26 +279,26 @@ func sync_camera(main_camera_transform: Transform) -> void:
 		preview_camera.global_transform.basis.x *= -1.0
 
 func _on_property_changed(_val = null) -> void:
-	if _ignore_ui_changes: return
+	if _is_loading_settings: return
 	save_settings()
 	update_preview()
 
 func _on_scale_changed(value: float, is_size_control: bool) -> void:
-	if _ignore_ui_changes: return
+	if _is_loading_settings: return
 	
 	if link_scale_chk.pressed:
-		_ignore_ui_changes = true
+		_is_loading_settings = true
 		if is_size_control:
 			pos_scale_spin.value = value
 		else:
 			size_scale_spin.value = value
-		_ignore_ui_changes = false
+		_is_loading_settings = false
 	
 	save_settings()
 	update_preview()
 
 func _on_rotation_changed(_val = null) -> void:
-	if _ignore_ui_changes: return
+	if _is_loading_settings: return
 	_apply_rotation_to_tree()
 	save_settings()
 	update_preview()
@@ -339,7 +338,7 @@ func _read_item_data(item: TreeItem) -> Dictionary:
 	}
 
 func _apply_rotation_to_tree() -> void:
-	_ignore_ui_changes = true
+	_is_loading_settings = true
 
 	var roll: float = deg2rad(roll_spinbox.value)
 	var pitch: float = deg2rad(pitch_spinbox.value)
@@ -356,14 +355,14 @@ func _apply_rotation_to_tree() -> void:
 		var item: TreeItem = paintballz_tree.create_item(root)
 		_setup_tree_item(item, p_data, new_pos)
 
-	_ignore_ui_changes = false
+	_is_loading_settings = false
 
 func _reset_rotation_spinboxes() -> void:
-	_ignore_ui_changes = true
+	_is_loading_settings = true
 	roll_spinbox.value = 0
 	pitch_spinbox.value = 0
 	yaw_spinbox.value = 0
-	_ignore_ui_changes = false
+	_is_loading_settings = false
 
 func _on_MirrorButton_pressed(axis: String) -> void:
 	for p_data in _base_paintballz_data:
@@ -695,7 +694,7 @@ func get_properties() -> Dictionary:
 	return properties
 
 func set_properties(properties: Dictionary) -> void:
-	_ignore_ui_changes = true
+	_is_loading_settings = true
 
 	if properties.has("size"):
 		size_spinbox.value = properties.size
@@ -737,7 +736,7 @@ func set_properties(properties: Dictionary) -> void:
 
 	_populate_tree_from_base()
 
-	_ignore_ui_changes = false
+	_is_loading_settings = false
 	save_settings()
 	update_preview()
 
@@ -855,7 +854,8 @@ func load_settings() -> void:
 	if err != OK:
 		return
 	
-	_ignore_ui_changes = true
+	print("[STATUS] PresetSettings: loading settings configuration")
+	_is_loading_settings = true
 
 	size_spinbox.value = config.get_value("PresetProperties", "size", 10.0)
 	size_mode_option.selected = config.get_value("PresetProperties", "size_mode", 2)
@@ -882,10 +882,10 @@ func load_settings() -> void:
 	_base_paintballz_data = config.get_value("PresetProperties", "paintballz_data", [])
 	_populate_tree_from_base()
 	
-	_ignore_ui_changes = false
+	_is_loading_settings = false
 
 func _on_reset_defaults_pressed() -> void:
-	_ignore_ui_changes = true
+	_is_loading_settings = true
 	
 	size_spinbox.value = 10.0
 	size_mode_option.selected = 2
@@ -912,7 +912,7 @@ func _on_reset_defaults_pressed() -> void:
 	_base_paintballz_data.clear()
 	_populate_tree_from_base()
 	
-	_ignore_ui_changes = false
+	_is_loading_settings = false
 	
 	save_settings()
 	update_preview()

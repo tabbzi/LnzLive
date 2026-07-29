@@ -50,6 +50,11 @@ onready var lnz_text_edit: TextEdit = get_tree().root.get_node(
 
 var is_docked: bool = false
 
+var _is_loading_settings: bool = false
+
+const SETTINGS_PATH: String = "user://settings.cfg"
+const RECOLOR_SECTION: String = "RecolorSettings"
+
 const NATURAL_COLORS: Array = [10, 20, 30, 40, 50, 60, 90, 100, 110, 120]
 const TEXTURABLE_COLORS: Array = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
 
@@ -97,6 +102,7 @@ func _ready() -> void:
 	_populate_color_theory_options()
 		
 	_on_palette_changed()
+	load_settings()
 
 func _populate_color_theory_options() -> void:
 	if not is_instance_valid(color_theory_select):
@@ -121,7 +127,8 @@ func _on_random_seed_toggled(is_on: bool) -> void:
 	pass
 
 func _on_nose_ballz_toggled(is_on: bool) -> void:
-	pass
+	if _is_loading_settings: return
+	save_settings()
 
 func set_docked(docked: bool) -> void:
 	is_docked = docked
@@ -818,5 +825,85 @@ func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: Stri
 			if texture_str.is_valid_integer():
 				var texture_id: int = int(texture_str)
 				if texture_id > new_max:
-					new_max = texture_id
+						new_max = texture_id
 	return new_max
+
+func save_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("[WARNING] RecolorSettings: error loading existing settings config for save: ", err)
+		return
+
+	if is_instance_valid(nose_ballz_check):
+		config.set_value(RECOLOR_SECTION, "nose_ballz", nose_ballz_check.pressed)
+
+	var check_container = color_swap_check_container
+	var checks: Dictionary = {}
+	for cb in check_container.get_children():
+		if cb is CheckBox:
+			checks[cb.name] = cb.pressed
+	var check_container_2 = check_container.get_parent().get_node("CheckContainer2")
+	if check_container_2:
+		for cb in check_container_2.get_children():
+			if cb is CheckBox:
+				checks[cb.name] = cb.pressed
+	config.set_value(RECOLOR_SECTION, "checks", checks)
+
+	var swaps = _gather_swap_data()
+	config.set_value(RECOLOR_SECTION, "swaps", swaps)
+
+	var save_err: int = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("[ERROR] RecolorSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
+
+func load_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
+	if err != OK:
+		print("[WARNING] RecolorSettings: could not load config from %s, using defaults (Error: %d)" % [SETTINGS_PATH, err])
+		return
+
+	print("[STATUS] RecolorSettings: loading settings configuration")
+	_is_loading_settings = true
+
+	if is_instance_valid(nose_ballz_check):
+		nose_ballz_check.pressed = config.get_value(RECOLOR_SECTION, "nose_ballz", true)
+
+	var checks = config.get_value(RECOLOR_SECTION, "checks", {})
+	for key in checks:
+		var found = false
+		for cb in color_swap_check_container.get_children():
+			if cb is CheckBox and cb.name == key:
+				cb.pressed = checks[key]
+				found = true
+				break
+		if not found:
+			var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
+			if check_container_2:
+				for cb in check_container_2.get_children():
+					if cb is CheckBox and cb.name == key:
+						cb.pressed = checks[key]
+						found = true
+						break
+
+	var swaps = config.get_value(RECOLOR_SECTION, "swaps", [])
+	for i in range(swaps.size()):
+		var swap = swaps[i]
+		if i < swap_lines_container.get_child_count():
+			var line = swap_lines_container.get_child(i)
+			line.find_node("BeforeColor", true, false).text = swap.get("before_color", "")
+			line.find_node("BeforeTexture", true, false).text = swap.get("before_texture", "")
+			line.find_node("AfterColor", true, false).text = swap.get("after_color", "")
+			line.find_node("AfterTexture", true, false).text = swap.get("after_texture", "")
+			line.find_node("ColorRampCheck", true, false).pressed = swap.get("is_ramp", false)
+		else:
+			var new_line = _add_swap_line()
+			new_line.find_node("BeforeColor", true, false).text = swap.get("before_color", "")
+			new_line.find_node("BeforeTexture", true, false).text = swap.get("before_texture", "")
+			new_line.find_node("AfterColor", true, false).text = swap.get("after_color", "")
+			new_line.find_node("AfterTexture", true, false).text = swap.get("after_texture", "")
+			new_line.find_node("ColorRampCheck", true, false).pressed = swap.get("is_ramp", false)
+
+	_is_loading_settings = false
+	_refresh_all_previews()

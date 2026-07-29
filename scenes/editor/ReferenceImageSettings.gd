@@ -19,6 +19,7 @@ onready var y_spinbox: SpinBox = $VBoxContainer/SettingsContainer/HBoxContainer/
 
 var import_dialog: FileDialog
 var is_active: bool = false
+var _is_loading_settings: bool = false
 
 var image_paths: Array = []
 var selected_image_path: String = ""
@@ -156,25 +157,30 @@ func _on_clear_folder_button_pressed() -> void:
 func _on_option_button_item_selected(index: int) -> void:
 	if index < image_paths.size():
 		selected_image_path = image_paths[index]
-		_save_settings()
+		if not _is_loading_settings:
+			_save_settings()
 		_emit_image_update()
 
 func _on_show_bg_toggled(pressed: bool) -> void:
+	if _is_loading_settings: return
 	_save_settings()
 	_emit_image_update()
 
 func _on_show_popup_toggled(pressed: bool) -> void:
+	if _is_loading_settings: return
 	_save_settings()
 	_emit_image_update()
 	var popup: Node = get_tree().root.find_node("ReferenceImagePopup", true, false)
 
 func _on_center_toggled(pressed: bool) -> void:
+	if _is_loading_settings: return
 	x_spinbox.set_editable(!pressed)
 	y_spinbox.set_editable(!pressed)
 	_save_settings()
 	_emit_image_update()
 
 func _on_scale_toggled(pressed: bool) -> void:
+	if _is_loading_settings: return
 	_save_settings()
 	_emit_image_update()
 
@@ -189,7 +195,8 @@ func _on_y_changed(value: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST or what == NOTIFICATION_POPUP_HIDE:
-		_save_settings()
+		if not _is_loading_settings:
+			_save_settings()
 
 func _emit_image_update() -> void:
 	var config_data: Dictionary = {
@@ -228,6 +235,8 @@ func _save_settings() -> void:
 func _load_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	if config.load(CONFIG_PATH) == OK:
+		print("[STATUS] ReferenceImageSettings: loading settings configuration")
+		_is_loading_settings = true
 		is_active = config.get_value("ReferenceImage", "is_active", false)
 		selected_image_path = config.get_value("ReferenceImage", "path", "")
 
@@ -250,6 +259,7 @@ func _load_settings() -> void:
 			if selected_image_path in image_paths:
 				option_button.select(image_paths.find(selected_image_path))
 
+		_is_loading_settings = false
 		_emit_image_update()
 
 func toggle_reference_image() -> void:

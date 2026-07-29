@@ -31,6 +31,7 @@ enum GameMode {
 }
 
 var current_mode: int = GameMode.PETZ
+var _is_loading_settings: bool = false
 
 var current_tool: int = Tool.PENCIL
 var current_brush_shape: int = BrushShape.SQUARE
@@ -185,6 +186,8 @@ func _initialize_canvas() -> void:
 func load_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	if config.load(SETTINGS_PATH) == OK:
+		print("[STATUS] TextureEditor: loading settings configuration")
+		_is_loading_settings = true
 		brush_size_spin.value = config.get_value("TextureEditor", "brush_size", 1.0)
 		brush_spacing_spin.value = config.get_value("TextureEditor", "brush_spacing", 1.0)
 		dither_amount_spin.value = config.get_value("TextureEditor", "dither_amount", 0.5)
@@ -205,6 +208,8 @@ func load_settings() -> void:
 
 		show_quadrants_check.pressed = config.get_value("TextureEditor", "show_quadrants", false)
 
+		_is_loading_settings = false
+
 func save_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	config.load(SETTINGS_PATH)
@@ -224,6 +229,7 @@ func save_settings() -> void:
 	config.save(SETTINGS_PATH)
 
 func _trigger_setting_save(_ignored_value = null) -> void:
+	if _is_loading_settings: return
 	save_settings()
 
 func _on_ZoomOptionButton_item_selected(index: int) -> void:

@@ -152,6 +152,7 @@ func load_settings() -> void:
 	if err != OK:
 		return
 
+	print("[STATUS] LineModeSettings: loading settings configuration")
 	_is_loading_settings = true
 
 	find_node("Fuzz").value = config.get_value("LineProperties", "fuzz", 0)

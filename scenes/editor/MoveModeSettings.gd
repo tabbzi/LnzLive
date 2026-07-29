@@ -426,6 +426,7 @@ func load_settings() -> void:
 	if err != OK:
 		return
 
+	print("[STATUS] MoveModeSettings: loading settings configuration")
 	_is_loading_settings = true
 
 	var constraint: String = config.get_value("MoveProperties", "constraint_mode", "Free")

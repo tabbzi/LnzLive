@@ -1230,6 +1230,7 @@ func load_settings() -> void:
 	if err != OK:
 		return
 
+	print("[STATUS] AutoPaintballerSettings: loading settings configuration")
 	_is_loading_settings = true
 
 	_affected_ballz.text = config.get_value("AutoPaintballer", "affected_ballz", "")

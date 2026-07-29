@@ -525,6 +525,7 @@ func load_settings() -> void:
 	if err != OK:
 		return
 
+	print("[STATUS] ProjectSettings: loading settings configuration")
 	_is_loading_settings = true
 
 	find_node("LegExt1MinSpinBox").value = config.get_value("ProjectProperties", "leg_ext_1_min", -30.0)
