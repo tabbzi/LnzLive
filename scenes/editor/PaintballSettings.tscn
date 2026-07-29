@@ -1022,6 +1022,16 @@ custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
 value = 5.0
 
+[node name="ExcludeEyeBallz" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced"]
+margin_left = 5.0
+margin_top = 187.0
+margin_right = 465.0
+margin_bottom = 212.0
+hint_tooltip = "Exclude eye ballz (eyes and irises) from paintball generation"
+custom_fonts/font = SubResource( 3 )
+text = "Exclude Eye Ballz"
+pressed = true
+
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 829.0
 margin_right = 470.0

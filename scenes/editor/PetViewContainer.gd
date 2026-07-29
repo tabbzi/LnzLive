@@ -1449,6 +1449,11 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 					target_ball = active_selected_ball
 
 		if target_ball:
+			var exclude_eye_ballz: bool = paintball_settings_instance.get_properties().get("exclude_eye_ballz", true)
+			if exclude_eye_ballz:
+				var eye_ball_ids: Array = KeyBallsData.get_group_balls("Eyes")
+				if target_ball.ball_no in eye_ball_ids:
+					return true
 			var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
 			var result = _create_paintball_at_position(screen_pos, target_ball)
 			if result:
@@ -3385,6 +3390,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			return null
 
 		var props: Dictionary = paintball_settings_instance.get_properties()
+
+		var exclude_eye_ballz: bool = props.get("exclude_eye_ballz", true)
+		if exclude_eye_ballz and KeyBallsData.get_group_balls("Eyes").has(target_ball.ball_no):
+			return null
 
 		var color_list: Array = LnzLiveUtils.parse_number_list(props.color)
 		if color_list.empty():

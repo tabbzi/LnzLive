@@ -45,6 +45,7 @@ onready var _jitter: SpinBox = find_node("Jitter")
 onready var _ordered: CheckBox = find_node("Ordered")
 onready var _repeat: CheckBox = find_node("Repeat")
 onready var _shuffle: CheckBox = find_node("Shuffle")
+onready var _exclude_eye_ballz: CheckBox = find_node("ExcludeEyeBallz")
 onready var _random_walk_checkbox: CheckBox = find_node("RandomWalkCheckBox")
 onready var _walk_steps: SpinBox = find_node("WalkStepsSpinBox")
 onready var _walk_spread: SpinBox = find_node("WalkSpreadSpinBox")
@@ -576,6 +577,7 @@ func get_properties() -> Dictionary:
 	properties["random_walk"] = _random_walk_checkbox.pressed
 	properties["walk_steps"] = _walk_steps.value
 	properties["walk_spread"] = _walk_spread.value
+	properties["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
 	return properties
 
 func export_paintball_json() -> void:
@@ -709,6 +711,7 @@ func _apply_settings_dict(data: Dictionary) -> void:
 	if data.has("random_walk"): _random_walk_checkbox.pressed = data["random_walk"]
 	if data.has("walk_steps"): _walk_steps.value = data["walk_steps"]
 	if data.has("walk_spread"): _walk_spread.value = data["walk_spread"]
+	if data.has("exclude_eye_ballz"): _exclude_eye_ballz.pressed = data["exclude_eye_ballz"]
 	_is_loading_settings = false
 	save_settings()
 	_refresh_all_previews()
@@ -838,6 +841,7 @@ func _connect_settings_signals() -> void:
 	_repeat.connect("toggled", self, "_on_setting_changed")
 	_shuffle.connect("toggled", self, "_on_setting_changed")
 	_eraser_checkbox.connect("toggled", self, "_on_setting_changed")
+	_exclude_eye_ballz.connect("toggled", self, "_on_setting_changed")
 	_random_walk_checkbox.connect("toggled", self, "_on_setting_changed")
 	_walk_steps.connect("value_changed", self, "_on_setting_changed")
 	_walk_spread.connect("value_changed", self, "_on_setting_changed")
@@ -1341,6 +1345,7 @@ func save_settings() -> void:
 	config.set_value("PaintballProperties", "random_walk", _random_walk_checkbox.pressed)
 	config.set_value("PaintballProperties", "walk_steps", _walk_steps.value)
 	config.set_value("PaintballProperties", "walk_spread", _walk_spread.value)
+	config.set_value("PaintballProperties", "exclude_eye_ballz", _exclude_eye_ballz.pressed)
 
 	config.set_value("DesignMode", "design_paintballs", _design_canvas.design_paintballs)
 	config.set_value("DesignMode", "brush_size", _brush_size_slider.value)
@@ -1396,6 +1401,7 @@ func load_settings() -> void:
 	_random_walk_checkbox.pressed = config.get_value("PaintballProperties", "random_walk", false)
 	_walk_steps.value = config.get_value("PaintballProperties", "walk_steps", 3.0)
 	_walk_spread.value = config.get_value("PaintballProperties", "walk_spread", 5.0)
+	_exclude_eye_ballz.pressed = config.get_value("PaintballProperties", "exclude_eye_ballz", true)
 
 	var loaded_paintballs: Array = config.get_value("DesignMode", "design_paintballs", [])
 	if loaded_paintballs.size() > 0:
