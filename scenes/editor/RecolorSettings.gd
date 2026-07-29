@@ -35,6 +35,9 @@ onready var random_seed_check: CheckBox = bottom_row.get_node_or_null("RandomSee
 onready var natural_colors_check: CheckBox = bottom_row.get_node_or_null("NaturalColorsOnly")
 onready var texturable_only_check: CheckBox = bottom_row.get_node_or_null("TexturableOnly")
 
+onready var check_container_2 = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2
+onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("NoseBallz")
+
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
 
@@ -88,6 +91,9 @@ func _ready() -> void:
 	if is_instance_valid(random_seed_check):
 		random_seed_check.connect("toggled", self, "_on_random_seed_toggled")
 	
+	if is_instance_valid(nose_ballz_check):
+		nose_ballz_check.connect("toggled", self, "_on_nose_ballz_toggled")
+	
 	_populate_color_theory_options()
 		
 	_on_palette_changed()
@@ -112,6 +118,9 @@ func _on_theory_seed_changed(color: Color) -> void:
 	pass
 
 func _on_random_seed_toggled(is_on: bool) -> void:
+	pass
+
+func _on_nose_ballz_toggled(is_on: bool) -> void:
 	pass
 
 func set_docked(docked: bool) -> void:
@@ -344,12 +353,14 @@ func _on_RecolorButton_pressed() -> void:
 	var lines_on: bool = color_swap_check_container.get_node("Lines").pressed
 
 	var polygons_on: bool = color_swap_check_container.get_parent().get_node("CheckContainer2/Polygons").pressed
+	var nose_ballz_on: bool = is_instance_valid(nose_ballz_check) and nose_ballz_check.pressed
 
 	recolor_info.balls_on = balls_on
 	recolor_info.ball_outlines_on = ball_outlines_on
 	recolor_info.paintballs_on = paintballs_on
 	recolor_info.lines_on = lines_on
 	recolor_info.polygons_on = polygons_on
+	recolor_info.nose_ballz_on = nose_ballz_on
 
 	emit_signal("recolor", recolor_info)
 

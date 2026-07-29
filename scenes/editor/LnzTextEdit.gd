@@ -3565,6 +3565,10 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	
 	var species = KeyBallsData.species
 	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, "")
+	if all_recolor_info.has("nose_ballz_on") and all_recolor_info.nose_ballz_on:
+		for n in KeyBallsData.get_nose(species):
+			if n in balls_to_exclude:
+				balls_to_exclude.erase(n)
 
 	# [Ballz Info] - color=0, outline=1, texture=7
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:

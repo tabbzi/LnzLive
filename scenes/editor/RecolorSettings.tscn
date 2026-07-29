@@ -194,6 +194,14 @@ custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Polygons"
 
+[node name="NoseBallz" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
+margin_left = 92.0
+margin_right = 188.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+pressed = true
+text = "Nose Ballz"
+
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 86.0
 margin_right = 458.0

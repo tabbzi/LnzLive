@@ -1594,7 +1594,7 @@ margin_right = 141.0
 margin_bottom = 515.0
 size_flags_horizontal = 3
 window_title = "Color Swap"
-dialog_text = "Note that Color Swap always excludes eyes, tongue and nose from recoloring
+ dialog_text = "Note that Color Swap always excludes eyes and tongue from recoloring. Use the 'Nose ballz' toggle to control nose exclusion.
 "
 dialog_hide_on_ok = false
 __meta__ = {
