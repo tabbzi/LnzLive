@@ -86,6 +86,9 @@ const MAX_NEARBY_BALLS: int = 6
 const NEARBY_SCREEN_RADIUS: float = 60.0
 const TAB_RESET_THRESHOLD_PIXELS: float = 15.0
 
+enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR }
+var current_mode: int = Mode.NONE
+
 var input_is_paused: bool = false
 
 var last_selected = null
@@ -1466,6 +1469,11 @@ func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
 		return
 
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var focus_owner = get_focus_owner()
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+			focus_owner.release_focus()
+
 	if _handle_box_selection(event):
 		return
 
@@ -1490,12 +1498,6 @@ func _gui_input(event: InputEvent) -> void:
 
 	if _handle_paint_mode_gui_input(event):
 		return
-
-	# Guard against entering hotkeys into text area when interacting with view container:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var focus_owner = get_focus_owner()
-		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
-			focus_owner.release_focus()
 
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
@@ -1862,6 +1864,8 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				return true
 
 	if not event.control and not event.alt and not event.shift:
+		if _is_text_input_focused(event):
+			return false
 		match event.scancode:
 			KEY_S:
 				select_check_box.pressed = not select_check_box.pressed
@@ -1946,7 +1950,195 @@ func _is_text_input_focused(event: InputEventKey) -> bool:
 		return true
 	return false
 
+func _exit_all_modes() -> void:
+	paintball_check_box.pressed = false
+	line_mode_check_box.pressed = false
+	move_mode_check_box.pressed = false
+	preset_mode_check_box.pressed = false
+	recolor_mode_check_box.pressed = false
+	texture_editor_mode_check_box.pressed = false
+	project_mode_check_box.pressed = false
+	auto_paintballer_check_box.pressed = false
+	view_palette_check_box.pressed = false
+	view_variations_check_box.pressed = false
+
+	# Return to FileTree tab when explicitly exiting all modes (ESC)
+	if sidebar_controller:
+		var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
+		if tree_tab:
+			sidebar_controller.switch_to_tab(tree_tab)
+
+	mark_ui_dirty()
+
+func set_mode(new_mode: int) -> void:
+	if current_mode == new_mode:
+		return
+
+	var old_mode = current_mode
+	current_mode = new_mode
+
+	paintball_mode = (new_mode == Mode.PAINTBALL)
+	move_mode = (new_mode == Mode.MOVE)
+	linez_mode = (new_mode == Mode.LINE)
+	preset_mode = (new_mode == Mode.PRESET)
+	recolor_mode = (new_mode == Mode.RECOLOR)
+	project_mode = (new_mode == Mode.PROJECT)
+	auto_paintballer_mode = (new_mode == Mode.AUTO_PAINTBALLER)
+	texture_editor_mode = (new_mode == Mode.TEXTURE_EDITOR)
+
+	if old_mode != Mode.NONE:
+		_exit_mode(old_mode)
+		_update_mode_panel_visibility(_get_mode_settings_instance(old_mode), false, false)
+
+	if new_mode != Mode.NONE:
+		_enter_mode(new_mode)
+		_update_mode_panel_visibility(_get_mode_settings_instance(new_mode), true)
+		_update_paintball_mode_ui()
+
+	_sync_mode_checkboxes()
+
+	_sync_mode_cursor()
+	mark_ui_dirty()
+
+func _get_mode_settings_instance(mode: int) -> Control:
+	match mode:
+		Mode.MOVE:
+			return move_mode_settings_instance
+		Mode.PAINTBALL:
+			return paintball_settings_instance
+		Mode.LINE:
+			return line_mode_settings_instance
+		Mode.PRESET:
+			return preset_settings_instance
+		Mode.RECOLOR:
+			return recolor_settings_instance
+		Mode.PROJECT:
+			return project_settings_instance
+		Mode.AUTO_PAINTBALLER:
+			return auto_paintballer_settings_instance
+		Mode.TEXTURE_EDITOR:
+			return texture_editor_settings_instance
+	return null
+
+func _exit_mode(mode: int) -> void:
+	match mode:
+		Mode.MOVE:
+			_on_unselect_all()
+			_on_move_mode_clear()
+			selected_balls.clear()
+		Mode.PAINTBALL:
+			paintball_target_ball = null
+			close_paintball_on_apply = false
+			_restore_all_balls()
+			_set_pending_paintballs_visible(false)
+		Mode.LINE:
+			line_mode_close = false
+			if is_instance_valid(linez_start_ball):
+				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+			linez_start_ball = null
+			if polygon_mode:
+				_clear_polygon_selection()
+				polygon_balls.clear()
+		Mode.PRESET:
+			pass
+		Mode.RECOLOR:
+			recolor_settings_instance.clear_buckets()
+		Mode.PROJECT:
+			pass
+		Mode.AUTO_PAINTBALLER:
+			if is_instance_valid(pet_node):
+				pet_node.clear_auto_paintballz()
+			_on_unselect_all()
+			_auto_paint_affected_cache.clear()
+			var all_balls: Array = _get_all_visual_balls()
+			for b in all_balls:
+				if is_instance_valid(b) and b.has_method("apply_outline_state"):
+					b.apply_outline_state(b.OutlineState.NONE)
+		Mode.TEXTURE_EDITOR:
+			pass
+
+func _enter_mode(mode: int) -> void:
+	match mode:
+		Mode.MOVE:
+			move_mode_settings_instance.set_queued_count(pending_moves.size())
+			ball_label.hide()
+			_reset_tab_state()
+		Mode.PAINTBALL:
+			_restore_all_balls()
+			_ordered_color_index = 0
+			_ordered_outline_color_index = 0
+			_ordered_texture_index = 0
+			paintball_settings_instance.find_node("Target").selected = 0
+		Mode.LINE:
+			pass
+		Mode.PRESET:
+			if is_instance_valid(pet_node) and is_instance_valid(pet_node.lnz):
+				if pet_node.lnz.texture_list:
+					preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+				if pet_node.lnz.palette:
+					preset_settings_instance.set_palette(pet_node.lnz.palette)
+		Mode.RECOLOR, Mode.PROJECT, Mode.AUTO_PAINTBALLER, Mode.TEXTURE_EDITOR:
+			pass
+
+func _sync_mode_checkboxes() -> void:
+	if select_check_box.pressed != selecting_on:
+		select_check_box.pressed = selecting_on
+	if paintball_check_box.pressed != (current_mode == Mode.PAINTBALL):
+		paintball_check_box.pressed = (current_mode == Mode.PAINTBALL)
+	if line_mode_check_box.pressed != (current_mode == Mode.LINE):
+		line_mode_check_box.pressed = (current_mode == Mode.LINE)
+	if move_mode_check_box.pressed != (current_mode == Mode.MOVE):
+		move_mode_check_box.pressed = (current_mode == Mode.MOVE)
+	if preset_mode_check_box.pressed != (current_mode == Mode.PRESET):
+		preset_mode_check_box.pressed = (current_mode == Mode.PRESET)
+	if recolor_mode_check_box.pressed != (current_mode == Mode.RECOLOR):
+		recolor_mode_check_box.pressed = (current_mode == Mode.RECOLOR)
+	if project_mode_check_box.pressed != (current_mode == Mode.PROJECT):
+		project_mode_check_box.pressed = (current_mode == Mode.PROJECT)
+	if auto_paintballer_check_box.pressed != (current_mode == Mode.AUTO_PAINTBALLER):
+		auto_paintballer_check_box.pressed = (current_mode == Mode.AUTO_PAINTBALLER)
+	if texture_editor_mode_check_box.pressed != (current_mode == Mode.TEXTURE_EDITOR):
+		texture_editor_mode_check_box.pressed = (current_mode == Mode.TEXTURE_EDITOR)
+
+func _sync_mode_cursor() -> void:
+	match current_mode:
+		Mode.NONE:
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_POINTING_HAND if selecting_on else CURSOR_ARROW
+		Mode.PAINTBALL:
+			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.LINE:
+			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.RECOLOR:
+			Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.PRESET:
+			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.MOVE:
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.PROJECT, Mode.AUTO_PAINTBALLER, Mode.TEXTURE_EDITOR:
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+
 func _unhandled_key_input(event: InputEventKey) -> void:
+	if event.is_pressed() and event.scancode == KEY_ESCAPE:
+		_exit_all_modes()
+		var focus_owner = get_focus_owner()
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+			focus_owner.release_focus()
+
+		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
+			var floating_panels = sidebar_controller.floating_layer.get_children()
+			for panel in floating_panels:
+				sidebar_controller.dock_panel(panel)
+
+		get_tree().set_input_as_handled()
+		return
+
 	if input_is_paused:
 		return
 
@@ -1962,21 +2154,6 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			get_tree().set_input_as_handled()
 			_cycle_nearby_ballz()
 			return
-
-	if event.is_pressed() and event.scancode == KEY_ESCAPE:
-		paintball_check_box.pressed = false
-		line_mode_check_box.pressed = false
-		move_mode_check_box.pressed = false
-		preset_mode_check_box.pressed = false
-		recolor_mode_check_box.pressed = false
-		texture_editor_mode_check_box.pressed = false
-		project_mode_check_box.pressed = false
-		auto_paintballer_check_box.pressed = false
-		view_palette_check_box.pressed = false
-		view_variations_check_box.pressed = false
-
-		get_tree().set_input_as_handled()
-		return
 
 	# Mini-history for Paintball and Move modes
 	if event is InputEventKey and event.pressed and event.control and event.shift:
@@ -2906,10 +3083,9 @@ func _deactivate_other_modes(active_mode_name: String) -> void:
 		texture_editor_mode_check_box.pressed = false
 		texture_editor_mode_check_box.pressed = false
 
-func _update_mode_panel_visibility(panel: Control, is_active: bool) -> void:
+func _update_mode_panel_visibility(panel: Control, is_active: bool, switch_to_filetree_on_hide: bool = false) -> void:
 	if is_active:
 		if "is_docked" in panel and panel.is_docked:
-			sidebar_controller.dock_panel(panel)
 			sidebar_controller.switch_to_tab(panel)
 		elif sidebar_controller and (panel == variation_tree or panel == palette_viewer_instance):
 			sidebar_controller.switch_to_tab(panel)
@@ -2922,7 +3098,7 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool) -> void:
 		elif panel != variation_tree and panel != palette_viewer_instance:
 			panel.hide()
 
-		if sidebar_controller:
+		if switch_to_filetree_on_hide and sidebar_controller:
 			var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
 			if tree_tab:
 				var current_tab: Node = sidebar_controller.tab_container.get_current_tab_control()
@@ -2931,75 +3107,32 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool) -> void:
 
 func _on_recolor_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Recolor Mode")
-	recolor_mode = is_on
-	_update_mode_panel_visibility(recolor_settings_instance, is_on)
-
-	if is_on:
-		mouse_default_cursor_shape = CURSOR_ARROW
-		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
-	else:
-		recolor_settings_instance.clear_buckets()
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-		recolor_settings_instance.clear_buckets()
-	mark_ui_dirty()
+		set_mode(Mode.RECOLOR)
+	elif current_mode == Mode.RECOLOR:
+		set_mode(Mode.NONE)
 
 func _on_paintball_mode_toggled(is_on: bool) -> void:
 	print("[STATUS] PetViewContainer: Paintball Mode toggled %s" % is_on)
 	if is_on:
-		_deactivate_other_modes("Paintball Mode")
-	paintball_mode = is_on
-	_update_mode_panel_visibility(paintball_settings_instance, is_on)
-
-	if not is_on:
-		paintball_target_ball = null
-		close_paintball_on_apply = false
-		_restore_all_balls()
-	else:
-		_restore_all_balls()
-		_ordered_color_index = 0
-		_ordered_outline_color_index = 0
-		_ordered_texture_index = 0
-		paintball_settings_instance.find_node("Target").selected = 0
-
-	_update_paintball_mode_ui()
-	mark_ui_dirty()
+		set_mode(Mode.PAINTBALL)
+	elif current_mode == Mode.PAINTBALL:
+		# Only exit Paintball if we're actually in Paintball mode.
+		# When syncing checkboxes during a mode switch, the checkbox is already
+		# false so this won't fire. If it does fire (user clicked off), we're
+		# in PAINTBALL so it's a legitimate exit.
+		set_mode(Mode.NONE)
 
 func _on_move_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Move Mode")
-	move_mode = is_on
-	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
-
-	if is_on:
-		move_mode_settings_instance.set_queued_count(pending_moves.size())
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		ball_label.hide()
-		_reset_tab_state()
-	else:
-		_on_unselect_all()
-		_on_move_mode_clear()
-	mark_ui_dirty()
+		set_mode(Mode.MOVE)
+	elif current_mode == Mode.MOVE:
+		set_mode(Mode.NONE)
 
 func _on_line_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Line Mode")
-	linez_mode = is_on
-	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
-
-	if is_on:
-		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-	else:
-		line_mode_close = false
-		if is_instance_valid(linez_start_ball):
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-		linez_start_ball = null
-		if polygon_mode:
-			_clear_polygon_selection()
-			polygon_balls.clear()
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-	mark_ui_dirty()
+		set_mode(Mode.LINE)
+	elif current_mode == Mode.LINE:
+		set_mode(Mode.NONE)
 
 func _on_polygon_mode_toggled(is_on: bool) -> void:
 	polygon_mode = is_on
@@ -3026,53 +3159,27 @@ func _finalize_polygon() -> void:
 
 func _on_preset_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Preset Mode")
-	preset_mode = is_on
-	_update_mode_panel_visibility(preset_settings_instance, is_on)
-
-	if is_on:
-		if pet_node and pet_node.lnz:
-			if pet_node.lnz.texture_list:
-				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-			if pet_node.lnz.palette:
-				preset_settings_instance.set_palette(pet_node.lnz.palette)
-
-		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_ARROW
-	else:
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-	mark_ui_dirty()
+		set_mode(Mode.PRESET)
+	elif current_mode == Mode.PRESET:
+		set_mode(Mode.NONE)
 
 func _on_auto_paintballer_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Auto Paintballer")
-	auto_paintballer_mode = is_on
-	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
-
-	if not is_on:
-		pet_node.clear_auto_paintballz()
-		_on_unselect_all()
-		_auto_paint_affected_cache.clear()
-		var all_balls: Array = _get_all_visual_balls()
-		for b in all_balls:
-			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-				b.apply_outline_state(b.OutlineState.NONE)
-	mark_ui_dirty()
+		set_mode(Mode.AUTO_PAINTBALLER)
+	elif current_mode == Mode.AUTO_PAINTBALLER:
+		set_mode(Mode.NONE)
 
 func _on_project_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Project Mode")
-	project_mode = is_on
-	_update_mode_panel_visibility(project_settings_instance, is_on)
-	mark_ui_dirty()
+		set_mode(Mode.PROJECT)
+	elif current_mode == Mode.PROJECT:
+		set_mode(Mode.NONE)
 
 func _on_texture_editor_mode_toggled(is_on: bool) -> void:
 	if is_on:
-		_deactivate_other_modes("Texture Editor")
-	texture_editor_mode = is_on
-	_update_mode_panel_visibility(texture_editor_settings_instance, is_on)
-	mark_ui_dirty()
+		set_mode(Mode.TEXTURE_EDITOR)
+	elif current_mode == Mode.TEXTURE_EDITOR:
+		set_mode(Mode.NONE)
 
 
 ### PALETTE VIEWER ###
