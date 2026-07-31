@@ -126,9 +126,10 @@ signal ball_selected(ball_no, is_addball)
 signal ball_moved(ball_no, new_position)
 signal ball_resized(ball_no, size_dif)
 
-signal addball_deleted(ball_no)
 signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
+signal delete_ball(ball_no)
+signal omit_ball(ball_no)
 
 signal palette_changed(palette_name)
 
@@ -214,7 +215,6 @@ func populate_bhd_list():
 # signal_paintball_mouse_enter
 # signal_paintball_mouse_exit
 # signal_ball_selected
-# signal_ball_deleted
 # _on_LnzTextEdit_find_ball
 # _on_LnzTextEdit_find_line
 # _on_LnzTextEdit_find_paintball
@@ -286,11 +286,12 @@ func signal_ball_selected(ball_no, section):
 		is_addball = true
 	emit_signal("ball_selected", section, ball_no, is_addball, lnz.balls.keys().max() + 1)
 
-func signal_ball_deleted(ball_no):
-	print("[STATUS] Node: signal_ball_deleted: ball_no %d" % ball_no)
-	var ball = ball_map[ball_no]
-	if ball.base_ball_no != -1:
-		emit_signal("addball_deleted", ball_no)
+func _on_Node_ball_deleted(ball_no):
+	print("[STATUS] Node: _on_Node_ball_deleted: ball_no %d" % ball_no)
+	if ball_no > KeyBallsData.max_base_ball_num:
+		emit_signal("delete_ball", ball_no)
+	else:
+		emit_signal("omit_ball", ball_no)
 
 func _on_LnzTextEdit_find_ball(ball_no):
 	print("[STATUS] Node: _on_LnzTextEdit_find_ball: flashing ball %d" % ball_no)
@@ -1091,6 +1092,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 			node.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 			node.connect("ball_selected", self, "signal_ball_selected")
+			node.connect("delete_ball", self, "_on_Node_ball_deleted")
 			
 			balls_parent.add_child(node)
 			#node.set_owner(root)
@@ -1154,7 +1156,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 			node.connect("ball_selected", self, "signal_ball_selected")
-			node.connect("ball_deleted", self, "signal_ball_deleted")
+			node.connect("delete_ball", self, "_on_Node_ball_deleted")
 
 			if no_texture_rotate.has(int(key)):
 				node.set_tile_texture(false)

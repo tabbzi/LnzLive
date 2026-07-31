@@ -1870,12 +1870,13 @@ __meta__ = {
 
 [node name="UserSettingsDialog" parent="SceneRoot" instance=ExtResource( 40 )]
 
-[connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]
 [connection signal="ball_mouse_enter" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_Node_ball_mouse_enter"]
 [connection signal="ball_moved" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_moved"]
 [connection signal="ball_resized" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_resized"]
 [connection signal="ball_selected" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_selected"]
+[connection signal="delete_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_delete_ball"]
+[connection signal="omit_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_omit_ball"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]

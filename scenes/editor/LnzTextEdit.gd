@@ -3357,6 +3357,12 @@ func create_addball(reference_ball, also_connect_line := false):
 func _on_ToolsMenu_delete_ball(ball_no: int):
 	delete_ball(ball_no)
 
+func _on_Node_delete_ball(ball_no: int):
+	delete_ball(ball_no)
+
+func _on_Node_omit_ball(ball_no: int):
+	omit_ball(ball_no)
+
 func delete_ball(ball_no: int):
 	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
