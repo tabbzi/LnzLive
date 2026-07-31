@@ -67,7 +67,6 @@ signal paintball_mouse_exit()
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
-signal delete_ball(ball_no)
 
 func _ready():
 	old_outline = outline
@@ -344,10 +343,6 @@ func _input(event):
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.LINE)
-		elif event.scancode == KEY_DELETE:
-			get_tree().set_input_as_handled()
-			if ball_no != -1:
-				emit_signal("delete_ball", ball_no)
 
 var timer_count = 0
 
