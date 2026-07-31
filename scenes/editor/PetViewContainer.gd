@@ -2032,6 +2032,7 @@ func _exit_mode(mode: int) -> void:
 			_restore_all_balls()
 			_set_pending_paintballs_visible(false)
 		Mode.LINE:
+			var should_switch_tab = line_mode_close
 			line_mode_close = false
 			if is_instance_valid(linez_start_ball):
 				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
@@ -2039,6 +2040,10 @@ func _exit_mode(mode: int) -> void:
 			if polygon_mode:
 				_clear_polygon_selection()
 				polygon_balls.clear()
+			if should_switch_tab and sidebar_controller:
+				var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
+				if tree_tab:
+					sidebar_controller.switch_to_tab(tree_tab)
 		Mode.PRESET:
 			pass
 		Mode.RECOLOR:
