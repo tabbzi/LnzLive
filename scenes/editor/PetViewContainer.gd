@@ -1904,7 +1904,7 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
-			KEY_H:
+			KEY_K:
 				lnz_text_edit.capture_headshot()
 				get_tree().set_input_as_handled()
 				return true
@@ -2182,6 +2182,12 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 				return
 
 	if _handle_move_nudge_key_input(event):
+		return
+
+	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_H:
+		get_tree().set_input_as_handled()
+		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
+			pet_node.unhide_all_balls()
 		return
 
 	# Open Tools Menu via CTRL+SPACE for last selected ball:

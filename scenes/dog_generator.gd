@@ -1093,6 +1093,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 			node.connect("ball_selected", self, "signal_ball_selected")
 			node.connect("delete_ball", self, "_on_Node_ball_deleted")
+			node.connect("hide_ball", self, "hide_ball")
 			
 			balls_parent.add_child(node)
 			#node.set_owner(root)
@@ -1157,6 +1158,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 			node.connect("ball_selected", self, "signal_ball_selected")
 			node.connect("delete_ball", self, "_on_Node_ball_deleted")
+			node.connect("hide_ball", self, "hide_ball")
 
 			if no_texture_rotate.has(int(key)):
 				node.set_tile_texture(false)

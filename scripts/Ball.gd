@@ -73,6 +73,7 @@ signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
 signal delete_ball(ball_no)
+signal hide_ball(ball_no)
 
 func _ready() -> void:
 	old_outline = outline
@@ -383,6 +384,9 @@ func _input(event: InputEvent) -> void:
 		elif event.scancode == KEY_DELETE:
 			get_tree().set_input_as_handled()
 			emit_signal("delete_ball", ball_no)
+		elif event.scancode == KEY_H and not event.control and not event.alt and not event.shift:
+			get_tree().set_input_as_handled()
+			emit_signal("hide_ball", ball_no)
 
 func flash() -> void:
 	timer_count = 0

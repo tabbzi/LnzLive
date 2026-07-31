@@ -46,7 +46,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `V` | Open/Close Variation Viewer |
 | **Tools** | none yet | Open/Close Texture Editor |
-| **Tools** | `H` | Capture `[Head Shot]` |
+| **Tools** | `K` | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
 | **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
 | **Text Editing** | `CTRL` + `F` | **Find/Replace**: Toggles Find and Replace panel |
@@ -60,8 +60,10 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `C` or `P` | Jumps to the `[Project Ball]` entries involving hovered ball |
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
 | **Select Mode** | `N` | Cycle through nearby balls (when overlapping or hard to select) |
+| **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
+| **Global** | `CTRL` + `H` | Unhide all hidden balls |
 | **Shape Mode** | `D` or `ALT` + `P` | **Open/Close Shape Mode** |
 | **Paintball Mode** | `W` or `ALT` + `B` | **Open/Close Paintball Mode** |
 | **Paintball Mode** | `left-click` | **Draw**: Add paintballz by point-and-click |

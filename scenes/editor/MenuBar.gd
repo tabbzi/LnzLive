@@ -128,7 +128,7 @@ func _setup_tool_menu() -> void:
 	popup.set_item_tooltip(popup.get_item_index(ToolMenu.COLOR_SWAP), "Hotkey G to toggle Color Swap")
 	
 	popup.add_item("Capture Head Shot", ToolMenu.CAPTURE_HEADSHOT)
-	popup.set_item_tooltip(popup.get_item_index(ToolMenu.CAPTURE_HEADSHOT), "Hotkey H to capture [Head Shot]")
+	popup.set_item_tooltip(popup.get_item_index(ToolMenu.CAPTURE_HEADSHOT), "Hotkey K to capture [Head Shot]")
 	
 	popup.connect("id_pressed", self, "_on_tool_menu_id_pressed")
 
