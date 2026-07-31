@@ -3391,6 +3391,24 @@ func omit_ball(ball_no: int):
 		cursor_set_line(line_idx)
 		cursor_set_column(0)
 		insert_text_at_cursor(str(ball_no) + "\n")
+	
+	var bounds = get_section_bounds("[Linez]")
+	if not bounds.empty():
+		var lines_to_comment = []
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with("[") or line.begins_with(";"): continue
+			var parts = split_line(line)
+			if parts.size() >= 2 and (parts[0] == str(ball_no) or parts[1] == str(ball_no)):
+				lines_to_comment.append(i)
+		if not lines_to_comment.empty():
+			for line_idx in lines_to_comment:
+				var line_text = get_line(line_idx)
+				var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+				var indent = line_text.substr(0, indent_len)
+				var content = line_text.lstrip(" \t")
+				set_line(line_idx, indent + "; " + content + " ; commented out by Omit Ballz action")
+	
 	save_file(true)
 	commit_full_snapshot("Omitted Ballz #%d" % ball_no)
 
@@ -3416,6 +3434,27 @@ func unomit_ball(ball_no: int):
 		if line == str(ball_no):
 			select(line_idx, 0, line_idx + 1, 0)
 			cut()
+			
+			var bounds = get_section_bounds("[Linez]")
+			if not bounds.empty():
+				for j in range(bounds.start, bounds.end):
+					var l = get_line(j).strip_edges()
+					if not l.begins_with("; "): continue
+					if not " ; commented out by Omit Ballz action" in l: continue
+					var data_part = l.substr(2)
+					data_part = data_part.left(data_part.find(" ; commented out by Omit Ballz action"))
+					data_part = data_part.strip_edges()
+					var parts = data_part.split(" ", false)
+					if parts.size() < 2: continue
+					if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
+					var line_text = get_line(j)
+					var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+					var indent = line_text.substr(0, indent_len)
+					var content = line_text.lstrip(" \t")
+					content = content.substr(2)
+					content = content.replace(" ; commented out by Omit Ballz action", "")
+					set_line(j, indent + content)
+			
 			save_file(true)
 			commit_full_snapshot("Unomitted Ballz #%d" % ball_no)
 			return
