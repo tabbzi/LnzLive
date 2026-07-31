@@ -1105,10 +1105,19 @@ custom_colors/font_color = Color( 1, 1, 1, 0.8 )
 align = 2
 script = ExtResource( 42 )
 
-[node name="VersionLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
+[node name="HiddenBallsLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
+margin_left = 10.0
 margin_top = 78.0
-margin_right = 759.0
 margin_bottom = 98.0
+custom_fonts/font = ExtResource( 35 )
+custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
+align = 2
+visible = false
+
+[node name="VersionLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
+margin_top = 102.0
+margin_right = 759.0
+margin_bottom = 122.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
 text = "PB-beta-v1.4.7-preview-38"

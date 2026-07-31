@@ -130,6 +130,7 @@ signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
 signal delete_ball(ball_no)
 signal omit_ball(ball_no)
+signal hidden_balls_changed(count)
 
 signal palette_changed(palette_name)
 
@@ -2209,6 +2210,7 @@ func hide_ball(ball_no):
 	print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
 	if not _hidden_balls.has(ball_no):
 		_hidden_balls.append(ball_no)
+		emit_signal("hidden_balls_changed", _hidden_balls.size())
 
 	_apply_hidden_state_to_visuals(ball_no)
 	
@@ -2248,8 +2250,9 @@ func unhide_all_balls():
 		if is_instance_valid(pb) and pb.has_method("set_hidden"):
 			pb.set_hidden(false)
 	_hidden_paintballs.clear()
-
 	_hidden_balls.clear()
+	emit_signal("hidden_balls_changed", 0)
+
 
 func _apply_hidden_state_to_visuals(ball_no):
 	if ball_map.has(ball_no):

@@ -72,6 +72,7 @@ onready var project_mode_check_box: CheckBox = find_node("ProjectModeCheckBox")
 onready var preset_mode_check_box: CheckBox = find_node("PresetModeCheckBox")
 
 onready var tools_menu: Node = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
+onready var hidden_balls_label: Label = find_node("HiddenBallsLabel")
 
 var _auto_paint_affected_cache: Array = []
 
@@ -343,6 +344,7 @@ func _ready() -> void:
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
 		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "_on_clear_auto_paintballz")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
+		pet_node.connect("hidden_balls_changed", self, "_on_hidden_balls_changed")
 
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", self, "_restore_auto_paintballer_selection")
 	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
@@ -2238,6 +2240,13 @@ func _set_camera_view(view_name: String) -> void:
 func _on_ShaderSettingsButton_pressed() -> void:
 	if is_instance_valid(shader_settings_instance):
 		shader_settings_instance.popup_centered()
+
+func _on_hidden_balls_changed(count: int) -> void:
+	if count > 0:
+		hidden_balls_label.text = "%d ballz hidden (CTRL+H to unhide)" % count
+		hidden_balls_label.visible = true
+	else:
+		hidden_balls_label.visible = false
 
 func _on_texture_rotation_mode_changed(mode: int) -> void:
 	var all_balls: Array = _get_all_visual_balls()
