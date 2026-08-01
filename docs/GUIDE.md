@@ -61,6 +61,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
 | **Select Mode** | `N` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
+| **Select Mode** | `DELETE` | Omit (if base ballz) or delete (if add ballz) hovered ball |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
 | **Global** | `CTRL` + `H` | Unhide all hidden balls |
