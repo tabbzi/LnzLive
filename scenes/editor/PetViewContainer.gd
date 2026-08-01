@@ -61,6 +61,8 @@ onready var variation_tree: Tree = get_tree().root.get_node(
 
 onready var select_check_box: CheckBox = find_node("SelectCheckBox")
 
+onready var ball_range_container: Control = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer")
+
 onready var recolor_mode_check_box: CheckBox = find_node("RecolorModeCheckBox")
 onready var texture_editor_mode_check_box: CheckBox = find_node("TextureEditorModeCheckBox")
 var texture_editor_mode: bool = false
@@ -367,6 +369,11 @@ func _ready() -> void:
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+
+	# Connect BallRangeSelector in Select Mode
+	var br = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer")
+	if is_instance_valid(br):
+		br.connect("select_balls", self, "_on_BallRange_select_balls")
 
 	var shader_settings_btn: Button = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
 	if is_instance_valid(shader_settings_btn):
@@ -941,10 +948,39 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	return global_pos - self.rect_global_position
 
 func _handle_box_selection(event: InputEvent) -> bool:
+	# Active modes handle their own box selection — Select Mode only when NONE is active
 	if (
 		not (move_mode or preset_mode or auto_paintballer_mode)
 		or not Input.is_key_pressed(KEY_CONTROL)
 	):
+		# Select Mode box select — ONLY when no other mode is active
+		if _is_select_mode_active() and Input.is_key_pressed(KEY_CONTROL):
+			if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+				if event.pressed:
+					box_selecting = true
+					box_start_pos = event.position
+					box_end_pos = event.position
+					return true
+				elif box_selecting:
+					box_selecting = false
+					update()
+					if box_start_pos.distance_to(event.position) < 5.0:
+						var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+						if hover:
+							if hover in selected_balls:
+								selected_balls.erase(hover)
+							else:
+								selected_balls.append(hover)
+							if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
+								hover.apply_outline_state(get_visual_state_for_ball(hover))
+							_update_multi_select_visuals()
+					else:
+						_commit_box_selection()
+					return true
+			if event is InputEventMouseMotion and box_selecting:
+				box_end_pos = event.position
+				update()
+				return true
 		return false
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
@@ -1499,6 +1535,36 @@ func _gui_input(event: InputEvent) -> void:
 		return
 
 	if _handle_paint_mode_gui_input(event):
+		return
+
+	# Select Mode left-click handling (only when no other mode is active):
+	if _is_select_mode_active() and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+		if target_ball:
+			_reset_tab_state()
+			if Input.is_key_pressed(KEY_CONTROL) or Input.is_key_pressed(KEY_META):
+				# Ctrl+click: toggle ball in/out of selection
+				if target_ball in selected_balls:
+					selected_balls.erase(target_ball)
+					if target_ball.has_method("apply_outline_state"):
+						target_ball.apply_outline_state(get_visual_state_for_ball(target_ball))
+				else:
+					selected_balls.append(target_ball)
+					target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+				_update_selected_ballz_in_settings()
+				mark_ui_dirty()
+				return
+			else:
+				# Plain click: clear existing, select only this ball
+				for b in selected_balls:
+					if is_instance_valid(b) and b.has_method("apply_outline_state"):
+						b.apply_outline_state(b.OutlineState.NONE)
+				selected_balls.clear()
+				active_selected_ball = target_ball
+				selected_balls.append(target_ball)
+				target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+			_update_selected_ballz_in_settings()
+			mark_ui_dirty()
 		return
 
 	# Open Tools Menu via right-click on hovered ball:
@@ -2107,6 +2173,38 @@ func _sync_mode_checkboxes() -> void:
 	if texture_editor_mode_check_box.pressed != (current_mode == Mode.TEXTURE_EDITOR):
 		texture_editor_mode_check_box.pressed = (current_mode == Mode.TEXTURE_EDITOR)
 
+func _is_select_mode_active() -> bool:
+	return selecting_on and current_mode == Mode.NONE
+
+func _cleanup_selected_balls() -> void:
+	var cleaned := Array()
+	for b in selected_balls:
+		if is_instance_valid(b):
+			cleaned.append(b)
+	if cleaned.size() != selected_balls.size():
+		selected_balls = cleaned
+
+func _on_BallRange_select_balls(ids: Array) -> void:
+	if not selecting_on:
+		return
+	# BallRange replaces selection entirely (like MoveModeSettings AffectedBallz)
+	_on_unselect_all()
+	for id in ids:
+		var ball: Spatial = find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball) and ball.is_inside_tree():
+			if "ball_no" in ball:
+				selected_balls.append(ball)
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
+
+func _update_multi_select_visuals() -> void:
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
+
 func _sync_mode_cursor() -> void:
 	match current_mode:
 		Mode.NONE:
@@ -2337,24 +2435,42 @@ func _on_ModePopup_about_to_show() -> void:
 
 func _on_SelectCheckBox_pressed() -> void:
 	selecting_on = select_check_box.pressed
-	if !selecting_on:
+	if selecting_on:
+		# Auto-disable any active mode when entering Select
+		if move_mode:
+			move_mode_check_box.pressed = false
+		if paintball_mode:
+			paintball_check_box.pressed = false
+		if linez_mode:
+			line_mode_check_box.pressed = false
+		if preset_mode:
+			preset_mode_check_box.pressed = false
+		if recolor_mode:
+			recolor_mode_check_box.pressed = false
+		if project_mode:
+			project_mode_check_box.pressed = false
+		if auto_paintballer_mode:
+			auto_paintballer_check_box.pressed = false
+		for b in _get_all_visual_balls():
+			if is_instance_valid(b) and b.has_method("set_select_mode_active"):
+				b.select_mode_active = true
+	else:
 		if last_selected_is_valid():
 			last_selected._on_Area_mouse_exited()
 		last_selected = null
 		clear_active_selected_ball()
+		_on_unselect_all()
 		ball_label.hide()
 		for b in _get_all_visual_balls():
-			if b and b.has_method("apply_outline_state"):
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
 				b.select_mode_active = false
 		tex.update()
-	else:
-		for b in _get_all_visual_balls():
-			if b and b.has_method("set_select_mode_active"):
-				b.select_mode_active = true
 	# for pb in get_tree().get_nodes_in_group("paintballs"):
 	# 	if pb and pb.has_method("set_select_mode_active"):
 	# 		pb.select_mode_active = selecting_on
+	if is_instance_valid(ball_range_container):
+		ball_range_container.visible = selecting_on
 	mark_ui_dirty()
 
 func _on_HelpButton_pressed() -> void:
@@ -2436,6 +2552,8 @@ func get_visual_state_for_ball(b: Spatial):
 			return b.OutlineState.ACTIVE_SELECTED
 		elif move_mode and pending_moves.has(b.ball_no):
 			return b.OutlineState.MODIFIED
+		elif _is_select_mode_active() and b in selected_balls:
+			return b.OutlineState.ACTIVE_SELECTED
 		else:
 			if b == active_selected_ball:
 				return b.OutlineState.ACTIVE_SELECTED
@@ -2492,6 +2610,29 @@ func _on_affected_list_changed(ids: Array) -> void:
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+func _print_selected_ball_colors(ball_nos: Array) -> void:
+	var ball_map_string = ""
+	for no in ball_nos:
+		if is_instance_valid(pet_node) and pet_node.ball_map.has(no):
+			var ball = pet_node.ball_map[no]
+			if "ball_no" in ball:
+				var this_ball_string = (
+					str(ball.ball_no)
+					+ ",\t\t"
+					+ str(ball.color_index)
+					+ ",\t\t"
+					+ str(ball.fuzz_amount)
+					+ ",\t\t"
+					+ str(ball.outline)
+					+ ",\t\t"
+					+ str(ball.texture_id).replace("0", "3")
+				)
+				if ball_map_string != "":
+					ball_map_string += "\n"
+				ball_map_string += this_ball_string
+	OS.set_clipboard(ball_map_string)
+	print("[STATUS] PetViewContainer: copied colors of %d selected ballz to clipboard" % ball_nos.size())
 
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
@@ -2823,13 +2964,69 @@ func _update_selected_ballz_in_settings() -> void:
 	if auto_paintballer_mode:
 		auto_paintballer_settings_instance.update_selected_balls_text(ids)
 
+	# Update BallRangeContainer in Select Mode
+	if selecting_on and is_instance_valid(ball_range_container):
+		var edit_node = ball_range_container.get_node_or_null("VBoxContainer/BallRangeHBox/BallRangeEdit")
+		if is_instance_valid(edit_node) and edit_node is LineEdit:
+			if edit_node.has_focus():
+				pass  # Don't overwrite user input
+			else:
+				ids.sort()
+				if ids.empty():
+					edit_node.text = ""
+				else:
+					edit_node.text = _compress_ranges_for_display(ids)
+
+func _compress_ranges_for_display(ball_ids: Array) -> String:
+	ball_ids.sort()
+	var start: int = ball_ids[0]
+	var prev: int = start
+	var ranges: Array = []
+	
+	for i in range(1, ball_ids.size()):
+		var curr: int = ball_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+			
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+	
+	var s: String = ""
+	for i in range(ranges.size()):
+		if i > 0:
+			s += ","
+		s += str(ranges[i])
+	return s
+
 func _on_select_balls_by_ids(ids: Array) -> void:
 	_on_unselect_all()
 
 	for id in ids:
 		var ball: Spatial = find_visual_ball_by_no(id)
-		if ball and is_instance_valid(ball):
+		if ball and is_instance_valid(ball) and ball.is_inside_tree():
 			if "ball_no" in ball:
+				selected_balls.append(ball)
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+
+	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
+
+func select_balls_by_ids(ids: Array) -> void:
+	_cleanup_selected_balls()
+
+	for id in ids:
+		var ball: Spatial = find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball) and ball.is_inside_tree():
+			if "ball_no" in ball and not (ball in selected_balls):
 				selected_balls.append(ball)
 				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
 

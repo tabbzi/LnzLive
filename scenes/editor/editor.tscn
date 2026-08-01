@@ -1,6 +1,7 @@
-[gd_scene load_steps=59 format=2]
+[gd_scene load_steps=60 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
+[ext_resource path="res://scenes/editor/BallRangeSelector.gd" type="Script" id=59]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
 [ext_resource path="res://scenes/dog_generator.gd" type="Script" id=3]
 [ext_resource path="res://scenes/editor/PetViewContainer.gd" type="Script" id=4]
@@ -1361,6 +1362,36 @@ custom_styles/normal = SubResource( 14 )
 custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
+[node name="BallRangeContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+visible = false
+margin_left = 1.0
+margin_top = 10.0
+margin_right = 758.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+custom_styles/panel = ExtResource( 23 )
+script = ExtResource( 59 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer"]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 754.0
+margin_bottom = 36.0
+
+[node name="BallRangeHBox" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer/VBoxContainer"]
+margin_right = 746.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+
+[node name="BallRangeLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer/VBoxContainer/BallRangeHBox"]
+margin_right = 50.0
+custom_fonts/font = ExtResource( 27 )
+text = "Ball Range:"
+
+[node name="BallRangeEdit" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/BallRangeContainer/VBoxContainer/BallRangeHBox"]
+size_flags_horizontal = 3
+hint_tooltip = "Enter: 1-5, 10, 15-20"
+
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_top = 28.0
 margin_right = 757.0
@@ -1962,4 +1993,8 @@ __meta__ = {
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="unomit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_unomit_ball"]
+[connection signal="apply_fuzz_to_selected_balls" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_fuzz_to_selected_balls"]
+[connection signal="delete_selected_balls" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_delete_selected_balls"]
+[connection signal="omit_selected_balls" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_omit_selected_balls"]
+[connection signal="clear_paintballz_from_selected_balls" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_clear_paintballz_from_selected_balls"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]

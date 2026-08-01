@@ -3377,6 +3377,51 @@ func delete_ball(ball_no: int):
 	save_file(true)
 	commit_full_snapshot("Deleted Addballz #%d" % ball_no)
 
+func _on_ToolsMenu_delete_selected_balls():
+	save_backup()
+	var to_delete = Array()
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if is_instance_valid(pet_view):
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and "ball_no" in b:
+				to_delete.append(b.ball_no)
+		for no in to_delete:
+			var is_addball = no > KeyBallsData.max_base_ball_num
+			if is_addball:
+				var line_no = find_line_in_addball_section(no - KeyBallsData.max_base_ball_num)
+				if line_no != -1:
+					select(line_no, 0, line_no + 1, 0)
+					cut()
+				_update_all_references(no)
+		pet_view.selected_balls.clear()
+	save_file(true)
+	commit_full_snapshot("Deleted %d selected ballz" % to_delete.size())
+
+func _on_ToolsMenu_omit_selected_balls():
+	save_backup()
+	var to_omit = Array()
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if is_instance_valid(pet_view):
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and "ball_no" in b:
+				to_omit.append(b.ball_no)
+		for no in to_omit:
+			omit_ball(no)
+		pet_view.selected_balls.clear()
+	save_file(true)
+	commit_full_snapshot("Omitted %d selected ballz" % to_omit.size())
+
+func _on_ToolsMenu_clear_paintballz_from_selected_balls():
+	save_backup()
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if is_instance_valid(pet_view):
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and "ball_no" in b:
+				_on_ToolsMenu_clear_ball_paintballz(b.ball_no)
+		pet_view.selected_balls.clear()
+	save_file(true)
+	commit_full_snapshot("Cleared paintballz from selected ballz")
+
 func _on_ToolsMenu_omit_ball(ball_no: int):
 	omit_ball(ball_no)
 
@@ -3777,6 +3822,21 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 
 	save_file(true)
 	commit_full_snapshot("Applied Global Fuzz: " + str(fuzz))
+
+func _on_ToolsMenu_apply_fuzz_to_selected_balls(fuzz, ball_nos):
+	save_backup()
+	if is_instance_valid(pet_node):
+		for no in ball_nos:
+			if pet_node.ball_map.has(no):
+				var ball = pet_node.ball_map[no]
+				if "ball_no" in ball:
+					ball.fuzz_amount = fuzz
+					if is_instance_valid(pet_node.lnz):
+						if no < KeyBallsData.max_base_ball_num:
+							pet_node.lnz.balls[no].fuzz = fuzz
+						else:
+							pet_node.lnz.addballs[no].fuzz = fuzz
+	print("[STATUS] LnzTextEdit: applied fuzz %d to %d selected ballz" % [fuzz, ball_nos.size()])
 
 func _resolve_recolor(color_str: String, is_outline: bool, rules: Array, info, texture: String):
 	for rule in rules:

@@ -23,6 +23,10 @@ signal paintball_mode_for_ball_toggled(ball)
 signal omit_ball(ball_no)
 signal unomit_ball(ball_no)
 signal hide_ball(ball_no)
+signal apply_fuzz_to_selected_balls(fuzz, ball_nos)
+signal delete_selected_balls()
+signal omit_selected_balls()
+signal clear_paintballz_from_selected_balls()
 
 var selected_visual_ball: Node = null
 var current_action: int = 0
@@ -52,6 +56,22 @@ enum ToolsAction {
 var dog_generator: Node = null
 
 var cached_palette_colors: Array = []
+
+var _pending_fuzz_target_nos: Array = []
+
+func get_selected_ball_nos() -> Array:
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if not is_instance_valid(pet_view):
+		return []
+	if pet_view.selecting_on and pet_view.current_mode == 0 and not pet_view.selected_balls.empty():
+		var nos := Array()
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and b.has_method("get") and b.get("ball_no") != null:
+				nos.append(b.ball_no)
+		return nos
+	if is_instance_valid(selected_visual_ball) and selected_visual_ball.has_method("get") and selected_visual_ball.get("ball_no") != null:
+		return [selected_visual_ball.ball_no]
+	return []
 
 var color_line_edit
 var outcol_line_edit
@@ -276,12 +296,20 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 	var is_addball: bool = false
 	var is_omitted: bool = false
 	var is_ball_selected: bool = false
+	var pet_view: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = true
 		is_addball = ball_no > KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
+
+	# Check for multi-select in Select Mode
+	var multi_selected_nos: Array = []
+	if is_instance_valid(pet_view) and pet_view.selecting_on and pet_view.current_mode == 0:
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and b.has_method("get") and b.get("ball_no") != null:
+				multi_selected_nos.append(b.ball_no)
 
 	# Match against IDs so reordering items in _ready() doesn't break logic
 	match id:
@@ -293,8 +321,21 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 			if is_instance_valid(selected_visual_ball):
 				emit_signal("create_addball", selected_visual_ball, false)
 
-		ToolsAction.DELETE_ADDBALLZ: # Delete Addballz
-			if is_instance_valid(selected_visual_ball):
+		ToolsAction.DELETE_ADDBALLZ: # Delete Addballz / Omit
+			if not multi_selected_nos.empty() and is_instance_valid(pet_view):
+				for _no in multi_selected_nos:
+					var no: int = _no
+					var b = pet_view.find_visual_ball_by_no(no)
+					if is_instance_valid(b):
+						var b_is_addball = no > KeyBallsData.max_base_ball_num
+						var b_is_omitted = b.get("omitted") == true
+						if b_is_omitted:
+							emit_signal("unomit_ball", no)
+						elif b_is_addball:
+							emit_signal("delete_ball", no)
+						else:
+							emit_signal("omit_ball", no)
+			elif is_instance_valid(selected_visual_ball):
 				if is_omitted:
 					emit_signal("unomit_ball", ball_no)
 				elif is_addball:
@@ -303,7 +344,17 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 					emit_signal("omit_ball", ball_no)
 
 		ToolsAction.OMIT_UNOMIT: # Omit/Unomit Ballz
-			if is_instance_valid(selected_visual_ball):
+			if not multi_selected_nos.empty() and is_instance_valid(pet_view):
+				for _no in multi_selected_nos:
+					var no: int = _no
+					var b = pet_view.find_visual_ball_by_no(no)
+					if is_instance_valid(b):
+						var b_is_omitted = b.get("omitted") == true
+						if b_is_omitted:
+							emit_signal("unomit_ball", no)
+						else:
+							emit_signal("omit_ball", no)
+			elif is_instance_valid(selected_visual_ball):
 				if is_omitted:
 					emit_signal("unomit_ball", ball_no)
 				else:
@@ -311,23 +362,31 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 
 		ToolsAction.CONNECT_LINEZ: # Connect by Linez
 			if is_instance_valid(selected_visual_ball):
-				var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-				pet_view.line_mode_close = true
-				pet_view.line_mode_check_box.pressed = true
-				pet_view.polygon_mode = false
-				pet_view.polygon_balls.clear()
-				if pet_view.line_mode_settings_instance:
-					var cb = pet_view.line_mode_settings_instance.find_node("PolygonModeCheckBox")
+				var pv2: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+				pv2.line_mode_close = true
+				pv2.line_mode_check_box.pressed = true
+				pv2.polygon_mode = false
+				pv2.polygon_balls.clear()
+				if pv2.line_mode_settings_instance:
+					var cb = pv2.line_mode_settings_instance.find_node("PolygonModeCheckBox")
 					if cb:
 						cb.pressed = false
-				pet_view.linez_start_ball = selected_visual_ball
+				pv2.linez_start_ball = selected_visual_ball
 				selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
 
 		ToolsAction.COPY_L_TO_R: # Copy-Mirror (L-to-R)
-			emit_signal("copy_l_to_r", ball_no)
+			if not multi_selected_nos.empty():
+				var _first_no: int = multi_selected_nos[0]
+				emit_signal("copy_l_to_r", _first_no)
+			else:
+				emit_signal("copy_l_to_r", ball_no)
 
 		ToolsAction.COPY_R_TO_L: # Copy-Mirror (R-to-L)
-			emit_signal("copy_r_to_l", ball_no)
+			if not multi_selected_nos.empty():
+				var _first_no: int = multi_selected_nos[0]
+				emit_signal("copy_r_to_l", _first_no)
+			else:
+				emit_signal("copy_r_to_l", ball_no)
 
 		ToolsAction.PAINTBALL_MODE: # Paintball Mode
 			if is_instance_valid(selected_visual_ball):
@@ -337,15 +396,30 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 			get_parent().get_node("ExportClothes").open(ball_no)
 
 		ToolsAction.HIDE_BALLZ: # Hide Ballz
-			if is_instance_valid(selected_visual_ball):
+			if not multi_selected_nos.empty() and is_instance_valid(pet_view):
+				for _no in multi_selected_nos:
+					var _n: int = _no
+					emit_signal("hide_ball", _n)
+			elif is_instance_valid(selected_visual_ball):
 				emit_signal("hide_ball", ball_no)
 
 		ToolsAction.APPLY_FUZZ: # Apply Global Fuzz
+			if not multi_selected_nos.empty() and is_instance_valid(pet_view):
+				_pending_fuzz_target_nos = multi_selected_nos.duplicate()
+			else:
+				_pending_fuzz_target_nos = []
 			var options = get_parent().get_node("FuzzPopup")
 			options.popup_centered()
 
 		ToolsAction.COPY_COLORS: # Print Ballz Colors
-			emit_signal("print_ball_colors")
+			if not multi_selected_nos.empty() and is_instance_valid(pet_view):
+				var target_nos := Array()
+				for _n in multi_selected_nos:
+					var _ni: int = _n
+					target_nos.append(_ni)
+				pet_view._print_selected_ball_colors(target_nos)
+			else:
+				emit_signal("print_ball_colors")
 
 		ToolsAction.BALL_INFO: # Jump to ball
 			if is_ball_selected:
@@ -385,6 +459,14 @@ func _on_ToolsMenu_about_to_show() -> void:
 
 	var in_mode: bool = active_mode != ""
 
+	var multi_selected_nos: Array = []
+	var is_select_mode: bool = false
+	if is_instance_valid(pet_view) and pet_view.selecting_on and pet_view.current_mode == 0:
+		for b in pet_view.selected_balls:
+			if is_instance_valid(b) and "ball_no" in b:
+				multi_selected_nos.append(b.ball_no)
+		is_select_mode = true
+
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = is_instance_valid(selected_visual_ball)
@@ -396,8 +478,25 @@ func _on_ToolsMenu_about_to_show() -> void:
 		is_addball = ball_no > KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
 
+	# In Select Mode with multi-select, set selected_visual_ball to first for fallback UI
+	if is_select_mode and not multi_selected_nos.empty():
+		var pv = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		if is_instance_valid(pv):
+			var first_no = multi_selected_nos[0]
+			var fb = pv.find_visual_ball_by_no(first_no)
+			if is_instance_valid(fb):
+				selected_visual_ball = fb
+				ball_no = first_no
+				is_ball_selected = true
+				is_addball = ball_no > KeyBallsData.max_base_ball_num
+
+	var has_multi_select: bool = is_select_mode and multi_selected_nos.size() >= 2
+
 	if is_ball_selected:
-		set_item_text(get_item_index(ToolsAction.BALL_INFO), "Jump to #%d (%s)" % [ball_no, b_name])
+		if has_multi_select:
+			set_item_text(get_item_index(ToolsAction.BALL_INFO), "%d Ballz Selected" % multi_selected_nos.size())
+		else:
+			set_item_text(get_item_index(ToolsAction.BALL_INFO), "Jump to #%d (%s)" % [ball_no, b_name])
 	else:
 		set_item_text(get_item_index(ToolsAction.BALL_INFO), "No Ballz Selected")
 
@@ -408,7 +507,10 @@ func _on_ToolsMenu_about_to_show() -> void:
 	option_text = "Create Addballz + Linez"
 	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
-		option_text += " (#" + str(ball_no) + ")"
+		if has_multi_select:
+			option_text += " (from #%d, %d selected)" % [ball_no, multi_selected_nos.size()]
+		else:
+			option_text += " (#" + str(ball_no) + ")"
 	set_item_text(idx, option_text)
 
 	# Create Addballz
@@ -416,44 +518,70 @@ func _on_ToolsMenu_about_to_show() -> void:
 	option_text = "Create Addballz"
 	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
-		option_text += " (#" + str(ball_no) + ")"
+		if has_multi_select:
+			option_text += " (from #%d, %d selected)" % [ball_no, multi_selected_nos.size()]
+		else:
+			option_text += " (#" + str(ball_no) + ")"
 	set_item_text(idx, option_text)
 
 	# Delete Addballz
 	idx = get_item_index(ToolsAction.DELETE_ADDBALLZ)
-	option_text = "Delete Addballz"
-	set_item_disabled(idx, !is_ball_selected or !is_addball)
-	if is_ball_selected and is_addball:
-		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(idx, option_text)
+	if has_multi_select:
+		var del_count = multi_selected_nos.size()
+		set_item_text(idx, "Delete/Omit (%d ballz)" % del_count)
+		set_item_disabled(idx, false)
+	elif is_ball_selected and is_addball:
+		set_item_text(idx, "Delete Addballz (#" + str(ball_no) + ")")
+		set_item_disabled(idx, false)
+	elif is_ball_selected:
+		set_item_text(idx, "Omit Ballz (#" + str(ball_no) + ")")
+		set_item_disabled(idx, false)
+	else:
+		set_item_text(idx, "Delete Addballz / Omit")
+		set_item_disabled(idx, true)
 
 	# Omit/Unomit Ballz
 	idx =  get_item_index(ToolsAction.OMIT_UNOMIT)
-	set_item_disabled(idx, !is_ball_selected)
-	if is_ball_selected:
+	if has_multi_select:
+		var omit_count = multi_selected_nos.size()
+		set_item_text(idx, "Omit/Unomit (%d ballz)" % omit_count)
+		set_item_disabled(idx, false)
+	elif is_ball_selected:
 		var type_str: String = "Addballz" if is_addball else "Ballz"
 		if is_omitted:
 			set_item_text(idx, "Unomit " + type_str + " (#" + str(ball_no) + ")")
 		else:
 			set_item_text(idx, "Omit " + type_str + " (#" + str(ball_no) + ")")
+		set_item_disabled(idx, false)
 	else:
 		set_item_text(idx, "Omit / Unomit Ballz")
 		set_item_disabled(idx, !is_ball_selected)
 
-	# Connect by Linez
+	# Connect by Linez — disabled in multi-select (only works from a single ball)
 	idx = get_item_index(ToolsAction.CONNECT_LINEZ)
 	option_text = "Connect by Linez"
-	set_item_disabled(idx, !is_ball_selected)
-	if is_ball_selected:
+	if has_multi_select:
+		set_item_text(idx, "Connect by Linez")
+		set_item_disabled(idx, true)
+	elif is_ball_selected:
 		option_text += " (Start: #" + str(ball_no) + ")"
-	set_item_text(idx, option_text)
+		set_item_text(idx, option_text)
+		set_item_disabled(idx, false)
+	else:
+		set_item_disabled(idx, true)
 
-	# Copy-Mirror (L-to-R/R-to-L)
-	if is_ball_selected:
+	# Copy-Mirror (L-to-R/R-to-L) — disabled in multi-select (only works from a single ball)
+	if has_multi_select:
+		idx = get_item_index(ToolsAction.COPY_L_TO_R)
+		set_item_text(idx, "Copy-Mirror (L-to-R)")
+		set_item_disabled(idx, true)
+		idx = get_item_index(ToolsAction.COPY_R_TO_L)
+		set_item_text(idx, "Copy-Mirror (R-to-L)")
+		set_item_disabled(idx, true)
+	elif is_ball_selected:
 		idx = get_item_index(ToolsAction.COPY_L_TO_R)
 		set_item_text(idx, "Copy-Mirror (#" + str(ball_no) + ")")
 		set_item_disabled(idx, false)
-
 		idx = get_item_index(ToolsAction.COPY_R_TO_L)
 		set_item_text(idx, "Copy-Mirror (all ballz)")
 		set_item_disabled(idx, true)
@@ -461,47 +589,75 @@ func _on_ToolsMenu_about_to_show() -> void:
 		idx = get_item_index(ToolsAction.COPY_L_TO_R)
 		set_item_text(idx, "Copy-Mirror (L-to-R, all ballz)")
 		set_item_disabled(idx, false)
-
 		idx = get_item_index(ToolsAction.COPY_R_TO_L)
 		set_item_text(idx, "Copy-Mirror (R-to-L, all ballz)")
 		set_item_disabled(idx, false)
 
-	# Paintball Mode
+	# Paintball Mode — disabled in multi-select (only works on first selected ball)
 	idx = get_item_index(ToolsAction.PAINTBALL_MODE)
 	option_text = "Paintball Mode"
-	if is_ball_selected:
+	if has_multi_select:
+		set_item_text(idx, "Paintball Mode (%d selected)" % multi_selected_nos.size())
+		set_item_disabled(idx, false)
+	elif is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
+		set_item_text(idx, option_text)
+		set_item_disabled(idx, false)
 	else:
 		option_text += " (all ballz)"
-	set_item_text(idx, option_text)
+		set_item_text(idx, option_text)
+		set_item_disabled(idx, false)
 
-	# Export to Clothes CLZ
+	# Export to Clothes CLZ — disabled in multi-select (only works on a single ball)
 	idx = get_item_index(ToolsAction.EXPORT_CLOTHES)
 	option_text = "Export to Clothes CLZ"
-	if is_ball_selected:
+	if has_multi_select:
+		set_item_text(idx, "Export to Clothes CLZ")
+		set_item_disabled(idx, true)
+	elif is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(idx, option_text)
+		set_item_text(idx, option_text)
+		set_item_disabled(idx, false)
+	else:
+		set_item_disabled(idx, true)
 
 	# Hide Ballz
 	idx = get_item_index(ToolsAction.HIDE_BALLZ)
 	option_text = "Hide Ballz"
-	set_item_disabled(idx, !is_ball_selected)
-	if is_ball_selected:
+	if has_multi_select:
+		set_item_text(idx, "Hide (%d ballz)" % multi_selected_nos.size())
+		set_item_disabled(idx, false)
+	elif is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(idx, option_text)
+		set_item_text(idx, option_text)
+		set_item_disabled(idx, false)
+	else:
+		set_item_disabled(idx, true)
 
 	# Apply Global Fuzz
 	idx = get_item_index(ToolsAction.APPLY_FUZZ)
-	set_item_text(idx, "Apply Global Fuzz")
+	if has_multi_select:
+		set_item_text(idx, "Apply Fuzz (%d ballz)" % multi_selected_nos.size())
+	else:
+		set_item_text(idx, "Apply Global Fuzz")
 
 	# Copy Ballz Colors to Clipboard
 	idx = get_item_index(ToolsAction.COPY_COLORS)
-	set_item_text(idx, "Copy Ballz Colors to Clipboard")
+	if has_multi_select:
+		set_item_text(idx, "Copy Colors (%d ballz)" % multi_selected_nos.size())
+	else:
+		set_item_text(idx, "Copy Ballz Colors to Clipboard")
 
 	# Clear Paintballz
 	idx = get_item_index(ToolsAction.CLEAR_PAINTBALLZ)
-	set_item_disabled(idx, !is_ball_selected)
-	set_item_text(idx, "Clear Paintballz (#%d)" % ball_no if is_ball_selected else "Clear Paintballz")
+	if has_multi_select:
+		set_item_text(idx, "Clear Paintballz (%d ballz)" % multi_selected_nos.size())
+		set_item_disabled(idx, false)
+	elif is_ball_selected:
+		set_item_text(idx, "Clear Paintballz (#%d)" % ball_no)
+		set_item_disabled(idx, false)
+	else:
+		set_item_disabled(idx, true)
 
 	if in_mode:
 		# Disable everything involving interactive left-click
@@ -696,4 +852,9 @@ func _on_ApplyGlobalFuzz_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
 		var popup = get_parent().get_node("FuzzPopup/VBoxContainer")
 		var fuzz: int = popup.get_node("GlobalFuzzAmount").text.to_int()
-		emit_signal("apply_global_fuzz", fuzz)
+		if not _pending_fuzz_target_nos.empty():
+			var target_nos = _pending_fuzz_target_nos.duplicate()
+			_pending_fuzz_target_nos.clear()
+			emit_signal("apply_fuzz_to_selected_balls", fuzz, target_nos)
+		else:
+			emit_signal("apply_global_fuzz", fuzz)
