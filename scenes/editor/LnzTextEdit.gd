@@ -4478,7 +4478,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		
 		if !new_poly_lines.empty():
 			var poly_bounds2 = get_section_bounds("[Polygons]")
-			var insert_line = poly_bounds2.end
+			var insert_line = _find_insertion_line(poly_bounds2.start, poly_bounds2.end)
 			_insert_text_at_cursor_at_line(insert_line, _join_array(new_poly_lines, "\n") + "\n")
 
 	# [Move]
