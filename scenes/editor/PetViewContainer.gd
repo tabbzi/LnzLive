@@ -1101,7 +1101,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 								var orig_s: float = b.ball_size
 								if was_resizing and _scale_group_initial_data.has(b.ball_no):
-									orig_s = _scale_group_initial_data[b.ball_no].size
+									orig_s = _scale_group_initial_data[b.ball_no]["size"]
 
 								pending_moves[b.ball_no] = {
 									"orig_pos": orig_p,
@@ -1122,7 +1122,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 											== pending_moves[b.ball_no]["new_size"]
 										)
 									):
-										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
+										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
 					_record_move_end_state("Drag Move")
@@ -1151,7 +1151,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var offset_from_pivot: Vector3 = initial.pos - _scale_group_pivot
 				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
 
-				var target_visual: float = clamp(initial.size * scale_factor, 1.0, 500.0)
+				var target_visual: float = clamp(initial["size"] * scale_factor, 1.0, 500.0)
 				var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b_no)
 				var is_addball: bool = sizing_info.is_addball
 				var bhd_s: int = sizing_info.bhd_size
@@ -1280,23 +1280,23 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						if properties.has("size"):
 							var original_size: int = 0
 							if pet_node.lnz.balls.has(ball_no):
-								original_size = pet_node.lnz.balls[ball_no].size
+								original_size = pet_node.lnz.balls[ball_no]["size"] 
 							elif pet_node.lnz.addballs.has(ball_no):
-								original_size = pet_node.lnz.addballs[ball_no].size
-							properties["size"] = original_size + properties.size
+								original_size = pet_node.lnz.addballs[ball_no]["size"]
+							properties["size"] = original_size + properties["size"]
 
 					preset_settings_instance.SizeMode.TRUE:
 						if properties.has("size"):
 							var scale: float = pet_node.lnz.scales[1]
 							properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-								properties.size, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+								properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
 							)
 
 				var scale_ratio: float = 1.0
 				if properties.get("scale_paintballz", false) and properties.has("paintballz"):
 					var source_ref: float = preset_settings_instance.source_ball_reference_size
 					
-					var final_lnz: float = properties.size
+					var final_lnz: float = properties.get("size", sizing_info.bhd_size)
 					var current_base_size: float = sizing_info.bhd_size + final_lnz
 					if not sizing_info.is_addball:
 						current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
@@ -1315,7 +1315,7 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						for pb in properties.paintballz:
 							var new_pb: Dictionary = pb.duplicate()
 							new_pb.position *= (scale_ratio * p_pos_mod)
-							new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+							new_pb["size"] = int(round(new_pb["size"] * scale_ratio * p_size_mod))
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
 						
@@ -3893,9 +3893,9 @@ func _on_preset_apply_selection() -> void:
 		if size_mode == preset_settings_instance.SizeMode.SUM:
 			var original: int = 0
 			if pet_node.lnz.balls.has(ball_no):
-				original = pet_node.lnz.balls[ball_no].size
+				original = pet_node.lnz.balls[ball_no]["size"] 
 			elif pet_node.lnz.addballs.has(ball_no):
-				original = pet_node.lnz.addballs[ball_no].size
+				original = pet_node.lnz.addballs[ball_no]["size"] 
 			per_ball_props["size"] = original + ref_val
 
 		elif size_mode == preset_settings_instance.SizeMode.TRUE:

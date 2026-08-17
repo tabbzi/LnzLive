@@ -386,7 +386,7 @@ func _populate_tree_from_base() -> void:
 
 func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3) -> void:
 	item.set_text(0, str(p_data.base))
-	item.set_text(1, str(p_data.size))
+	item.set_text(1, str(p_data["size"]))
 	item.set_text(2, str(pos.x))
 	item.set_text(3, str(pos.y))
 	item.set_text(4, str(pos.z))
@@ -600,7 +600,7 @@ func update_preview() -> void:
 
 			var z_add_counter: float = 0.0
 			for pb_data in paintballs_from_tree:
-				var size: int = pb_data.size
+				var size: int = pb_data["size"]
 				var pos: Vector3 = pb_data.pos
 				var col: int = pb_data.col
 				var out_col: int = pb_data.out_col
@@ -697,8 +697,8 @@ func set_properties(properties: Dictionary) -> void:
 	_is_loading_settings = true
 
 	if properties.has("size"):
-		size_spinbox.value = properties.size
-		source_ball_reference_size = properties.size
+		size_spinbox.value = properties["size"]
+		source_ball_reference_size = properties["size"]
 
 	if properties.has("color_index"):
 		color_edit.text = str(properties.color_index)
@@ -743,7 +743,7 @@ func set_properties(properties: Dictionary) -> void:
 func _convert_lnz_object_to_dict(obj: Object) -> Dictionary:
 	return {
 		"base": obj.base,
-		"size": obj.size,
+		"size": obj["size"],
 		"position": obj.normalised_position,
 		"color_index": obj.color_index,
 		"outline_color_index": obj.outline_color_index,
