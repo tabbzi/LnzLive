@@ -2189,11 +2189,7 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 # _on_ToggleSpecialBalls_toggled
 # _on_TransparencyCheckBox_toggled
 # set_visibility_for_group
-# _on_AddballCheckBox_toggled
-# _on_BallCheckBox_toggled
-# _on_PaintballCheckBox_toggled
-# _on_LineCheckBox_toggled
-# _on_PolygonCheckBox_toggled
+# _on_draw_toggle_toggled
 # _on_OmittedBallCheckBox_toggled
 
 
@@ -2351,30 +2347,10 @@ func set_visibility_for_group(group_name: String, is_visible: bool):
 			else:
 				node.set_visible(is_visible)
 
-func _on_AddballCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_AddballCheckBox_toggled: setting addballs visibility to %s" % button_pressed)
-	draw_addballs = button_pressed
-	set_visibility_for_group("addballs", button_pressed)
-
-func _on_BallCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_BallCheckBox_toggled: setting balls visibility to %s" % button_pressed)
-	draw_balls = button_pressed
-	set_visibility_for_group("balls", button_pressed)
-
-func _on_PaintballCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_PaintballCheckBox_toggled: setting paintballs visibility to %s" % button_pressed)
-	draw_paintballs = button_pressed
-	set_visibility_for_group("paintballs", button_pressed)
-
-func _on_LineCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_LineCheckBox_toggled: setting lines visibility to %s" % button_pressed)
-	draw_lines = button_pressed
-	set_visibility_for_group("lines", button_pressed)
-
-func _on_PolygonCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_PolygonCheckBox_toggled: setting polygons visibility to %s" % button_pressed)
-	draw_polygons = button_pressed
-	set_visibility_for_group("polygons", button_pressed)
+func _on_draw_toggle_toggled(button_pressed, group_name):
+	print("[STATUS] Node: _on_draw_toggle_toggled: setting %s visibility to %s" % [group_name, button_pressed])
+	set("draw_" + group_name, button_pressed)
+	set_visibility_for_group(group_name, button_pressed)
 
 func _on_OmittedBallCheckBox_toggled(button_pressed):
 	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: setting omitted balls visibility to %s" % button_pressed)
