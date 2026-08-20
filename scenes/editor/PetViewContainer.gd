@@ -1314,8 +1314,10 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						var scaled_paintballz: Array = []
 						for pb in properties.paintballz:
 							var new_pb: Dictionary = pb.duplicate()
-							new_pb.position *= (scale_ratio * p_pos_mod)
-							new_pb["size"] = int(round(new_pb["size"] * scale_ratio * p_size_mod))
+							#new_pb.position *= (scale_ratio * p_pos_mod)
+							#new_pb["size"] = int(round(new_pb["size"] * scale_ratio * p_size_mod))
+							new_pb.position *= p_pos_mod
+							new_pb.size = int(round(new_pb.size * p_size_mod))
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
 						
@@ -3925,8 +3927,10 @@ func _on_preset_apply_selection() -> void:
 				var scaled_paintballz: Array = []
 				for pb in per_ball_props["paintballz"]:
 					var new_pb: Dictionary = pb.duplicate()
-					new_pb.position *= (scale_ratio * p_pos_mod)
-					new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+					#new_pb.position *= (scale_ratio * p_pos_mod)
+					#new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+					new_pb.position *= p_pos_mod
+					new_pb.size = int(round(new_pb.size * p_size_mod))
 					scaled_paintballz.append(new_pb)
 				per_ball_props["paintballz"] = scaled_paintballz
 
