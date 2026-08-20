@@ -406,11 +406,19 @@ func _ready() -> void:
 	)
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
+	call_deferred("_sync_shader_settings_to_pet")
 	_setup_3d_gizmos()
 
 	# check flipped view...
 	tex.rect_scale.x = -1.0
 	tex.rect_pivot_offset = tex.rect_size / 2.0
+
+func _sync_shader_settings_to_pet():
+	if is_instance_valid(shader_settings_instance) and is_instance_valid(pet_node):
+		pet_node._shader_rotation_mode = shader_settings_instance.get_mode()
+		pet_node._shader_rotation_input = shader_settings_instance.get_input_vec()
+		pet_node._shader_affected_by_size = shader_settings_instance.get_affected_by_size()
+		pet_node._shader_affected_by_rotation = shader_settings_instance.get_affected_by_rotation()
 
 func _on_reference_image_updated(config_data: Dictionary) -> void:
 	update_config_reference_image(config_data)
@@ -2251,6 +2259,7 @@ func _on_hidden_balls_changed(count: int) -> void:
 		hidden_balls_label.visible = false
 
 func _on_texture_rotation_mode_changed(mode: int) -> void:
+	pet_node._shader_rotation_mode = mode
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2261,6 +2270,7 @@ func _on_texture_rotation_mode_changed(mode: int) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_mode", mode)
 
 func _on_texture_rotation_input_changed(input_vec: Vector2) -> void:
+	pet_node._shader_rotation_input = input_vec
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2271,6 +2281,7 @@ func _on_texture_rotation_input_changed(input_vec: Vector2) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_input", input_vec)
 
 func _on_texture_affected_by_size_changed(is_affected: bool) -> void:
+	pet_node._shader_affected_by_size = is_affected
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2281,6 +2292,7 @@ func _on_texture_affected_by_size_changed(is_affected: bool) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_size", is_affected)
 
 func _on_texture_affected_by_rotation_changed(is_affected: bool) -> void:
+	pet_node._shader_affected_by_rotation = is_affected
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:

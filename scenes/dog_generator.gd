@@ -67,6 +67,11 @@ var _auto_paintball_nodes = []
 
 var render_flat_colors_global = false
 
+var _shader_rotation_mode = 1
+var _shader_rotation_input = Vector2.ZERO
+var _shader_affected_by_size = true
+var _shader_affected_by_rotation = false
+
 var _texture_cache = {}
 var _atlas_manifest = {}
 var _atlas_textures = {}
@@ -1411,6 +1416,8 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		else:
 			visual_polygon.visible = draw_polygons
 
+		apply_shader_settings(visual_polygon)
+
 		polygons_map[i] = visual_polygon
 
 		var poly_balls = [polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4]
@@ -1525,6 +1532,8 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			parent.add_child(visual_line)
 			visual_line.set_owner(root)
 
+		apply_shader_settings(visual_line)
+
 		i += 1
 	# print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
@@ -1583,6 +1592,7 @@ func generate_whiskers(new_create: bool):
 				visual_line = whiskers[i]
 
 		if visual_line:
+			apply_shader_settings(visual_line)
 			_update_whisker_position(visual_line, start_node, end_node)
 		i += 1
 
@@ -1986,7 +1996,18 @@ func _apply_tile_texture_settings(node, key, tile_when_absent: bool):
 	elif tile_when_absent:
 		node.set_tile_texture(true)
 
+func apply_shader_settings(node):
+	if node.has_node("MeshInstance") and is_instance_valid(node.get_node("MeshInstance")):
+		var mat = node.get_node("MeshInstance").material_override
+		if mat:
+			mat.set_shader_param("texture_rotation_mode", _shader_rotation_mode)
+			mat.set_shader_param("texture_rotation_input", _shader_rotation_input)
+			mat.set_shader_param("texture_affected_by_size", _shader_affected_by_size)
+			mat.set_shader_param("texture_affected_by_rotation", _shader_affected_by_rotation)
+			mat.set_shader_param("render_flat_colors", render_flat_colors_global)
+
 func apply_visual_properties(node, data, texture_list, palette, fallback_texture = null):
+	apply_shader_settings(node)
 	node.color_index = data.color_index
 	node.outline_color_index = data.outline_color_index
 	node.outline = data.outline
