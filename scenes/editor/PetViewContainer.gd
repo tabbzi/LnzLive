@@ -342,7 +342,7 @@ func _ready() -> void:
 
 	if is_instance_valid(pet_node):
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
-		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "_on_clear_auto_paintballz")
+		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "clear_auto_paintballz")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
 		pet_node.connect("hidden_balls_changed", self, "_on_hidden_balls_changed")
 
