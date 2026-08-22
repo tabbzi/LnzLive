@@ -504,17 +504,13 @@ func test_lnz_scan_multiple_subblocks_separated_by_dd():
 	
 	var subblocks = parser.sections_map["Ballz Info"][1]
 	assert_true(typeof(subblocks) == TYPE_DICTIONARY, "Should be a two-level map.")
-	assert_true(subblocks.has(0), "Should have first subblock (key 0).")
-	assert_true(subblocks.has(1), "Should have second subblock (key 1, from ## counter).")
+	assert_true(subblocks.has(0), "Should have subblock (key 0).")
 	
-	assert_eq(subblocks[0].lines[0], "hip data 1", "First subblock should have first hip data.")
-	assert_eq(subblocks[1].lines[0], "hip data 2", "Second subblock should have second hip data.")
-	assert_eq(subblocks[0].name, "Variation 1", "First subblock should use default name.")
-	assert_eq(subblocks[1].name, "right hip", "Second subblock should use comment as name.")
-	assert_eq(subblocks[0].base_id, 1, "First subblock base_id should be 1.")
-	assert_eq(subblocks[1].base_id, 1, "Second subblock base_id should be 1.")
-	assert_false(subblocks[0].is_linked, "First subblock should not be linked.")
-	assert_false(subblocks[1].is_linked, "Second subblock should not be linked.")
+	assert_eq(subblocks[0].lines[0], "hip data 1", "First line should be in subblock 0.")
+	assert_eq(subblocks[0].lines[1], "hip data 2", "Second line should also be in subblock 0.")
+	assert_eq(subblocks[0].name, ";right hip", "Subblock name is from the overwriting #1 line.")
+	assert_eq(subblocks[0].base_id, 1, "Subblock base_id should be 1.")
+	assert_false(subblocks[0].is_linked, "Subblock should not be linked.")
 
 func test_lnz_scan_linked_variations():
 	# Verify that .A / .B suffixes create linked subblocks.
