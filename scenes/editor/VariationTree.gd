@@ -14,7 +14,7 @@ func setup(p_dog_generator: Node, p_lnz_parser: Node) -> void:
 	_load_exclusions()
 	populate_tree()
 
-func populate_tree():
+func populate_tree() -> void:
 	if lnz_parser == null:
 		return
 	_sections_map = lnz_parser.get("sections_map")
@@ -23,370 +23,567 @@ func populate_tree():
 
 	clear()
 	var root: TreeItem = create_item()
-	if not root:
+	if root == null:
 		return
 	set_hide_root(true)
-
 	set_columns(1)
 	set_column_title(0, "Variation Viewer")
 	set_column_titles_visible(true)
 
-	var sections = _sections_map.keys()
-	sections.sort()
+	var sections: Array = _get_sorted_sections()
+	var config: Dictionary = _get_config()
 
-	var id_counts = {}
-	for section in sections:
-		var section_variations = _sections_map[section]
-		if typeof(section_variations) != TYPE_DICTIONARY:
-			continue
-		for id in section_variations:
-			if id == 0: continue
-			if not id_counts.has(id): id_counts[id] = 0
-			id_counts[id] += 1
-
-	var global_ids: Array = []
-	for id in id_counts:
-		if id_counts[id] > 1:
-			global_ids.append(id)
-	global_ids.sort()
+	var global_ids: Array = _extract_global_ids(sections)
+	var global_suffixes: Array = _extract_global_suffixes(sections)
 
 	if global_ids.size() > 0:
-		var global_item: TreeItem = create_item(root)
-		if not global_item:
-			return
-		global_item.set_text(0, "Global Variations")
-		global_item.set_selectable(0, false)
+		var g_folder: TreeItem = create_item(root)
+		g_folder.set_text(0, "Global Variations")
+		g_folder.set_selectable(0, false)
 
-		for id in global_ids:
-			var item: TreeItem = create_item(global_item)
+		for gid in global_ids:
+			var item: TreeItem = create_item(g_folder)
 			item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
 			item.set_editable(0, true)
-			item.set_text(0, "Global Variation #" + str(id))
-			item.set_metadata(0, {"type": "global", "id": id})
+			item.set_text(0, "Global Variation #" + str(gid))
+			item.set_metadata(0, {"type": "global", "id": gid})
+			item.set_checked(0, _is_global_id_active(sections, gid, config))
 
-			var all_active: bool = true
-			for s in sections:
-				var s_data = _sections_map[s]
-				if typeof(s_data) == TYPE_DICTIONARY and s_data.has(id):
-					var config = dog_generator.current_variation_config
-					if not config.has(s) or not config[s].has(id):
-						all_active = false
-						break
-			item.set_checked(0, all_active)
+	if global_suffixes.size() > 0:
+		var g_folder: TreeItem = _find_child_by_text(root, "Global Variations")
+		if g_folder != null:
+			for sk in global_suffixes:
+				var parts: Array = (sk as String).split(".")
+				var g_id: int = parts[0].to_int()
+				var suffix: String = parts[1]
+				var item: TreeItem = create_item(g_folder)
+				item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+				item.set_editable(0, true)
+				item.set_text(0, "Global Variation #" + str(g_id) + "." + suffix + " (linked)")
+				item.set_metadata(0, {"type": "global_suffix", "id": g_id, "suffix": suffix})
+				item.set_checked(0, _is_global_suffix_active(sections, g_id, suffix, config))
 
 	for section in sections:
-		var section_data = _sections_map[section]
-		if typeof(section_data) != TYPE_DICTIONARY:
-			continue
-
-		var has_variations: bool = false
-		for id in section_data:
-			if id > 0:
-				has_variations = true
-				break
-
-		if not has_variations:
+		var section_data = _get_section_data(section)
+		if section_data == null or not _section_has_variations(section_data):
 			continue
 
 		var section_item: TreeItem = create_item(root)
-		if not section_item:
-			return
 		section_item.set_text(0, section)
 		section_item.set_selectable(0, false)
 
-		var variations = section_data
-		var var_ids = variations.keys()
-		var_ids.sort()
+		var items: Array = _collect_top_level_items(section, section_data)
+		items.sort_custom(self, "_sort_variation_items")
 
-		for id in var_ids:
-			if id == 0: continue
+		for item_data in items:
+			var item: TreeItem = create_item(section_item)
+			item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+			item.set_editable(0, true)
+			item.set_text(0, _build_item_label(item_data))
+			item.set_metadata(0, _build_item_meta(item_data, section))
+			item.set_checked(0, _is_section_item_active(section, item_data, config))
 
-			var val = variations[id]
+			if item_data.get("type", "") == "bare" and item_data.get("int_count", 0) > 0:
+				_render_subblock_children(section, item_data.id, item, config)
 
-			if typeof(val) == TYPE_DICTIONARY:
-				var item = create_item(section_item)
-				if not item:
-					return
-				item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-				item.set_editable(0, true)
-				item.set_text(0, "#" + str(id))
-				item.set_metadata(0, {"type": "section", "section": section, "id": id, "is_group": true})
+func _collect_top_level_items(section: String, section_data) -> Array:
+	var items: Array = []
+	for id in section_data:
+		if id == 0:
+			continue
+		var val = section_data[id]
 
-				var config = dog_generator.current_variation_config
-				var is_active = config.has(section) and config[section].has(id)
-				item.set_checked(0, is_active)
+		if typeof(val) == TYPE_DICTIONARY:
+			var display_name: String = _extract_display_name(val, id)
+			var int_count: int = 0
+			for key in val:
+				if typeof(key) == TYPE_INT:
+					int_count += 1
 
-				var subblocks = val
-				var int_keys = []
-				var str_keys = []
-				for key in subblocks:
-					if typeof(key) == TYPE_INT:
-						int_keys.append(key)
-					else:
-						str_keys.append(key)
-				int_keys.sort()
+			items.append({
+				"id": id, "type": "bare", "is_group": true,
+				"is_linked": false, "int_count": int_count,
+				"display_name": display_name, "start_line": 0
+			})
 
-				for key in int_keys:
-					var subblock = subblocks[key]
-					if typeof(subblock) != TYPE_OBJECT:
-						continue
-					var sub_item = create_item(item)
-					if not sub_item:
-						return
-					sub_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+			for key in val:
+				if typeof(key) == TYPE_STRING:
+					var subblock = val[key]
+					var sub_display: String = ""
+					if typeof(subblock) == TYPE_OBJECT and subblock.name != "Variation " + str(id):
+						sub_display = subblock.name
+					items.append({
+						"id": id, "type": "suffix", "suffix": key,
+						"is_group": false,
+						"is_linked": typeof(subblock) == TYPE_OBJECT and subblock.is_linked,
+						"display_name": sub_display,
+						"start_line": subblock.start_line if typeof(subblock) == TYPE_OBJECT else 0
+					})
+		else:
+			var var_block = val
+			var display_name: String = ""
+			if var_block.name != "Variation " + str(id):
+				display_name = var_block.name
+			items.append({
+				"id": id, "type": "legacy", "is_group": false,
+				"is_linked": false, "display_name": display_name,
+				"start_line": var_block.start_line
+			})
+	return items
 
-					var display_name = subblock.name
-					if display_name == "Variation " + str(id):
-						display_name = ""
+func _build_item_label(item_data) -> String:
+	var label: String = "#" + str(item_data.id)
+	var t: String = item_data.get("type", "")
+	if t == "bare" and item_data.get("int_count", 0) > 0:
+		label += " (" + str(item_data.int_count) + " subblocks)"
+	elif t == "suffix":
+		label += "." + item_data.suffix
+		if item_data.get("is_linked", false):
+			label += " (linked)"
+	elif t == "legacy":
+		label += " " + item_data.get("display_name", "")
+	if item_data.get("display_name", "") != "" and t != "suffix":
+		label += "; " + item_data.display_name
+	return label
 
-					var label = "#" + str(id)
-					if key > 0:
-						label = label + " (" + str(key) + ")"
-					if display_name != "":
-						label = label + "; " + display_name
+func _build_item_meta(item_data, section: String) -> Dictionary:
+	var meta = {"type": "section", "section": section, "id": item_data.id}
+	var t: String = item_data.get("type", "")
+	if t == "bare":
+		meta["is_group"] = true
+	elif t == "suffix":
+		meta["suffix"] = item_data.suffix
+		meta["is_linked"] = item_data.get("is_linked", false)
+	if item_data.get("start_line", 0) > 0:
+		meta["start_line"] = item_data.start_line
+	return meta
 
-					sub_item.set_text(0, label)
-					sub_item.set_metadata(0, {"type": "section", "section": section, "id": id, "subblock_key": key, "start_line": subblock.start_line})
+func _render_subblock_children(section: String, id: int, parent_item: TreeItem, config: Dictionary) -> void:
+	var val = _get_id_data(section, id)
+	if val == null:
+		return
+	var int_keys: Array = []
+	for key in val:
+		if typeof(key) == TYPE_INT:
+			int_keys.append(key)
+	int_keys.sort()
+	for key in int_keys:
+		var subblock = val[key]
+		if typeof(subblock) != TYPE_OBJECT:
+			continue
+		var sub_item: TreeItem = create_item(parent_item)
+		var display_name: String = subblock.name
+		if display_name == "Variation " + str(id):
+			display_name = ""
+		var label: String = "#" + str(id) + " (" + str(key) + ")"
+		if display_name != "":
+			label += "; " + display_name
+		sub_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		sub_item.set_text(0, label)
+		sub_item.set_metadata(0, {
+			"type": "section", "section": section, "id": id,
+			"subblock_key": key, "start_line": subblock.start_line
+		})
+		sub_item.set_checked(0, _is_subblock_active(config, section, id, key))
 
-					var sub_is_active = _is_subblock_active(config, section, id, key)
-					sub_item.set_checked(0, sub_is_active)
-
-				for key in str_keys:
-					var subblock = subblocks[key]
-					if typeof(subblock) != TYPE_OBJECT:
-						continue
-					var sub_item = create_item(item)
-					if not sub_item:
-						return
-					sub_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-
-					var display_name = subblock.name
-					if display_name == "Variation " + str(id):
-						display_name = ""
-
-					var label = "#" + str(id) + "." + key
-					if subblock.is_linked:
-						label = label + " (linked)"
-					if display_name != "":
-						label = label + "; " + display_name
-
-					sub_item.set_text(0, label)
-					sub_item.set_metadata(0, {"type": "section", "section": section, "id": id, "subblock_key": key, "start_line": subblock.start_line})
-
-					sub_item.set_selectable(0, false)
-					sub_item.set_checked(0, true)
-
-			else:
-				var var_block = val
-				var item = create_item(section_item)
-				if not item:
-					return
-				item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-				item.set_editable(0, true)
-
-				var display_name = var_block.name
-				if display_name == "Variation " + str(id):
-					display_name = ""
-
-				item.set_text(0, "#" + str(id) + " " + display_name)
-				item.set_metadata(0, {"type": "section", "section": section, "id": id, "start_line": var_block.start_line})
-
-				var config = dog_generator.current_variation_config
-				if config.has(section) and config[section].has(id):
-					item.set_checked(0, true)
-				else:
-					item.set_checked(0, false)
+func _sort_variation_items(a, b) -> bool:
+	var at: String = a.get("type", "")
+	var bt: String = b.get("type", "")
+	if at == "bare" and bt != "bare":
+		return true
+	if at != "bare" and bt == "bare":
+		return false
+	if a.id < b.id:
+		return true
+	if a.id > b.id:
+		return false
+	if at == "suffix" and bt != "suffix":
+		return true
+	return false
 
 func _ready() -> void:
 	connect("item_edited", self, "_on_item_edited")
 	connect("item_selected", self, "_on_item_selected")
 
-func _on_item_edited():
-	var item = get_edited()
-	var col = get_edited_column()
-	if col == 0:
-		var meta = item.get_metadata(0)
-		if meta:
-			var checked = item.is_checked(0)
+func _on_item_edited() -> void:
+	var item: TreeItem = get_edited()
+	if item == null or get_edited_column() != 0:
+		return
+	var meta = item.get_metadata(0)
+	if meta == null:
+		return
+	var checked: bool = item.is_checked(0)
+	var config: Dictionary = _get_config()
 
-			if meta.type == "global":
-				var id = meta.id
-				var sections = _sections_map.keys()
-				var config = dog_generator.current_variation_config
+	var mtype: String = meta.get("type", "")
+	if mtype == "global":
+		_handle_global_toggle(meta.id, checked, config)
+	elif mtype == "global_suffix":
+		_handle_global_suffix_toggle(meta.id, meta.suffix, checked, config)
+	elif mtype == "section":
+		_handle_section_toggle(meta, checked, config)
 
-				var root = get_root()
-				if root:
-					var global_folder = root.get_children()
-					if global_folder and global_folder.get_text(0) == "Global Variations":
-						var g_item = global_folder.get_children()
-						while g_item:
-							var g_meta = g_item.get_metadata(0)
-							if g_meta and g_meta.id != id:
-								g_item.set_checked(0, false)
-							g_item = g_item.get_next()
+	_update_tree_checks(config)
+	_sync_parser_exclusions(config)
+	dog_generator.recompose_model()
 
-				var all_global_ids = []
-				if root:
-					var global_folder = root.get_children()
-					if global_folder and global_folder.get_text(0) == "Global Variations":
-						var g_item = global_folder.get_children()
-						while g_item:
-							var g_meta = g_item.get_metadata(0)
-							if g_meta: all_global_ids.append(g_meta.id)
-							g_item = g_item.get_next()
+func _on_item_selected() -> void:
+	var item: TreeItem = get_selected()
+	if item == null:
+		return
+	var meta = item.get_metadata(0)
+	if meta != null and meta.has("start_line"):
+		var lnz_text_edit: Node = get_tree().root.get_node(
+			"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
+		)
+		if lnz_text_edit != null:
+			lnz_text_edit.cursor_set_line(meta.start_line)
+			lnz_text_edit.center_viewport_to_cursor()
 
-				for s in sections:
-					if not config.has(s): config[s] = [0]
+func _handle_global_toggle(gid: int, checked: bool, config: Dictionary) -> void:
+	var sections: Array = _get_sorted_sections()
 
-					for g_id in all_global_ids:
-						if config[s].has(g_id):
-							config[s].erase(g_id)
+	_sync_global_siblings(gid)
 
-					if checked:
-						var sec_data = _sections_map[s]
-						if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(id):
-							config[s] = [0, id]
-						elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(1):
-							config[s] = [0, 1]
-						else:
-							config[s] = [0]
-					elif not checked:
-						if config[s].empty(): config[s] = [0]
-						var sec_data2 = _sections_map[s]
-						if typeof(sec_data2) == TYPE_DICTIONARY:
-							var lowest_id = _find_lowest_variation_id(sec_data2)
-							if lowest_id > 0:
-								config[s] = [0, lowest_id]
+	for s in sections:
+		var sec_data = _get_section_data(s)
+		if sec_data != null and sec_data.has(gid):
+			config[s] = [0, gid]
+		else:
+			config[s] = _build_fallback_array(s)
 
-				_update_tree_checks()
+func _handle_global_suffix_toggle(gid: int, suffix: String, checked: bool, config: Dictionary) -> void:
+	var sections: Array = _get_sorted_sections()
+	var suffix_key: String = _make_suffix_key(gid, suffix)
+	for s in sections:
+		var id_data = _get_id_data(s, gid)
+		if id_data == null or not id_data.has(suffix):
+			continue
+		if checked:
+			config[s] = [0, gid, suffix_key]
+		else:
+			config[s].erase(suffix_key)
+			if config[s].has(gid):
+				config[s].erase(gid)
+			config[s] = _build_fallback_array(s)
 
-			elif meta.type == "section":
-				var section = meta.section
-				var id = meta.id
-				var config = dog_generator.current_variation_config
-				if not config.has(section): config[section] = [0]
+func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
+	var section: String = meta.section
+	var id: int = meta.id
 
-				if meta.has("is_group") and meta.is_group:
-					if not checked:
-						return
-					config[section] = [0, id]
-					if _source_has_linked(section, id):
-						_broadcast_linked_variations(section, id, config)
-					_clear_section_exclusions(section)
-
-				elif meta.has("subblock_key"):
-					var subblock_key = meta.subblock_key
-					if checked:
-						if not config[section].has(id):
-							config[section].append(id)
-						_remove_exclusion(section, id, subblock_key)
-					else:
-						var sec_data = _sections_map[section]
-						var all_active = true
-						if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(id):
-							var val = sec_data[id]
-							if typeof(val) == TYPE_DICTIONARY:
-								for k in val:
-									if k != 0:
-										all_active = false
-										break
-						if all_active:
-							if config[section].has(id):
-								config[section].erase(id)
-						else:
-							_add_exclusion(section, id, subblock_key)
-
-				else:
-					# Legacy single block
-					if checked:
-						config[section] = [0, id]
-					else:
-						if config[section].has(id):
-							config[section].erase(id)
-
-						var sec_data3 = _sections_map[section]
-						if config[section] == [0] and typeof(sec_data3) == TYPE_DICTIONARY and sec_data3.has(1):
-							config[section] = [0, 1]
-
-				_update_tree_checks()
-
-			dog_generator.recompose_model()
-
-func _add_exclusion(section: String, id: int, subblock_key) -> void:
-	var config = dog_generator.current_variation_config
 	if not config.has(section):
 		config[section] = [0]
-	var excl_key = section + "_excluded"
+
+	if meta.get("is_group", false):
+		_handle_bare_toggle(section, id, checked, config)
+	elif meta.has("suffix"):
+		_handle_suffix_toggle(section, id, meta, checked, config)
+	elif meta.has("subblock_key"):
+		_handle_subblock_toggle(section, id, meta.subblock_key, checked, config)
+	else:
+		_handle_legacy_toggle(section, id, checked, config)
+
+func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
+	if not checked:
+		return
+	config[section] = [0, id]
+	if _has_linked_suffix(section, id):
+		_broadcast_linked_suffix(section, id, config)
+	_clear_section_exclusions(section)
+
+func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config: Dictionary) -> void:
+	var suffix: String = meta.suffix
+	var is_linked: bool = meta.get("is_linked", false)
+	var suffix_key: String = _make_suffix_key(id, suffix)
+
+	if checked:
+		_clear_other_numbers(section, id, config)
+		if not config[section].has(id):
+			config[section].append(id)
+		if not config[section].has(suffix_key):
+			config[section].append(suffix_key)
+		if is_linked:
+			_broadcast_linked_suffix(section, id, config, suffix)
+	else:
+		config[section].erase(suffix_key)
+		if is_linked:
+			_deactivate_linked_suffix(section, id, suffix, config)
+		if _should_deactivate_id(section, id, config):
+			_deactivate_and_fallback(section, id, config)
+
+func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bool, config: Dictionary) -> void:
+	if checked:
+		if not config[section].has(id):
+			config[section].append(id)
+		_remove_exclusion(section, id, subblock_key)
+	else:
+		var id_data = _get_id_data(section, id)
+		if id_data != null:
+			var has_other: bool = false
+			for k in id_data:
+				if typeof(k) != TYPE_INT:
+					continue
+				if k != 0 and k != subblock_key:
+					has_other = true
+					break
+			if has_other:
+				_add_exclusion(section, id, subblock_key)
+			else:
+				if config[section].has(id):
+					config[section].erase(id)
+				config[section] = _build_fallback_array(section)
+
+func _handle_legacy_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
+	if checked:
+		config[section] = [0, id]
+	else:
+		config[section].erase(id)
+		config[section] = _build_fallback_array(section)
+
+func _has_linked_suffix(section: String, id: int) -> bool:
+	var id_data = _get_id_data(section, id)
+	if id_data == null:
+		return false
+	for key in id_data:
+		if typeof(key) == TYPE_STRING:
+			return true
+	return false
+
+func _broadcast_linked_suffix(source_section: String, source_id: int, config: Dictionary, source_suffix: String = "") -> void:
+	if source_suffix == "":
+		var id_data = _get_id_data(source_section, source_id)
+		if id_data == null:
+			return
+		for key in id_data:
+			if typeof(key) == TYPE_STRING:
+				source_suffix = key
+				break
+		if source_suffix == "":
+			return
+
+	var suffix_key: String = _make_suffix_key(source_id, source_suffix)
+	var sections: Array = _get_sorted_sections()
+	for section in sections:
+		if section == source_section:
+			continue
+		var id_data = _get_id_data(section, source_id)
+		if id_data == null or not id_data.has(source_suffix):
+			continue
+		config[section] = [0, source_id, suffix_key]
+
+func _deactivate_linked_suffix(source_section: String, source_id: int, source_suffix: String, config: Dictionary) -> void:
+	var suffix_key: String = _make_suffix_key(source_id, source_suffix)
+	var sections: Array = _get_sorted_sections()
+	for section in sections:
+		if section == source_section:
+			continue
+		var id_data = _get_id_data(section, source_id)
+		if id_data == null or not id_data.has(source_suffix):
+			continue
+		if config.has(section) and config[section].has(suffix_key):
+			config[section].erase(suffix_key)
+		if _should_deactivate_id(section, source_id, config) and config.has(section):
+			if config[section].has(source_id):
+				config[section].erase(source_id)
+			config[section] = _build_fallback_array(section)
+
+func _clear_other_numbers(section: String, keep_id: int, config: Dictionary) -> void:
+	if not config.has(section):
+		return
+	var cfg: Array = config[section]
+	var to_remove: Array = []
+	for entry in cfg:
+		if entry == 0:
+			continue
+		if typeof(entry) == TYPE_INT:
+			if entry != keep_id:
+				to_remove.append(entry)
+		elif entry is String:
+			var parts: Array = (entry as String).split(".")
+			if parts.size() >= 1 and parts[0].to_int() != keep_id:
+				to_remove.append(entry)
+	for entry in to_remove:
+		cfg.erase(entry)
+
+func _build_fallback_array(section: String) -> Array:
+	var fallback: int = _find_fallback_id(section)
+	if fallback > 0:
+		return [0, fallback]
+	return [0]
+
+func _find_fallback_id(section: String) -> int:
+	var sec_data = _get_section_data(section)
+	if sec_data == null:
+		return 0
+	if sec_data.has(1):
+		return 1
+	return _find_lowest_variation_id(sec_data)
+
+func _find_lowest_variation_id(section_data) -> int:
+	var lowest: int = 0
+	for id in section_data:
+		if id > 0 and (lowest == 0 or id < lowest):
+			lowest = id
+	return lowest
+
+func _should_deactivate_id(section: String, id: int, config: Dictionary) -> bool:
+	var id_data = _get_id_data(section, id)
+	if id_data == null:
+		return true
+	var excl_config = config.get(section + "_excluded", {})
+	var excl_list: Array = []
+	if typeof(excl_config) == TYPE_DICTIONARY:
+		var excl_key: String = "excluded_" + str(id)
+		if excl_config.has(excl_key):
+			excl_list = excl_config[excl_key]
+	for k in id_data:
+		if k == 0:
+			continue
+		if excl_list.has(k):
+			continue
+		return false
+	return true
+
+func _deactivate_and_fallback(section: String, id: int, config: Dictionary) -> void:
+	if config.has(section):
+		config[section].erase(id)
+	config[section] = _build_fallback_array(section)
+
+func _add_exclusion(section: String, id: int, subblock_key) -> void:
+	var config: Dictionary = _get_config()
+	var excl_key: String = section + "_excluded"
 	if not config.has(excl_key):
 		config[excl_key] = {}
-	if not config[excl_key].has("excluded_" + str(id)):
-		config[excl_key]["excluded_" + str(id)] = []
-	config[excl_key]["excluded_" + str(id)].append(subblock_key)
+	var list_key: String = "excluded_" + str(id)
+	if not config[excl_key].has(list_key):
+		config[excl_key][list_key] = []
+	config[excl_key][list_key].append(subblock_key)
 	_save_exclusions()
 
 func _remove_exclusion(section: String, id: int, subblock_key) -> void:
-	var config = dog_generator.current_variation_config
-	var excl_key = section + "_excluded"
-	if config.has(excl_key):
-		var excl_dict = config[excl_key]
-		var excl_list_key = "excluded_" + str(id)
-		if excl_dict.has(excl_list_key):
-			var excl_list = excl_dict[excl_list_key]
-			if excl_list.has(subblock_key):
-				excl_list.erase(subblock_key)
-			if excl_list.empty():
-				excl_dict.erase(excl_list_key)
-				if excl_dict.empty():
-					config.erase(excl_key)
+	var config: Dictionary = _get_config()
+	var excl_key: String = section + "_excluded"
+	var list_key: String = "excluded_" + str(id)
+	if config.has(excl_key) and config[excl_key].has(list_key):
+		config[excl_key][list_key].erase(subblock_key)
+		if config[excl_key][list_key].empty():
+			config[excl_key].erase(list_key)
+			if config[excl_key].empty():
+				config.erase(excl_key)
 	_save_exclusions()
 
 func _clear_section_exclusions(section: String) -> void:
-	var config = dog_generator.current_variation_config
-	var excl_key = section + "_excluded"
-	if config.has(excl_key):
-		config.erase(excl_key)
+	var config: Dictionary = _get_config()
+	config.erase(section + "_excluded")
 	_save_exclusions()
 
+func _sync_parser_exclusions(config: Dictionary) -> void:
+	if lnz_parser == null:
+		return
+	var sync_data = {}
+	for key in config:
+		if key is String and (key as String).ends_with("_excluded"):
+			var section_name: String = (key as String).trim_suffix("_excluded")
+			sync_data[section_name] = config[key]
+	lnz_parser.set_excluded_subblocks(sync_data)
+
 func _save_exclusions() -> void:
-	var path = _current_file_path
-	if path == "":
-		if is_instance_valid(dog_generator):
-			path = dog_generator.last_loaded_filepath
+	var path: String = _resolve_file_path()
 	if path == "":
 		return
-	var config = dog_generator.current_variation_config
+	var config: Dictionary = _get_config()
 	var exclusions = {}
 	for key in config:
-		if key is String and key.ends_with("_excluded"):
-			var section_name = key.trim_suffix("_excluded")
+		if key is String and (key as String).ends_with("_excluded"):
+			var section_name: String = (key as String).trim_suffix("_excluded")
 			exclusions[section_name] = config[key]
-	var cf = ConfigFile.new()
+	var cf: ConfigFile = ConfigFile.new()
 	cf.set_value("exclusions", "data", exclusions)
 	cf.save("user://lnz_exclusions_" + _get_file_hash() + ".cfg")
 
 func _load_exclusions() -> void:
-	var path = _current_file_path
-	if path == "":
-		if is_instance_valid(dog_generator):
-			path = dog_generator.last_loaded_filepath
+	var path: String = _resolve_file_path()
 	if path == "":
 		return
-	var cf = ConfigFile.new()
-	var err = cf.load("user://lnz_exclusions_" + _get_file_hash() + ".cfg")
-	if err != OK:
+	var cf: ConfigFile = ConfigFile.new()
+	if cf.load("user://lnz_exclusions_" + _get_file_hash() + ".cfg") != OK:
 		return
 	if cf.has_section_key("exclusions", "data"):
 		var data = cf.get_value("exclusions", "data")
 		if typeof(data) == TYPE_DICTIONARY:
-			var config = dog_generator.current_variation_config
+			var config: Dictionary = _get_config()
 			for section in data:
-				var excl_key = section + "_excluded"
-				config[excl_key] = data[section]
+				config[section + "_excluded"] = data[section]
+
+func _resolve_file_path() -> String:
+	if _current_file_path != "":
+		return _current_file_path
+	if is_instance_valid(dog_generator):
+		return dog_generator.last_loaded_filepath
+	return ""
 
 func _get_file_hash() -> String:
-	if _current_file_path == "":
+	var path: String = _resolve_file_path()
+	if path == "":
 		return "empty"
-	return str(_current_file_path.hash())
+	return str(path.hash())
+
+func _update_tree_checks(config: Dictionary) -> void:
+	var root: TreeItem = get_root()
+	if root == null:
+		return
+	_sync_item_checks(root, config)
+
+func _sync_item_checks(item: TreeItem, config: Dictionary) -> void:
+	var child: TreeItem = item.get_children()
+	while child != null:
+		var meta = child.get_metadata(0)
+		if meta != null:
+			var mtype: String = meta.get("type", "")
+			if mtype == "global":
+				child.set_checked(0, _is_global_id_active(_get_sorted_sections(), meta.id, config))
+			elif mtype == "global_suffix":
+				child.set_checked(0, _is_global_suffix_active(_get_sorted_sections(), meta.id, meta.suffix, config))
+			elif mtype == "section":
+				if meta.has("subblock_key"):
+					child.set_checked(0, _is_subblock_active(config, meta.section, meta.id, meta.subblock_key))
+				else:
+					child.set_checked(0, _is_section_item_active(meta.section, meta, config))
+		_sync_item_checks(child, config)
+		child = child.get_next()
+
+
+func _is_global_id_active(sections: Array, gid: int, config: Dictionary) -> bool:
+	var any_exists: bool = false
+	for s in sections:
+		var sec_data = _get_section_data(s)
+		if sec_data != null and sec_data.has(gid):
+			any_exists = true
+			var cfg = config.get(s, [])
+			if typeof(cfg) != TYPE_ARRAY or not cfg.has(gid):
+				return false
+	return any_exists
+
+func _is_global_suffix_active(sections: Array, gid: int, suffix: String, config: Dictionary) -> bool:
+	var suffix_key: String = _make_suffix_key(gid, suffix)
+	var any_exists: bool = false
+	for s in sections:
+		var id_data = _get_id_data(s, gid)
+		if id_data != null and id_data.has(suffix):
+			any_exists = true
+			var cfg = config.get(s, [])
+			if typeof(cfg) != TYPE_ARRAY or not cfg.has(suffix_key):
+				return false
+	return any_exists
+
+func _is_section_item_active(section: String, item_data, config: Dictionary) -> bool:
+	if not config.has(section):
+		return false
+	var cfg: Array = config[section]
+	var is_active: bool = cfg.has(item_data.id)
+	if item_data.get("type", "") == "suffix":
+		is_active = is_active or cfg.has(_make_suffix_key(item_data.id, item_data.suffix))
+	return is_active
 
 func _is_subblock_active(config: Dictionary, section: String, id: int, subblock_key) -> bool:
 	if not config.has(section) or not config[section].has(id):
@@ -394,7 +591,7 @@ func _is_subblock_active(config: Dictionary, section: String, id: int, subblock_
 	var excl_config = config.get(section + "_excluded", {})
 	if typeof(excl_config) != TYPE_DICTIONARY:
 		return true
-	var excl_key = "excluded_" + str(id)
+	var excl_key: String = "excluded_" + str(id)
 	if not excl_config.has(excl_key):
 		return true
 	var excl_list = excl_config[excl_key]
@@ -402,90 +599,110 @@ func _is_subblock_active(config: Dictionary, section: String, id: int, subblock_
 		return true
 	return not excl_list.has(subblock_key)
 
-func _find_lowest_variation_id(section_data) -> int:
-	var lowest = 0
-	if typeof(section_data) == TYPE_DICTIONARY:
-		for id in section_data:
-			if id > 0 and (lowest == 0 or id < lowest):
-				lowest = id
-	return lowest
+func _find_child_by_text(parent: TreeItem, text: String) -> TreeItem:
+	var child: TreeItem = parent.get_children()
+	while child != null:
+		if child.get_text(0) == text:
+			return child
+		child = child.get_next()
+	return null
 
-func _source_has_linked(source_section: String, source_id: int) -> bool:
-	var source_data = _sections_map.get(source_section, {})
-	if typeof(source_data) != TYPE_DICTIONARY:
-		return false
-	var source_id_data = source_data.get(source_id, {})
-	if typeof(source_id_data) != TYPE_DICTIONARY:
-		return false
-	for key in source_id_data:
-		if typeof(key) == TYPE_STRING:
+func _sync_global_siblings(gid: int) -> void:
+	var root: TreeItem = get_root()
+	if root == null:
+		return
+	var folder: TreeItem = _find_child_by_text(root, "Global Variations")
+	if folder == null:
+		return
+	var child: TreeItem = folder.get_children()
+	while child != null:
+		var meta = child.get_metadata(0)
+		if meta != null and meta.get("id", -1) != gid:
+			child.set_checked(0, false)
+		child = child.get_next()
+
+func _get_config() -> Dictionary:
+	return dog_generator.current_variation_config
+
+func _get_sorted_sections() -> Array:
+	var sections: Array = _sections_map.keys()
+	sections.sort()
+	return sections
+
+func _get_section_data(section: String):
+	if _sections_map == null or not _sections_map.has(section):
+		return null
+	var data = _sections_map[section]
+	if typeof(data) != TYPE_DICTIONARY:
+		return null
+	return data
+
+func _get_id_data(section: String, id: int):
+	var sec_data = _get_section_data(section)
+	if sec_data == null or not sec_data.has(id):
+		return null
+	var data = sec_data[id]
+	if typeof(data) != TYPE_DICTIONARY:
+		return null
+	return data
+
+func _make_suffix_key(id: int, suffix: String) -> String:
+	return str(id) + "." + suffix
+
+func _extract_display_name(id_data, id: int) -> String:
+	for key in id_data:
+		if typeof(id_data[key]) == TYPE_OBJECT:
+			var blk = id_data[key]
+			if blk.name != "Variation " + str(id):
+				return blk.name
+			break
+	return ""
+
+func _section_has_variations(section_data) -> bool:
+	for id in section_data:
+		if id > 0:
 			return true
 	return false
 
-func _broadcast_linked_variations(source_section: String, source_id: int, config: Dictionary) -> void:
-	if not _source_has_linked(source_section, source_id):
-		return
-	var sections = _sections_map.keys()
+func _extract_global_ids(sections: Array) -> Array:
+	var id_counts = {}
 	for section in sections:
-		if section == source_section:
+		var sec_data = _get_section_data(section)
+		if sec_data == null:
 			continue
-		var sec_data = _sections_map[section]
-		if typeof(sec_data) != TYPE_DICTIONARY:
-			continue
-		if not sec_data.has(source_id):
-			continue
-		var id_data = sec_data[source_id]
-		if typeof(id_data) != TYPE_DICTIONARY:
-			continue
-		var linked_suffixes = []
-		for key in id_data:
-			if typeof(key) == TYPE_STRING:
-				linked_suffixes.append(key)
-		if linked_suffixes.size() == 0:
-			continue
-		if not config.has(section):
-			config[section] = [0]
-		if not config[section].has(source_id):
-			config[section].append(source_id)
+		for id in sec_data:
+			if id == 0:
+				continue
+			if not id_counts.has(id):
+				id_counts[id] = 0
+			id_counts[id] += 1
+	var result: Array = []
+	for id in id_counts:
+		if id_counts[id] > 1:
+			result.append(id)
+	result.sort()
+	return result
 
-func _update_tree_checks() -> void:
-	var root = get_root()
-	if not root: return
-
-	var config = dog_generator.current_variation_config
-
-	var item = root.get_children()
-	while item:
-		var child = item.get_children()
-		while child:
-			var meta = child.get_metadata(0)
-			if meta and meta.type == "section":
-				var is_active = config.has(meta.section) and config[meta.section].has(meta.id)
-				child.set_checked(0, is_active)
-				# Also sync subblock children
-				var subchild = child.get_children()
-				while subchild:
-					var sub_meta = subchild.get_metadata(0)
-					if sub_meta and sub_meta.has("subblock_key"):
-						var sub_is_active = config.has(sub_meta.section) and config[sub_meta.section].has(sub_meta.id)
-						var excl_key = "excluded_" + str(sub_meta.id)
-						var excluded_list = []
-						var excl_config = config.get(sub_meta.section + "_excluded", {})
-						if excl_config.has(excl_key):
-							excluded_list = excl_config[excl_key]
-						if sub_is_active and excluded_list.has(sub_meta.subblock_key):
-							sub_is_active = false
-						subchild.set_checked(0, sub_is_active)
-					subchild = subchild.get_next()
-			child = child.get_next()
-		item = item.get_next()
-
-func _on_item_selected() -> void:
-	var item = get_selected()
-	if item:
-		var meta = item.get_metadata(0)
-		if meta and meta.has("start_line"):
-			var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-			if lnz_text_edit:
-				lnz_text_edit.cursor_set_line(meta.start_line)
-				lnz_text_edit.center_viewport_to_cursor()
+func _extract_global_suffixes(sections: Array) -> Array:
+	var suffix_counts = {}
+	for section in sections:
+		var sec_data = _get_section_data(section)
+		if sec_data == null:
+			continue
+		for id in sec_data:
+			if id == 0:
+				continue
+			var val = sec_data[id]
+			if typeof(val) == TYPE_DICTIONARY:
+				for key in val:
+					if typeof(key) == TYPE_STRING:
+						var sk: String = _make_suffix_key(id, key)
+						if not suffix_counts.has(sk):
+							suffix_counts[sk] = 0
+						suffix_counts[sk] += 1
+	var result: Array = []
+	for sk in suffix_counts:
+		if suffix_counts[sk] > 1:
+			result.append(sk)
+	result.sort()
+	return result

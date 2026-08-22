@@ -115,7 +115,7 @@ func _scan_file(file: File) -> void:
 	var current_var_id: int = 0
 	var current_subblock_key = 0
 	var line_number: int = 0
-	var _subblock_counter: int = 0
+	var _subblock_counter: int = -1
 
 	var var_regex: RegEx = RegEx.new()
 	var_regex.compile("^#(\\d+)(\\.([A-Z]))?(.*)")
@@ -133,6 +133,7 @@ func _scan_file(file: File) -> void:
 				current_var_id = 0
 				current_subblock_key = 0
 				_ensure_block(current_section, current_var_id, line_number)
+				_subblock_counter = -1
 		elif line_stripped == "##":
 			_subblock_counter += 1
 			current_var_id = 0
@@ -256,43 +257,98 @@ func get_next_section(file: File, section_name: String) -> bool:
 		return false
 	return true
 
+func set_excluded_subblocks(p_data: Dictionary) -> void:
+	excluded_subblocks = p_data
+
 func compile_section(section_name: String, active_ids: Array) -> VirtualFileLineReader:
 	var compiled_lines: Array = []
-	
-	if sections_map.has(section_name):
-		var section_dict: Dictionary = sections_map[section_name]
 
-		# Always include base block (key 0)
-		if typeof(section_dict) == TYPE_DICTIONARY and section_dict.has(0):
-			var base_block = section_dict[0]
-			if typeof(base_block) == TYPE_DICTIONARY:
-				for key in base_block:
-					var subblock = base_block[key]
-					if typeof(subblock) == TYPE_OBJECT:
-						compiled_lines.append_array(subblock.lines)
-			elif typeof(base_block) == TYPE_OBJECT:
-				compiled_lines.append_array(base_block.lines)
+	if not sections_map.has(section_name):
+		return VirtualFileLineReader.new(compiled_lines)
 
-		for id in active_ids:
-			if id != 0 and section_dict.has(id):
-				var block_or_dict = section_dict[id]
-				if typeof(block_or_dict) == TYPE_DICTIONARY:
-					var excluded_key = "excluded_" + str(id)
-					var excluded_list = []
-					if excluded_subblocks.has(section_name) and excluded_subblocks[section_name].has(excluded_key):
-						excluded_list = excluded_subblocks[section_name][excluded_key]
-					
-					for key in block_or_dict:
-						if typeof(key) == TYPE_STRING:
-							var subblock = block_or_dict[key]
-							if typeof(subblock) == TYPE_OBJECT:
-								compiled_lines.append_array(subblock.lines)
-							continue
-						if excluded_list.has(key):
-							continue
-						var subblock = block_or_dict[key]
-						if typeof(subblock) == TYPE_OBJECT:
-							compiled_lines.append_array(subblock.lines)
+	var section_dict = sections_map[section_name]
+	if typeof(section_dict) != TYPE_DICTIONARY:
+		return VirtualFileLineReader.new(compiled_lines)
+
+	if section_dict.has(0):
+		var base_block = section_dict[0]
+		if typeof(base_block) == TYPE_DICTIONARY:
+			for key in base_block:
+				var subblock = base_block[key]
+				if typeof(subblock) == TYPE_OBJECT:
+					compiled_lines.append_array(subblock.lines)
+		elif typeof(base_block) == TYPE_OBJECT:
+			compiled_lines.append_array(base_block.lines)
+
+	var active_int_ids: Array = []
+	var active_suffixes = {}  # {int_id: ["A", "B"]}
+
+	for entry in active_ids:
+		if typeof(entry) == TYPE_INT:
+			if entry == 0:
+				continue
+			active_int_ids.append(entry)
+		elif typeof(entry) == TYPE_STRING:
+			var parts: Array = (entry as String).split(".")
+			if parts.size() == 2 and parts[0].is_valid_integer():
+				var entry_id: int = parts[0].to_int()
+				if entry_id == 0:
+					continue
+				if not active_suffixes.has(entry_id):
+					active_suffixes[entry_id] = []
+				active_suffixes[entry_id].append(parts[1])
+
+	for id in active_int_ids:
+		if not section_dict.has(id):
+			continue
+		var block_or_dict = section_dict[id]
+
+		if typeof(block_or_dict) == TYPE_OBJECT:
+			compiled_lines.append_array(block_or_dict.lines)
+			continue
+
+		if typeof(block_or_dict) != TYPE_DICTIONARY:
+			continue
+
+		var excluded_list: Array = []
+		var excluded_key: String = "excluded_" + str(id)
+		if excluded_subblocks.has(section_name) and excluded_subblocks[section_name].has(excluded_key):
+			excluded_list = excluded_subblocks[section_name][excluded_key]
+
+		var specific_suffixes: Array = active_suffixes.get(id, [])
+
+		for key in block_or_dict:
+			if typeof(key) == TYPE_STRING:
+				if specific_suffixes.size() > 0:
+					if not specific_suffixes.has(key):
+						continue
+					var sub = block_or_dict[key]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+				else:
+					var sub = block_or_dict[key]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+			else:
+				if excluded_list.has(key):
+					continue
+				var sub = block_or_dict[key]
+				if typeof(sub) == TYPE_OBJECT:
+					compiled_lines.append_array(sub.lines)
+
+	for sid in active_suffixes:
+		if active_int_ids.has(sid):
+			continue
+		if not section_dict.has(sid):
+			continue
+		var id_data = section_dict[sid]
+		if typeof(id_data) != TYPE_DICTIONARY:
+			continue
+		for suffix in active_suffixes[sid]:
+			if id_data.has(suffix):
+				var subblock = id_data[suffix]
+				if typeof(subblock) == TYPE_OBJECT:
+					compiled_lines.append_array(subblock.lines)
 
 	return VirtualFileLineReader.new(compiled_lines)
 
