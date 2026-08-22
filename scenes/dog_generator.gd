@@ -673,8 +673,20 @@ func recompose_model():
 		"Outline Color Override": "get_outline_color_override"
 	}
 
+	lnz.excluded_subblocks = {}
 	for section in ordered_sections:
 		if current_variation_config.has(section):
+			var config = current_variation_config[section]
+			var excl_config = current_variation_config.get(section + "_excluded", {})
+			for key in excl_config:
+				if typeof(key) == TYPE_STRING and key.begins_with("excluded_"):
+					var base_id_str = key.trim_prefix("excluded_")
+					if base_id_str.is_valid_integer():
+						var base_id = base_id_str.to_int()
+						if not lnz.excluded_subblocks.has(section):
+							lnz.excluded_subblocks[section] = {}
+						lnz.excluded_subblocks[section]["excluded_" + str(base_id)] = excl_config[key]
+			
 			var method = section_methods[section]
 			var reader = lnz.compile_section(section, current_variation_config[section])
 			lnz.call(method, reader)
