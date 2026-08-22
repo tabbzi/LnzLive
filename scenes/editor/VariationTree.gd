@@ -178,7 +178,10 @@ func _render_subblock_children(section: String, id: int, parent_item: TreeItem, 
 		var label: String = "#" + str(id) + " (" + str(key) + ")"
 		if display_name != "":
 			label += "; " + display_name
+		
 		sub_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		sub_item.set_editable(0, true)
+		
 		sub_item.set_text(0, label)
 		sub_item.set_metadata(0, {
 			"type": "section", "section": section, "id": id,
@@ -284,12 +287,22 @@ func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 		_handle_legacy_toggle(section, id, checked, config)
 
 func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
-	if not checked:
-		return
-	config[section] = [0, id]
-	if _has_linked_suffix(section, id):
-		_broadcast_linked_suffix(section, id, config)
-	_clear_section_exclusions(section)
+	if checked:
+		config[section] = [0, id]
+		if _has_linked_suffix(section, id):
+			_broadcast_linked_suffix(section, id, config)
+		
+		var excl_key: String = section + "_excluded"
+		var list_key: String = "excluded_" + str(id)
+		if config.has(excl_key) and config[excl_key].has(list_key):
+			config[excl_key].erase(list_key)
+			if config[excl_key].empty():
+				config.erase(excl_key)
+		_save_exclusions()
+	else:
+		if config.has(section) and config[section].has(id):
+			config[section].erase(id)
+		config[section] = _build_fallback_array(section)
 
 func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config: Dictionary) -> void:
 	var suffix: String = meta.suffix
@@ -323,9 +336,10 @@ func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bo
 			for k in id_data:
 				if typeof(k) != TYPE_INT:
 					continue
-				if k != 0 and k != subblock_key:
+				if k != subblock_key and _is_subblock_active(config, section, id, k):
 					has_other = true
 					break
+			
 			if has_other:
 				_add_exclusion(section, id, subblock_key)
 			else:
