@@ -185,13 +185,7 @@ func _ensure_subblock(section: String, parsed_id: int, suffix: String, custom_na
 		sections_map[section] = {}
 	
 	var is_linked = suffix != ""
-	var subblock_key = null
-	if is_linked:
-		subblock_key = suffix
-	elif subblock_counter > 0:
-		subblock_key = subblock_counter
-	else:
-		subblock_key = 0
+	var subblock_key = subblock_counter + 1
 	
 	if sections_map[section].has(parsed_id):
 		var existing = sections_map[section][parsed_id]

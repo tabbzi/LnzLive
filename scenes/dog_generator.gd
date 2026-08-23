@@ -441,22 +441,69 @@ func generate_pet(file_path):
 		last_loaded_filepath = file_path
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
-			current_variation_config[section_name] = [0]
-			if lnz.sections_map[section_name].has(1):
-				current_variation_config[section_name].append(1)
+			var sec_data = lnz.sections_map[section_name]
+			if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(1):
+				current_variation_config[section_name] = {}
+				var val = sec_data[1]
+				if typeof(val) == TYPE_DICTIONARY:
+					for sk in val:
+						current_variation_config[section_name][sk] = 1
+				else:
+					current_variation_config[section_name][0] = 1
+			elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(0):
+				current_variation_config[section_name] = {}
+				var lowest = _find_lowest_variation_id_in_data(sec_data)
+				if lowest > 0:
+					var val = sec_data[lowest]
+					if typeof(val) == TYPE_DICTIONARY:
+						for sk in val:
+							current_variation_config[section_name][sk] = lowest
+					else:
+						current_variation_config[section_name][0] = lowest
+				else:
+					current_variation_config[section_name][0] = 0
+			else:
+				current_variation_config[section_name] = null
 	else:
 		var old_config = current_variation_config.duplicate()
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
-			current_variation_config[section_name] = [0]
-
-			if old_config.has(section_name):
-				var old_ids = old_config[section_name]
-				for id in old_ids:
-					if id != 0 and lnz.sections_map[section_name].has(id):
-						if not current_variation_config[section_name].has(id):
-							current_variation_config[section_name].append(id)
-				current_variation_config[section_name].sort()
+			var sec_data = lnz.sections_map[section_name]
+			if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(1):
+				current_variation_config[section_name] = {}
+				if old_config.has(section_name):
+					var old_val = old_config[section_name]
+					if typeof(old_val) == TYPE_DICTIONARY:
+						for sk in old_val:
+							var v = old_val[sk]
+							if typeof(v) == TYPE_INT and v != 0:
+								if sec_data.has(v):
+									current_variation_config[section_name][sk] = v
+							elif typeof(v) == TYPE_STRING:
+								current_variation_config[section_name][sk] = v
+					elif typeof(old_val) == TYPE_ARRAY:
+						for id in old_val:
+							if id != 0 and sec_data.has(id):
+								var sv = sec_data[id]
+								if typeof(sv) == TYPE_DICTIONARY:
+									for sk in sv:
+										current_variation_config[section_name][sk] = id
+								else:
+									current_variation_config[section_name][0] = id
+			elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(0):
+				current_variation_config[section_name] = {}
+				var lowest = _find_lowest_variation_id_in_data(sec_data)
+				if lowest > 0:
+					var val = sec_data[lowest]
+					if typeof(val) == TYPE_DICTIONARY:
+						for sk in val:
+							current_variation_config[section_name][sk] = lowest
+					else:
+						current_variation_config[section_name][0] = lowest
+				else:
+					current_variation_config[section_name][0] = 0
+			else:
+				current_variation_config[section_name] = null
 
 	var variation_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/Variations")
 	if variation_tree:
@@ -676,7 +723,6 @@ func recompose_model():
 	lnz.excluded_subblocks = {}
 	for section in ordered_sections:
 		if current_variation_config.has(section):
-			var config = current_variation_config[section]
 			var excl_config = current_variation_config.get(section + "_excluded", {})
 			for key in excl_config:
 				if typeof(key) == TYPE_STRING and key.begins_with("excluded_"):
@@ -688,17 +734,21 @@ func recompose_model():
 						lnz.excluded_subblocks[section]["excluded_" + str(base_id)] = excl_config[key]
 			
 			var method = section_methods[section]
-			var reader = lnz.compile_section(section, current_variation_config[section])
+			var active_ids = _config_to_active_ids(section)
+			var reader = lnz.compile_section(section, active_ids)
 			lnz.call(method, reader)
 
 	if current_variation_config.has("Paint Ballz"):
-		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", current_variation_config["Paint Ballz"]))
+		var pb_ids = _config_to_active_ids("Paint Ballz")
+		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_ids))
 
 	if current_variation_config.has("Move"):
-		lnz.parse_moves(lnz.compile_section("Move", current_variation_config["Move"]))
+		var move_ids = _config_to_active_ids("Move")
+		lnz.parse_moves(lnz.compile_section("Move", move_ids))
 
 	if current_variation_config.has("Project Ball"):
-		lnz.get_project_balls(lnz.compile_section("Project Ball", current_variation_config["Project Ball"]))
+		var pball_ids = _config_to_active_ids("Project Ball")
+		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_ids))
 
 	# Cat without [Whiskers] section: apply default whisker connections
 	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
@@ -1454,7 +1504,6 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	for line in line_data:
 		var start = ball_map.get(line.start)
 		var end = ball_map.get(line.end)
-
 		if start == null or end == null or not is_instance_valid(start) or not is_instance_valid(end):
 			print("[WARNING] dog_generator: generate_lines: could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
@@ -1607,6 +1656,41 @@ func generate_whiskers(new_create: bool):
 			apply_shader_settings(visual_line)
 			_update_whisker_position(visual_line, start_node, end_node)
 		i += 1
+
+func _find_lowest_variation_id_in_data(section_data) -> int:
+	var lowest: int = 0
+	for id in section_data:
+		if id > 0 and (lowest == 0 or id < lowest):
+			lowest = id
+	return lowest
+
+func _config_to_active_ids(section: String) -> Array:
+	if not current_variation_config.has(section):
+		return [0]
+	var dict = current_variation_config[section]
+	if dict == null:
+		return [0]
+	if typeof(dict) != TYPE_DICTIONARY:
+		return [0]
+	var result = [0]
+	var seen_ids = {}
+	for sk in dict:
+		var val = dict[sk]
+		if typeof(val) == TYPE_INT:
+			if val != 0 and not seen_ids.has(val):
+				seen_ids[val] = true
+				result.append(val)
+		elif typeof(val) == TYPE_STRING:
+			if not seen_ids.has(val):
+				seen_ids[val] = true
+				result.append(val)
+			var parts: Array = (val as String).split(".")
+			if parts.size() == 2 and parts[0].is_valid_integer():
+				var bare_id = parts[0].to_int()
+				if not seen_ids.has(bare_id):
+					seen_ids[bare_id] = true
+					result.append(bare_id)
+	return result
 
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()

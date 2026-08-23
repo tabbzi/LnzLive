@@ -1,6 +1,7 @@
 extends Tree
 ## VariationTree.gd
 ## Manages the tree view for selecting and configuring pet variations
+## New model: config[section][subblock_key] = active_id (nested dict per section)
 
 var dog_generator = null
 var lnz_parser = null
@@ -72,19 +73,57 @@ func populate_tree() -> void:
 		section_item.set_text(0, section)
 		section_item.set_selectable(0, false)
 
-		var items: Array = _collect_top_level_items(section, section_data)
+		var items = _collect_top_level_items(section, section_data)
 		items.sort_custom(self, "_sort_variation_items")
 
-		for item_data in items:
-			var item: TreeItem = create_item(section_item)
-			item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-			item.set_editable(0, true)
-			item.set_text(0, _build_item_label(item_data))
-			item.set_metadata(0, _build_item_meta(item_data, section))
-			item.set_checked(0, _is_section_item_active(section, item_data, config))
+		var sorted_block_keys = block_keys_sorted(section_data)
+		for subblock_key in sorted_block_keys:
+			var block_label = "Block " + str(subblock_key)
+			var block_item: TreeItem = create_item(section_item)
+			block_item.set_text(0, block_label)
+			block_item.set_selectable(0, false)
 
-			if item_data.get("type", "") == "bare" and item_data.get("int_count", 0) > 0:
-				_render_subblock_children(section, item_data.id, item, config)
+			var child_items = []
+			for item_data in items:
+				var t: String = item_data.get("type", "")
+				if t == "bare":
+					var id_data = _get_id_data(section, item_data.id)
+					if id_data != null and typeof(id_data) == TYPE_DICTIONARY:
+						if id_data.has(subblock_key):
+							var clone = item_data.duplicate()
+							clone["subblock_key"] = subblock_key
+							child_items.append(clone)
+				elif t == "suffix":
+					if str(item_data.get("subblock_key", "")) == str(subblock_key):
+						child_items.append(item_data)
+				elif t == "legacy":
+					if str(subblock_key) == "0":
+						var clone = item_data.duplicate()
+						clone["subblock_key"] = 0
+						child_items.append(clone)
+
+			child_items.sort_custom(self, "_sort_variation_items")
+
+			for item_data in child_items:
+				var item: TreeItem = create_item(block_item)
+				item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+				item.set_editable(0, true)
+				item.set_text(0, _build_item_label(item_data))
+				item.set_metadata(0, _build_item_meta(item_data, section, subblock_key))
+				item.set_checked(0, _is_section_item_active(section, item_data, config))
+
+func block_keys_sorted(section_data) -> Array:
+	var keys = []
+	for id in section_data:
+		if id == 0:
+			continue
+		var val = section_data[id]
+		if typeof(val) == TYPE_DICTIONARY:
+			for sk in val:
+				if not keys.has(sk):
+					keys.append(sk)
+	keys.sort()
+	return keys
 
 func _collect_top_level_items(section: String, section_data) -> Array:
 	var items: Array = []
@@ -96,14 +135,18 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 		if typeof(val) == TYPE_DICTIONARY:
 			var display_name: String = _extract_display_name(val, id)
 			var int_count: int = 0
+			var first_start_line: int = 0
 			for key in val:
 				if typeof(key) == TYPE_INT:
 					int_count += 1
+				if typeof(val[key]) == TYPE_OBJECT:
+					if val[key].start_line > 0 and first_start_line == 0:
+						first_start_line = val[key].start_line
 
 			items.append({
 				"id": id, "type": "bare", "is_group": true,
 				"is_linked": false, "int_count": int_count,
-				"display_name": display_name, "start_line": 0
+				"display_name": display_name, "start_line": first_start_line
 			})
 
 			for key in val:
@@ -117,7 +160,8 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 						"is_group": false,
 						"is_linked": typeof(subblock) == TYPE_OBJECT and subblock.is_linked,
 						"display_name": sub_display,
-						"start_line": subblock.start_line if typeof(subblock) == TYPE_OBJECT else 0
+						"start_line": subblock.start_line if typeof(subblock) == TYPE_OBJECT else 0,
+						"subblock_key": key
 					})
 		else:
 			var var_block = val
@@ -127,7 +171,8 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 			items.append({
 				"id": id, "type": "legacy", "is_group": false,
 				"is_linked": false, "display_name": display_name,
-				"start_line": var_block.start_line
+				"start_line": var_block.start_line,
+				"subblock_key": 0
 			})
 	return items
 
@@ -146,48 +191,22 @@ func _build_item_label(item_data) -> String:
 		label += "; " + item_data.display_name
 	return label
 
-func _build_item_meta(item_data, section: String) -> Dictionary:
-	var meta = {"type": "section", "section": section, "id": item_data.id}
+func _build_item_meta(item_data, section: String, subblock_key) -> Dictionary:
+	var meta = {"type": "section", "section": section, "id": item_data.id, "subblock_key": subblock_key}
 	var t: String = item_data.get("type", "")
 	if t == "bare":
 		meta["is_group"] = true
+		var id_data = _get_id_data(section, item_data.id)
+		if id_data != null and typeof(id_data) == TYPE_DICTIONARY and id_data.has(subblock_key):
+			var blk = id_data[subblock_key]
+			if typeof(blk) == TYPE_OBJECT and blk.start_line > 0:
+				meta["start_line"] = blk.start_line
 	elif t == "suffix":
 		meta["suffix"] = item_data.suffix
 		meta["is_linked"] = item_data.get("is_linked", false)
-	if item_data.get("start_line", 0) > 0:
+	if item_data.has("start_line") and item_data.start_line > 0 and not meta.has("start_line"):
 		meta["start_line"] = item_data.start_line
 	return meta
-
-func _render_subblock_children(section: String, id: int, parent_item: TreeItem, config: Dictionary) -> void:
-	var val = _get_id_data(section, id)
-	if val == null:
-		return
-	var int_keys: Array = []
-	for key in val:
-		if typeof(key) == TYPE_INT:
-			int_keys.append(key)
-	int_keys.sort()
-	for key in int_keys:
-		var subblock = val[key]
-		if typeof(subblock) != TYPE_OBJECT:
-			continue
-		var sub_item: TreeItem = create_item(parent_item)
-		var display_name: String = subblock.name
-		if display_name == "Variation " + str(id):
-			display_name = ""
-		var label: String = "#" + str(id) + " (" + str(key) + ")"
-		if display_name != "":
-			label += "; " + display_name
-		
-		sub_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-		sub_item.set_editable(0, true)
-		
-		sub_item.set_text(0, label)
-		sub_item.set_metadata(0, {
-			"type": "section", "section": section, "id": id,
-			"subblock_key": key, "start_line": subblock.start_line
-		})
-		sub_item.set_checked(0, _is_subblock_active(config, section, id, key))
 
 func _sort_variation_items(a, b) -> bool:
 	var at: String = a.get("type", "")
@@ -251,9 +270,26 @@ func _handle_global_toggle(gid: int, checked: bool, config: Dictionary) -> void:
 	for s in sections:
 		var sec_data = _get_section_data(s)
 		if sec_data != null and sec_data.has(gid):
-			config[s] = [0, gid]
+			if not config.has(s):
+				config[s] = {}
+			var id_data = _get_id_data(s, gid)
+			if id_data != null and typeof(id_data) == TYPE_DICTIONARY:
+				for sk in id_data:
+					config[s][sk] = gid
+			elif id_data != null:
+				config[s][0] = gid
 		else:
-			config[s] = _build_fallback_array(s)
+			if not config.has(s):
+				config[s] = {}
+			if config[s] == null or typeof(config[s]) != TYPE_DICTIONARY or config[s].empty():
+				var fallback_id = _find_fallback_id(s)
+				if fallback_id > 0:
+					var fb_id_data = _get_id_data(s, fallback_id)
+					if fb_id_data != null and typeof(fb_id_data) == TYPE_DICTIONARY:
+						for sk in fb_id_data:
+							config[s][sk] = fallback_id
+					else:
+						config[s][0] = fallback_id
 
 func _handle_global_suffix_toggle(gid: int, suffix: String, checked: bool, config: Dictionary) -> void:
 	var sections: Array = _get_sorted_sections()
@@ -263,22 +299,33 @@ func _handle_global_suffix_toggle(gid: int, suffix: String, checked: bool, confi
 		if id_data == null or not id_data.has(suffix):
 			continue
 		if checked:
-			config[s] = [0, gid, suffix_key]
+			if not config.has(s):
+				config[s] = {}
+			if id_data != null and typeof(id_data) == TYPE_DICTIONARY:
+				for sk in id_data:
+					config[s][sk] = suffix_key
 		else:
-			config[s].erase(suffix_key)
-			if config[s].has(gid):
-				config[s].erase(gid)
-			config[s] = _build_fallback_array(s)
+			if config.has(s) and config[s].has(suffix):
+				config[s].erase(suffix)
+			if config.has(s) and config[s].empty():
+				var fallback_id = _find_fallback_id(s)
+				if fallback_id > 0:
+					var fb_id_data = _get_id_data(s, fallback_id)
+					if fb_id_data != null and typeof(fb_id_data) == TYPE_DICTIONARY:
+						for sk in fb_id_data:
+							config[s][sk] = fallback_id
+					else:
+						config[s][0] = fallback_id
 
 func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 	var section: String = meta.section
 	var id: int = meta.id
 
 	if not config.has(section):
-		config[section] = [0]
+		config[section] = {}
 
 	if meta.get("is_group", false):
-		_handle_bare_toggle(section, id, checked, config)
+		_handle_bare_toggle(section, id, checked, config, meta.get("subblock_key"))
 	elif meta.has("suffix"):
 		_handle_suffix_toggle(section, id, meta, checked, config)
 	elif meta.has("subblock_key"):
@@ -286,9 +333,20 @@ func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 	else:
 		_handle_legacy_toggle(section, id, checked, config)
 
-func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
+func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary, subblock_key = null) -> void:
 	if checked:
-		config[section] = [0, id]
+		if subblock_key != null:
+			# Only set for this specific block
+			config[section][subblock_key] = id
+		else:
+			# Set this id for all subblock_keys in this section
+			var id_data = _get_id_data(section, id)
+			if id_data != null and typeof(id_data) == TYPE_DICTIONARY:
+				for sk in id_data:
+					config[section][sk] = id
+			else:
+				config[section][0] = id
+
 		if _has_linked_suffix(section, id):
 			_broadcast_linked_suffix(section, id, config)
 		
@@ -300,9 +358,11 @@ func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictio
 				config.erase(excl_key)
 		_save_exclusions()
 	else:
-		if config.has(section) and config[section].has(id):
-			config[section].erase(id)
-		config[section] = _build_fallback_array(section)
+		# Unchecking: only remove from this specific subblock_key
+		if subblock_key != null and config.has(section):
+			config[section].erase(subblock_key)
+		if config.has(section) and config[section].empty():
+			config[section] = _build_fallback_dict(section)
 
 func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config: Dictionary) -> void:
 	var suffix: String = meta.suffix
@@ -311,14 +371,14 @@ func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config
 
 	if checked:
 		_clear_other_numbers(section, id, config)
-		if not config[section].has(id):
-			config[section].append(id)
-		if not config[section].has(suffix_key):
-			config[section].append(suffix_key)
+		if not config.has(section):
+			config[section] = {}
+		config[section][suffix] = suffix_key
 		if is_linked:
 			_broadcast_linked_suffix(section, id, config, suffix)
 	else:
-		config[section].erase(suffix_key)
+		if config.has(section) and config[section].has(suffix):
+			config[section].erase(suffix)
 		if is_linked:
 			_deactivate_linked_suffix(section, id, suffix, config)
 		if _should_deactivate_id(section, id, config):
@@ -326,33 +386,36 @@ func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config
 
 func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bool, config: Dictionary) -> void:
 	if checked:
-		if not config[section].has(id):
-			config[section].append(id)
+		# Set this id for this specific subblock_key
+		if not config.has(section):
+			config[section] = {}
+		config[section][subblock_key] = id
 		_remove_exclusion(section, id, subblock_key)
 	else:
 		var id_data = _get_id_data(section, id)
 		if id_data != null:
 			var has_other: bool = false
 			for k in id_data:
-				if typeof(k) != TYPE_INT:
+				if k == subblock_key:
 					continue
-				if k != subblock_key and _is_subblock_active(config, section, id, k):
+				if _is_subblock_active(config, section, id, k):
 					has_other = true
 					break
 			
 			if has_other:
 				_add_exclusion(section, id, subblock_key)
 			else:
-				if config[section].has(id):
-					config[section].erase(id)
-				config[section] = _build_fallback_array(section)
+				if config.has(section) and config[section].has(subblock_key):
+					config[section].erase(subblock_key)
+				config[section] = _build_fallback_dict_for_subblock(section, subblock_key)
 
 func _handle_legacy_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
 	if checked:
-		config[section] = [0, id]
+		config[section][0] = id
 	else:
-		config[section].erase(id)
-		config[section] = _build_fallback_array(section)
+		if config.has(section):
+			config[section].erase(0)
+		config[section] = _build_fallback_dict(section)
 
 func _has_linked_suffix(section: String, id: int) -> bool:
 	var id_data = _get_id_data(section, id)
@@ -383,7 +446,9 @@ func _broadcast_linked_suffix(source_section: String, source_id: int, config: Di
 		var id_data = _get_id_data(section, source_id)
 		if id_data == null or not id_data.has(source_suffix):
 			continue
-		config[section] = [0, source_id, suffix_key]
+		if not config.has(section):
+			config[section] = {}
+		config[section][source_suffix] = suffix_key
 
 func _deactivate_linked_suffix(source_section: String, source_id: int, source_suffix: String, config: Dictionary) -> void:
 	var suffix_key: String = _make_suffix_key(source_id, source_suffix)
@@ -394,36 +459,76 @@ func _deactivate_linked_suffix(source_section: String, source_id: int, source_su
 		var id_data = _get_id_data(section, source_id)
 		if id_data == null or not id_data.has(source_suffix):
 			continue
-		if config.has(section) and config[section].has(suffix_key):
-			config[section].erase(suffix_key)
+		if config.has(section) and config[section].has(source_suffix):
+			config[section].erase(source_suffix)
 		if _should_deactivate_id(section, source_id, config) and config.has(section):
-			if config[section].has(source_id):
-				config[section].erase(source_id)
-			config[section] = _build_fallback_array(section)
+			if config[section].empty():
+				var fallback_id = _find_fallback_id(section)
+				if fallback_id > 0:
+					var fb_id_data = _get_id_data(section, fallback_id)
+					if fb_id_data != null and typeof(fb_id_data) == TYPE_DICTIONARY:
+						for sk in fb_id_data:
+							config[section][sk] = fallback_id
+					else:
+						config[section][0] = fallback_id
 
 func _clear_other_numbers(section: String, keep_id: int, config: Dictionary) -> void:
 	if not config.has(section):
 		return
-	var cfg: Array = config[section]
-	var to_remove: Array = []
-	for entry in cfg:
-		if entry == 0:
-			continue
-		if typeof(entry) == TYPE_INT:
-			if entry != keep_id:
-				to_remove.append(entry)
-		elif entry is String:
-			var parts: Array = (entry as String).split(".")
+	var keys_to_erase = []
+	for sk in config[section]:
+		var val = config[section][sk]
+		if typeof(val) == TYPE_INT:
+			if val != keep_id and val != 0:
+				keys_to_erase.append(sk)
+		elif typeof(val) == TYPE_STRING:
+			var parts: Array = (val as String).split(".")
 			if parts.size() >= 1 and parts[0].to_int() != keep_id:
-				to_remove.append(entry)
-	for entry in to_remove:
-		cfg.erase(entry)
+				keys_to_erase.append(sk)
+	for sk in keys_to_erase:
+		config[section].erase(sk)
 
-func _build_fallback_array(section: String) -> Array:
+func _build_fallback_dict(section: String) -> Dictionary:
+	var fallback: int = _find_fallback_id(section)
+	var result = {}
+	if fallback > 0:
+		var sec_data = _get_section_data(section)
+		if sec_data != null and sec_data.has(fallback):
+			var val = sec_data[fallback]
+			if typeof(val) == TYPE_DICTIONARY:
+				for sk in val:
+					result[sk] = fallback
+			else:
+				result[0] = fallback
+	return result
+
+func _build_fallback_dict_for_subblock(section: String, subblock_key) -> Dictionary:
+	var fallback: int = _find_fallback_id(section)
+	var result = {}
+	if fallback > 0:
+		var sec_data = _get_section_data(section)
+		if sec_data != null and sec_data.has(fallback):
+			var val = sec_data[fallback]
+			if typeof(val) == TYPE_DICTIONARY:
+				if val.has(subblock_key):
+					result[subblock_key] = fallback
+				else:
+					for sk in val:
+						result[sk] = fallback
+			else:
+				result[0] = fallback
+	return result
+
+func _get_fallback_id(section: String, subblock_key) -> int:
 	var fallback: int = _find_fallback_id(section)
 	if fallback > 0:
-		return [0, fallback]
-	return [0]
+		var sec_data = _get_section_data(section)
+		if sec_data != null and sec_data.has(fallback):
+			var val = sec_data[fallback]
+			if typeof(val) == TYPE_DICTIONARY:
+				if val.has(subblock_key):
+					return fallback
+	return fallback
 
 func _find_fallback_id(section: String) -> int:
 	var sec_data = _get_section_data(section)
@@ -445,23 +550,36 @@ func _should_deactivate_id(section: String, id: int, config: Dictionary) -> bool
 	if id_data == null:
 		return true
 	var excl_config = config.get(section + "_excluded", {})
-	var excl_list: Array = []
+	var excl_list = []
 	if typeof(excl_config) == TYPE_DICTIONARY:
 		var excl_key: String = "excluded_" + str(id)
 		if excl_config.has(excl_key):
 			excl_list = excl_config[excl_key]
 	for k in id_data:
-		if k == 0:
+		if typeof(k) == TYPE_INT and k == 0:
 			continue
-		if excl_list.has(k):
+		if typeof(k) == TYPE_STRING and excl_list.has(k):
 			continue
-		return false
+		if typeof(k) == TYPE_INT and excl_list.has(k):
+			continue
+		if config.has(section) and config[section].has(k):
+			return false
 	return true
 
 func _deactivate_and_fallback(section: String, id: int, config: Dictionary) -> void:
 	if config.has(section):
-		config[section].erase(id)
-	config[section] = _build_fallback_array(section)
+		var keys_to_erase = []
+		for sk in config[section]:
+			var val = config[section][sk]
+			if typeof(val) == TYPE_INT and val == id:
+				keys_to_erase.append(sk)
+			elif typeof(val) == TYPE_STRING:
+				var parts: Array = (val as String).split(".")
+				if parts.size() >= 1 and parts[0].to_int() == id:
+					keys_to_erase.append(sk)
+		for sk in keys_to_erase:
+			config[section].erase(sk)
+	config[section] = _build_fallback_dict(section)
 
 func _add_exclusion(section: String, id: int, subblock_key) -> void:
 	var config: Dictionary = _get_config()
@@ -573,8 +691,21 @@ func _is_global_id_active(sections: Array, gid: int, config: Dictionary) -> bool
 		var sec_data = _get_section_data(s)
 		if sec_data != null and sec_data.has(gid):
 			any_exists = true
-			var cfg = config.get(s, [])
-			if typeof(cfg) != TYPE_ARRAY or not cfg.has(gid):
+			var cfg = config.get(s, {})
+			if typeof(cfg) != TYPE_DICTIONARY:
+				return false
+			var active_for_any: bool = false
+			for sk in cfg:
+				var val = cfg[sk]
+				if typeof(val) == TYPE_INT and val == gid:
+					active_for_any = true
+					break
+				elif typeof(val) == TYPE_STRING:
+					var parts: Array = (val as String).split(".")
+					if parts.size() >= 1 and parts[0].to_int() == gid:
+						active_for_any = true
+						break
+			if not active_for_any:
 				return false
 	return any_exists
 
@@ -585,33 +716,61 @@ func _is_global_suffix_active(sections: Array, gid: int, suffix: String, config:
 		var id_data = _get_id_data(s, gid)
 		if id_data != null and id_data.has(suffix):
 			any_exists = true
-			var cfg = config.get(s, [])
-			if typeof(cfg) != TYPE_ARRAY or not cfg.has(suffix_key):
+			var cfg = config.get(s, {})
+			if typeof(cfg) != TYPE_DICTIONARY:
+				return false
+			if not cfg.has(suffix):
+				return false
+			var val = cfg[suffix]
+			var matches = typeof(val) == TYPE_STRING and val == suffix_key
+			if not matches and typeof(val) == TYPE_INT and val == gid:
+				matches = true
+			if not matches:
 				return false
 	return any_exists
 
 func _is_section_item_active(section: String, item_data, config: Dictionary) -> bool:
 	if not config.has(section):
 		return false
-	var cfg: Array = config[section]
-	var is_active: bool = cfg.has(item_data.id)
-	if item_data.get("type", "") == "suffix":
-		is_active = is_active or cfg.has(_make_suffix_key(item_data.id, item_data.suffix))
-	return is_active
+	var cfg = config[section]
+	if typeof(cfg) != TYPE_DICTIONARY:
+		return false
+	var id = item_data.id
+	var t: String = item_data.get("type", "")
+	if t == "suffix":
+		var suffix: String = item_data.suffix
+		if cfg.has(suffix):
+			var val = cfg[suffix]
+			if val == _make_suffix_key(id, suffix) or (typeof(val) == TYPE_INT and val == id):
+				return true
+		return false
+	else:
+		for sk in cfg:
+			var val = cfg[sk]
+			if typeof(val) == TYPE_INT and val == id:
+				return true
+			if typeof(val) == TYPE_STRING:
+				var parts: Array = (val as String).split(".")
+				if parts.size() >= 1 and parts[0].to_int() == id:
+					return true
+	return false
 
 func _is_subblock_active(config: Dictionary, section: String, id: int, subblock_key) -> bool:
-	if not config.has(section) or not config[section].has(id):
+	if not config.has(section):
 		return false
-	var excl_config = config.get(section + "_excluded", {})
-	if typeof(excl_config) != TYPE_DICTIONARY:
+	var cfg = config[section]
+	if typeof(cfg) != TYPE_DICTIONARY:
+		return false
+	if not cfg.has(subblock_key):
+		return false
+	var val = cfg[subblock_key]
+	if typeof(val) == TYPE_INT and val == id:
 		return true
-	var excl_key: String = "excluded_" + str(id)
-	if not excl_config.has(excl_key):
-		return true
-	var excl_list = excl_config[excl_key]
-	if typeof(excl_list) != TYPE_ARRAY:
-		return true
-	return not excl_list.has(subblock_key)
+	if typeof(val) == TYPE_STRING:
+		var parts: Array = (val as String).split(".")
+		if parts.size() >= 1 and parts[0].to_int() == id:
+			return true
+	return false
 
 func _find_child_by_text(parent: TreeItem, text: String) -> TreeItem:
 	var child: TreeItem = parent.get_children()
@@ -719,4 +878,25 @@ func _extract_global_suffixes(sections: Array) -> Array:
 		if suffix_counts[sk] > 1:
 			result.append(sk)
 	result.sort()
+	return result
+
+func _get_active_ids_for_section(section: String) -> Array:
+	var config = _get_config()
+	if not config.has(section):
+		return [0]
+	var dict = config[section]
+	if typeof(dict) != TYPE_DICTIONARY:
+		return [0]
+	var result = [0]
+	var seen_ids = {}
+	for sk in dict:
+		var val = dict[sk]
+		if typeof(val) == TYPE_INT:
+			if val != 0 and not seen_ids.has(val):
+				seen_ids[val] = true
+				result.append(val)
+		elif typeof(val) == TYPE_STRING:
+			if not seen_ids.has(val):
+				seen_ids[val] = true
+				result.append(val)
 	return result
