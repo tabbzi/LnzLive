@@ -42,6 +42,8 @@ func populate_tree() -> void:
 		g_folder.set_text(0, "Global Variations")
 		g_folder.set_selectable(0, false)
 
+		_create_randomize_button()
+
 		for gid in global_ids:
 			var item: TreeItem = create_item(g_folder)
 			item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
@@ -169,7 +171,7 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 			if var_block.name != "Variation " + str(id):
 				display_name = var_block.name
 			items.append({
-				"id": id, "type": "legacy", "is_group": false,
+				"id": id, "type": "bare", "is_group": true,
 				"is_linked": false, "display_name": display_name,
 				"start_line": var_block.start_line,
 				"subblock_key": 0
@@ -179,9 +181,7 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 func _build_item_label(item_data) -> String:
 	var label: String = "#" + str(item_data.id)
 	var t: String = item_data.get("type", "")
-	if t == "bare" and item_data.get("int_count", 0) > 0:
-		label += " (" + str(item_data.int_count) + " subblocks)"
-	elif t == "suffix":
+	if t == "suffix":
 		label += "." + item_data.suffix
 		if item_data.get("is_linked", false):
 			label += " (linked)"
@@ -226,6 +226,19 @@ func _sort_variation_items(a, b) -> bool:
 func _ready() -> void:
 	connect("item_edited", self, "_on_item_edited")
 	connect("item_selected", self, "_on_item_selected")
+	_create_randomize_button()
+	randomize()
+
+func _create_randomize_button() -> void:
+	var hbox = HBoxContainer.new()
+	add_child(hbox)
+	var btn = Button.new()
+	btn.text = "Randomize Variation (click me!)"
+	btn.connect("pressed", self, "_on_randomize_pressed")
+	hbox.add_child(btn)
+
+func _on_randomize_pressed() -> void:
+	randomize_variations()
 
 func _on_item_edited() -> void:
 	var item: TreeItem = get_edited()
@@ -330,8 +343,6 @@ func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 		_handle_suffix_toggle(section, id, meta, checked, config)
 	elif meta.has("subblock_key"):
 		_handle_subblock_toggle(section, id, meta.subblock_key, checked, config)
-	else:
-		_handle_legacy_toggle(section, id, checked, config)
 
 func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary, subblock_key = null) -> void:
 	if checked:
@@ -408,14 +419,6 @@ func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bo
 				if config.has(section) and config[section].has(subblock_key):
 					config[section].erase(subblock_key)
 				config[section] = _build_fallback_dict_for_subblock(section, subblock_key)
-
-func _handle_legacy_toggle(section: String, id: int, checked: bool, config: Dictionary) -> void:
-	if checked:
-		config[section][0] = id
-	else:
-		if config.has(section):
-			config[section].erase(0)
-		config[section] = _build_fallback_dict(section)
 
 func _has_linked_suffix(section: String, id: int) -> bool:
 	var id_data = _get_id_data(section, id)
@@ -900,3 +903,87 @@ func _get_active_ids_for_section(section: String) -> Array:
 				seen_ids[val] = true
 				result.append(val)
 	return result
+
+func randomize_variations() -> void:
+	var config = _get_config()
+	var sections = _get_sorted_sections()
+	
+	var all_blocks = {}
+	for section in sections:
+		var sec_data = _get_section_data(section)
+		if sec_data == null or typeof(sec_data) != TYPE_DICTIONARY:
+			continue
+		if not config.has(section):
+			config[section] = {}
+		for id in sec_data:
+			if id == 0:
+				continue
+			var val = sec_data[id]
+			if typeof(val) == TYPE_DICTIONARY:
+				for sk in val:
+					if not all_blocks.has(section):
+						all_blocks[section] = {}
+					if not all_blocks[section].has(sk):
+						all_blocks[section][sk] = []
+					all_blocks[section][sk].append(id)
+			elif typeof(val) == TYPE_OBJECT:
+				if not all_blocks.has(section):
+					all_blocks[section] = {}
+				var sk = val.subblock_key if val.has("subblock_key") else 0
+				if not all_blocks[section].has(sk):
+					all_blocks[section][sk] = []
+				all_blocks[section][sk].append(id)
+	
+	var picked_suffixes = {}
+	for section in all_blocks:
+		for sk in all_blocks[section]:
+			var ids = all_blocks[section][sk]
+			if ids.size() == 0:
+				continue
+			var picked_id = ids[randi() % ids.size()]
+			var sub = _get_subblock(section, picked_id, sk)
+			if typeof(sub) == TYPE_OBJECT and sub.is_linked:
+				var suffix_str = str(sk) if typeof(sk) == TYPE_STRING else ""
+				if suffix_str != "":
+					config[section][sk] = _make_suffix_key(picked_id, suffix_str)
+					picked_suffixes[section + "." + str(sk)] = {"id": picked_id, "suffix": suffix_str}
+				else:
+					config[section][sk] = picked_id
+			else:
+				config[section][sk] = picked_id
+	
+	for block_key in picked_suffixes:
+		var pick = picked_suffixes[block_key]
+		var parts = block_key.split(".")
+		var source_section = parts[0]
+		var suffix_key = str(pick.id) + "." + pick.suffix
+		for section in sections:
+			if section == source_section:
+				continue
+			var sec_data = _get_section_data(section)
+			if sec_data == null:
+				continue
+			if sec_data.has(pick.id):
+				var id_data = sec_data[pick.id]
+				if typeof(id_data) == TYPE_DICTIONARY and id_data.has(pick.suffix):
+					var sk_val = id_data[pick.suffix]
+					if typeof(sk_val) == TYPE_OBJECT:
+						var sk2 = pick.suffix
+						if not config.has(section):
+							config[section] = {}
+						config[section][sk2] = suffix_key
+	
+	_update_tree_checks(config)
+	_sync_parser_exclusions(config)
+	dog_generator.recompose_model()
+
+func _get_subblock(section: String, id: int, sk):
+	var sec = _get_section_data(section)
+	if sec == null:
+		return null
+	if not sec.has(id):
+		return null
+	var val = sec[id]
+	if typeof(val) == TYPE_DICTIONARY and val.has(sk):
+		return val[sk]
+	return null
