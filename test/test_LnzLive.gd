@@ -504,31 +504,42 @@ func test_lnz_scan_multiple_subblocks_separated_by_dd():
 	
 	var subblocks = parser.sections_map["Ballz Info"][1]
 	assert_true(typeof(subblocks) == TYPE_DICTIONARY, "Should be a two-level map.")
-	assert_true(subblocks.has(0), "Should have subblock (key 0).")
+	assert_true(subblocks.has(0), "Should have first subblock (key 0).")
+	assert_true(subblocks.has(1), "Should have second subblock (key 1).")
 	
 	assert_eq(subblocks[0].lines[0], "hip data 1", "First line should be in subblock 0.")
-	assert_eq(subblocks[0].lines[1], "hip data 2", "Second line should also be in subblock 0.")
-	assert_eq(subblocks[0].name, ";right hip", "Subblock name is from the overwriting #1 line.")
-	assert_eq(subblocks[0].base_id, 1, "Subblock base_id should be 1.")
-	assert_false(subblocks[0].is_linked, "Subblock should not be linked.")
+	assert_eq(subblocks[1].lines[0], "hip data 2", "Second line should be in subblock 1.")
+	
+	assert_eq(subblocks[0].name, ";left hip", "First subblock name is from the first #1 line.")
+	assert_eq(subblocks[1].name, ";right hip", "Second subblock name is from the second #1 line.")
+	assert_eq(subblocks[0].base_id, 1, "Subblock 0 base_id should be 1.")
+	assert_eq(subblocks[1].base_id, 1, "Subblock 1 base_id should be 1.")
+	assert_false(subblocks[0].is_linked, "Subblock 0 should not be linked.")
+	assert_false(subblocks[1].is_linked, "Subblock 1 should not be linked.")
 
 func test_lnz_scan_linked_variations():
 	# Verify that .A / .B suffixes create linked subblocks.
-	var content = "[Color Info Override]\n#2.A\nlink data A\n#2.B\nlink data B\n#2\nunlinked data"
+	var content = "[Color Info Override]\n#2.A\nlink data A\n##\n#2.B\nlink data B\n##\n#2\nunlinked data\n##"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
 	
 	var subblocks = parser.sections_map["Color Info Override"][2]
 	assert_true(typeof(subblocks) == TYPE_DICTIONARY, "Should be a two-level map.")
-	assert_true(subblocks.has("A"), "Should have subblock A.")
-	assert_true(subblocks.has("B"), "Should have subblock B.")
-	assert_true(subblocks.has(0), "Should have subblock 0 (unlinked #2).")
+	assert_true(subblocks.has(0), "Should have subblock 0 (#2.A).")
+	assert_true(subblocks.has(1), "Should have subblock 1 (#2.B).")
+	assert_true(subblocks.has(2), "Should have subblock 2 (#2).")
 	
-	assert_eq(subblocks["A"].lines[0], "link data A", "Subblock A should have its data.")
-	assert_eq(subblocks["B"].lines[0], "link data B", "Subblock B should have its data.")
-	assert_true(subblocks["A"].is_linked, "Subblock A should be linked.")
-	assert_true(subblocks["B"].is_linked, "Subblock B should be linked.")
-	assert_false(subblocks[0].is_linked, "Subblock 0 should not be linked.")
+	assert_eq(subblocks[0].lines[0], "link data A", "Subblock 0 should have its data.")
+	assert_eq(subblocks[1].lines[0], "link data B", "Subblock 1 should have its data.")
+	assert_eq(subblocks[2].lines[0], "unlinked data", "Subblock 2 should have its data.")
+	
+	assert_true(subblocks[0].is_linked, "Subblock 0 should be linked.")
+	assert_true(subblocks[1].is_linked, "Subblock 1 should be linked.")
+	assert_false(subblocks[2].is_linked, "Subblock 2 should not be linked.")
+	
+	if "suffix" in subblocks[0]:
+		assert_eq(subblocks[0].suffix, "A", "Subblock 0 suffix should be A.")
+		assert_eq(subblocks[1].suffix, "B", "Subblock 1 suffix should be B.")
 
 func test_lnz_compile_section_merges_all_subblocks():
 	# Verify that compile_section merges all subblocks when base ID is requested.
