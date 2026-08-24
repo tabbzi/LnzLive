@@ -254,7 +254,7 @@ func get_next_section(file: File, section_name: String) -> bool:
 func set_excluded_subblocks(p_data: Dictionary) -> void:
 	excluded_subblocks = p_data
 
-func compile_section(section_name: String, active_ids: Array) -> VirtualFileLineReader:
+func compile_section(section_name: String, active_config) -> VirtualFileLineReader:
 	var compiled_lines: Array = []
 
 	if not sections_map.has(section_name):
@@ -274,8 +274,50 @@ func compile_section(section_name: String, active_ids: Array) -> VirtualFileLine
 		elif typeof(base_block) == TYPE_OBJECT:
 			compiled_lines.append_array(base_block.lines)
 
+	if typeof(active_config) == TYPE_DICTIONARY:
+		# active_config is {subblock_key: id_or_suffix_string}
+		for subblock_key in active_config:
+			var val = active_config[subblock_key]
+			var parsed_id: int = 0
+			var parsed_suffix: String = ""
+
+			if typeof(val) == TYPE_INT:
+				parsed_id = val
+			elif typeof(val) == TYPE_STRING:
+				var parts: Array = (val as String).split(".")
+				if parts.size() >= 1 and parts[0].is_valid_integer():
+					parsed_id = parts[0].to_int()
+				if parts.size() == 2:
+					parsed_suffix = parts[1]
+
+			if parsed_id == 0 or not section_dict.has(parsed_id):
+				continue
+
+			var block_or_dict = section_dict[parsed_id]
+			if typeof(block_or_dict) == TYPE_OBJECT:
+				compiled_lines.append_array(block_or_dict.lines)
+			elif typeof(block_or_dict) == TYPE_DICTIONARY:
+				# Check direct key match (int subblock index)
+				if block_or_dict.has(subblock_key):
+					var sub = block_or_dict[subblock_key]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+				# Check suffix match (string key)
+				elif parsed_suffix != "" and block_or_dict.has(parsed_suffix):
+					var sub = block_or_dict[parsed_suffix]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+				# Fallback to key 0
+				elif block_or_dict.has(0):
+					var sub = block_or_dict[0]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+
+		return VirtualFileLineReader.new(compiled_lines)
+
+	var active_ids: Array = active_config if typeof(active_config) == TYPE_ARRAY else [0]
 	var active_int_ids: Array = []
-	var active_suffixes = {}  # {int_id: ["A", "B"]}
+	var active_suffixes = {}
 
 	for entry in active_ids:
 		if typeof(entry) == TYPE_INT:
@@ -304,45 +346,10 @@ func compile_section(section_name: String, active_ids: Array) -> VirtualFileLine
 		if typeof(block_or_dict) != TYPE_DICTIONARY:
 			continue
 
-		var excluded_list: Array = []
-		var excluded_key: String = "excluded_" + str(id)
-		if excluded_subblocks.has(section_name) and excluded_subblocks[section_name].has(excluded_key):
-			excluded_list = excluded_subblocks[section_name][excluded_key]
-
-		var specific_suffixes: Array = active_suffixes.get(id, [])
-
 		for key in block_or_dict:
-			if typeof(key) == TYPE_STRING:
-				if specific_suffixes.size() > 0:
-					if not specific_suffixes.has(key):
-						continue
-					var sub = block_or_dict[key]
-					if typeof(sub) == TYPE_OBJECT:
-						compiled_lines.append_array(sub.lines)
-				else:
-					var sub = block_or_dict[key]
-					if typeof(sub) == TYPE_OBJECT:
-						compiled_lines.append_array(sub.lines)
-			else:
-				if excluded_list.has(key):
-					continue
-				var sub = block_or_dict[key]
-				if typeof(sub) == TYPE_OBJECT:
-					compiled_lines.append_array(sub.lines)
-
-	for sid in active_suffixes:
-		if active_int_ids.has(sid):
-			continue
-		if not section_dict.has(sid):
-			continue
-		var id_data = section_dict[sid]
-		if typeof(id_data) != TYPE_DICTIONARY:
-			continue
-		for suffix in active_suffixes[sid]:
-			if id_data.has(suffix):
-				var subblock = id_data[suffix]
-				if typeof(subblock) == TYPE_OBJECT:
-					compiled_lines.append_array(subblock.lines)
+			var sub = block_or_dict[key]
+			if typeof(sub) == TYPE_OBJECT:
+				compiled_lines.append_array(sub.lines)
 
 	return VirtualFileLineReader.new(compiled_lines)
 

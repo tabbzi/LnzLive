@@ -258,6 +258,9 @@ func _on_item_edited() -> void:
 	elif mtype == "section":
 		_handle_section_toggle(meta, checked, config)
 
+	for section in _get_sorted_sections():
+		_rebuild_section_exclusions(section, config)
+
 	_update_tree_checks(config)
 	_sync_parser_exclusions(config)
 	dog_generator.recompose_model()
@@ -347,10 +350,8 @@ func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary, subblock_key = null) -> void:
 	if checked:
 		if subblock_key != null:
-			# Only set for this specific block
 			config[section][subblock_key] = id
 		else:
-			# Set this id for all subblock_keys in this section
 			var id_data = _get_id_data(section, id)
 			if id_data != null and typeof(id_data) == TYPE_DICTIONARY:
 				for sk in id_data:
@@ -360,18 +361,13 @@ func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictio
 
 		if _has_linked_suffix(section, id):
 			_broadcast_linked_suffix(section, id, config)
-		
-		var excl_key: String = section + "_excluded"
-		var list_key: String = "excluded_" + str(id)
-		if config.has(excl_key) and config[excl_key].has(list_key):
-			config[excl_key].erase(list_key)
-			if config[excl_key].empty():
-				config.erase(excl_key)
-		_save_exclusions()
 	else:
-		# Unchecking: only remove from this specific subblock_key
 		if subblock_key != null and config.has(section):
 			config[section].erase(subblock_key)
+			var fallback_id = _get_fallback_id(section, subblock_key)
+			if fallback_id > 0:
+				config[section][subblock_key] = fallback_id
+
 		if config.has(section) and config[section].empty():
 			config[section] = _build_fallback_dict(section)
 
@@ -397,28 +393,69 @@ func _handle_suffix_toggle(section: String, id: int, meta, checked: bool, config
 
 func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bool, config: Dictionary) -> void:
 	if checked:
-		# Set this id for this specific subblock_key
 		if not config.has(section):
 			config[section] = {}
 		config[section][subblock_key] = id
-		_remove_exclusion(section, id, subblock_key)
 	else:
-		var id_data = _get_id_data(section, id)
-		if id_data != null:
-			var has_other: bool = false
-			for k in id_data:
-				if k == subblock_key:
-					continue
-				if _is_subblock_active(config, section, id, k):
-					has_other = true
-					break
-			
-			if has_other:
-				_add_exclusion(section, id, subblock_key)
-			else:
-				if config.has(section) and config[section].has(subblock_key):
-					config[section].erase(subblock_key)
-				config[section] = _build_fallback_dict_for_subblock(section, subblock_key)
+		if config.has(section) and config[section].has(subblock_key):
+			config[section].erase(subblock_key)
+			var fallback_id = _get_fallback_id(section, subblock_key)
+			if fallback_id > 0:
+				config[section][subblock_key] = fallback_id
+				
+		if config.has(section) and config[section].empty():
+			config[section] = _build_fallback_dict_for_subblock(section, subblock_key)
+
+func _rebuild_section_exclusions(section: String, config: Dictionary) -> void:
+	var sec_data = _get_section_data(section)
+	if sec_data == null:
+		return
+
+	var cfg = config.get(section, {})
+	if typeof(cfg) != TYPE_DICTIONARY:
+		return
+
+	var excl_key: String = section + "_excluded"
+	config[excl_key] = {}
+
+	var active_ids = []
+	for sk in cfg:
+		var val = cfg[sk]
+		var base_id = 0
+		if typeof(val) == TYPE_INT:
+			base_id = val
+		elif typeof(val) == TYPE_STRING:
+			var parts = (val as String).split(".")
+			if parts.size() > 0 and parts[0].is_valid_integer():
+				base_id = parts[0].to_int()
+		if base_id != 0 and not active_ids.has(base_id):
+			active_ids.append(base_id)
+
+	for id in active_ids:
+		if sec_data.has(id):
+			var id_data = sec_data[id]
+			if typeof(id_data) == TYPE_DICTIONARY:
+				var excluded_for_id = []
+				for sk in id_data:
+					var active_val = cfg.get(sk)
+					var is_active = false
+					if typeof(active_val) == TYPE_INT and active_val == id:
+						is_active = true
+					elif typeof(active_val) == TYPE_STRING:
+						var parts = (active_val as String).split(".")
+						if parts.size() > 0 and parts[0].to_int() == id:
+							is_active = true
+					
+					if not is_active:
+						excluded_for_id.append(sk)
+				
+				if excluded_for_id.size() > 0:
+					config[excl_key]["excluded_" + str(id)] = excluded_for_id
+
+	if config[excl_key].empty():
+		config.erase(excl_key)
+
+	_save_exclusions()
 
 func _has_linked_suffix(section: String, id: int) -> bool:
 	var id_data = _get_id_data(section, id)
@@ -973,6 +1010,9 @@ func randomize_variations() -> void:
 							config[section] = {}
 						config[section][sk2] = suffix_key
 	
+	for section in sections:
+		_rebuild_section_exclusions(section, config)
+
 	_update_tree_checks(config)
 	_sync_parser_exclusions(config)
 	dog_generator.recompose_model()

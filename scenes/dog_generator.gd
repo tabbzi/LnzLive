@@ -663,7 +663,6 @@ func recompose_model():
 	lnz.no_texture_rotate.clear()
 	lnz.quadrant_balls.clear()
 
-	# Parse Sections
 	var ordered_sections = [
 		"Texture List",
 		"Palette",
@@ -720,35 +719,24 @@ func recompose_model():
 		"Outline Color Override": "get_outline_color_override"
 	}
 
-	lnz.excluded_subblocks = {}
 	for section in ordered_sections:
 		if current_variation_config.has(section):
-			var excl_config = current_variation_config.get(section + "_excluded", {})
-			for key in excl_config:
-				if typeof(key) == TYPE_STRING and key.begins_with("excluded_"):
-					var base_id_str = key.trim_prefix("excluded_")
-					if base_id_str.is_valid_integer():
-						var base_id = base_id_str.to_int()
-						if not lnz.excluded_subblocks.has(section):
-							lnz.excluded_subblocks[section] = {}
-						lnz.excluded_subblocks[section]["excluded_" + str(base_id)] = excl_config[key]
-			
 			var method = section_methods[section]
-			var active_ids = _config_to_active_ids(section)
-			var reader = lnz.compile_section(section, active_ids)
+			var sec_cfg = current_variation_config[section]
+			var reader = lnz.compile_section(section, sec_cfg)
 			lnz.call(method, reader)
 
 	if current_variation_config.has("Paint Ballz"):
-		var pb_ids = _config_to_active_ids("Paint Ballz")
-		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_ids))
+		var pb_cfg = current_variation_config["Paint Ballz"]
+		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_cfg))
 
 	if current_variation_config.has("Move"):
-		var move_ids = _config_to_active_ids("Move")
-		lnz.parse_moves(lnz.compile_section("Move", move_ids))
+		var move_cfg = current_variation_config["Move"]
+		lnz.parse_moves(lnz.compile_section("Move", move_cfg))
 
 	if current_variation_config.has("Project Ball"):
-		var pball_ids = _config_to_active_ids("Project Ball")
-		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_ids))
+		var pball_cfg = current_variation_config["Project Ball"]
+		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_cfg))
 
 	# Cat without [Whiskers] section: apply default whisker connections
 	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
