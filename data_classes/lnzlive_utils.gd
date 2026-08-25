@@ -638,6 +638,19 @@ static func get_hue(color: Color) -> float:
 		h += 360.0
 	return h
 
+static func get_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
+	if palette_colors.empty():
+		return 0
+	var best_index: int = 0
+	var min_dist: float = INF
+	for i in range(palette_colors.size()):
+		var c: Color = palette_colors[i]
+		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+		if dist < min_dist:
+			min_dist = dist
+			best_index = i
+	return best_index
+
 static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
 	if palette_colors.empty():
 		return 0
@@ -650,6 +663,33 @@ static func find_closest_palette_index(palette_colors: Array, target_color: Colo
 			min_dist = dist
 			best_index = i
 	return best_index
+
+static func darken_color(color: Color, factor: float) -> Color:
+	return Color(
+		clamp(color.r * factor, 0.0, 1.0),
+		clamp(color.g * factor, 0.0, 1.0),
+		clamp(color.b * factor, 0.0, 1.0),
+		color.a
+	)
+
+static func lighten_color(color: Color, factor: float) -> Color:
+	return Color(
+		clamp(color.r / factor, 0.0, 1.0),
+		clamp(color.g / factor, 0.0, 1.0),
+		clamp(color.b / factor, 0.0, 1.0),
+		color.a
+	)
+
+static func clamp_color_within_range(base_color: Color, factor: float, min_factor: float) -> Color:
+	var result = darken_color(base_color, factor)
+	var min_c = darken_color(base_color, min_factor)
+	var max_c = lighten_color(base_color, factor)
+	return Color(
+		clamp(result.r, min_c.r, max_c.r),
+		clamp(result.g, min_c.g, max_c.g),
+		clamp(result.b, min_c.b, max_c.b),
+		result.a
+	)
 
 
 ### WEB UTILITIES ###

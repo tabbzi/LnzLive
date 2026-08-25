@@ -1,8 +1,9 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://scenes/editor/RecolorSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
+[ext_resource path="res://scenes/editor/EyePreviewCanvas.gd" type="Script" id=9]
 
 [sub_resource type="DynamicFont" id=1]
 size = 36
@@ -58,7 +59,7 @@ anti_aliasing = false
 
 [node name="RecolorSettings" type="Panel"]
 margin_right = 500.0
-margin_bottom = 625.0
+margin_bottom = 1131.0
 rect_min_size = Vector2( 250, 625 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
@@ -117,7 +118,7 @@ Check Ramp to recolor all colors of ramp (e.g. 10-19) to corresponding colors of
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0
 margin_right = 470.0
-margin_bottom = 595.0
+margin_bottom = 1101.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -126,7 +127,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 458.0
-margin_bottom = 785.0
+margin_bottom = 1239.0
 size_flags_horizontal = 3
 custom_constants/separation = 10
 
@@ -137,7 +138,7 @@ margin_bottom = 4.0
 [node name="SwapContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 14.0
 margin_right = 458.0
-margin_bottom = 482.0
+margin_bottom = 542.0
 custom_constants/separation = 5
 
 [node name="Title" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
@@ -196,7 +197,7 @@ text = "Polygons"
 
 [node name="NoseBallz" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
 margin_left = 92.0
-margin_right = 188.0
+margin_right = 189.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
@@ -369,9 +370,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Recolor"
 
 [node name="ExportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
-margin_top = 478.0
+margin_top = 473.0
 margin_right = 458.0
-margin_bottom = 503.0
+margin_bottom = 498.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -381,9 +382,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Export JSON"
 
 [node name="ImportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
-margin_top = 513.0
+margin_top = 503.0
 margin_right = 458.0
-margin_bottom = 538.0
+margin_bottom = 528.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -393,14 +394,252 @@ custom_fonts/font = SubResource( 4 )
 text = "Import JSON"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 492.0
+margin_top = 552.0
 margin_right = 458.0
-margin_bottom = 496.0
+margin_bottom = 556.0
+
+[node name="EyeColorsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 566.0
+margin_right = 458.0
+margin_bottom = 950.0
+custom_constants/separation = 6
+
+[node name="EyeColorsTitle" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_right = 458.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 4 )
+text = "Eye Colors"
+
+[node name="EyePreviewCanvas" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 27.0
+margin_right = 458.0
+margin_bottom = 107.0
+rect_min_size = Vector2( 300, 80 )
+script = ExtResource( 9 )
+
+[node name="EyeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 113.0
+margin_right = 458.0
+margin_bottom = 130.0
+custom_fonts/font = SubResource( 5 )
+text = "Eye:"
+
+[node name="EyeOutlineRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 136.0
+margin_right = 458.0
+margin_bottom = 163.0
+
+[node name="EyeOutlineLeftLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
+margin_top = 5.0
+margin_right = 51.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
+text = "Eye Out:"
+
+[node name="EyeOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
+margin_left = 55.0
+margin_right = 254.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "L"
+
+[node name="EyeOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
+margin_left = 258.0
+margin_right = 458.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "R"
+
+[node name="EyeColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 169.0
+margin_right = 458.0
+margin_bottom = 196.0
+
+[node name="EyeColLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
+margin_top = 5.0
+margin_right = 48.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
+text = "Eye Col:"
+
+[node name="EyeColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
+margin_left = 52.0
+margin_right = 253.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "L"
+
+[node name="EyeColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
+margin_left = 257.0
+margin_right = 458.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "R"
+
+[node name="EyelidRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 202.0
+margin_right = 458.0
+margin_bottom = 229.0
+
+[node name="EyelidLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyelidRow"]
+margin_top = 5.0
+margin_right = 41.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
+text = "Eyelid:"
+
+[node name="EyelidEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyelidRow"]
+margin_left = 45.0
+margin_right = 458.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "e.g. 0"
+
+[node name="IrisLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 235.0
+margin_right = 458.0
+margin_bottom = 252.0
+custom_fonts/font = SubResource( 5 )
+text = "Iris:"
+
+[node name="IrisOutlineRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 258.0
+margin_right = 458.0
+margin_bottom = 285.0
+
+[node name="IrisOutlineLeftLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
+margin_top = 5.0
+margin_right = 54.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
+text = "Iris Out:"
+
+[node name="IrisOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
+margin_left = 58.0
+margin_right = 256.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "L"
+
+[node name="IrisOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
+margin_left = 260.0
+margin_right = 458.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "R"
+
+[node name="IrisColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 291.0
+margin_right = 458.0
+margin_bottom = 318.0
+
+[node name="IrisColLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
+margin_top = 5.0
+margin_right = 51.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
+text = "Iris Col:"
+
+[node name="IrisColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
+margin_left = 55.0
+margin_right = 254.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "L"
+
+[node name="IrisColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
+margin_left = 258.0
+margin_right = 458.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 5 )
+max_length = 3
+placeholder_text = "R"
+
+[node name="EyeButtonRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 324.0
+margin_right = 458.0
+margin_bottom = 353.0
+alignment = 1
+
+[node name="AllCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
+margin_left = 99.0
+margin_right = 149.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "All"
+
+[node name="LidCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
+margin_left = 153.0
+margin_right = 210.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "Lids"
+
+[node name="OddCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
+margin_left = 214.0
+margin_right = 272.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "Odd"
+
+[node name="FireflyCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
+margin_left = 276.0
+margin_right = 359.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "Firefly"
+
+[node name="EyeButtonRow2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
+margin_top = 359.0
+margin_right = 458.0
+margin_bottom = 384.0
+alignment = 1
+
+[node name="RandomizeEyeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2"]
+margin_left = 88.0
+margin_right = 223.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Randomize Eyes"
+
+[node name="ApplyEyeColorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2"]
+margin_left = 227.0
+margin_right = 370.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Apply Eye Colors"
 
 [node name="BucketContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 506.0
+margin_top = 960.0
 margin_right = 458.0
-margin_bottom = 785.0
+margin_bottom = 1239.0
 custom_constants/separation = 10
 
 [node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
@@ -435,8 +674,8 @@ margin_left = 88.0
 margin_right = 430.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
-max_length = 3
 custom_fonts/font = SubResource( 5 )
+max_length = 3
 placeholder_text = "e.g. 55"
 
 [node name="ColorIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -460,8 +699,8 @@ margin_top = 31.0
 margin_right = 430.0
 margin_bottom = 58.0
 size_flags_horizontal = 3
-max_length = 3
 custom_fonts/font = SubResource( 5 )
+max_length = 3
 placeholder_text = "e.g. 245"
 
 [node name="OutlineIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -487,7 +726,7 @@ margin_right = 430.0
 margin_bottom = 89.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
-placeholder_text = "e.g. 0"
+placeholder_text = "e.g. 244"
 
 [node name="Spacer1" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
