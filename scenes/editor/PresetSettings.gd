@@ -947,8 +947,8 @@ func _on_AutofillRecolorsButton_pressed() -> void:
 		var before_color = line.get_node("BeforeColor")
 		var after_color = line.get_node("AfterColor")
 		
-		_setup_preview_wrapper(before_color, "BeforeColor_" + str(line.get_instance_id()))
-		_setup_preview_wrapper(after_color, "AfterColor_" + str(line.get_instance_id()))
+		LnzLiveUtils.setup_preview_wrapper(self, before_color, "BeforeColor_" + str(line.get_instance_id()))
+		LnzLiveUtils.setup_preview_wrapper(self, after_color, "AfterColor_" + str(line.get_instance_id()))
 
 		var remove_btn: Button = line.get_node_or_null("RemoveButton")
 		if remove_btn:
@@ -1084,39 +1084,6 @@ func _create_color_preview_texture(color: Color) -> ImageTexture:
 	tex.create_from_image(img)
 	return tex
 
-func _setup_preview_wrapper(le, le_name: String) -> void:
-	if not le: return
-	var parent: Node = le.get_parent()
-
-	var hbox = HBoxContainer.new()
-	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var pos: int = le.get_index()
-	var orig_owner: Node = le.owner
-	
-	parent.remove_child(le)
-	parent.add_child(hbox)
-	
-	if orig_owner != null:
-		hbox.owner = orig_owner
-	
-	parent.move_child(hbox, pos)
-
-	hbox.add_child(le)
-	if orig_owner != null:
-		le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var preview_container = HBoxContainer.new()
-	preview_container.name = le_name + "_Preview"
-	hbox.add_child(preview_container)
-	if orig_owner != null:
-		preview_container.owner = orig_owner
-
-	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
-		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
-
 func _on_color_list_text_changed(new_text: String, container: Container) -> void:
 	LnzLiveUtils.update_color_list_previews(container, new_text, _get_cached_palette_colors())
 
@@ -1164,7 +1131,7 @@ func _get_cached_palette_colors() -> Array:
 		var h: int = img.get_height()
 		for i in range(256):
 			var x: int = i % w
-			var y: int = i / h
+			var y: int = i / w
 			if x < w and y < h:
 				colors.append(img.get_pixel(x, y))
 			else:

@@ -146,8 +146,8 @@ func _add_swap_line() -> Control:
 	var before_color = line.get_node("BeforeColor")
 	var after_color = line.get_node("AfterColor")
 	
-	_setup_preview_wrapper(before_color, "BeforeColor_" + str(id))
-	_setup_preview_wrapper(after_color, "AfterColor_" + str(id))
+	LnzLiveUtils.setup_preview_wrapper(self, before_color, "BeforeColor_" + str(id))
+	LnzLiveUtils.setup_preview_wrapper(self, after_color, "AfterColor_" + str(id))
 	
 	var remove_btn: Button = line.get_node_or_null("RemoveButton")
 	if remove_btn:
@@ -178,39 +178,6 @@ func _on_bucket_property_changed(new_text: String) -> void:
 			bucket_texture_icon.texture = tex
 	else:
 		bucket_texture_icon.texture = null
-
-func _setup_preview_wrapper(le, le_name: String) -> void:
-	if not le: return
-	var parent: Node = le.get_parent()
-
-	var hbox = HBoxContainer.new()
-	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var pos: int = le.get_index()
-	var orig_owner: Node = le.owner
-	
-	parent.remove_child(le)
-	parent.add_child(hbox)
-	
-	if orig_owner != null:
-		hbox.owner = orig_owner
-	
-	parent.move_child(hbox, pos)
-
-	hbox.add_child(le)
-	if orig_owner != null:
-		le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var preview_container = HBoxContainer.new()
-	preview_container.name = le_name + "_Preview"
-	hbox.add_child(preview_container)
-	if orig_owner != null:
-		preview_container.owner = orig_owner
-
-	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
-		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
 
 func _setup_grid_preview(le, icon_node: TextureRect, le_name: String) -> void:
 	if not is_instance_valid(icon_node): return

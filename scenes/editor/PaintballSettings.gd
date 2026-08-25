@@ -181,51 +181,14 @@ func _ready() -> void:
 	set_process(true)
 
 func _setup_color_previews() -> void:
-	_setup_preview_wrapper("Color")
-	_setup_preview_wrapper("OutlineColor")
+	LnzLiveUtils.setup_preview_wrapper(self, _color, "Color")
+	LnzLiveUtils.setup_preview_wrapper(self, _outline_color, "OutlineColor")
 	
 	_color_preview = find_node("Color_Preview", true, false)
 	_outline_color_preview = find_node("OutlineColor_Preview", true, false)
 
-func _setup_preview_wrapper(le_name: String) -> void:
-	var le: Control = find_node(le_name, true, false)
-	if not le: return
-	var parent: Control = le.get_parent()
-
-	var hbox = HBoxContainer.new()
-	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var pos: int = le.get_index()
-	var orig_owner: Node = le.owner
-	
-	parent.remove_child(le)
-	parent.add_child(hbox)
-	
-	if orig_owner != null:
-		hbox.owner = orig_owner
-	
-	parent.move_child(hbox, pos)
-
-	hbox.add_child(le)
-	if orig_owner != null:
-		le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var preview_container = HBoxContainer.new()
-	preview_container.name = le_name + "_Preview"
-	hbox.add_child(preview_container)
-	if orig_owner != null:
-		preview_container.owner = orig_owner
-
-	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
-		le.connect("text_changed", self, "_on_color_list_text_changed", [le_name])
-
-func _on_color_list_text_changed(new_text: String, le_name: String) -> void:
-	if le_name == "Color" and _color_preview:
-		_update_previews_inner(new_text, _color_preview)
-	elif le_name == "OutlineColor" and _outline_color_preview:
-		_update_previews_inner(new_text, _outline_color_preview)
+func _on_color_list_text_changed(new_text: String, container: Container) -> void:
+	_update_previews_inner(new_text, container)
 
 func _refresh_all_previews() -> void:
 	if _color and _color_preview:

@@ -779,3 +779,35 @@ static func save_web_ref_to_disk(file_name: String, file_blob) -> int:
 	file.store_buffer(file_blob)
 	file.close()
 	return OK
+
+static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: String) -> void:
+	if not is_instance_valid(le):
+		return
+	var parent: Node = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.rect_min_size = le.rect_min_size
+
+	var pos: int = le.get_index()
+	var orig_owner: Node = le.owner
+
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):
+		le.connect("text_changed", parent_script, "_on_color_list_text_changed", [preview_container])
