@@ -935,24 +935,20 @@ func _refresh_eye_preview() -> void:
 		return
 	if not is_instance_valid(eye_outline_left_edit):
 		return
-	if eye_outline_left_edit.text != "":
-		eye_preview_canvas.eye_outline_left = _get_eye_color(eye_outline_left_edit.text)
-	if eye_outline_right_edit.text != "":
-		eye_preview_canvas.eye_outline_right = _get_eye_color(eye_outline_right_edit.text)
-	if eyelid_edit.text != "":
-		eye_preview_canvas.eyelid_color = _get_eye_color(eyelid_edit.text)
-	if iris_outline_left_edit.text != "":
-		eye_preview_canvas.iris_outline_left = _get_eye_color(iris_outline_left_edit.text)
-	if iris_outline_right_edit.text != "":
-		eye_preview_canvas.iris_outline_right = _get_eye_color(iris_outline_right_edit.text)
-	if iris_col_left_edit.text != "":
-		eye_preview_canvas.iris_color_left = _get_eye_color(iris_col_left_edit.text)
-	if iris_col_right_edit.text != "":
-		eye_preview_canvas.iris_color_right = _get_eye_color(iris_col_right_edit.text)
-	if eye_col_left_edit.text != "":
-		eye_preview_canvas.eye_color_left = _get_eye_color(eye_col_left_edit.text)
-	if eye_col_right_edit.text != "":
-		eye_preview_canvas.eye_color_right = _get_eye_color(eye_col_right_edit.text)
+		
+	eye_preview_canvas.eye_outline_left = _get_eye_color(eye_outline_left_edit.text) if eye_outline_left_edit.text != "" else Color(0.0, 0.0, 0.0, 1.0)
+	eye_preview_canvas.eye_outline_right = _get_eye_color(eye_outline_right_edit.text) if eye_outline_right_edit.text != "" else Color(0.0, 0.0, 0.0, 1.0)
+	eye_preview_canvas.eyelid_color = _get_eye_color(eyelid_edit.text) if eyelid_edit.text != "" else Color(0.0, 0.0, 0.0, 1.0)
+	
+	eye_preview_canvas.iris_outline_left = _get_eye_color(iris_outline_left_edit.text) if iris_outline_left_edit.text != "" else Color(1.0, 0.5, 1.0, 1.0)
+	eye_preview_canvas.iris_outline_right = _get_eye_color(iris_outline_right_edit.text) if iris_outline_right_edit.text != "" else Color(1.0, 0.5, 1.0, 1.0)
+	
+	eye_preview_canvas.iris_color_left = _get_eye_color(iris_col_left_edit.text) if iris_col_left_edit.text != "" else Color(0.0, 0.0, 0.0, 1.0)
+	eye_preview_canvas.iris_color_right = _get_eye_color(iris_col_right_edit.text) if iris_col_right_edit.text != "" else Color(0.0, 0.0, 0.0, 1.0)
+	
+	eye_preview_canvas.eye_color_left = _get_eye_color(eye_col_left_edit.text) if eye_col_left_edit.text != "" else Color(1.0, 1.0, 1.0, 1.0)
+	eye_preview_canvas.eye_color_right = _get_eye_color(eye_col_right_edit.text) if eye_col_right_edit.text != "" else Color(1.0, 1.0, 1.0, 1.0)
+	
 	eye_preview_canvas.update()
 
 
@@ -1069,7 +1065,8 @@ func _on_RandomizeEye_pressed() -> void:
 		var generated_left = LnzLiveUtils.generate_theory_colors(ref_left, theory_left, 3)
 		var chosen_left = generated_left[randi() % generated_left.size()]
 		
-		var min_v_left = min(ref_left.v + 0.25, 1.0)
+		var iris_out_color_left = _get_eye_color(iris_outline_left_edit.text)
+		var min_v_left = min(iris_out_color_left.v + 0.25, 1.0)
 		var eye_col_target_left = Color.from_hsv(chosen_left.h, chosen_left.s, rand_range(min_v_left, 1.0))
 		eye_col_left_edit.text = str(get_closest_palette_index(eye_col_target_left))
 		
@@ -1079,7 +1076,8 @@ func _on_RandomizeEye_pressed() -> void:
 			var generated_right = LnzLiveUtils.generate_theory_colors(ref_right, theory_right, 3)
 			var chosen_right = generated_right[randi() % generated_right.size()]
 			
-			var min_v_right = min(ref_right.v + 0.25, 1.0)
+			var iris_out_color_right = _get_eye_color(iris_outline_right_edit.text)
+			var min_v_right = min(iris_out_color_right.v + 0.25, 1.0)
 			var eye_col_target_right = Color.from_hsv(chosen_right.h, chosen_right.s, rand_range(min_v_right, 1.0))
 			eye_col_right_edit.text = str(get_closest_palette_index(eye_col_target_right))
 		else:
