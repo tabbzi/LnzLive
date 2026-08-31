@@ -443,7 +443,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "L"
+placeholder_text = "eyeR outline"
 
 [node name="EyeOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
 margin_left = 258.0
@@ -452,7 +452,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "R"
+placeholder_text = "eyeL outline"
 
 [node name="EyeColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 169.0
@@ -473,7 +473,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "L"
+placeholder_text = "eyeR color"
 
 [node name="EyeColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
 margin_left = 257.0
@@ -482,7 +482,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "R"
+placeholder_text = "eyeL color"
 
 [node name="EyelidRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 202.0
@@ -503,7 +503,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "e.g. 0"
+placeholder_text = "e.g. 244"
 
 [node name="IrisLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 235.0
@@ -531,7 +531,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "L"
+placeholder_text = "irisR outline"
 
 [node name="IrisOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
 margin_left = 260.0
@@ -540,7 +540,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "R"
+placeholder_text = "irisL outline"
 
 [node name="IrisColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 291.0
@@ -561,7 +561,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "L"
+placeholder_text = "irisR color"
 
 [node name="IrisColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
 margin_left = 258.0
@@ -570,7 +570,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 max_length = 3
-placeholder_text = "R"
+placeholder_text = "irisL color"
 
 [node name="EyeButtonRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 324.0
