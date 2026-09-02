@@ -205,6 +205,8 @@ var selected_balls: Array = []
 var locked_balls: Array = []
 var pending_moves: Dictionary = {}  # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
 
+var _locked_balls_cache: Array = []
+
 var _pre_move_state: Dictionary = {}
 
 var box_selecting: bool = false
@@ -2092,9 +2094,11 @@ func _get_mode_settings_instance(mode: int) -> Control:
 func _exit_mode(mode: int) -> void:
 	match mode:
 		Mode.MOVE:
+			_locked_balls_cache = locked_balls.duplicate()
 			_on_unselect_all()
 			_on_move_mode_clear()
 			selected_balls.clear()
+			locked_balls.clear()
 		Mode.PAINTBALL:
 			paintball_target_ball = null
 			close_paintball_on_apply = false
@@ -2134,6 +2138,8 @@ func _exit_mode(mode: int) -> void:
 func _enter_mode(mode: int) -> void:
 	match mode:
 		Mode.MOVE:
+			locked_balls = _locked_balls_cache.duplicate()
+			_sync_locked_balls_to_visuals()
 			move_mode_settings_instance.set_queued_count(pending_moves.size())
 			ball_label.hide()
 			_reset_tab_state()
