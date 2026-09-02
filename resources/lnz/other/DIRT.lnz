@@ -2,6 +2,8 @@
 ; GAME: PETZ
 ; (keep the above comments to auto-read correct model and palette)
 
+; Yes, I know that these look like nothing. It's possible that they're not parsing correctly.
+
 ;dirt
 
 [Num Ballz]
