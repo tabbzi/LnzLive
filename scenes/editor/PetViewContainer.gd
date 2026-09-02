@@ -325,7 +325,7 @@ func _ready() -> void:
 		)
 		lnz_text_edit.connect("create_polygon", self, "_on_LnzTextEdit_create_polygon")
 	if is_instance_valid(pet_node):
-		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_pending_paintballz")
+		paintball_settings_instance.connect("clear_paintballz", pet_node, "clear_pending_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	if is_instance_valid(pet_node):
