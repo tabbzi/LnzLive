@@ -40,6 +40,7 @@ onready var _group: SpinBox = find_node("Group")
 onready var _anchored: CheckBox = find_node("Anchored")
 onready var _target: OptionButton = find_node("Target")
 onready var _freeline_checkbox: CheckBox = find_node("FreelineCheckBox")
+onready var _straight_line_checkbox: CheckBox = find_node("StraightLineCheckBox")
 onready var _spacing: SpinBox = find_node("Spacing")
 onready var _jitter: SpinBox = find_node("Jitter")
 onready var _ordered: CheckBox = find_node("Ordered")
@@ -532,6 +533,7 @@ func get_properties() -> Dictionary:
 	properties["anchored"] = _anchored.pressed
 	properties["target_mode"] = _target.selected
 	properties["freeline"] = _freeline_checkbox.pressed
+	properties["straight_line"] = _straight_line_checkbox.pressed
 	properties["spacing"] = _spacing.value
 	properties["jitter"] = _jitter.value
 	properties["ordered"] = _ordered.pressed
@@ -666,6 +668,7 @@ func _apply_settings_dict(data: Dictionary) -> void:
 	if data.has("anchored"): _anchored.pressed = data["anchored"]
 	if data.has("target_mode"): _target.selected = data["target_mode"]
 	if data.has("freeline"): _freeline_checkbox.pressed = data["freeline"]
+	if data.has("straight_line"): _straight_line_checkbox.pressed = data["straight_line"]
 	if data.has("spacing"): _spacing.value = data["spacing"]
 	if data.has("jitter"): _jitter.value = data["jitter"]
 	if data.has("ordered"): _ordered.pressed = data["ordered"]
@@ -798,6 +801,7 @@ func _connect_settings_signals() -> void:
 	_anchored.connect("toggled", self, "_on_setting_changed")
 	_target.connect("item_selected", self, "_on_setting_changed")
 	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
+	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
 	_spacing.connect("value_changed", self, "_on_setting_changed")
 	_jitter.connect("value_changed", self, "_on_setting_changed")
 	_ordered.connect("toggled", self, "_on_setting_changed")
@@ -847,6 +851,7 @@ func _on_design_tool_toggled(_arg = null) -> void:
 	_design_canvas.mirror_x = _mirror_x.pressed
 	_design_canvas.mirror_y = _mirror_y.pressed
 	_design_canvas.eraser_mode = _canvas_eraser.pressed
+	_design_canvas.straight_line_enabled = _straight_line_checkbox.pressed
 	_design_canvas.update()
 	save_settings()
 
@@ -1300,6 +1305,7 @@ func save_settings() -> void:
 	config.set_value("PaintballProperties", "anchored", _anchored.pressed)
 	config.set_value("PaintballProperties", "target", _target.selected)
 	config.set_value("PaintballProperties", "freeline", _freeline_checkbox.pressed)
+	config.set_value("PaintballProperties", "straight_line", _straight_line_checkbox.pressed)
 	config.set_value("PaintballProperties", "spacing", _spacing.value)
 	config.set_value("PaintballProperties", "jitter", _jitter.value)
 	config.set_value("PaintballProperties", "ordered", _ordered.pressed)
@@ -1320,6 +1326,7 @@ func save_settings() -> void:
 	config.set_value("DesignMode", "mirror_x", _mirror_x.pressed)
 	config.set_value("DesignMode", "mirror_y", _mirror_y.pressed)
 	config.set_value("DesignMode", "canvas_eraser", _canvas_eraser.pressed)
+	config.set_value("DesignMode", "straight_line", _straight_line_checkbox.pressed)
 	config.set_value("DesignMode", "design_jitter", _design_jitter.value)
 	config.set_value("DesignMode", "rotate_jitter", _rotate_jitter.value)
 	config.set_value("DesignMode", "rotate_fixed", _rotate_fixed.pressed)
@@ -1356,6 +1363,7 @@ func load_settings() -> void:
 	_anchored.pressed = config.get_value("PaintballProperties", "anchored", true)
 	_target.selected = config.get_value("PaintballProperties", "target", 0)
 	_freeline_checkbox.pressed = config.get_value("PaintballProperties", "freeline", false)
+	_straight_line_checkbox.pressed = config.get_value("PaintballProperties", "straight_line", false)
 	_spacing.value = config.get_value("PaintballProperties", "spacing", 5.0)
 	_jitter.value = config.get_value("PaintballProperties", "jitter", 0.0)
 	_ordered.pressed = config.get_value("PaintballProperties", "ordered", false)
@@ -1397,6 +1405,7 @@ func load_settings() -> void:
 	_mirror_x.pressed = config.get_value("DesignMode", "mirror_x", false)
 	_mirror_y.pressed = config.get_value("DesignMode", "mirror_y", false)
 	_canvas_eraser.pressed = config.get_value("DesignMode", "canvas_eraser", false)
+	_straight_line_checkbox.pressed = config.get_value("DesignMode", "straight_line", false)
 	_design_jitter.value = config.get_value("DesignMode", "design_jitter", 0.0)
 	_rotate_jitter.value = config.get_value("DesignMode", "rotate_jitter", 0.0)
 	_rotate_fixed.pressed = config.get_value("DesignMode", "rotate_fixed", false)
@@ -1430,6 +1439,7 @@ func _on_reset_defaults_pressed() -> void:
 	_anchored.pressed = true
 	_target.selected = 0
 	_freeline_checkbox.pressed = false
+	_straight_line_checkbox.pressed = false
 	_spacing.value = 5.0
 	_jitter.value = 0.0
 	_ordered.pressed = false

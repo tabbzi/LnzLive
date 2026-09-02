@@ -663,7 +663,17 @@ func _process(_delta: float) -> void:
 				paintball_settings_instance.find_node("FreelineCheckBox").pressed
 				or Input.is_key_pressed(KEY_SHIFT)
 			)
-			if freeline_on:
+			var straight_line_on: bool = (
+				freeline_on
+				and (
+					paintball_settings_instance.find_node("StraightLineCheckBox").pressed
+					or Input.is_key_pressed(KEY_ALT)
+					or Input.is_key_pressed(KEY_L)
+				)
+			)
+			if straight_line_on:
+				body = "Paintball Mode (Straight Line): Click and drag to draw. Hold X/Y to lock axis."
+			elif freeline_on:
 				body = "Paintball Mode (Freeline): Left-click and drag to draw."
 			else:
 				body = "Paintball Mode: Left-click to add next paintball"
@@ -1393,6 +1403,14 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				)
 			)
 		)
+		var is_straight_line: bool = (
+			freeline_mode
+			and (
+				props.get("straight_line", false)
+				or Input.is_key_pressed(KEY_ALT)
+				or Input.is_key_pressed(KEY_L)
+			)
+		)
 		if freeline_mode:
 			if event.pressed:
 				print("[STATUS] PetViewContainer: started freeline path")
@@ -1406,7 +1424,24 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			else:
 				print("[STATUS] PetViewContainer: finished freeline path")
 				freeline_active = false
-				_finalize_freeline()
+
+				if is_straight_line:
+					var start_pos: Vector2 = freeline_path.front()
+					var end_pos: Vector2 = event.position
+
+					if Input.is_key_pressed(KEY_X):
+						end_pos.y = start_pos.y
+					elif Input.is_key_pressed(KEY_Y):
+						end_pos.x = start_pos.x
+
+					freeline_path.clear()
+					var dist: float = start_pos.distance_to(end_pos)
+					var steps: int = max(1, round(dist / max(1.0, props.spacing)))
+					for i in range(steps + 1):
+						var t: float = float(i) / float(steps)
+						freeline_path.append(start_pos.linear_interpolate(end_pos, t))
+
+				_finalize_freeline(event.position)
 			return true
 
 	if event is InputEventMouseMotion and freeline_active:
@@ -3327,7 +3362,7 @@ func close_paintball_mode() -> void:
 	print("[STATUS] PetViewContainer: closing paintball mode")
 	paintball_check_box.pressed = false
 
-func _finalize_freeline() -> void:
+func _finalize_freeline(end_position = null) -> void:
 	# var _perf_start_time: int = OS.get_ticks_msec()
 	# var _perf_dyn_start: int = OS.get_dynamic_memory_usage()
 	# var _perf_stat_start: int = OS.get_static_memory_usage()

@@ -567,6 +567,14 @@ hint_tooltip = "Draw continuous lines (hold SHIFT key)"
 custom_fonts/font = SubResource( 3 )
 text = "Freeline"
 
+[node name="StraightLineCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
+margin_top = 33.0
+margin_right = 460.0
+margin_bottom = 62.0
+hint_tooltip = "Constrain stroke to a straight line. Hold X or Y to lock axis."
+custom_fonts/font = SubResource( 3 )
+text = "Straight Line"
+
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_top = 33.0
 margin_right = 460.0
