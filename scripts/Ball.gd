@@ -17,6 +17,7 @@ export var pet_center             = Vector3(0, 0, 0)   setget set_pet_center
 
 export var visible_override       = true               setget set_visible
 export var omitted                = false
+export var is_locked              = false
 
 var select_mode_active            = false              setget set_select_mode_active
 
@@ -59,7 +60,8 @@ enum OutlineState {
 	LINEZ_TARGET,
 	HOVER,
 	MODIFIED,
-	PIVOT
+	PIVOT,
+	LOCKED
 }
 
 var current_outline_state: int = OutlineState.NONE setget , get_outline_state
@@ -318,6 +320,8 @@ func apply_outline_state(state: int) -> void:
 			highlight_idx = 248 # GRAY
 		OutlineState.PIVOT:
 			highlight_idx = 1 # RED
+		OutlineState.LOCKED:
+			highlight_idx = 165 # YELLOW
 		OutlineState.NONE:
 			highlight_idx = -1
 

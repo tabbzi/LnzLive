@@ -81,6 +81,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Line Mode** | `E` | **Open/Close Line Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
+| **Move Mode** | `Q` | **Lock/Unlock** hovered ball (yellow outline) |
+| **Move Mode** | `CTRL` + `Q` | **Unlock All** locked ballz |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `ALT` + `SHIFT` + `left-click drag`| Scale/Resize selected group of ballz |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
@@ -412,6 +414,8 @@ Coming soon!
 Move Mode provides advanced visual editing for multiple balls:
 
 - **Group Movement:** Select multiple balls (`CTRL`+left-click or Box Select) to move them as a unit.
+- **Locked Ballz:** In Move Mode, press `Q` on a hovered ball to lock it (yellow outline). Locked ballz are excluded from selection and movement. Press `Q` again or `CTRL`+`Q` to unlock. Use "Lock All" / "Unlock All" buttons in the panel.
+- **Group Pan:** With a selection active in Move Mode, hold `SHIFT` + left-click drag on any area (including background) to pan the entire selected group as a unit without altering selection.
 
 - **Axis/Plane Locks:** Use the constraint buttons (Free, X, Y, Z, XY, XZ, YZ) or hotkeys (X, Y, Z, and combinations) to lock movement to specific axes or planes.
 
