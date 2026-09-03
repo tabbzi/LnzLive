@@ -2025,7 +2025,8 @@ func fuzz_to_amount(fuzz: float) -> float:
 	return clamp(fuzz / 2, 0, 5)
 
 func snap_ball_size(size: float) -> float:
-	return size - 1 - fmod(size, 2)
+	# return size - 1 - fmod(size, 2)
+	return round(size)
 
 func base_z_offset(base_z: float) -> float:
 	return base_z * 20.0 + 10.0
