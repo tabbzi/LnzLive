@@ -640,28 +640,36 @@ static func get_hue(color: Color) -> float:
 
 static func get_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
 	if palette_colors.empty():
-		return 0
-	var best_index: int = 0
+		return 1
+	var best_index: int = -1
 	var min_dist: float = INF
 	for i in range(palette_colors.size()):
+		if i == 0:
+			continue
 		var c: Color = palette_colors[i]
 		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
 		if dist < min_dist:
 			min_dist = dist
 			best_index = i
+	if best_index == -1:
+		return 1
 	return best_index
 
 static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
 	if palette_colors.empty():
-		return 0
-	var best_index: int = 0
+		return 1
+	var best_index: int = -1
 	var min_dist: float = INF
 	for i in range(palette_colors.size()):
+		if i == 0:
+			continue
 		var c: Color = palette_colors[i]
 		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
 		if dist < min_dist:
 			min_dist = dist
 			best_index = i
+	if best_index == -1:
+		return 1
 	return best_index
 
 static func darken_color(color: Color, factor: float) -> Color:

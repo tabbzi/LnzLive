@@ -293,7 +293,7 @@ func _on_GeneratePaletteButton_pressed() -> void:
 		if parsed.size() > 0: 
 			base_index = parsed[randi() % parsed.size()]
 		else:
-			base_index = randi() % 256 
+			base_index = randi() % 255 + 1
 		
 	var base_color: Color = get_color_from_index(base_index)
 	
@@ -757,7 +757,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		out_diams.append(int(max(1, round(final_pb_percentage))))
 
 		var color_list: Array = LnzLiveUtils.parse_number_list(slot_data.color)
-		out_colors.append(color_list[randi() % color_list.size()] if color_list else 0)
+		out_colors.append(color_list[randi() % color_list.size()] if color_list else 1)
 		
 		var out_col_list: Array = LnzLiveUtils.parse_number_list(slot_data.outline_color)
 		out_outlines.append(int(out_col_list[0]) if out_col_list else 244)

@@ -687,7 +687,7 @@ func _on_RandomizeSwap_pressed() -> void:
 		var before_color_edit = l.find_node("BeforeColor", true, false)
 		var before_texture_edit = l.find_node("BeforeTexture", true, false)
 		
-		var random_color: int = randi() % 256
+		var random_color: int = randi() % 255 + 1
 		before_color_edit.text = str(random_color)
 		
 		var random_texture: int = randi() % (max_texture_id + 1)
@@ -723,7 +723,7 @@ func _on_RandomizeAfter_pressed() -> void:
 		if not use_random_seed:
 			seed_color = theory_seed_picker.color
 		else:
-			var rand_idx: int = randi() % 256
+			var rand_idx: int = randi() % 255 + 1
 			seed_color = get_color_from_index(rand_idx)
 		
 	var use_natural: bool = false
@@ -762,7 +762,7 @@ func _on_RandomizeAfter_pressed() -> void:
 				var chosen_color: Color = new_colors[randi() % new_colors.size()]
 				random_color = get_closest_palette_index(chosen_color)
 			else:
-				random_color = randi() % 256
+				random_color = randi() % 255 + 1
 				
 		else:
 			if is_ramp:
@@ -770,7 +770,7 @@ func _on_RandomizeAfter_pressed() -> void:
 				ramp_base = max(ramp_base, 10) # Ensure at least 10
 				random_color = ramp_base + (randi() % 10)
 			else:
-				random_color = randi() % 256
+				random_color = randi() % 255 + 1
 
 		if random_color >= cached_palette_colors.size():
 			random_color = cached_palette_colors.size() - 1
@@ -786,15 +786,19 @@ func _on_RandomizeAfter_pressed() -> void:
 
 func get_closest_palette_index(target_color: Color) -> int:
 	if cached_palette_colors.empty():
-		return 0
-	var best_index: int = 0
+		return 1
+	var best_index: int = -1
 	var min_dist: float = INF
 	for i in range(cached_palette_colors.size()):
+		if i == 0:
+			continue
 		var c: Color = cached_palette_colors[i]
 		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
 		if dist < min_dist:
 			min_dist = dist
 			best_index = i
+	if best_index == -1:
+		return 1
 	return best_index
 
 func get_color_from_index(index: int) -> Color:
@@ -1020,11 +1024,11 @@ func _on_RandomizeEye_pressed() -> void:
 	
 	var head_color = _get_head_ball_color()
 	
-	var iris_out_left = randi() % cached_palette_colors.size()
+	var iris_out_left = randi() % (cached_palette_colors.size() - 1) + 1
 	var iris_out_right = iris_out_left
 	
 	if _eye_odd:
-		iris_out_right = randi() % cached_palette_colors.size()
+		iris_out_right = randi() % (cached_palette_colors.size() - 1) + 1
 		
 	iris_outline_left_edit.text = str(iris_out_left)
 	iris_outline_right_edit.text = str(iris_out_right)

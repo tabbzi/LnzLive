@@ -1437,7 +1437,7 @@ func _generate_surprise_color_string() -> String:
 	if cached_palette_colors.empty() and is_instance_valid(pet_node) and "current_palette_texture" in pet_node:
 		_on_palette_changed()
 		
-	var base_index: int = randi() % 256
+	var base_index: int = randi() % 255 + 1
 	var base_color: Color = get_color_from_index(base_index)
 	
 	var p_type: int = randi() % 5
