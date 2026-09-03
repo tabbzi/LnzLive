@@ -2100,10 +2100,15 @@ func _exit_mode(mode: int) -> void:
 			selected_balls.clear()
 			locked_balls.clear()
 		Mode.PAINTBALL:
+			var should_switch_tab = close_paintball_on_apply
 			paintball_target_ball = null
 			close_paintball_on_apply = false
 			_restore_all_balls()
 			_set_pending_paintballs_visible(false)
+			if should_switch_tab and sidebar_controller:
+				var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
+				if tree_tab:
+					sidebar_controller.switch_to_tab(tree_tab)
 		Mode.LINE:
 			var should_switch_tab = line_mode_close
 			line_mode_close = false
