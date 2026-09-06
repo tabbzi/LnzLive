@@ -26,19 +26,47 @@ func _update_ball_label(ball_no: int) -> void:
 			var name1: String = lnz_edit.get_ball_name(b1)
 			var name2: String = lnz_edit.get_ball_name(b2)
 			
+			var bounds = lnz_edit.get_section_bounds("[Linez]")
+			var count_b1: int = 0
+			var count_b2: int = 0
+			var total_valid: int = 0
+			if not bounds.empty():
+				for i in range(bounds.start, bounds.end):
+					var line = lnz_edit.get_line(i).strip_edges()
+					if line.empty() or line.begins_with(";"):
+						continue
+					var pl = lnz_edit.split_line(line)
+					if pl.size() < 2:
+						continue
+					total_valid += 1
+					var lb1 = int(pl[0])
+					var lb2 = int(pl[1])
+					if lb1 == b1 or lb2 == b1:
+						count_b1 += 1
+					if lb1 == b2 or lb2 == b2:
+						count_b2 += 1
+			
 			# Construct display text
-			var display_text: String = "#(" + str(b1) + "): " + str(name1) + " to #(" + str(b2) + "): " + str(name2)
+			var display_text: String = "#(" + str(b1) + "): " + str(name1)
+			if current_section == "[Linez]":
+				display_text += " (" + str(count_b1) + "/32)"
+			display_text += " to #(" + str(b2) + "): " + str(name2)
+			if current_section == "[Linez]":
+				display_text += " (" + str(count_b2) + "/32)"
+			display_text += " (" + str(total_valid) + "/256 linez)"
 			
 			# Check linez limits if method exists
+			var at_limit: bool = false
 			if current_section == "[Linez]" and lnz_edit.has_method("check_linez_limits"):
 				if lnz_edit.check_linez_limits(b1, b2):
-					display_text += " (LINEZ LIMIT)"
-					ball_label.add_color_override("font_color", Color.red)
-				else:
-					ball_label.add_color_override("font_color", Color.white)
+					at_limit = true
+			
+			if at_limit:
+				display_text += " (AT LIMIT)"
+				ball_label.add_color_override("font_color", Color.red)
 			else:
 				ball_label.add_color_override("font_color", Color.white)
-				
+			
 			ball_label.text = display_text
 			ball_label.visible = true
 			return

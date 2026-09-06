@@ -4538,7 +4538,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		
 		if !new_poly_lines.empty():
 			var poly_bounds2 = get_section_bounds("[Polygons]")
-			var insert_line = poly_bounds2.end
+			var insert_line = _find_insertion_line(poly_bounds2.start, poly_bounds2.end)
 			_insert_text_at_cursor_at_line(insert_line, _join_array(new_poly_lines, "\n") + "\n")
 
 	# [Move]
@@ -4726,10 +4726,15 @@ func _process_linez_line_for_mirror(parts: Array, target_ball_no: int, mirrored_
 	var end_ball = parts[1].to_int()
 
 	if associated_left_balls.has(start_ball) or associated_left_balls.has(end_ball):
-		var mirrored_parts = parts
+		var mirrored_parts = Array(parts)
 		mirrored_parts[0] = str(_get_mirrored_counterpart(start_ball, target_ball_no, mirrored_ball_no, temp_addball_map))
 		mirrored_parts[1] = str(_get_mirrored_counterpart(end_ball, target_ball_no, mirrored_ball_no, temp_addball_map))
 		
+		if mirrored_parts.size() > 5:
+			var temp = mirrored_parts[4]
+			mirrored_parts[4] = mirrored_parts[5]
+			mirrored_parts[5] = temp
+
 		# Mirror outline type for lines
 		if mirrored_parts.size() > 8:
 			if mirrored_parts[8] == "0": mirrored_parts[8] = "-2"
@@ -4828,6 +4833,12 @@ func _mirror_linez_processor(parts: Array, left_balls_list: Array, middle_balls_
 
 		mirrored_parts[0] = str(mirrored_start)
 		mirrored_parts[1] = str(mirrored_end)
+		
+		if mirrored_parts.size() > 5:
+			var temp = mirrored_parts[4]
+			mirrored_parts[4] = mirrored_parts[5]
+			mirrored_parts[5] = temp
+
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
 	return processed_lines

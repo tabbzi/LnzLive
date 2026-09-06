@@ -134,8 +134,8 @@ func _ready() -> void:
 			vbox.margin_right = 0
 			vbox.margin_bottom = 0
 	
-	_setup_preview_wrapper(color_line_edit, "ColorEdit")
-	_setup_preview_wrapper(outcol_line_edit, "OutcolEdit")
+	LnzLiveUtils.setup_preview_wrapper(self, color_line_edit, "ColorEdit")
+	LnzLiveUtils.setup_preview_wrapper(self, outcol_line_edit, "OutcolEdit")
 	
 	# Apply comfortable padding to all standard LineEdits inside the menu popups
 	var le_style: StyleBoxFlat = color_line_edit.get_stylebox("normal").duplicate()
@@ -168,30 +168,6 @@ func _resize_and_anchor_popup(popup_name: String, new_size: Vector2) -> void:
 			vbox.anchor_bottom = 1.0
 			vbox.margin_right = 0
 			vbox.margin_bottom = 0
-
-func _setup_preview_wrapper(le, le_name: String) -> void:
-	if not is_instance_valid(le): return
-	var parent: Container = le.get_parent()
-
-	var hbox = HBoxContainer.new()
-	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.rect_min_size = le.rect_min_size
-
-	var pos: int = le.get_index()
-	parent.remove_child(le)
-	parent.add_child(hbox)
-	parent.move_child(hbox, pos)
-
-	hbox.add_child(le)
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var preview_container = HBoxContainer.new()
-	preview_container.name = le_name + "_Preview"
-	hbox.add_child(preview_container)
-
-	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
-		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
 
 func _on_color_list_text_changed(new_text: String, container: Container) -> void:
 	# Removed ClassDB check because LnzLiveUtils is an AutoLoad singleton.

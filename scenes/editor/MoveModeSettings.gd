@@ -16,6 +16,9 @@ signal select_balls_by_ids(ids)
 signal flip_selection(axis_vector, pivot_id)
 signal pivot_changed
 signal apply_scale(factor, scale_dist, scale_size, pivot_id)
+signal lock_all
+signal unlock_all
+signal select_locked_balls_by_ids
 
 var _is_loading_settings: bool = false
 
@@ -58,6 +61,9 @@ onready var _mirror_y: CheckBox = find_node("MirrorY")
 onready var _mirror_z: CheckBox = find_node("MirrorZ")
 onready var _reset_defaults: Button = find_node("ResetDefaultsButton")
 onready var _queued_label: Label = find_node("QueuedLabel")
+onready var _lock_all_btn: Button = find_node("LockAllButton")
+onready var _unlock_all_btn: Button = find_node("UnlockAllButton")
+onready var _locked_ballz: Control = find_node("LockedBallz")
 
 var _constraint_buttons: Array = []
 
@@ -132,12 +138,21 @@ func _ready() -> void:
 		_affected_ballz.connect("text_entered", self, "_on_AffectedBallz_text_entered")
 		_affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
 
+	if _locked_ballz:
+		_locked_ballz.connect("text_entered", self, "_on_LockedBallz_text_entered")
+		_locked_ballz.connect("text_changed", self, "_on_LockedBallz_text_changed")
+
 	_flip_x.connect("pressed", self, "_on_Flip_pressed", ["x"])
 	_flip_y.connect("pressed", self, "_on_Flip_pressed", ["y"])
 	_flip_z.connect("pressed", self, "_on_Flip_pressed", ["z"])
 
 	_connect_settings_signals()
 	load_settings()
+
+	if _lock_all_btn:
+		_lock_all_btn.connect("pressed", self, "_on_LockAll_pressed")
+	if _unlock_all_btn:
+		_unlock_all_btn.connect("pressed", self, "_on_UnlockAll_pressed")
 
 
 func _nudge_node_name(axis: String) -> String:
@@ -282,7 +297,22 @@ func _on_UnselectButton_pressed() -> void:
 
 func _on_UnselectSide_pressed(side: String) -> void:
 	emit_signal("unselect_side", side)
-	
+
+func _on_LockAll_pressed() -> void:
+	emit_signal("lock_all")
+
+func _on_UnlockAll_pressed() -> void:
+	emit_signal("unlock_all")
+
+func _on_LockedBallz_text_entered(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_locked_balls_by_ids", ids)
+	if _locked_ballz:
+		_locked_ballz.release_focus()
+
+func _on_LockedBallz_text_changed(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_locked_balls_by_ids", ids)
 func _on_constraint_selected(selected_name: String) -> void:
 	current_constraint_mode = selected_name
 	

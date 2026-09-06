@@ -33,6 +33,87 @@ enum FractalPreset { CUSTOM, DRAGON_CURVE, SIERPINSKI, BARNSLEY_FERN }
 
 const ALLOWED_FRACTAL_CHARS: String = "FGABX+-[]"
 
+const _PROP_MAP = [
+	# CORE PROPERTIES
+	{ "key": "affected_ballz", "node": "_affected_ballz", "read": "text", "write": "text" },
+	{ "key": "distribution", "node": "_distribution", "read": "selected", "write": "selected" },
+	{ "key": "num_spots", "node": "_num_spots", "read": "value", "write": "value" },
+	{ "key": "size_min", "node": "_size_min", "read": "value", "write": "value" },
+	{ "key": "size_max", "node": "_size_max", "read": "value", "write": "value" },
+	{ "key": "size_adaptive", "node": "_size_adaptive", "read": "pressed", "write": "pressed" },
+	{ "key": "color_list", "node": "_color_list", "read": "text", "write": "text" },
+	{ "key": "outline_color_list", "node": "_outline_color_list", "read": "text", "write": "text" },
+	{ "key": "outline_type_min", "node": "_outline_type_min", "read": "value", "write": "value" },
+	{ "key": "outline_type_max", "node": "_outline_type_max", "read": "value", "write": "value" },
+	{ "key": "fuzz_min", "node": "_fuzz_min", "read": "value", "write": "value" },
+	{ "key": "fuzz_max", "node": "_fuzz_max", "read": "value", "write": "value" },
+	{ "key": "texture_list", "node": "_texture_list", "read": "text", "write": "text" },
+	{ "key": "group", "node": "_group", "read": "value", "write": "value" },
+	{ "key": "anchored", "node": "_anchored", "read": "pressed", "write": "pressed" },
+	{ "key": "ordered", "node": "_ordered", "read": "pressed", "write": "pressed" },
+	{ "key": "use_seed", "node": "_use_seed", "read": "pressed", "write": "pressed" },
+	{ "key": "seed", "node": "_seed_edit", "read": "text", "write": "text" },
+	{ "key": "pixel_mode", "node": "_pixel_mode", "read": "pressed", "write": "pressed" },
+	# SPIRAL (01)
+	{ "key": "spiral_turns", "node": "_spiral_turns", "read": "value", "write": "value" },
+	# STAR (02)
+	{ "key": "star_points", "node": "_star_points", "read": "value", "write": "value" },
+	{ "key": "star_point_size", "node": "_star_point_size", "read": "value", "write": "value" },
+	{ "key": "ray_length", "node": "_ray_length", "read": "value", "write": "value" },
+	# BANDS (03)
+	{ "key": "num_bands", "node": "_num_bands", "read": "value", "write": "value" },
+	{ "key": "band_spacing", "node": "_band_spacing", "read": "value", "write": "value" },
+	{ "key": "band_offset", "node": "_band_offset", "read": "value", "write": "value" },
+	{ "key": "band_angle", "node": "_band_angle", "read": "value", "write": "value" },
+	{ "key": "band_direction", "node": "_band_direction", "read": "selected", "write": "selected" },
+	# NOISE_FIELD (04)
+	{ "key": "noise_scale", "node": "_noise_scale", "read": "value", "write": "value" },
+	{ "key": "noise_threshold", "node": "_noise_threshold", "read": "value", "write": "value" },
+	{ "key": "noise_octaves", "node": "_noise_octaves", "read": "value", "write": "value" },
+	# GRID / CHECKERBOARD (05 / 06)
+	{ "key": "grid_size", "node": "_grid_size", "read": "value", "write": "value" },
+	# RANDOM_WALK (07)
+	# CLUSTERED (08)
+	{ "key": "num_clusters", "node": "_num_clusters", "read": "value", "write": "value" },
+	# POLE_FOCUSED (09)
+	# EQUATOR_FOCUSED (10)
+	# HALFIE (11)
+	{ "key": "halfie_axis", "node": "_halfie_axis", "read": "selected", "write": "selected" },
+	{ "key": "halfie_side", "node": "_halfie_side", "read": "selected", "write": "selected" },
+	# BULLSEYE (12)
+	{ "key": "num_rings", "node": "_num_rings", "read": "value", "write": "value" },
+	# LEOPARD (13)
+	{ "key": "leopard_radius_min", "node": "_leopard_radius_min", "read": "value", "write": "value" },
+	{ "key": "leopard_radius_max", "node": "_leopard_radius_max", "read": "value", "write": "value" },
+	{ "key": "leopard_irregularity", "node": "_leopard_irregularity", "read": "value", "write": "value" },
+	{ "key": "leopard_completeness", "node": "_leopard_completeness", "read": "value", "write": "value" },
+	{ "key": "leopard_use_paired_colors", "node": "_leopard_paired_colors", "read": "pressed", "write": "pressed" },
+	# RAINBOW (14)
+	{ "key": "rainbow_angle", "node": "_rainbow_angle", "read": "value", "write": "value" },
+	{ "key": "rainbow_curvature", "node": "_rainbow_curvature", "read": "value", "write": "value" },
+	{ "key": "rainbow_width", "node": "_rainbow_width", "read": "value", "write": "value" },
+	{ "key": "rainbow_length", "node": "_rainbow_length", "read": "value", "write": "value" },
+	# STRIPES (15)
+	{ "key": "stripe_feed_rate", "node": "_stripe_feed_rate", "read": "value", "write": "value" },
+	{ "key": "stripe_kill_rate", "node": "_stripe_kill_rate", "read": "value", "write": "value" },
+	{ "key": "stripe_timestep", "node": "_stripe_timestep", "read": "value", "write": "value" },
+	{ "key": "diffusion_b", "node": "_diffusion_activator", "read": "value", "write": "value" },
+	{ "key": "diffusion_a", "node": "_diffusion_inhibitor", "read": "value", "write": "value" },
+	# FRACTAL (16)
+	{ "key": "fractal_iterations", "node": "_fractal_iterations", "read": "value", "write": "value" },
+	{ "key": "fractal_angle", "node": "_fractal_angle", "read": "value", "write": "value" },
+	{ "key": "fractal_preset", "node": "_fractal_preset", "read": "selected", "write": "selected" },
+	{ "key": "fractal_axiom", "node": "_fractal_axiom", "read": "text", "write": "text" },
+	{ "key": "fractal_rules", "node": "_fractal_rules", "read": "text", "write": "text" },
+	# VORONOI (17)
+	{ "key": "voronoi_cells", "node": "_voronoi_cells", "read": "value", "write": "value" },
+	{ "key": "voronoi_edge_size", "node": "_voronoi_edge_size", "read": "value", "write": "value" },
+	# WAVE (18)
+	{ "key": "wave_degree_l", "node": "_wave_degree_l", "read": "value", "write": "value" },
+	{ "key": "wave_order_m", "node": "_wave_order_m", "read": "value", "write": "value" },
+	{ "key": "wave_threshold", "node": "_wave_threshold", "read": "value", "write": "value" },
+]
+
 signal randomize_auto_paintballz(paintballz)
 signal apply_auto_paintballz
 signal clear_auto_paintballz
@@ -169,48 +250,14 @@ func _ready() -> void:
 	call_deferred("_on_palette_changed")
 
 func _setup_color_previews() -> void:
-	_setup_preview_wrapper("ColorList")
-	_setup_preview_wrapper("OutlineColorList")
+	LnzLiveUtils.setup_preview_wrapper(self, _color_list, "ColorList")
+	LnzLiveUtils.setup_preview_wrapper(self, _outline_color_list, "OutlineColorList")
 	
 	_color_list_preview = find_node("ColorList_Preview", true, false)
 	_outline_color_list_preview = find_node("OutlineColorList_Preview", true, false)
 
-func _setup_preview_wrapper(le_name: String) -> void:
-	var le = find_node(le_name, true, false)
-	if not le: return
-	var parent: Control = le.get_parent()
-
-	var hbox = HBoxContainer.new()
-	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var pos: int = le.get_index()
-	var orig_owner: Node = le.owner
-	
-	parent.remove_child(le)
-	parent.add_child(hbox)
-	
-	if orig_owner != null:
-		hbox.owner = orig_owner
-	
-	parent.move_child(hbox, pos)
-
-	hbox.add_child(le)
-	if orig_owner != null:
-		le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var preview_container = HBoxContainer.new()
-	preview_container.name = le_name + "_Preview"
-	hbox.add_child(preview_container)
-	if orig_owner != null:
-		preview_container.owner = orig_owner
-
-	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
-		le.connect("text_changed", self, "_on_color_list_text_changed", [le_name])
-
-func _on_color_list_text_changed(new_text: String, le_name: String) -> void:
-	_update_previews_inner(new_text, find_node(le_name + "_Preview", true, false))
+func _on_color_list_text_changed(new_text: String, container: Container) -> void:
+	_update_previews_inner(new_text, container)
 
 func _refresh_all_previews() -> void:
 	if _color_list and _color_list_preview:
@@ -873,149 +920,36 @@ func _create_paintball(pos: Vector3, size: float, ball_no: int, properties: Dict
 
 func get_properties() -> Dictionary:
 	var properties: Dictionary = {}
-	properties["affected_ballz"] = _affected_ballz.text
-	properties["distribution"] = _distribution.selected
-	properties["num_spots"] = _num_spots.value
-	properties["spiral_turns"] = _spiral_turns.value
-	properties["star_points"] = _star_points.value
-	properties["star_point_size"] = _star_point_size.value
-	properties["num_bands"] = _num_bands.value
-	properties["band_spacing"] = _band_spacing.value
-	properties["band_offset"] = _band_offset.value
-	properties["band_angle"] = _band_angle.value
-	properties["band_direction"] = _band_direction.selected 
-	properties["noise_scale"] = _noise_scale.value
-	properties["noise_threshold"] = _noise_threshold.value
-	properties["noise_octaves"] = _noise_octaves.value
-	properties["voronoi_cells"] = _voronoi_cells.value
-	properties["voronoi_edge_size"] = _voronoi_edge_size.value
-	properties["wave_degree_l"] = _wave_degree_l.value
-	properties["wave_order_m"] = _wave_order_m.value
-	properties["wave_threshold"] = _wave_threshold.value
-	
-	properties["grid_size"] = _grid_size.value
-	properties["num_clusters"] = _num_clusters.value
-	properties["ray_length"] = _ray_length.value
-	properties["stripe_feed_rate"] = _stripe_feed_rate.value
-	properties["stripe_kill_rate"] = _stripe_kill_rate.value
-	properties["diffusion_b"] = _diffusion_activator.value
-	properties["diffusion_a"] = _diffusion_inhibitor.value
-	properties["stripe_timestep"] = _stripe_timestep.value
-	properties["size_adaptive"] = _size_adaptive.pressed
-	properties["leopard_radius_min"] = _leopard_radius_min.value
-	properties["leopard_radius_max"] = _leopard_radius_max.value
-	properties["leopard_irregularity"] = _leopard_irregularity.value
-	properties["leopard_completeness"] = _leopard_completeness.value
-	properties["leopard_use_paired_colors"] = _leopard_paired_colors.pressed
-	properties["rainbow_angle"] = _rainbow_angle.value
-	properties["rainbow_curvature"] = _rainbow_curvature.value
-	properties["rainbow_width"] = _rainbow_width.value
-	properties["rainbow_length"] = _rainbow_length.value
-	properties["fractal_iterations"] = _fractal_iterations.value
-	properties["fractal_angle"] = _fractal_angle.value
-	properties["fractal_preset"] = _fractal_preset.selected
-	properties["fractal_axiom"] = _fractal_axiom.text
-	properties["fractal_rules"] = _fractal_rules.text
-	properties["halfie_axis"] = _halfie_axis.selected
-	properties["halfie_side"] = _halfie_side.selected
-	properties["num_rings"] = _num_rings.value
-	properties["size_min"] = _size_min.value
-	properties["size_max"] = _size_max.value
-	
-	properties["color_list"] = _color_list.text if _color_list else ""
-	properties["outline_color_list"] = _outline_color_list.text if _outline_color_list else ""
-	
-	properties["outline_type_min"] = _outline_type_min.value
-	properties["outline_type_max"] = _outline_type_max.value
-	properties["fuzz_min"] = _fuzz_min.value
-	properties["fuzz_max"] = _fuzz_max.value
-	properties["texture_list"] = _texture_list.text
-	properties["group"] = _group.value
-	properties["anchored"] = _anchored.pressed
-	properties["ordered"] = _ordered.pressed
-	properties["use_seed"] = _use_seed.pressed
-	properties["seed"] = _seed_edit.text
-	properties["pixel_mode"] = _pixel_mode.pressed
+	for prop in _PROP_MAP:
+		properties[prop["key"]] = _read_prop(prop)
 	return properties
+
+func _read_prop(prop: Dictionary):
+	var node = self.get(prop["node"])
+	if not is_instance_valid(node):
+		return null
+	var r = prop["read"]
+	if r == "value": return node.value
+	if r == "selected": return node.selected
+	if r == "pressed": return node.pressed
+	if r == "text": return node.text
+	return null
+
+func _write_prop(prop: Dictionary, val):
+	var node = self.get(prop["node"])
+	if not is_instance_valid(node):
+		return
+	var w = prop["write"]
+	if w == "value": node.value = val
+	elif w == "selected": node.selected = val
+	elif w == "pressed": node.pressed = val
+	elif w == "text": node.text = str(val)
 
 func _apply_settings_dict(data: Dictionary) -> void:
 	_is_loading_settings = true
-	
-	if data.has("affected_ballz"): _affected_ballz.text = str(data["affected_ballz"])
-	if data.has("distribution"): _distribution.selected = data["distribution"]
-	if data.has("num_spots"): _num_spots.value = data["num_spots"]
-	if data.has("spiral_turns"): _spiral_turns.value = data["spiral_turns"]
-	if data.has("star_points"): _star_points.value = data["star_points"]
-	if data.has("star_point_size"): _star_point_size.value = data["star_point_size"]
-	if data.has("num_bands"): _num_bands.value = data["num_bands"]
-	if data.has("band_spacing"): _band_spacing.value = data["band_spacing"]
-	if data.has("band_offset"): _band_offset.value = data["band_offset"]
-	if data.has("band_angle"): _band_angle.value = data["band_angle"]
-	if data.has("band_direction"): _band_direction.selected = data["band_direction"]
-	
-	if data.has("noise_scale"): _noise_scale.value = data["noise_scale"]
-	if data.has("noise_threshold"): _noise_threshold.value = data["noise_threshold"]
-	if data.has("noise_octaves"): _noise_octaves.value = data["noise_octaves"]
-	
-	if data.has("voronoi_cells"): _voronoi_cells.value = data["voronoi_cells"]
-	if data.has("voronoi_edge_size"): _voronoi_edge_size.value = data["voronoi_edge_size"]
-	
-	if data.has("wave_degree_l"): _wave_degree_l.value = data["wave_degree_l"]
-	if data.has("wave_order_m"): _wave_order_m.value = data["wave_order_m"]
-	if data.has("wave_threshold"): _wave_threshold.value = data["wave_threshold"]
-	
-	if data.has("grid_size"): _grid_size.value = data["grid_size"]
-	if data.has("num_clusters"): _num_clusters.value = data["num_clusters"]
-	if data.has("ray_length"): _ray_length.value = data["ray_length"]
-	
-	if data.has("stripe_feed_rate"): _stripe_feed_rate.value = data["stripe_feed_rate"]
-	if data.has("stripe_kill_rate"): _stripe_kill_rate.value = data["stripe_kill_rate"]
-	if data.has("stripe_timestep"): _stripe_timestep.value = data["stripe_timestep"]
-	if data.has("diffusion_b"): _diffusion_activator.value = data["diffusion_b"]
-	if data.has("diffusion_a"): _diffusion_inhibitor.value = data["diffusion_a"]
-	if data.has("size_adaptive"): _size_adaptive.pressed = data["size_adaptive"]
-
-	
-	if data.has("leopard_radius_min"): _leopard_radius_min.value = data["leopard_radius_min"]
-	if data.has("leopard_radius_max"): _leopard_radius_max.value = data["leopard_radius_max"]
-	if data.has("leopard_irregularity"): _leopard_irregularity.value = data["leopard_irregularity"]
-	if data.has("leopard_completeness"): _leopard_completeness.value = data["leopard_completeness"]
-	if data.has("leopard_use_paired_colors"): _leopard_paired_colors.pressed = data["leopard_use_paired_colors"]
-	
-	if data.has("rainbow_angle"): _rainbow_angle.value = data["rainbow_angle"]
-	if data.has("rainbow_curvature"): _rainbow_curvature.value = data["rainbow_curvature"]
-	if data.has("rainbow_width"): _rainbow_width.value = data["rainbow_width"]
-	if data.has("rainbow_length"): _rainbow_length.value = data["rainbow_length"]
-	
-	if data.has("fractal_iterations"): _fractal_iterations.value = data["fractal_iterations"]
-	if data.has("fractal_angle"): _fractal_angle.value = data["fractal_angle"]
-	if data.has("fractal_preset"): _fractal_preset.selected = data["fractal_preset"]
-	if data.has("fractal_axiom"): _fractal_axiom.text = str(data["fractal_axiom"])
-	if data.has("fractal_rules"): _fractal_rules.text = str(data["fractal_rules"])
-	
-	if data.has("halfie_axis"): _halfie_axis.selected = data["halfie_axis"]
-	if data.has("halfie_side"): _halfie_side.selected = data["halfie_side"]
-	
-	if data.has("num_rings"): _num_rings.value = data["num_rings"]
-	if data.has("size_min"): _size_min.value = data["size_min"]
-	if data.has("size_max"): _size_max.value = data["size_max"]
-	
-	if data.has("color_list"): _color_list.text = str(data["color_list"])
-	if data.has("outline_color_list"): _outline_color_list.text = str(data["outline_color_list"])
-	
-	if data.has("outline_type_min"): _outline_type_min.value = data["outline_type_min"]
-	if data.has("outline_type_max"): _outline_type_max.value = data["outline_type_max"]
-	if data.has("fuzz_min"): _fuzz_min.value = data["fuzz_min"]
-	if data.has("fuzz_max"): _fuzz_max.value = data["fuzz_max"]
-	if data.has("texture_list"): _texture_list.text = str(data["texture_list"])
-	
-	if data.has("group"): _group.value = data["group"]
-	if data.has("anchored"): _anchored.pressed = data["anchored"]
-	if data.has("ordered"): _ordered.pressed = data["ordered"]
-	if data.has("use_seed"): _use_seed.pressed = data["use_seed"]
-	if data.has("seed"): _seed_edit.text = str(data["seed"])
-	if data.has("pixel_mode"): _pixel_mode.pressed = data["pixel_mode"]
-	
+	for prop in _PROP_MAP:
+		if data.has(prop["key"]):
+			_write_prop(prop, data[prop["key"]])
 	_is_loading_settings = false
 	_on_setting_changed()
 	_refresh_all_previews()
@@ -1503,7 +1437,7 @@ func _generate_surprise_color_string() -> String:
 	if cached_palette_colors.empty() and is_instance_valid(pet_node) and "current_palette_texture" in pet_node:
 		_on_palette_changed()
 		
-	var base_index: int = randi() % 256
+	var base_index: int = randi() % 255 + 1
 	var base_color: Color = get_color_from_index(base_index)
 	
 	var p_type: int = randi() % 5

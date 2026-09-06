@@ -114,6 +114,10 @@ var drag_start_pos: Vector2 = Vector2()
 var _scale_group_pivot: Vector3 = Vector3.ZERO
 var _scale_group_initial_data: Dictionary = {}
 
+var _group_panning: bool = false
+var _group_pan_start_pos: Vector2 = Vector2.ZERO
+var _group_pan_start_origin: Vector3 = Vector3.ZERO
+
 var sidebar_controller = null
 
 var linez_mode: bool = false
@@ -200,7 +204,10 @@ var eraser: Texture = load("res://resources/icons/ico_eraser_2x_64px.png")
 const ZOOM_STEP: float = 1.2
 
 var selected_balls: Array = []
+var locked_balls: Array = []
 var pending_moves: Dictionary = {}  # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
+
+var _locked_balls_cache: Array = []
 
 var _pre_move_state: Dictionary = {}
 
@@ -327,7 +334,7 @@ func _ready() -> void:
 		)
 		lnz_text_edit.connect("create_polygon", self, "_on_LnzTextEdit_create_polygon")
 	if is_instance_valid(pet_node):
-		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_pending_paintballz")
+		paintball_settings_instance.connect("clear_paintballz", pet_node, "clear_pending_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	if is_instance_valid(pet_node):
@@ -344,7 +351,7 @@ func _ready() -> void:
 
 	if is_instance_valid(pet_node):
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
-		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "_on_clear_auto_paintballz")
+		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "clear_auto_paintballz")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
 		pet_node.connect("hidden_balls_changed", self, "_on_hidden_balls_changed")
 
@@ -365,6 +372,9 @@ func _ready() -> void:
 	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
 	move_mode_settings_instance.connect("apply_scale", self, "_on_apply_scale")
+	move_mode_settings_instance.connect("lock_all", self, "_on_lock_all")
+	move_mode_settings_instance.connect("unlock_all", self, "_on_unlock_all")
+	move_mode_settings_instance.connect("select_locked_balls_by_ids", self, "_on_select_locked_balls_by_ids")
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
@@ -413,11 +423,19 @@ func _ready() -> void:
 	)
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
+	call_deferred("_sync_shader_settings_to_pet")
 	_setup_3d_gizmos()
 
 	# check flipped view...
 	tex.rect_scale.x = -1.0
 	tex.rect_pivot_offset = tex.rect_size / 2.0
+
+func _sync_shader_settings_to_pet():
+	if is_instance_valid(shader_settings_instance) and is_instance_valid(pet_node):
+		pet_node._shader_rotation_mode = shader_settings_instance.get_mode()
+		pet_node._shader_rotation_input = shader_settings_instance.get_input_vec()
+		pet_node._shader_affected_by_size = shader_settings_instance.get_affected_by_size()
+		pet_node._shader_affected_by_rotation = shader_settings_instance.get_affected_by_rotation()
 
 func _on_reference_image_updated(config_data: Dictionary) -> void:
 	update_config_reference_image(config_data)
@@ -662,7 +680,17 @@ func _process(_delta: float) -> void:
 				paintball_settings_instance.find_node("FreelineCheckBox").pressed
 				or Input.is_key_pressed(KEY_SHIFT)
 			)
-			if freeline_on:
+			var straight_line_on: bool = (
+				freeline_on
+				and (
+					paintball_settings_instance.find_node("StraightLineCheckBox").pressed
+					or Input.is_key_pressed(KEY_ALT)
+					or Input.is_key_pressed(KEY_L)
+				)
+			)
+			if straight_line_on:
+				body = "Paintball Mode (Straight Line): Click and drag to draw. Hold X/Y to lock axis."
+			elif freeline_on:
 				body = "Paintball Mode (Freeline): Left-click and drag to draw."
 			else:
 				body = "Paintball Mode: Left-click to add next paintball"
@@ -678,8 +706,11 @@ func _process(_delta: float) -> void:
 		body = "Project Mode: Use the panel to add or randomize projections.\nHit 'Apply to LNZ' to save changes."
 
 	elif move_mode:
-		body = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group."
 		var queued_count: int = pending_moves.size()
+		var hint: String = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group. Q = lock hovered ball."
+		if not selected_balls.empty():
+			hint += "\nSHIFT + drag = pan selected group"
+		body = hint
 		if queued_count > 0:
 			body += "\nQueued Moves: " + str(queued_count)
 
@@ -1053,6 +1084,10 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
 
+	# Group pan: SHIFT+drag on any area
+	if _handle_group_pan_input(event):
+		return true
+
 	# Check for Nudge hotkey via Scroll
 	if (
 		event is InputEventMouseButton
@@ -1096,6 +1131,10 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 
 				if hover:
+					# Locked balls cannot be selected or moved
+					if _is_ball_locked(hover) and not Input.is_key_pressed(KEY_CONTROL):
+						return true
+
 					if Input.is_key_pressed(KEY_CONTROL):
 						# Toggle selection
 						if hover in selected_balls:
@@ -1137,7 +1176,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 								var orig_s: float = b.ball_size
 								if was_resizing and _scale_group_initial_data.has(b.ball_no):
-									orig_s = _scale_group_initial_data[b.ball_no].size
+									orig_s = _scale_group_initial_data[b.ball_no]["size"]
 
 								pending_moves[b.ball_no] = {
 									"orig_pos": orig_p,
@@ -1158,7 +1197,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 											== pending_moves[b.ball_no]["new_size"]
 										)
 									):
-										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
+										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
 					_record_move_end_state("Drag Move")
@@ -1187,7 +1226,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var offset_from_pivot: Vector3 = initial.pos - _scale_group_pivot
 				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
 
-				var target_visual: float = clamp(initial.size * scale_factor, 1.0, 500.0)
+				var target_visual: float = clamp(initial["size"] * scale_factor, 1.0, 500.0)
 				var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b_no)
 				var is_addball: bool = sizing_info.is_addball
 				var bhd_s: int = sizing_info.bhd_size
@@ -1248,6 +1287,9 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 				for b in selected_balls:
 					if is_instance_valid(b):
+						if _is_ball_locked(b):
+							continue
+
 						var addballz_base_selected: bool = false
 						var p: Node = b.get_parent()
 						while is_instance_valid(p) and p != get_tree().root:
@@ -1316,23 +1358,23 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						if properties.has("size"):
 							var original_size: int = 0
 							if pet_node.lnz.balls.has(ball_no):
-								original_size = pet_node.lnz.balls[ball_no].size
+								original_size = pet_node.lnz.balls[ball_no]["size"] 
 							elif pet_node.lnz.addballs.has(ball_no):
-								original_size = pet_node.lnz.addballs[ball_no].size
-							properties["size"] = original_size + properties.size
+								original_size = pet_node.lnz.addballs[ball_no]["size"]
+							properties["size"] = original_size + properties["size"]
 
 					preset_settings_instance.SizeMode.TRUE:
 						if properties.has("size"):
 							var scale: float = pet_node.lnz.scales[1]
 							properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-								properties.size, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+								properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
 							)
 
 				var scale_ratio: float = 1.0
 				if properties.get("scale_paintballz", false) and properties.has("paintballz"):
 					var source_ref: float = preset_settings_instance.source_ball_reference_size
 					
-					var final_lnz: float = properties.size
+					var final_lnz: float = properties.get("size", sizing_info.bhd_size)
 					var current_base_size: float = sizing_info.bhd_size + final_lnz
 					if not sizing_info.is_addball:
 						current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
@@ -1350,8 +1392,10 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						var scaled_paintballz: Array = []
 						for pb in properties.paintballz:
 							var new_pb: Dictionary = pb.duplicate()
-							new_pb.position *= (scale_ratio * p_pos_mod)
-							new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+							#new_pb.position *= (scale_ratio * p_pos_mod)
+							#new_pb["size"] = int(round(new_pb["size"] * scale_ratio * p_size_mod))
+							new_pb.position *= p_pos_mod
+							new_pb.size = int(round(new_pb.size * p_size_mod))
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
 						
@@ -1419,6 +1463,14 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				)
 			)
 		)
+		var is_straight_line: bool = (
+			freeline_mode
+			and (
+				props.get("straight_line", false)
+				or Input.is_key_pressed(KEY_ALT)
+				or Input.is_key_pressed(KEY_L)
+			)
+		)
 		if freeline_mode:
 			if event.pressed:
 				print("[STATUS] PetViewContainer: started freeline path")
@@ -1432,7 +1484,24 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			else:
 				print("[STATUS] PetViewContainer: finished freeline path")
 				freeline_active = false
-				_finalize_freeline()
+
+				if is_straight_line:
+					var start_pos: Vector2 = freeline_path.front()
+					var end_pos: Vector2 = event.position
+
+					if Input.is_key_pressed(KEY_X):
+						end_pos.y = start_pos.y
+					elif Input.is_key_pressed(KEY_Y):
+						end_pos.x = start_pos.x
+
+					freeline_path.clear()
+					var dist: float = start_pos.distance_to(end_pos)
+					var steps: int = max(1, round(dist / max(1.0, props.spacing)))
+					for i in range(steps + 1):
+						var t: float = float(i) / float(steps)
+						freeline_path.append(start_pos.linear_interpolate(end_pos, t))
+
+				_finalize_freeline(event.position)
 			return true
 
 	if event is InputEventMouseMotion and freeline_active:
@@ -2091,14 +2160,21 @@ func _get_mode_settings_instance(mode: int) -> Control:
 func _exit_mode(mode: int) -> void:
 	match mode:
 		Mode.MOVE:
+			_locked_balls_cache = locked_balls.duplicate()
 			_on_unselect_all()
 			_on_move_mode_clear()
 			selected_balls.clear()
+			locked_balls.clear()
 		Mode.PAINTBALL:
+			var should_switch_tab = close_paintball_on_apply
 			paintball_target_ball = null
 			close_paintball_on_apply = false
 			_restore_all_balls()
 			_set_pending_paintballs_visible(false)
+			if should_switch_tab and sidebar_controller:
+				var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
+				if tree_tab:
+					sidebar_controller.switch_to_tab(tree_tab)
 		Mode.LINE:
 			var should_switch_tab = line_mode_close
 			line_mode_close = false
@@ -2133,6 +2209,8 @@ func _exit_mode(mode: int) -> void:
 func _enter_mode(mode: int) -> void:
 	match mode:
 		Mode.MOVE:
+			locked_balls = _locked_balls_cache.duplicate()
+			_sync_locked_balls_to_visuals()
 			move_mode_settings_instance.set_queued_count(pending_moves.size())
 			ball_label.hide()
 			_reset_tab_state()
@@ -2304,6 +2382,21 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_mode_shortcut_key_input(event):
 		return
 
+	# Move Mode ball lock: Q to toggle lock on hovered ball, CTRL+Q to unlock all
+	if move_mode and event.pressed and not event.alt:
+		if event.control:
+			if event.scancode == KEY_Q:
+				_unlock_all_balls()
+				get_tree().set_input_as_handled()
+				return
+		else:
+			if event.scancode == KEY_Q:
+				var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+				if hover and is_instance_valid(hover) and "ball_no" in hover:
+					_toggle_lock_ball(hover)
+					get_tree().set_input_as_handled()
+					return
+
 	if _handle_camera_view_key_input(event):
 		return
 
@@ -2347,6 +2440,7 @@ func _on_hidden_balls_changed(count: int) -> void:
 		hidden_balls_label.visible = false
 
 func _on_texture_rotation_mode_changed(mode: int) -> void:
+	pet_node._shader_rotation_mode = mode
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2357,6 +2451,7 @@ func _on_texture_rotation_mode_changed(mode: int) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_mode", mode)
 
 func _on_texture_rotation_input_changed(input_vec: Vector2) -> void:
+	pet_node._shader_rotation_input = input_vec
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2367,6 +2462,7 @@ func _on_texture_rotation_input_changed(input_vec: Vector2) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_input", input_vec)
 
 func _on_texture_affected_by_size_changed(is_affected: bool) -> void:
+	pet_node._shader_affected_by_size = is_affected
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2377,6 +2473,7 @@ func _on_texture_affected_by_size_changed(is_affected: bool) -> void:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_size", is_affected)
 
 func _on_texture_affected_by_rotation_changed(is_affected: bool) -> void:
+	pet_node._shader_affected_by_rotation = is_affected
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
@@ -2540,6 +2637,9 @@ func get_visual_state_for_ball(b: Spatial):
 	if not "ball_no" in b:
 		return
 	else:
+		if move_mode and b.ball_no in locked_balls:
+			return b.OutlineState.LOCKED
+
 		if move_mode:
 			if use_pivot_check_box.pressed:
 				#if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
@@ -2964,48 +3064,8 @@ func _update_selected_ballz_in_settings() -> void:
 	if auto_paintballer_mode:
 		auto_paintballer_settings_instance.update_selected_balls_text(ids)
 
-	# Update BallRangeContainer in Select Mode
-	if selecting_on and is_instance_valid(ball_range_container):
-		var edit_node = ball_range_container.get_node_or_null("VBoxContainer/BallRangeHBox/BallRangeEdit")
-		if is_instance_valid(edit_node) and edit_node is LineEdit:
-			if edit_node.has_focus():
-				pass  # Don't overwrite user input
-			else:
-				ids.sort()
-				if ids.empty():
-					edit_node.text = ""
-				else:
-					edit_node.text = _compress_ranges_for_display(ids)
-
-func _compress_ranges_for_display(ball_ids: Array) -> String:
-	ball_ids.sort()
-	var start: int = ball_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-	
-	for i in range(1, ball_ids.size()):
-		var curr: int = ball_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-			
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-	
-	var s: String = ""
-	for i in range(ranges.size()):
-		if i > 0:
-			s += ","
-		s += str(ranges[i])
-	return s
+	var locked_ids: Array = locked_balls.duplicate()
+	update_locked_ballz_text(locked_ids)
 
 func _on_select_balls_by_ids(ids: Array) -> void:
 	_on_unselect_all()
@@ -3063,6 +3123,8 @@ func _commit_box_selection() -> void:
 		var pos_in_container: Vector2 = _get_screen_pos_from_viewport_pos(projected_pos_local)
 
 		if rect.has_point(pos_in_container):
+			if _is_ball_locked(b):
+				continue
 			if not (b in selected_balls):
 				selected_balls.append(b)
 				if b.has_method("apply_outline_state"):
@@ -3510,7 +3572,7 @@ func close_paintball_mode() -> void:
 	print("[STATUS] PetViewContainer: closing paintball mode")
 	paintball_check_box.pressed = false
 
-func _finalize_freeline() -> void:
+func _finalize_freeline(end_position = null) -> void:
 	# var _perf_start_time: int = OS.get_ticks_msec()
 	# var _perf_dyn_start: int = OS.get_dynamic_memory_usage()
 	# var _perf_stat_start: int = OS.get_static_memory_usage()
@@ -4090,9 +4152,9 @@ func _on_preset_apply_selection() -> void:
 		if size_mode == preset_settings_instance.SizeMode.SUM:
 			var original: int = 0
 			if pet_node.lnz.balls.has(ball_no):
-				original = pet_node.lnz.balls[ball_no].size
+				original = pet_node.lnz.balls[ball_no]["size"] 
 			elif pet_node.lnz.addballs.has(ball_no):
-				original = pet_node.lnz.addballs[ball_no].size
+				original = pet_node.lnz.addballs[ball_no]["size"] 
 			per_ball_props["size"] = original + ref_val
 
 		elif size_mode == preset_settings_instance.SizeMode.TRUE:
@@ -4122,8 +4184,10 @@ func _on_preset_apply_selection() -> void:
 				var scaled_paintballz: Array = []
 				for pb in per_ball_props["paintballz"]:
 					var new_pb: Dictionary = pb.duplicate()
-					new_pb.position *= (scale_ratio * p_pos_mod)
-					new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+					#new_pb.position *= (scale_ratio * p_pos_mod)
+					#new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+					new_pb.position *= p_pos_mod
+					new_pb.size = int(round(new_pb.size * p_size_mod))
 					scaled_paintballz.append(new_pb)
 				per_ball_props["paintballz"] = scaled_paintballz
 
@@ -4166,6 +4230,10 @@ func _restore_preset_selection(ids: Array) -> void:
 # _on_flip_selection
 # _on_apply_scale
 # _on_pivot_changed
+# _toggle_lock_ball
+# _unlock_all_balls
+# _is_ball_locked
+# _handle_group_pan_input
 
 func _on_move_mode_clear() -> void:
 	var all_balls: Array = _get_all_visual_balls()
@@ -4760,3 +4828,161 @@ func _on_pivot_changed() -> void:
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+func _toggle_lock_ball(ball: Spatial) -> void:
+	if not is_instance_valid(ball) or not "ball_no" in ball:
+		return
+	var ball_no: int = ball.ball_no
+	if ball_no in locked_balls:
+		locked_balls.erase(ball_no)
+	else:
+		locked_balls.append(ball_no)
+	_sync_locked_balls_to_visuals()
+	update_locked_ballz_text(locked_balls)
+
+func _unlock_all_balls() -> void:
+	locked_balls.clear()
+	_sync_locked_balls_to_visuals()
+	update_locked_ballz_text([])
+
+func _sync_locked_balls_to_visuals() -> void:
+	var all_balls: Array = _get_all_visual_balls()
+	for b in all_balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+		var script_path: String = ""
+		if b.get_script():
+			script_path = b.get_script().resource_path
+		if script_path.find("Ball.gd") == -1:
+			continue
+		if b.ball_no in locked_balls:
+			b.is_locked = true
+		else:
+			b.is_locked = false
+		b.apply_outline_state(get_visual_state_for_ball(b))
+	mark_ui_dirty()
+
+func _is_ball_locked(ball: Spatial) -> bool:
+	if not is_instance_valid(ball) or not "ball_no" in ball:
+		return false
+	return ball.ball_no in locked_balls
+
+func _handle_group_pan_input(event: InputEvent) -> bool:
+	if not move_mode:
+		return false
+
+	# Group pan: SHIFT + left-click drag on any area (background or selected area)
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		_group_panning = true
+		_group_pan_start_pos = event.position
+		# Capture the current world position of the first selected ball as reference
+		if selected_balls.size() > 0 and is_instance_valid(selected_balls[0]):
+			_group_pan_start_origin = selected_balls[0].global_transform.origin
+		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
+		return true
+
+	# End group pan on mouse release
+	if _group_panning and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
+		_group_panning = false
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		return true
+
+	# Handle group pan drag
+	if _group_panning and event is InputEventMouseMotion:
+		var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+		
+		var ray_o: Vector3 = camera.project_ray_origin(screen_pos)
+		var ray_d: Vector3 = camera.project_ray_normal(screen_pos)
+		var plane_n: Vector3 = camera.global_transform.basis.z.normalized()
+		var plane_p: Vector3 = _group_pan_start_origin
+		var current_intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+
+		var prev_mouse_pos: Vector2 = event.position - event.relative
+		var prev_ray_o: Vector3 = camera.project_ray_origin(_get_viewport_pos_from_screen_pos(prev_mouse_pos))
+		var prev_ray_d: Vector3 = camera.project_ray_normal(_get_viewport_pos_from_screen_pos(prev_mouse_pos))
+		var prev_intersect = LnzLiveUtils.intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
+
+		if current_intersect and prev_intersect:
+			var delta: Vector3 = current_intersect - prev_intersect
+
+			# Apply axis/plane constraints
+			var constrain_x: bool = Input.is_key_pressed(KEY_X)
+			var constrain_y: bool = Input.is_key_pressed(KEY_Y)
+			var constrain_z: bool = Input.is_key_pressed(KEY_Z)
+
+			if constrain_x or constrain_y or constrain_z:
+				if not constrain_x:
+					delta.x = 0
+				if not constrain_y:
+					delta.y = 0
+				if not constrain_z:
+					delta.z = 0
+
+			for b in selected_balls:
+				if is_instance_valid(b):
+					if _is_ball_locked(b):
+						continue
+					b.global_transform.origin += delta
+					_track_pending_move(b)
+
+			if move_mode_settings_instance.is_mirror_x_active():
+				_apply_mirror_move(selected_balls, delta)
+
+		return true
+
+	return false
+
+func _on_lock_all() -> void:
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in locked_balls:
+				locked_balls.append(b.ball_no)
+	_sync_locked_balls_to_visuals()
+	update_locked_ballz_text(locked_balls)
+
+func _on_unlock_all() -> void:
+	_unlock_all_balls()
+
+func _on_select_locked_balls_by_ids(ids: Array) -> void:
+	if ids.empty():
+		locked_balls.clear()
+	else:
+		locked_balls = ids.duplicate()
+	_sync_locked_balls_to_visuals()
+	update_locked_ballz_text(locked_balls)
+
+func update_locked_ballz_text(ball_ids: Array) -> void:
+	if not is_instance_valid(move_mode_settings_instance):
+		return
+	var locked_node = move_mode_settings_instance.find_node("LockedBallz")
+	if not locked_node:
+		return
+	if ball_ids.empty():
+		locked_node.text = ""
+		return
+	var sorted_ids: Array = ball_ids.duplicate()
+	sorted_ids.sort()
+	var start: int = sorted_ids[0]
+	var prev: int = start
+	var ranges: Array = []
+	for i in range(1, sorted_ids.size()):
+		var curr: int = sorted_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+	var s: String = ""
+	for i in range(ranges.size()):
+		if i > 0:
+			s += ","
+		s += str(ranges[i])
+	locked_node.text = s

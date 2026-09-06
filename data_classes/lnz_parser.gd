@@ -12,6 +12,9 @@ class VariationBlock:
 	var section: String
 	var start_line: int
 	var lines: Array = []
+	var base_id: int = 0
+	var subblock_key = null
+	var is_linked: bool = false
 
 	func _init(p_id: int, p_name: String, p_section: String, p_start_line: int) -> void:
 		id = p_id
@@ -72,6 +75,8 @@ var palette = null
 
 var sections_map: Dictionary = {}
 
+var excluded_subblocks: Dictionary = {}
+
 var whisker_connections: Array = []
 
 var custom_eyes: Dictionary = {}
@@ -101,16 +106,19 @@ func _init(file_path: String) -> void:
 		return
 
 	_scan_file(file)
+	_finalize_sections()
 	file.close()
 
 func _scan_file(file: File) -> void:
 	sections_map = {}
 	var current_section: String = "Header"
 	var current_var_id: int = 0
+	var current_subblock_key = 0
 	var line_number: int = 0
+	var _subblock_counter: int = -1
 
 	var var_regex: RegEx = RegEx.new()
-	var_regex.compile("^#(\\d+)(.*)")
+	var_regex.compile("^#(\\d+)(\\.([A-Z]))?(.*)")
 
 	_ensure_block(current_section, 0, 0)
 
@@ -123,23 +131,43 @@ func _scan_file(file: File) -> void:
 			if end_bracket != -1:
 				current_section = line_stripped.substr(1, end_bracket - 1)
 				current_var_id = 0
+				current_subblock_key = 0
 				_ensure_block(current_section, current_var_id, line_number)
+				_subblock_counter = -1
+		elif line_stripped == "##":
+			_subblock_counter += 1
+			current_var_id = 0
 		elif line.begins_with("#"):
 			var match_res: RegExMatch = var_regex.search(line_stripped)
 			if match_res:
-				current_var_id = int(match_res.get_string(1))
-				var var_name: String = match_res.get_string(2).strip_edges()
+				var parsed_id: int = int(match_res.get_string(1))
+				var suffix: String = match_res.get_string(3)
+				var var_name: String = match_res.get_string(4).strip_edges()
 				if var_name.begins_with("-"):
 					var_name = var_name.substr(1).strip_edges()
 
-				_ensure_block(current_section, current_var_id, line_number, var_name)
+				var new_subblock_key = _ensure_subblock(current_section, parsed_id, suffix, var_name, line_number, _subblock_counter)
+				current_var_id = parsed_id
+				current_subblock_key = new_subblock_key
 			else:
-				# Just a comment or unrecognized
-				_append_line(current_section, current_var_id, line)
+				_append_line(current_section, current_var_id, line, current_subblock_key)
 		else:
-			_append_line(current_section, current_var_id, line)
+			_append_line(current_section, current_var_id, line, current_subblock_key)
 
 		line_number += 1
+
+func _finalize_sections() -> void:
+	for section in sections_map:
+		var section_data = sections_map[section]
+		if typeof(section_data) != TYPE_DICTIONARY:
+			continue
+		for id in section_data:
+			if id == 0: continue
+			var val = section_data[id]
+			if typeof(val) == TYPE_OBJECT:
+				var new_dict = {}
+				new_dict[0] = val
+				sections_map[section][id] = new_dict
 
 func _ensure_block(section: String, id: int, start_line: int, custom_name: String = "") -> void:
 	if !sections_map.has(section):
@@ -150,12 +178,69 @@ func _ensure_block(section: String, id: int, start_line: int, custom_name: Strin
 			name = custom_name
 		sections_map[section][id] = VariationBlock.new(id, name, section, start_line)
 	elif custom_name != "":
-		# Update name if we found it later (though scanning is linear so this case is rare/redundant)
 		sections_map[section][id].name = custom_name
 
-func _append_line(section: String, id: int, line: String) -> void:
-	if sections_map.has(section) and sections_map[section].has(id):
-		sections_map[section][id].lines.append(line)
+func _ensure_subblock(section: String, parsed_id: int, suffix: String, custom_name: String, start_line: int, subblock_counter: int):
+	if !sections_map.has(section):
+		sections_map[section] = {}
+	
+	var is_linked = suffix != ""
+	var subblock_key = subblock_counter + 1
+	
+	if sections_map[section].has(parsed_id):
+		var existing = sections_map[section][parsed_id]
+		if typeof(existing) == TYPE_OBJECT:
+			var new_dict = {}
+			new_dict[0] = existing
+			sections_map[section][parsed_id] = new_dict
+		elif typeof(existing) == TYPE_DICTIONARY:
+			pass
+	
+	var block_dict
+	if sections_map[section].has(parsed_id):
+		block_dict = sections_map[section][parsed_id]
+	else:
+		block_dict = {}
+		sections_map[section][parsed_id] = block_dict
+	
+	if typeof(block_dict) != TYPE_DICTIONARY:
+		block_dict = {}
+		sections_map[section][parsed_id] = block_dict
+	
+	if block_dict.has(subblock_key):
+		if custom_name != "":
+			block_dict[subblock_key].name = custom_name
+		return subblock_key
+	
+	var name: String = "Variation " + str(parsed_id)
+	if custom_name != "":
+		name = custom_name
+	
+	var block = VariationBlock.new(parsed_id, name, section, start_line)
+	block.base_id = parsed_id
+	block.subblock_key = subblock_key
+	block.is_linked = is_linked
+	block_dict[subblock_key] = block
+	return subblock_key
+
+func _append_line(section: String, id: int, line: String, subblock_key = 0):
+	if sections_map.has(section):
+		var section_data = sections_map[section]
+		if typeof(section_data) != TYPE_DICTIONARY:
+			return
+		if section_data.has(id):
+			var block_or_dict = section_data[id]
+			if typeof(block_or_dict) == TYPE_DICTIONARY:
+				if block_or_dict.has(subblock_key):
+					block_or_dict[subblock_key].lines.append(line)
+				else:
+					var new_block = VariationBlock.new(id, "Variation " + str(id), section, 0)
+					new_block.base_id = id
+					new_block.subblock_key = subblock_key
+					block_or_dict[subblock_key] = new_block
+					block_or_dict[subblock_key].lines.append(line)
+			else:
+				block_or_dict.lines.append(line)
 
 func get_next_section(file: File, section_name: String) -> bool:
 	file.seek(0)
@@ -166,18 +251,105 @@ func get_next_section(file: File, section_name: String) -> bool:
 		return false
 	return true
 
-func compile_section(section_name: String, active_ids: Array) -> VirtualFileLineReader:
+func set_excluded_subblocks(p_data: Dictionary) -> void:
+	excluded_subblocks = p_data
+
+func compile_section(section_name: String, active_config) -> VirtualFileLineReader:
 	var compiled_lines: Array = []
-	
-	if sections_map.has(section_name):
-		var section_dict: Dictionary = sections_map[section_name]
 
-		if section_dict.has(0):
-			compiled_lines.append_array(section_dict[0].lines)
+	if not sections_map.has(section_name):
+		return VirtualFileLineReader.new(compiled_lines)
 
-		for id in active_ids:
-			if id != 0 and section_dict.has(id):
-				compiled_lines.append_array(section_dict[id].lines)
+	var section_dict = sections_map[section_name]
+	if typeof(section_dict) != TYPE_DICTIONARY:
+		return VirtualFileLineReader.new(compiled_lines)
+
+	if section_dict.has(0):
+		var base_block = section_dict[0]
+		if typeof(base_block) == TYPE_DICTIONARY:
+			for key in base_block:
+				var subblock = base_block[key]
+				if typeof(subblock) == TYPE_OBJECT:
+					compiled_lines.append_array(subblock.lines)
+		elif typeof(base_block) == TYPE_OBJECT:
+			compiled_lines.append_array(base_block.lines)
+
+	if typeof(active_config) == TYPE_DICTIONARY:
+		# active_config is {subblock_key: id_or_suffix_string}
+		for subblock_key in active_config:
+			var val = active_config[subblock_key]
+			var parsed_id: int = 0
+			var parsed_suffix: String = ""
+
+			if typeof(val) == TYPE_INT:
+				parsed_id = val
+			elif typeof(val) == TYPE_STRING:
+				var parts: Array = (val as String).split(".")
+				if parts.size() >= 1 and parts[0].is_valid_integer():
+					parsed_id = parts[0].to_int()
+				if parts.size() == 2:
+					parsed_suffix = parts[1]
+
+			if parsed_id == 0 or not section_dict.has(parsed_id):
+				continue
+
+			var block_or_dict = section_dict[parsed_id]
+			if typeof(block_or_dict) == TYPE_OBJECT:
+				compiled_lines.append_array(block_or_dict.lines)
+			elif typeof(block_or_dict) == TYPE_DICTIONARY:
+				# Check direct key match (int subblock index)
+				if block_or_dict.has(subblock_key):
+					var sub = block_or_dict[subblock_key]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+				# Check suffix match (string key)
+				elif parsed_suffix != "" and block_or_dict.has(parsed_suffix):
+					var sub = block_or_dict[parsed_suffix]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+				# Fallback to key 0
+				elif block_or_dict.has(0):
+					var sub = block_or_dict[0]
+					if typeof(sub) == TYPE_OBJECT:
+						compiled_lines.append_array(sub.lines)
+
+		return VirtualFileLineReader.new(compiled_lines)
+
+	var active_ids: Array = active_config if typeof(active_config) == TYPE_ARRAY else [0]
+	var active_int_ids: Array = []
+	var active_suffixes = {}
+
+	for entry in active_ids:
+		if typeof(entry) == TYPE_INT:
+			if entry == 0:
+				continue
+			active_int_ids.append(entry)
+		elif typeof(entry) == TYPE_STRING:
+			var parts: Array = (entry as String).split(".")
+			if parts.size() == 2 and parts[0].is_valid_integer():
+				var entry_id: int = parts[0].to_int()
+				if entry_id == 0:
+					continue
+				if not active_suffixes.has(entry_id):
+					active_suffixes[entry_id] = []
+				active_suffixes[entry_id].append(parts[1])
+
+	for id in active_int_ids:
+		if not section_dict.has(id):
+			continue
+		var block_or_dict = section_dict[id]
+
+		if typeof(block_or_dict) == TYPE_OBJECT:
+			compiled_lines.append_array(block_or_dict.lines)
+			continue
+
+		if typeof(block_or_dict) != TYPE_DICTIONARY:
+			continue
+
+		for key in block_or_dict:
+			var sub = block_or_dict[key]
+			if typeof(sub) == TYPE_OBJECT:
+				compiled_lines.append_array(sub.lines)
 
 	return VirtualFileLineReader.new(compiled_lines)
 

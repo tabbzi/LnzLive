@@ -61,6 +61,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
 | **Select Mode** | `N` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
+| **Select Mode** | `DELETE` | Omit (if base ballz) or delete (if add ballz) hovered ball |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
 | **Global** | `CTRL` + `H` | Unhide all hidden balls |
@@ -69,6 +70,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `left-click` | **Draw**: Add paintballz by point-and-click |
 | **Paintball Mode** | `CTRL` + `left-click` | **Eraser**: Delete nearest queued paintballz |
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
+| **Paintball Mode** | `L` or `ALT` (hold while freeline active) | **Straight Line**: Constrain freeline to a straight line. Hold `X` or `Y` to lock axis |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `wheel down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
@@ -79,6 +81,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Line Mode** | `E` | **Open/Close Line Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
+| **Move Mode** | `Q` | **Lock/Unlock** hovered ball (yellow outline) |
+| **Move Mode** | `CTRL` + `Q` | **Unlock All** locked ballz |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `ALT` + `SHIFT` + `left-click drag`| Scale/Resize selected group of ballz |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
@@ -375,7 +379,7 @@ In the Standard tab, you control the properties of individual paintballs as they
 
 *Place (`left-click-drag`):* Place one paintball at a time using randomly sampled properties.
 
-*Freeline (`SHIFT` + `left-click-drag`, or toggle `Freeline` checkbox):* Draw continuous stroke of paintballz. Enable `Tapered` to automatically shrink the start and end of a stroke. You can adjust the `Spacing` between balls and add `Jitter` offsets paintballz along the stroke for a more natural, hand-drawn look. The `Shuffled` checkbox reorders the layer of paintballz for better texture blending. Colors and textures are randomly sampled unless `Ordered` checkbox is toggled. The `Repeated` checkbox modifies `Ordered` by starting from the beginning of the color/texture range with each stroke. 
+*Freeline (`SHIFT` + `left-click-drag`, or toggle `Freeline` checkbox):* Draw continuous stroke of paintballz. Hold `L` or `ALT` while drawing to constrain to a straight line. Hold `X` or `Y` to lock to the horizontal or vertical axis. Enable `Tapered` to automatically shrink the start and end of a stroke. You can adjust the `Spacing` between balls and add `Jitter` offsets paintballz along the stroke for a more natural, hand-drawn look. The `Shuffled` checkbox reorders the layer of paintballz for better texture blending. Colors and textures are randomly sampled unless `Ordered` checkbox is toggled. The `Repeated` checkbox modifies `Ordered` by starting from the beginning of the color/texture range with each stroke. 
 
 *Eraser (`CTRL` + `left-click`, or toggle `Eraser` checkbox):* Removing pending/queued paintballs by clicking them.
 
@@ -410,6 +414,8 @@ Coming soon!
 Move Mode provides advanced visual editing for multiple balls:
 
 - **Group Movement:** Select multiple balls (`CTRL`+left-click or Box Select) to move them as a unit.
+- **Locked Ballz:** In Move Mode, press `Q` on a hovered ball to lock it (yellow outline). Locked ballz are excluded from selection and movement. Press `Q` again or `CTRL`+`Q` to unlock. Use "Lock All" / "Unlock All" buttons in the panel.
+- **Group Pan:** With a selection active in Move Mode, hold `SHIFT` + left-click drag on any area (including background) to pan the entire selected group as a unit without altering selection.
 
 - **Axis/Plane Locks:** Use the constraint buttons (Free, X, Y, Z, XY, XZ, YZ) or hotkeys (X, Y, Z, and combinations) to lock movement to specific axes or planes.
 

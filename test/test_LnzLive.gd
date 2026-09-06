@@ -474,8 +474,11 @@ func test_lnz_scan_base_and_variations():
 	var base_lines = parser.sections_map["Ballz Info"][0].lines
 	assert_eq(base_lines[0], "10 10 10", "Base lines should be assigned to ID 0.")
 	
-	var var1_lines = parser.sections_map["Ballz Info"][1].lines
-	assert_eq(var1_lines[0], "20 20 20", "Variation lines should be assigned to ID 1.")
+	# First #N block before ## uses subblock key 0
+	var var1_subblocks = parser.sections_map["Ballz Info"][1]
+	assert_true(typeof(var1_subblocks) == TYPE_DICTIONARY, "Variation 1 should be a two-level map.")
+	assert_true(var1_subblocks.has(0), "Should have subblock key 0.")
+	assert_eq(var1_subblocks[0].lines[0], "20 20 20", "Variation lines should be assigned to subblock 0.")
 
 func test_lnz_compile_section_merging():
 	# Verify that compile_section correctly merges the base data with 
@@ -489,6 +492,102 @@ func test_lnz_compile_section_merging():
 	assert_eq(reader.get_len(), 2, "Reader should contain exactly 2 lines.")
 	assert_eq(reader.get_line(), "BaseData", "Base data should always be included.")
 	assert_eq(reader.get_line(), "Data2", "Active variation data should be appended.")
+
+func test_lnz_scan_multiple_subblocks_separated_by_dd():
+	# Verify that ## creates separate subblocks for the same variation ID.
+	var content = "[Ballz Info]\nbase data\n#1;left hip\nhip data 1\n##\n#1;right hip\nhip data 2\n##"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	
+	assert_true(parser.sections_map.has("Ballz Info"), "Should parse Ballz Info section.")
+	assert_true(parser.sections_map["Ballz Info"].has(1), "Should detect variation 1.")
+	
+	var subblocks = parser.sections_map["Ballz Info"][1]
+	assert_true(typeof(subblocks) == TYPE_DICTIONARY, "Should be a two-level map.")
+	assert_true(subblocks.has(0), "Should have first subblock (key 0).")
+	assert_true(subblocks.has(1), "Should have second subblock (key 1).")
+	
+	assert_eq(subblocks[0].lines[0], "hip data 1", "First line should be in subblock 0.")
+	assert_eq(subblocks[1].lines[0], "hip data 2", "Second line should be in subblock 1.")
+	
+	assert_eq(subblocks[0].name, ";left hip", "First subblock name is from the first #1 line.")
+	assert_eq(subblocks[1].name, ";right hip", "Second subblock name is from the second #1 line.")
+	assert_eq(subblocks[0].base_id, 1, "Subblock 0 base_id should be 1.")
+	assert_eq(subblocks[1].base_id, 1, "Subblock 1 base_id should be 1.")
+	assert_false(subblocks[0].is_linked, "Subblock 0 should not be linked.")
+	assert_false(subblocks[1].is_linked, "Subblock 1 should not be linked.")
+
+func test_lnz_scan_linked_variations():
+	# Verify that .A / .B suffixes create linked subblocks.
+	var content = "[Color Info Override]\n#2.A\nlink data A\n##\n#2.B\nlink data B\n##\n#2\nunlinked data\n##"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	
+	var subblocks = parser.sections_map["Color Info Override"][2]
+	assert_true(typeof(subblocks) == TYPE_DICTIONARY, "Should be a two-level map.")
+	assert_true(subblocks.has(0), "Should have subblock 0 (#2.A).")
+	assert_true(subblocks.has(1), "Should have subblock 1 (#2.B).")
+	assert_true(subblocks.has(2), "Should have subblock 2 (#2).")
+	
+	assert_eq(subblocks[0].lines[0], "link data A", "Subblock 0 should have its data.")
+	assert_eq(subblocks[1].lines[0], "link data B", "Subblock 1 should have its data.")
+	assert_eq(subblocks[2].lines[0], "unlinked data", "Subblock 2 should have its data.")
+	
+	assert_true(subblocks[0].is_linked, "Subblock 0 should be linked.")
+	assert_true(subblocks[1].is_linked, "Subblock 1 should be linked.")
+	assert_false(subblocks[2].is_linked, "Subblock 2 should not be linked.")
+	
+	if "suffix" in subblocks[0]:
+		assert_eq(subblocks[0].suffix, "A", "Subblock 0 suffix should be A.")
+		assert_eq(subblocks[1].suffix, "B", "Subblock 1 suffix should be B.")
+
+func test_lnz_compile_section_merges_all_subblocks():
+	# Verify that compile_section merges all subblocks when base ID is requested.
+	var content = "[Section]\nbase\n#1;first\nfirst data\n##\n#1;second\nsecond data\n##"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	
+	var reader = parser.compile_section("Section", [1])
+	var lines = []
+	while not reader.eof_reached():
+		var l = reader.get_line()
+		if not l.empty():
+			lines.append(l)
+	
+	assert_true(lines.has("base"), "Should include base.")
+	assert_true(lines.has("first data"), "Should include first subblock.")
+	assert_true(lines.has("second data"), "Should include second subblock.")
+
+func test_lnz_data_outside_variation_blocks_included():
+	# Verify that data outside variation blocks (before first #N and after ##)
+	# is always included in the compiled output, even when no variations are active.
+	var content = "[Ballz Info]\nbase ball data\n#1;left hip\nhip data 1\n##\n#1;right hip\nhip data 2\n##\npost_variation data"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	
+	# Compile with base only (active_ids = [0])
+	var reader = parser.compile_section("Ballz Info", [0])
+	var lines = []
+	while not reader.eof_reached():
+		var l = reader.get_line()
+		if not l.empty():
+			lines.append(l)
+	
+	assert_true(lines.has("base ball data"), "Should include base data.")
+	assert_true(lines.has("post_variation data"), "Should include data after ## (base block data).")
+	
+	# Compile with variation 1 active
+	reader = parser.compile_section("Ballz Info", [1])
+	lines = []
+	while not reader.eof_reached():
+		var l = reader.get_line()
+		if not l.empty():
+			lines.append(l)
+	
+	assert_true(lines.has("base ball data"), "Should include base data.")
+	assert_true(lines.has("hip data 1"), "Should include first subblock data.")
+	assert_true(lines.has("hip data 2"), "Should include second subblock data.")
+	assert_true(lines.has("post_variation data"), "Should include data after ## (base block data).")
 
 func test_lnz_get_parsed_lines_ignores_invalid_and_comments():
 	# Ensure get_parsed_lines skips empty lines, comments (;), and 

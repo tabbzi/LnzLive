@@ -111,6 +111,8 @@ func _ready() -> void:
 	import_pal_button.connect("pressed", self, "_on_ImportPalette_pressed")
 	open_user_folder_button.connect("pressed", self, "_on_OpenUserFolder_pressed")
 
+	rescan_button.connect("pressed", self, "_on_RescanButton_pressed")
+
 	menu_import_lnz.connect("pressed", self, "_on_ImportLNZ_pressed")
 	menu_import_tex.connect("pressed", self, "_on_ImportTexture_pressed")
 	menu_import_pal.connect("pressed", self, "_on_ImportPalette_pressed")
@@ -1559,3 +1561,9 @@ func _sort_by_name(a: Dictionary, b: Dictionary) -> bool:
 
 func _sort_by_time(a: Dictionary, b: Dictionary) -> bool:
 	return a["time"] > b["time"]
+
+func _on_RescanButton_pressed() -> void:
+	rescan(null)
+	rescan_textures(true) 
+	rescan_palettes()
+	rescan_bases()

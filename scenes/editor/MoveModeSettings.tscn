@@ -133,10 +133,11 @@ custom_styles/normal = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
 text = "Hold CTRL and click to select group of ballz, drag to move. Click Apply to save to LNZ, or Clear to reset.
 
-
 CTRL + click-and-drag to box select
-ALT + click to pick a pivot anchor ball
-ALT+SHIFT + click-drag to resize group of ballz"
+ALT + click to pick a pivot anchor
+ALT+SHIFT + click-drag to resize group of ballz
+Q = lock/unlock hovered ball (yellow outline)
+SHIFT + drag = pan selected group (with selection active)"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 87.0
@@ -162,6 +163,22 @@ align = 1
 margin_top = 21.0
 margin_right = 473.0
 margin_bottom = 48.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+placeholder_text = "e.g. 1,2,5-10"
+
+[node name="LockedBallzLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 52.0
+margin_right = 473.0
+margin_bottom = 69.0
+custom_fonts/font = SubResource( 4 )
+text = "Locked Ballz"
+align = 1
+
+[node name="LockedBallz" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 56.0
+margin_right = 473.0
+margin_bottom = 83.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 placeholder_text = "e.g. 1,2,5-10"
@@ -215,6 +232,36 @@ custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 7 )
 text = "Unselect All"
+
+[node name="LockButtons" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 102.0
+margin_right = 473.0
+margin_bottom = 127.0
+alignment = 1
+
+[node name="LockAllButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LockButtons"]
+margin_left = 150.0
+margin_right = 220.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 7 )
+text = "Lock All"
+
+[node name="UnlockAllButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LockButtons"]
+margin_left = 224.0
+margin_right = 330.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 7 )
+text = "Unlock All"
 
 [node name="GroupSelectionLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 102.0
