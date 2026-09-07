@@ -195,10 +195,20 @@ func load_settings() -> void:
 		if saved_size:
 			OS.window_size = saved_size
 			_cached_window_size = saved_size
-		
-		if saved_pos:
-			OS.window_position = saved_pos
-			_cached_window_pos = saved_pos
+
+		if saved_pos and saved_size:
+			var screen_size = OS.get_screen_size(OS.current_screen)
+			
+			var is_off_screen = saved_pos.x < 0 or saved_pos.y < 0 or \
+								saved_pos.x + saved_size.x > screen_size.x or \
+								saved_pos.y + saved_size.y > screen_size.y
+								
+			if is_off_screen:
+				OS.center_window()
+				_cached_window_pos = OS.window_position
+			else:
+				OS.window_position = saved_pos
+				_cached_window_pos = saved_pos
 		else:
 			OS.center_window()
 
