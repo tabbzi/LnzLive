@@ -10,7 +10,6 @@ func setup(p_dog_generator: Node, p_lnz_parser: Node) -> void:
 	dog_generator = p_dog_generator
 	lnz_parser = p_lnz_parser
 	_current_file_path = dog_generator.last_loaded_filepath
-	_load_exclusions()
 	populate_tree()
 
 func randomize_variations() -> void:
@@ -446,7 +445,6 @@ func _rebuild_section_exclusions(section: String, config: Dictionary) -> void:
 
 	if config[excl_key].empty():
 		config.erase(excl_key)
-	_save_exclusions()
 
 func _base_id_from_val(val) -> int:
 	if typeof(val) == TYPE_INT:
@@ -638,7 +636,6 @@ func _add_exclusion(section: String, id: int, subblock_key) -> void:
 	if not config[excl_key].has(list_key):
 		config[excl_key][list_key] = []
 	config[excl_key][list_key].append(subblock_key)
-	_save_exclusions()
 
 func _remove_exclusion(section: String, id: int, subblock_key) -> void:
 	var config = dog_generator.current_variation_config
@@ -650,12 +647,10 @@ func _remove_exclusion(section: String, id: int, subblock_key) -> void:
 			config[excl_key].erase(list_key)
 			if config[excl_key].empty():
 				config.erase(excl_key)
-	_save_exclusions()
 
 func _clear_section_exclusions(section: String) -> void:
 	var config = dog_generator.current_variation_config
 	config.erase(section + "_excluded")
-	_save_exclusions()
 
 func _sync_parser_exclusions(config: Dictionary) -> void:
 	if lnz_parser == null:
@@ -665,33 +660,6 @@ func _sync_parser_exclusions(config: Dictionary) -> void:
 		if key is String and (key as String).ends_with("_excluded"):
 			sync_data[(key as String).trim_suffix("_excluded")] = config[key]
 	lnz_parser.set_excluded_subblocks(sync_data)
-
-func _save_exclusions() -> void:
-	var path = _resolve_file_path()
-	if path == "":
-		return
-	var config = dog_generator.current_variation_config
-	var exclusions = {}
-	for key in config:
-		if key is String and (key as String).ends_with("_excluded"):
-			exclusions[(key as String).trim_suffix("_excluded")] = config[key]
-	var cf: ConfigFile = ConfigFile.new()
-	cf.set_value("exclusions", "data", exclusions)
-	cf.save("user://lnz_exclusions_" + _get_file_hash() + ".cfg")
-
-func _load_exclusions() -> void:
-	var path = _resolve_file_path()
-	if path == "":
-		return
-	var cf: ConfigFile = ConfigFile.new()
-	if cf.load("user://lnz_exclusions_" + _get_file_hash() + ".cfg") != OK:
-		return
-	if cf.has_section_key("exclusions", "data"):
-		var data = cf.get_value("exclusions", "data")
-		if typeof(data) == TYPE_DICTIONARY:
-			var config = dog_generator.current_variation_config
-			for section in data:
-				config[section + "_excluded"] = data[section]
 
 
 func _update_tree_checks(config: Dictionary) -> void:
@@ -931,19 +899,6 @@ func _get_active_ids_for_section(section: String) -> Array:
 				seen_ids[val] = true
 				result.append(val)
 	return result
-
-func _resolve_file_path() -> String:
-	if _current_file_path != "":
-		return _current_file_path
-	if is_instance_valid(dog_generator):
-		return dog_generator.last_loaded_filepath
-	return ""
-
-func _get_file_hash() -> String:
-	var path = _resolve_file_path()
-	if path == "":
-		return "empty"
-	return str(path.hash())
 
 func _get_subblock(section: String, id: int, sk):
 	var sec = _get_section_data(section)
