@@ -189,14 +189,14 @@ func load_settings() -> void:
 		if file_tree and file_tree.has_method("set_expanded_states"):
 			file_tree.set_expanded_states(file_tree_expanded_sections)
 
-		var saved_size = config.get_value("Display", "window_size", null)
-		var saved_pos = config.get_value("Display", "window_position", null)
-		
-		if saved_size:
+		var saved_size = null
+		if config.has_section_key("Display", "window_size"):
+			saved_size = config.get_value("Display", "window_size")
 			OS.window_size = saved_size
 			_cached_window_size = saved_size
 
-		if saved_pos and saved_size:
+		if config.has_section_key("Display", "window_position") and saved_size:
+			var saved_pos = config.get_value("Display", "window_position")
 			var screen_size = OS.get_screen_size(OS.current_screen)
 			
 			var is_off_screen = saved_pos.x < 0 or saved_pos.y < 0 or \

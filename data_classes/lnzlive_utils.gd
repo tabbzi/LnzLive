@@ -719,7 +719,7 @@ static func load_config(section: String, path: String) -> Dictionary:
 	var result: Dictionary = {}
 	var config: ConfigFile = ConfigFile.new()
 	var err: int = config.load(path)
-  if err != OK:
+	if err != OK:
 		return result
 
 	if not config.has_section(section):

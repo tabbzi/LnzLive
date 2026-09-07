@@ -28,16 +28,28 @@ func load_settings() -> void:
 	var err = config.load(SETTINGS_PATH)
 	
 	if err == OK:
-		var screen_pos = config.get_value("Display", "window_position", null)
-		var screen_size = config.get_value("Display", "window_size", null)
+		if config.has_section_key("Display", "window_size"):
+			OS.window_size = config.get_value("Display", "window_size")
 
-		if screen_pos:
-			OS.window_position = screen_pos
+		if config.has_section_key("Display", "window_position"):
+			var screen_pos = config.get_value("Display", "window_position")
+			var is_valid_position = false
+			
+			for i in range(OS.get_screen_count()):
+				var s_pos = OS.get_screen_position(i)
+				var s_size = OS.get_screen_size(i)
+				
+				if screen_pos.x >= s_pos.x and screen_pos.x < (s_pos.x + s_size.x) and \
+				   screen_pos.y >= s_pos.y and screen_pos.y < (s_pos.y + s_size.y):
+					is_valid_position = true
+					break
+			
+			if is_valid_position:
+				OS.window_position = screen_pos
+			else:
+				OS.center_window()
 		else:
 			OS.center_window()
-			
-		if screen_size:
-			OS.window_size = screen_size
 
 	elif err == ERR_FILE_NOT_FOUND:
 		OS.center_window()
