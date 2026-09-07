@@ -152,16 +152,6 @@ func _ready() -> void:
 	if _unlock_all_btn:
 		_unlock_all_btn.connect("pressed", self, "_on_UnlockAll_pressed")
 
-
-func _nudge_node_name(axis: String) -> String:
-	match axis:
-		"x": return "NudgeX"
-		"y": return "NudgeY"
-		"z": return "NudgeZ"
-	return ""
-
-## Reads mirror checkbox states into a Vector3 (1.0 = off, -1.0 = on).
-## Replaces the three find_node() calls in get_mirror_vector() with cached nodes.
 func _read_mirror_state() -> Vector3:
 	return Vector3(
 		-1.0 if _mirror_x and _mirror_x.pressed else 1.0,
