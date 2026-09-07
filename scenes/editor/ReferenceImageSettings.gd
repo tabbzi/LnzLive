@@ -219,48 +219,43 @@ func _emit_image_update() -> void:
 		popup.update_config_reference_image(config_data)
 
 func _save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	config.load(CONFIG_PATH)
-	config.set_value("ReferenceImage", "is_active", is_active)
-	config.set_value("ReferenceImage", "path", selected_image_path)
-	config.set_value("ReferenceImage", "show_bg", show_bg_checkbox.pressed)
-	config.set_value("ReferenceImage", "show_popup", show_popup_checkbox.pressed)
-	config.set_value("ReferenceImage", "center", center_checkbox.pressed)
-	config.set_value("ReferenceImage", "scale", scale_checkbox.pressed)
-	config.set_value("ReferenceImage", "x", x_spinbox.value)
-	config.set_value("ReferenceImage", "y", y_spinbox.value)
-	config.set_value("ReferenceImage", "scale_value", scale_value_spinbox.value)
-	config.save(CONFIG_PATH)
+	var values: Dictionary = {}
+	values["is_active"] = is_active
+	values["path"] = selected_image_path
+	values["show_bg"] = show_bg_checkbox.pressed
+	values["show_popup"] = show_popup_checkbox.pressed
+	values["center"] = center_checkbox.pressed
+	values["scale"] = scale_checkbox.pressed
+	values["x"] = x_spinbox.value
+	values["y"] = y_spinbox.value
+	values["scale_value"] = scale_value_spinbox.value
+	LnzLiveUtils.save_config("ReferenceImage", values, CONFIG_PATH)
 
 func _load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	if config.load(CONFIG_PATH) == OK:
-		print("[STATUS] ReferenceImageSettings: loading settings configuration")
-		_is_loading_settings = true
-		is_active = config.get_value("ReferenceImage", "is_active", false)
-		selected_image_path = config.get_value("ReferenceImage", "path", "")
-
-		var file: File = File.new()
-		if not file.file_exists(selected_image_path):
-			selected_image_path = ""
-
-		show_bg_checkbox.pressed = config.get_value("ReferenceImage", "show_bg", false)
-		show_popup_checkbox.pressed = config.get_value("ReferenceImage", "show_popup", false)
-		center_checkbox.pressed = config.get_value("ReferenceImage", "center", true)
-		scale_checkbox.pressed = config.get_value("ReferenceImage", "scale", false)
-		x_spinbox.value = config.get_value("ReferenceImage", "x", 0)
-		y_spinbox.value = config.get_value("ReferenceImage", "y", 0)
-		scale_value_spinbox.value = config.get_value("ReferenceImage", "scale_value", 1.0)
-
-		x_spinbox.set_editable(!center_checkbox.pressed)
-		y_spinbox.set_editable(!center_checkbox.pressed)
-
-		if option_button.get_item_count() > 0 and not option_button.is_disabled():
-			if selected_image_path in image_paths:
-				option_button.select(image_paths.find(selected_image_path))
-
-		_is_loading_settings = false
-		_emit_image_update()
+	var data: Dictionary = LnzLiveUtils.load_config("ReferenceImage", CONFIG_PATH)
+	if data.empty():
+		return
+	print("[STATUS] ReferenceImageSettings: loading settings configuration")
+	_is_loading_settings = true
+	is_active = data.get("is_active", false)
+	selected_image_path = data.get("path", "")
+	var file: File = File.new()
+	if not file.file_exists(selected_image_path):
+		selected_image_path = ""
+	show_bg_checkbox.pressed = data.get("show_bg", false)
+	show_popup_checkbox.pressed = data.get("show_popup", false)
+	center_checkbox.pressed = data.get("center", true)
+	scale_checkbox.pressed = data.get("scale", false)
+	x_spinbox.value = data.get("x", 0)
+	y_spinbox.value = data.get("y", 0)
+	scale_value_spinbox.value = data.get("scale_value", 1.0)
+	x_spinbox.set_editable(!center_checkbox.pressed)
+	y_spinbox.set_editable(!center_checkbox.pressed)
+	if option_button.get_item_count() > 0 and not option_button.is_disabled():
+		if selected_image_path in image_paths:
+			option_button.select(image_paths.find(selected_image_path))
+	_is_loading_settings = false
+	_emit_image_update()
 
 func toggle_reference_image() -> void:
 	if selected_image_path == "":

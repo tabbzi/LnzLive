@@ -20,8 +20,6 @@ signal lock_all
 signal unlock_all
 signal select_locked_balls_by_ids
 
-var _is_loading_settings: bool = false
-
 var current_constraint_mode: String = "free" # free, x, y, z, xy, xz, yz
 
 onready var _apply_button: Button = find_node("ApplyButton")
@@ -154,16 +152,6 @@ func _ready() -> void:
 	if _unlock_all_btn:
 		_unlock_all_btn.connect("pressed", self, "_on_UnlockAll_pressed")
 
-
-func _nudge_node_name(axis: String) -> String:
-	match axis:
-		"x": return "NudgeX"
-		"y": return "NudgeY"
-		"z": return "NudgeZ"
-	return ""
-
-## Reads mirror checkbox states into a Vector3 (1.0 = off, -1.0 = on).
-## Replaces the three find_node() calls in get_mirror_vector() with cached nodes.
 func _read_mirror_state() -> Vector3:
 	return Vector3(
 		-1.0 if _mirror_x and _mirror_x.pressed else 1.0,
@@ -418,70 +406,56 @@ func _on_setting_changed(_arg = null) -> void:
 	save_settings()
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
-		return
-
-	config.set_value("MoveProperties", "constraint_mode", current_constraint_mode)
-	config.set_value("MoveProperties", "align_mode", _align_mode_option.selected)
-
-	config.set_value("MoveProperties", "nudge_x", _nudge_x.value if _nudge_x else 0.0)
-	config.set_value("MoveProperties", "nudge_y", _nudge_y.value if _nudge_y else 0.0)
-	config.set_value("MoveProperties", "nudge_z", _nudge_z.value if _nudge_z else 0.0)
-
-	config.set_value("MoveProperties", "rotate_roll", _rotate_roll.value if _rotate_roll else 0.0)
-	config.set_value("MoveProperties", "rotate_pitch", _rotate_pitch.value if _rotate_pitch else 0.0)
-	config.set_value("MoveProperties", "rotate_yaw", _rotate_yaw.value if _rotate_yaw else 0.0)
-
-	config.set_value("MoveProperties", "scale_factor", _scale_factor.value if _scale_factor else 1.0)
-	config.set_value("MoveProperties", "scale_dist", _scale_dist.pressed if _scale_dist else true)
-	config.set_value("MoveProperties", "scale_size", _scale_size.pressed if _scale_size else true)
-
-	config.set_value("MoveProperties", "mirror_x", _mirror_x.pressed if _mirror_x else false)
-	config.set_value("MoveProperties", "mirror_y", _mirror_y.pressed if _mirror_y else false)
-	config.set_value("MoveProperties", "mirror_z", _mirror_z.pressed if _mirror_z else false)
-
-	config.set_value("MoveProperties", "use_pivot", _use_pivot_cb.pressed if _use_pivot_cb else false)
-	config.set_value("MoveProperties", "pivot_ball", _pivot_ball.value if _pivot_ball else 0.0)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving MoveModeSettings: ", save_err)
+	var values: Dictionary = {}
+	values["constraint_mode"] = current_constraint_mode
+	values["align_mode"] = _align_mode_option.selected
+	values["nudge_x"] = _nudge_x.value if _nudge_x else 0.0
+	values["nudge_y"] = _nudge_y.value if _nudge_y else 0.0
+	values["nudge_z"] = _nudge_z.value if _nudge_z else 0.0
+	values["rotate_roll"] = _rotate_roll.value if _rotate_roll else 0.0
+	values["rotate_pitch"] = _rotate_pitch.value if _rotate_pitch else 0.0
+	values["rotate_yaw"] = _rotate_yaw.value if _rotate_yaw else 0.0
+	values["scale_factor"] = _scale_factor.value if _scale_factor else 1.0
+	values["scale_dist"] = _scale_dist.pressed if _scale_dist else true
+	values["scale_size"] = _scale_size.pressed if _scale_size else true
+	values["mirror_x"] = _mirror_x.pressed if _mirror_x else false
+	values["mirror_y"] = _mirror_y.pressed if _mirror_y else false
+	values["mirror_z"] = _mirror_z.pressed if _mirror_z else false
+	values["use_pivot"] = _use_pivot_cb.pressed if _use_pivot_cb else false
+	values["pivot_ball"] = _pivot_ball.value if _pivot_ball else 0.0
+	LnzLiveUtils.save_config("MoveProperties", values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("MoveProperties", "user://settings.cfg")
+	if data.empty():
 		return
 
 	print("[STATUS] MoveModeSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	var constraint: String = config.get_value("MoveProperties", "constraint_mode", "Free")
+	var constraint: String = data.get("constraint_mode", "Free")
 	_on_constraint_selected(constraint)
 
-	_align_mode_option.selected = config.get_value("MoveProperties", "align_mode", 1)
+	_align_mode_option.selected = data.get("align_mode", 1)
 
-	if _nudge_x: _nudge_x.value = config.get_value("MoveProperties", "nudge_x", 0.0)
-	if _nudge_y: _nudge_y.value = config.get_value("MoveProperties", "nudge_y", 0.0)
-	if _nudge_z: _nudge_z.value = config.get_value("MoveProperties", "nudge_z", 0.0)
+	if _nudge_x: _nudge_x.value = data.get("nudge_x", 0.0)
+	if _nudge_y: _nudge_y.value = data.get("nudge_y", 0.0)
+	if _nudge_z: _nudge_z.value = data.get("nudge_z", 0.0)
 
-	if _rotate_roll: _rotate_roll.value = config.get_value("MoveProperties", "rotate_roll", 0.0)
-	if _rotate_pitch: _rotate_pitch.value = config.get_value("MoveProperties", "rotate_pitch", 0.0)
-	if _rotate_yaw: _rotate_yaw.value = config.get_value("MoveProperties", "rotate_yaw", 0.0)
+	if _rotate_roll: _rotate_roll.value = data.get("rotate_roll", 0.0)
+	if _rotate_pitch: _rotate_pitch.value = data.get("rotate_pitch", 0.0)
+	if _rotate_yaw: _rotate_yaw.value = data.get("rotate_yaw", 0.0)
 
-	if _scale_factor: _scale_factor.value = config.get_value("MoveProperties", "scale_factor", 1.0)
-	if _scale_dist: _scale_dist.pressed = config.get_value("MoveProperties", "scale_dist", true)
-	if _scale_size: _scale_size.pressed = config.get_value("MoveProperties", "scale_size", true)
+	if _scale_factor: _scale_factor.value = data.get("scale_factor", 1.0)
+	if _scale_dist: _scale_dist.pressed = data.get("scale_dist", true)
+	if _scale_size: _scale_size.pressed = data.get("scale_size", true)
 
-	if _mirror_x: _mirror_x.pressed = config.get_value("MoveProperties", "mirror_x", false)
-	if _mirror_y: _mirror_y.pressed = config.get_value("MoveProperties", "mirror_y", false)
-	if _mirror_z: _mirror_z.pressed = config.get_value("MoveProperties", "mirror_z", false)
+	if _mirror_x: _mirror_x.pressed = data.get("mirror_x", false)
+	if _mirror_y: _mirror_y.pressed = data.get("mirror_y", false)
+	if _mirror_z: _mirror_z.pressed = data.get("mirror_z", false)
 
-	if _use_pivot_cb: _use_pivot_cb.pressed = config.get_value("MoveProperties", "use_pivot", false)
-	if _pivot_ball: _pivot_ball.value = config.get_value("MoveProperties", "pivot_ball", 0.0)
+	if _use_pivot_cb: _use_pivot_cb.pressed = data.get("use_pivot", false)
+	if _pivot_ball: _pivot_ball.value = data.get("pivot_ball", 0.0)
 
 	_is_loading_settings = false
 

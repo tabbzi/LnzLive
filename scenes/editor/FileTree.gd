@@ -170,7 +170,6 @@ func _ready() -> void:
 
 	# rescan(null)
 	# rescan_textures(true)
-	# rescan_res_textures()
 	# rescan_palettes()
 	# rescan_bases()
 
@@ -600,16 +599,6 @@ func rescan_textures(reload_model: bool = false) -> void:
 			if pet_node.lnz:
 				pet_node.recompose_model()
 
-func rescan_res_textures() -> void:
-	var was_collapsed: bool = true
-	if res_textures != null:
-		was_collapsed = res_textures.collapsed
-		root.remove_child(res_textures)
-	res_textures = create_item(root, INDEX_GAME_TEXTURES)
-	res_textures.set_text(0, "Game Textures")
-	res_textures.collapsed = was_collapsed
-	scan_res_textures()
-	
 func rescan_palettes() -> void:
 	var was_collapsed: bool = true
 	if local_storage_palettes != null:

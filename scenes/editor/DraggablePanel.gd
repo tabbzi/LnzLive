@@ -14,6 +14,8 @@ var is_docked: bool = false
 var dock_button: Button
 var original_rect_size: Vector2
 
+var _is_loading_settings: bool = false
+
 func _ready() -> void:
 	get_viewport().connect("size_changed", self, "_on_viewport_resized")
 
@@ -100,30 +102,6 @@ func _on_dock_button_pressed() -> void:
 
 func _on_close_button_pressed() -> void:
 	_on_dock_button_pressed()
-
-func _setup_custom_buttons() -> void:
-	var style_normal: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_normal.tres")
-	var style_hover: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_hover.tres")
-	var pixel_font: Font = load("res://resources/fonts/font_pixel_maz_24.tres")
-
-	dock_button = Button.new()
-	dock_button.text = "Dock"
-
-	dock_button.add_stylebox_override("normal", style_normal)
-	dock_button.add_stylebox_override("hover", style_hover)
-	dock_button.add_stylebox_override("pressed", style_normal)
-	dock_button.add_font_override("font", pixel_font)
-	
-	dock_button.connect("pressed", self, "_on_dock_button_pressed")
-	add_child(dock_button)
-	
-	dock_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
-	dock_button.margin_right = -35
-	dock_button.margin_top = 5
-	dock_button.margin_left = -95
-	dock_button.margin_bottom = 25
-
-	update_buttons()
 
 func set_docked(docked: bool) -> void:
 	is_docked = docked

@@ -127,7 +127,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 458.0
-margin_bottom = 1239.0
+margin_bottom = 1299.0
 size_flags_horizontal = 3
 custom_constants/separation = 10
 
@@ -639,7 +639,7 @@ text = "Apply Eye Colors"
 [node name="BucketContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 960.0
 margin_right = 458.0
-margin_bottom = 1239.0
+margin_bottom = 1299.0
 custom_constants/separation = 10
 
 [node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
@@ -781,10 +781,20 @@ rect_min_size = Vector2( 24, 24 )
 expand = true
 stretch_mode = 6
 
-[node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 219.0
 margin_right = 458.0
-margin_bottom = 244.0
+margin_bottom = 400.0
+rect_min_size = Vector2( 0, 200 )
+scroll_horizontal_enabled = false
+
+[node name="PaletteGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll"]
+columns = 16
+
+[node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
+margin_top = 279.0
+margin_right = 458.0
+margin_bottom = 304.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -794,9 +804,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Apply Bucket"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_top = 254.0
+margin_top = 314.0
 margin_right = 458.0
-margin_bottom = 279.0
+margin_bottom = 339.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )

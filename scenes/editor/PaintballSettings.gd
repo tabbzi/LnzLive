@@ -12,8 +12,6 @@ signal apply_paintballz
 signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
-var _is_loading_settings: bool = false
-
 onready var paintballz_tree: Tree = find_node("PaintballzTree")
 onready var _apply_button: Button = find_node("ApplyButton")
 onready var _clear_button: Button = find_node("ClearButton")
@@ -445,17 +443,7 @@ func _process(delta: float) -> void:
 			item.dict["walk_done"] = true
 
 func get_closest_palette_index(target_color: Color) -> int:
-	if cached_palette_colors.empty():
-		return 0
-	var best_index: int = 0
-	var min_dist: float = INF
-	for i in range(cached_palette_colors.size()):
-		var c: Color = cached_palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	return best_index
+	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func _on_ApplyButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: apply_paintballz signal emitted")
@@ -1282,118 +1270,104 @@ func _on_setting_changed(_arg = null) -> void:
 	save_settings()
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("[WARNING] PaintballSettings: error loading existing settings config for save: ", err)
-		return
-
-	config.set_value("PaintballProperties", "diameter_min", _diameter_min.value)
-	config.set_value("PaintballProperties", "diameter_max", _diameter_max.value)
-	config.set_value("PaintballProperties", "tapered", _tapered.pressed)
-	config.set_value("PaintballProperties", "pixel_mode", _pixel_mode.pressed)
-	
-	if _color: config.set_value("PaintballProperties", "color", _color.text)
-	if _outline_color: config.set_value("PaintballProperties", "outline_color", _outline_color.text)
-	
-	config.set_value("PaintballProperties", "outline_type_min", _outline_type_min.value)
-	config.set_value("PaintballProperties", "outline_type_max", _outline_type_max.value)
-	config.set_value("PaintballProperties", "fuzz_min", _fuzz_min.value)
-	config.set_value("PaintballProperties", "fuzz_max", _fuzz_max.value)
-	config.set_value("PaintballProperties", "texture", _texture.text if _texture else "")
-	config.set_value("PaintballProperties", "group", _group.value)
-	config.set_value("PaintballProperties", "anchored", _anchored.pressed)
-	config.set_value("PaintballProperties", "target", _target.selected)
-	config.set_value("PaintballProperties", "freeline", _freeline_checkbox.pressed)
-	config.set_value("PaintballProperties", "straight_line", _straight_line_checkbox.pressed)
-	config.set_value("PaintballProperties", "spacing", _spacing.value)
-	config.set_value("PaintballProperties", "jitter", _jitter.value)
-	config.set_value("PaintballProperties", "ordered", _ordered.pressed)
-	config.set_value("PaintballProperties", "repeat", _repeat.pressed)
-	config.set_value("PaintballProperties", "shuffle", _shuffle.pressed)
-	config.set_value("PaintballProperties", "random_walk", _random_walk_checkbox.pressed)
-	config.set_value("PaintballProperties", "walk_steps", _walk_steps.value)
-	config.set_value("PaintballProperties", "walk_spread", _walk_spread.value)
-	config.set_value("PaintballProperties", "exclude_eye_ballz", _exclude_eye_ballz.pressed)
-
-	config.set_value("DesignMode", "design_paintballs", _design_canvas.design_paintballs)
-	config.set_value("DesignMode", "brush_size", _brush_size_slider.value)
-	config.set_value("DesignMode", "design_total_diameter", _design_total_diameter.value)
-	config.set_value("DesignMode", "design_total_diameter_max", _design_total_diameter_max.value)
-	config.set_value("DesignMode", "design_pixel_mode", _design_pixel_mode.pressed)
-	config.set_value("DesignMode", "color_slots_v2", design_color_slots)
-
-	config.set_value("DesignMode", "mirror_x", _mirror_x.pressed)
-	config.set_value("DesignMode", "mirror_y", _mirror_y.pressed)
-	config.set_value("DesignMode", "canvas_eraser", _canvas_eraser.pressed)
-	config.set_value("DesignMode", "straight_line", _straight_line_checkbox.pressed)
-	config.set_value("DesignMode", "design_jitter", _design_jitter.value)
-	config.set_value("DesignMode", "rotate_jitter", _rotate_jitter.value)
-	config.set_value("DesignMode", "rotate_fixed", _rotate_fixed.pressed)
-	config.set_value("DesignMode", "spread_jitter", _spread_jitter.value)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("[ERROR] PaintballSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
+	var values: Dictionary = {}
+	values["diameter_min"] = _diameter_min.value
+	values["diameter_max"] = _diameter_max.value
+	values["tapered"] = _tapered.pressed
+	values["pixel_mode"] = _pixel_mode.pressed
+	if _color: values["color"] = _color.text
+	if _outline_color: values["outline_color"] = _outline_color.text
+	values["outline_type_min"] = _outline_type_min.value
+	values["outline_type_max"] = _outline_type_max.value
+	values["fuzz_min"] = _fuzz_min.value
+	values["fuzz_max"] = _fuzz_max.value
+	if _texture: values["texture"] = _texture.text
+	values["group"] = _group.value
+	values["anchored"] = _anchored.pressed
+	values["target"] = _target.selected
+	values["freeline"] = _freeline_checkbox.pressed
+	values["straight_line"] = _straight_line_checkbox.pressed
+	values["spacing"] = _spacing.value
+	values["jitter"] = _jitter.value
+	values["ordered"] = _ordered.pressed
+	values["repeat"] = _repeat.pressed
+	values["shuffle"] = _shuffle.pressed
+	values["random_walk"] = _random_walk_checkbox.pressed
+	values["walk_steps"] = _walk_steps.value
+	values["walk_spread"] = _walk_spread.value
+	values["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	LnzLiveUtils.save_config("PaintballProperties", values, "user://settings.cfg")
+	var design_values: Dictionary = {}
+	design_values["design_paintballs"] = _design_canvas.design_paintballs
+	design_values["brush_size"] = _brush_size_slider.value
+	design_values["design_total_diameter"] = _design_total_diameter.value
+	design_values["design_total_diameter_max"] = _design_total_diameter_max.value
+	design_values["design_pixel_mode"] = _design_pixel_mode.pressed
+	design_values["color_slots_v2"] = design_color_slots
+	design_values["mirror_x"] = _mirror_x.pressed
+	design_values["mirror_y"] = _mirror_y.pressed
+	design_values["canvas_eraser"] = _canvas_eraser.pressed
+	design_values["straight_line"] = _straight_line_checkbox.pressed
+	design_values["design_jitter"] = _design_jitter.value
+	design_values["rotate_jitter"] = _rotate_jitter.value
+	design_values["rotate_fixed"] = _rotate_fixed.pressed
+	design_values["spread_jitter"] = _spread_jitter.value
+	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
-		print("[WARNING] PaintballSettings: could not load config from %s, using defaults (Error: %d)" % [SETTINGS_PATH, err])
+	var data: Dictionary = LnzLiveUtils.load_config("PaintballProperties", "user://settings.cfg")
+	var design_data: Dictionary = LnzLiveUtils.load_config("DesignMode", "user://settings.cfg")
+	if data.empty() and design_data.empty():
 		return
 
 	print("[STATUS] PaintballSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	_diameter_min.value = config.get_value("PaintballProperties", "diameter_min", 10.0)
-	_diameter_max.value = config.get_value("PaintballProperties", "diameter_max", 20.0)
-	_tapered.pressed = config.get_value("PaintballProperties", "tapered", false)
-	_pixel_mode.pressed = config.get_value("PaintballProperties", "pixel_mode", false)
-	
-	if _color: _color.text = config.get_value("PaintballProperties", "color", "")
-	if _outline_color: _outline_color.text = config.get_value("PaintballProperties", "outline_color", "244")
-	
-	_outline_type_min.value = config.get_value("PaintballProperties", "outline_type_min", -1.0)
-	_outline_type_max.value = config.get_value("PaintballProperties", "outline_type_max", -1.0)
-	_fuzz_min.value = config.get_value("PaintballProperties", "fuzz_min", 0.0)
-	_fuzz_max.value = config.get_value("PaintballProperties", "fuzz_max", 0.0)
-	if _texture: _texture.text = config.get_value("PaintballProperties", "texture", "0")
-	_group.value = config.get_value("PaintballProperties", "group", 0.0)
-	_anchored.pressed = config.get_value("PaintballProperties", "anchored", true)
-	_target.selected = config.get_value("PaintballProperties", "target", 0)
-	_freeline_checkbox.pressed = config.get_value("PaintballProperties", "freeline", false)
-	_straight_line_checkbox.pressed = config.get_value("PaintballProperties", "straight_line", false)
-	_spacing.value = config.get_value("PaintballProperties", "spacing", 5.0)
-	_jitter.value = config.get_value("PaintballProperties", "jitter", 0.0)
-	_ordered.pressed = config.get_value("PaintballProperties", "ordered", false)
-	_repeat.pressed = config.get_value("PaintballProperties", "repeat", false)
-	_shuffle.pressed = config.get_value("PaintballProperties", "shuffle", false)
-	_random_walk_checkbox.pressed = config.get_value("PaintballProperties", "random_walk", false)
-	_walk_steps.value = config.get_value("PaintballProperties", "walk_steps", 3.0)
-	_walk_spread.value = config.get_value("PaintballProperties", "walk_spread", 5.0)
-	_exclude_eye_ballz.pressed = config.get_value("PaintballProperties", "exclude_eye_ballz", true)
+	_diameter_min.value = data.get("diameter_min", 10.0)
+	_diameter_max.value = data.get("diameter_max", 20.0)
+	_tapered.pressed = data.get("tapered", false)
+	_pixel_mode.pressed = data.get("pixel_mode", false)
+	if _color: _color.text = data.get("color", "")
+	if _outline_color: _outline_color.text = data.get("outline_color", "244")
+	_outline_type_min.value = data.get("outline_type_min", -1.0)
+	_outline_type_max.value = data.get("outline_type_max", -1.0)
+	_fuzz_min.value = data.get("fuzz_min", 0.0)
+	_fuzz_max.value = data.get("fuzz_max", 0.0)
+	if _texture: _texture.text = data.get("texture", "0")
+	_group.value = data.get("group", 0.0)
+	_anchored.pressed = data.get("anchored", true)
+	_target.selected = data.get("target", 0)
+	_freeline_checkbox.pressed = data.get("freeline", false)
+	_straight_line_checkbox.pressed = data.get("straight_line", false)
+	_spacing.value = data.get("spacing", 5.0)
+	_jitter.value = data.get("jitter", 0.0)
+	_ordered.pressed = data.get("ordered", false)
+	_repeat.pressed = data.get("repeat", false)
+	_shuffle.pressed = data.get("shuffle", false)
+	_random_walk_checkbox.pressed = data.get("random_walk", false)
+	_walk_steps.value = data.get("walk_steps", 3.0)
+	_walk_spread.value = data.get("walk_spread", 5.0)
+	_exclude_eye_ballz.pressed = data.get("exclude_eye_ballz", true)
 
-	var loaded_paintballs: Array = config.get_value("DesignMode", "design_paintballs", [])
+	var loaded_paintballs: Array = design_data.get("design_paintballs", [])
 	if loaded_paintballs.size() > 0:
 		_design_canvas.design_paintballs = loaded_paintballs
 		_design_canvas.update()
 		_design_canvas.emit_signal("design_changed")
 
-	_brush_size_slider.value = config.get_value("DesignMode", "brush_size", 30.0)
-	_design_total_diameter.value = config.get_value("DesignMode", "design_total_diameter", 20.0)
-	_design_total_diameter_max.value = config.get_value("DesignMode", "design_total_diameter_max", 30.0)
-	_design_pixel_mode.pressed = config.get_value("DesignMode", "design_pixel_mode", false)
+	_brush_size_slider.value = design_data.get("brush_size", 30.0)
+	_design_total_diameter.value = design_data.get("design_total_diameter", 20.0)
+	_design_total_diameter_max.value = design_data.get("design_total_diameter_max", 30.0)
+	_design_pixel_mode.pressed = design_data.get("design_pixel_mode", false)
 	_design_canvas.brush_size = _brush_size_slider.value
 	_brush_size_label.text = "Brush Size (" + str(_brush_size_slider.value) + "%)"
 	_brush_space_label.text = "Brush Spacing (" + str(_brush_space_slider.value) + "%)"
 
-
-	var loaded_slots_v2: Array = config.get_value("DesignMode", "color_slots_v2", [])
+	var loaded_slots_v2: Array = design_data.get("color_slots_v2", [])
 	if loaded_slots_v2.size() > 0:
 		design_color_slots = loaded_slots_v2
 	else:
-		var loaded_slots: Array = config.get_value("DesignMode", "color_slots", [])
+		var loaded_slots: Array = design_data.get("color_slots", [])
 		if loaded_slots.size() == 4:
 			for i in range(4):
 				var old_slot: Dictionary = loaded_slots[i]
@@ -1402,14 +1376,14 @@ func load_settings() -> void:
 				design_color_slots[i].texture = old_slot.texture
 				design_color_slots[i].outline_type = old_slot.outline_type
 
-	_mirror_x.pressed = config.get_value("DesignMode", "mirror_x", false)
-	_mirror_y.pressed = config.get_value("DesignMode", "mirror_y", false)
-	_canvas_eraser.pressed = config.get_value("DesignMode", "canvas_eraser", false)
-	_straight_line_checkbox.pressed = config.get_value("DesignMode", "straight_line", false)
-	_design_jitter.value = config.get_value("DesignMode", "design_jitter", 0.0)
-	_rotate_jitter.value = config.get_value("DesignMode", "rotate_jitter", 0.0)
-	_rotate_fixed.pressed = config.get_value("DesignMode", "rotate_fixed", false)
-	_spread_jitter.value = config.get_value("DesignMode", "spread_jitter", 0.0)
+	_mirror_x.pressed = design_data.get("mirror_x", false)
+	_mirror_y.pressed = design_data.get("mirror_y", false)
+	_canvas_eraser.pressed = design_data.get("canvas_eraser", false)
+	_straight_line_checkbox.pressed = design_data.get("straight_line", false)
+	_design_jitter.value = design_data.get("design_jitter", 0.0)
+	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
+	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
+	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
 
 	_on_design_tool_toggled(null)
 

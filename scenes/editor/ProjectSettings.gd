@@ -20,8 +20,6 @@ signal apply_projections(projections)
 signal randomize_body_proportions(settings)
 signal randomize_moves(settings)
 
-var _is_loading_settings: bool = false
-
 onready var projections_tree: Tree = find_node("ProjectionsTree")
 
 func _ready() -> void:
@@ -459,124 +457,95 @@ func _on_setting_changed(_arg = null) -> void:
 	save_settings()
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
-		return
-
-	config.set_value("ProjectProperties", "leg_ext_1_min", find_node("LegExt1MinSpinBox").value)
-	config.set_value("ProjectProperties", "leg_ext_1_max", find_node("LegExt1MaxSpinBox").value)
-	config.set_value("ProjectProperties", "leg_ext_2_min", find_node("LegExt2MinSpinBox").value)
-	config.set_value("ProjectProperties", "leg_ext_2_max", find_node("LegExt2MaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "head_enl_1_min", find_node("HeadEnl1MinSpinBox").value)
-	config.set_value("ProjectProperties", "head_enl_1_max", find_node("HeadEnl1MaxSpinBox").value)
-	config.set_value("ProjectProperties", "head_enl_2_min", find_node("HeadEnl2MinSpinBox").value)
-	config.set_value("ProjectProperties", "head_enl_2_max", find_node("HeadEnl2MaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "feet_enl_1_min", find_node("FeetEnl1MinSpinBox").value)
-	config.set_value("ProjectProperties", "feet_enl_1_max", find_node("FeetEnl1MaxSpinBox").value)
-	config.set_value("ProjectProperties", "feet_enl_2_min", find_node("FeetEnl2MinSpinBox").value)
-	config.set_value("ProjectProperties", "feet_enl_2_max", find_node("FeetEnl2MaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "scales_1_min", find_node("Scales1MinSpinBox").value)
-	config.set_value("ProjectProperties", "scales_1_max", find_node("Scales1MaxSpinBox").value)
-	config.set_value("ProjectProperties", "scales_2_min", find_node("Scales2MinSpinBox").value)
-	config.set_value("ProjectProperties", "scales_2_max", find_node("Scales2MaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "body_ext_min", find_node("BodyExtMinSpinBox").value)
-	config.set_value("ProjectProperties", "body_ext_max", find_node("BodyExtMaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "face_ext_min", find_node("FaceExtMinSpinBox").value)
-	config.set_value("ProjectProperties", "face_ext_max", find_node("FaceExtMaxSpinBox").value)
-
-	config.set_value("ProjectProperties", "ear_ext_min", find_node("EarExtMinSpinBox").value)
-	config.set_value("ProjectProperties", "ear_ext_max", find_node("EarExtMaxSpinBox").value)
-	
-	# Move Mode Settings
-	config.set_value("ProjectProperties", "move_x_min", find_node("MoveXMin").value)
-	config.set_value("ProjectProperties", "move_x_max", find_node("MoveXMax").value)
-	config.set_value("ProjectProperties", "move_y_min", find_node("MoveYMin").value)
-	config.set_value("ProjectProperties", "move_y_max", find_node("MoveYMax").value)
-	config.set_value("ProjectProperties", "move_z_min", find_node("MoveZMin").value)
-	config.set_value("ProjectProperties", "move_z_max", find_node("MoveZMax").value)
-	config.set_value("ProjectProperties", "jitter_radius", find_node("JitterRadius").value)
-	
-	config.set_value("ProjectProperties", "include_proj", find_node("IncludeProjCheckBox").pressed)
-	config.set_value("ProjectProperties", "include_body", find_node("IncludeBodyCheckBox").pressed)
-	config.set_value("ProjectProperties", "include_moves", find_node("IncludeMovesCheckBox").pressed)
-	
-	config.set_value("ProjectProperties", "grp_head", find_node("HeadCheckBox").pressed)
-	config.set_value("ProjectProperties", "grp_body", find_node("BodyCheckBox").pressed)
-	config.set_value("ProjectProperties", "grp_legs", find_node("LegsCheckBox").pressed)
-	config.set_value("ProjectProperties", "grp_tail", find_node("TailCheckBox").pressed)
-	config.set_value("ProjectProperties", "grp_ears", find_node("EarsCheckBox").pressed)
-	config.set_value("ProjectProperties", "grp_eyes", find_node("EyesCheckBox").pressed)
-	config.set_value("ProjectProperties", "mirror_x", find_node("MirrorXCheckBox").pressed)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving ProjectSettings: ", save_err)
+	var values: Dictionary = {}
+	values["leg_ext_1_min"] = find_node("LegExt1MinSpinBox").value
+	values["leg_ext_1_max"] = find_node("LegExt1MaxSpinBox").value
+	values["leg_ext_2_min"] = find_node("LegExt2MinSpinBox").value
+	values["leg_ext_2_max"] = find_node("LegExt2MaxSpinBox").value
+	values["head_enl_1_min"] = find_node("HeadEnl1MinSpinBox").value
+	values["head_enl_1_max"] = find_node("HeadEnl1MaxSpinBox").value
+	values["head_enl_2_min"] = find_node("HeadEnl2MinSpinBox").value
+	values["head_enl_2_max"] = find_node("HeadEnl2MaxSpinBox").value
+	values["feet_enl_1_min"] = find_node("FeetEnl1MinSpinBox").value
+	values["feet_enl_1_max"] = find_node("FeetEnl1MaxSpinBox").value
+	values["feet_enl_2_min"] = find_node("FeetEnl2MinSpinBox").value
+	values["feet_enl_2_max"] = find_node("FeetEnl2MaxSpinBox").value
+	values["scales_1_min"] = find_node("Scales1MinSpinBox").value
+	values["scales_1_max"] = find_node("Scales1MaxSpinBox").value
+	values["scales_2_min"] = find_node("Scales2MinSpinBox").value
+	values["scales_2_max"] = find_node("Scales2MaxSpinBox").value
+	values["body_ext_min"] = find_node("BodyExtMinSpinBox").value
+	values["body_ext_max"] = find_node("BodyExtMaxSpinBox").value
+	values["face_ext_min"] = find_node("FaceExtMinSpinBox").value
+	values["face_ext_max"] = find_node("FaceExtMaxSpinBox").value
+	values["ear_ext_min"] = find_node("EarExtMinSpinBox").value
+	values["ear_ext_max"] = find_node("EarExtMaxSpinBox").value
+	values["move_x_min"] = find_node("MoveXMin").value
+	values["move_x_max"] = find_node("MoveXMax").value
+	values["move_y_min"] = find_node("MoveYMin").value
+	values["move_y_max"] = find_node("MoveYMax").value
+	values["move_z_min"] = find_node("MoveZMin").value
+	values["move_z_max"] = find_node("MoveZMax").value
+	values["jitter_radius"] = find_node("JitterRadius").value
+	values["include_proj"] = find_node("IncludeProjCheckBox").pressed
+	values["include_body"] = find_node("IncludeBodyCheckBox").pressed
+	values["include_moves"] = find_node("IncludeMovesCheckBox").pressed
+	values["grp_head"] = find_node("HeadCheckBox").pressed
+	values["grp_body"] = find_node("BodyCheckBox").pressed
+	values["grp_legs"] = find_node("LegsCheckBox").pressed
+	values["grp_tail"] = find_node("TailCheckBox").pressed
+	values["grp_ears"] = find_node("EarsCheckBox").pressed
+	values["grp_eyes"] = find_node("EyesCheckBox").pressed
+	values["mirror_x"] = find_node("MirrorXCheckBox").pressed
+	LnzLiveUtils.save_config("ProjectProperties", values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("ProjectProperties", "user://settings.cfg")
+	if data.empty():
 		return
 
 	print("[STATUS] ProjectSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	find_node("LegExt1MinSpinBox").value = config.get_value("ProjectProperties", "leg_ext_1_min", -30.0)
-	find_node("LegExt1MaxSpinBox").value = config.get_value("ProjectProperties", "leg_ext_1_max", 30.0)
-	find_node("LegExt2MinSpinBox").value = config.get_value("ProjectProperties", "leg_ext_2_min", -30.0)
-	find_node("LegExt2MaxSpinBox").value = config.get_value("ProjectProperties", "leg_ext_2_max", 30.0)
-
-	find_node("HeadEnl1MinSpinBox").value = config.get_value("ProjectProperties", "head_enl_1_min", 100.0)
-	find_node("HeadEnl1MaxSpinBox").value = config.get_value("ProjectProperties", "head_enl_1_max", 120.0)
-	find_node("HeadEnl2MinSpinBox").value = config.get_value("ProjectProperties", "head_enl_2_min", 0.0)
-	find_node("HeadEnl2MaxSpinBox").value = config.get_value("ProjectProperties", "head_enl_2_max", 0.0)
-
-	find_node("FeetEnl1MinSpinBox").value = config.get_value("ProjectProperties", "feet_enl_1_min", 50.0)
-	find_node("FeetEnl1MaxSpinBox").value = config.get_value("ProjectProperties", "feet_enl_1_max", 150.0)
-	find_node("FeetEnl2MinSpinBox").value = config.get_value("ProjectProperties", "feet_enl_2_min", 0.0)
-	find_node("FeetEnl2MaxSpinBox").value = config.get_value("ProjectProperties", "feet_enl_2_max", 20.0)
-
-	find_node("Scales1MinSpinBox").value = config.get_value("ProjectProperties", "scales_1_min", 120.0)
-	find_node("Scales1MaxSpinBox").value = config.get_value("ProjectProperties", "scales_1_max", 120.0)
-	find_node("Scales2MinSpinBox").value = config.get_value("ProjectProperties", "scales_2_min", 100.0)
-	find_node("Scales2MaxSpinBox").value = config.get_value("ProjectProperties", "scales_2_max", 100.0)
-
-	find_node("BodyExtMinSpinBox").value = config.get_value("ProjectProperties", "body_ext_min", -20.0)
-	find_node("BodyExtMaxSpinBox").value = config.get_value("ProjectProperties", "body_ext_max", 60.0)
-
-	find_node("FaceExtMinSpinBox").value = config.get_value("ProjectProperties", "face_ext_min", -30.0)
-	find_node("FaceExtMaxSpinBox").value = config.get_value("ProjectProperties", "face_ext_max", 30.0)
-
-	find_node("EarExtMinSpinBox").value = config.get_value("ProjectProperties", "ear_ext_min", 50.0)
-	find_node("EarExtMaxSpinBox").value = config.get_value("ProjectProperties", "ear_ext_max", 100.0)
-	
-	find_node("MoveXMin").value = config.get_value("ProjectProperties", "move_x_min", -10.0)
-	find_node("MoveXMax").value = config.get_value("ProjectProperties", "move_x_max", 10.0)
-	find_node("MoveYMin").value = config.get_value("ProjectProperties", "move_y_min", -10.0)
-	find_node("MoveYMax").value = config.get_value("ProjectProperties", "move_y_max", 10.0)
-	find_node("MoveZMin").value = config.get_value("ProjectProperties", "move_z_min", -10.0)
-	find_node("MoveZMax").value = config.get_value("ProjectProperties", "move_z_max", 10.0)
-	find_node("JitterRadius").value = config.get_value("ProjectProperties", "jitter_radius", 10.0)
-	
-	find_node("IncludeProjCheckBox").pressed = config.get_value("ProjectProperties", "include_proj", true)
-	find_node("IncludeBodyCheckBox").pressed = config.get_value("ProjectProperties", "include_body", true)
-	find_node("IncludeMovesCheckBox").pressed = config.get_value("ProjectProperties", "include_moves", true)
-	
-	find_node("HeadCheckBox").pressed = config.get_value("ProjectProperties", "grp_head", true)
-	find_node("BodyCheckBox").pressed = config.get_value("ProjectProperties", "grp_body", true)
-	find_node("LegsCheckBox").pressed = config.get_value("ProjectProperties", "grp_legs", true)
-	find_node("TailCheckBox").pressed = config.get_value("ProjectProperties", "grp_tail", true)
-	find_node("EarsCheckBox").pressed = config.get_value("ProjectProperties", "grp_ears", true)
-	find_node("EyesCheckBox").pressed = config.get_value("ProjectProperties", "grp_eyes", true)
-	find_node("MirrorXCheckBox").pressed = config.get_value("ProjectProperties", "mirror_x", true)
-
+	find_node("LegExt1MinSpinBox").value = data.get("leg_ext_1_min", -30.0)
+	find_node("LegExt1MaxSpinBox").value = data.get("leg_ext_1_max", 30.0)
+	find_node("LegExt2MinSpinBox").value = data.get("leg_ext_2_min", -30.0)
+	find_node("LegExt2MaxSpinBox").value = data.get("leg_ext_2_max", 30.0)
+	find_node("HeadEnl1MinSpinBox").value = data.get("head_enl_1_min", 100.0)
+	find_node("HeadEnl1MaxSpinBox").value = data.get("head_enl_1_max", 120.0)
+	find_node("HeadEnl2MinSpinBox").value = data.get("head_enl_2_min", 0.0)
+	find_node("HeadEnl2MaxSpinBox").value = data.get("head_enl_2_max", 0.0)
+	find_node("FeetEnl1MinSpinBox").value = data.get("feet_enl_1_min", 50.0)
+	find_node("FeetEnl1MaxSpinBox").value = data.get("feet_enl_1_max", 150.0)
+	find_node("FeetEnl2MinSpinBox").value = data.get("feet_enl_2_min", 0.0)
+	find_node("FeetEnl2MaxSpinBox").value = data.get("feet_enl_2_max", 20.0)
+	find_node("Scales1MinSpinBox").value = data.get("scales_1_min", 120.0)
+	find_node("Scales1MaxSpinBox").value = data.get("scales_1_max", 120.0)
+	find_node("Scales2MinSpinBox").value = data.get("scales_2_min", 100.0)
+	find_node("Scales2MaxSpinBox").value = data.get("scales_2_max", 100.0)
+	find_node("BodyExtMinSpinBox").value = data.get("body_ext_min", -20.0)
+	find_node("BodyExtMaxSpinBox").value = data.get("body_ext_max", 60.0)
+	find_node("FaceExtMinSpinBox").value = data.get("face_ext_min", -30.0)
+	find_node("FaceExtMaxSpinBox").value = data.get("face_ext_max", 30.0)
+	find_node("EarExtMinSpinBox").value = data.get("ear_ext_min", 50.0)
+	find_node("EarExtMaxSpinBox").value = data.get("ear_ext_max", 100.0)
+	find_node("MoveXMin").value = data.get("move_x_min", -10.0)
+	find_node("MoveXMax").value = data.get("move_x_max", 10.0)
+	find_node("MoveYMin").value = data.get("move_y_min", -10.0)
+	find_node("MoveYMax").value = data.get("move_y_max", 10.0)
+	find_node("MoveZMin").value = data.get("move_z_min", -10.0)
+	find_node("MoveZMax").value = data.get("move_z_max", 10.0)
+	find_node("JitterRadius").value = data.get("jitter_radius", 10.0)
+	find_node("IncludeProjCheckBox").pressed = data.get("include_proj", true)
+	find_node("IncludeBodyCheckBox").pressed = data.get("include_body", true)
+	find_node("IncludeMovesCheckBox").pressed = data.get("include_moves", true)
+	find_node("HeadCheckBox").pressed = data.get("grp_head", true)
+	find_node("BodyCheckBox").pressed = data.get("grp_body", true)
+	find_node("LegsCheckBox").pressed = data.get("grp_legs", true)
+	find_node("TailCheckBox").pressed = data.get("grp_tail", true)
+	find_node("EarsCheckBox").pressed = data.get("grp_ears", true)
+	find_node("EyesCheckBox").pressed = data.get("grp_eyes", true)
+	find_node("MirrorXCheckBox").pressed = data.get("mirror_x", true)
 	_is_loading_settings = false
 
 func _on_reset_defaults_pressed() -> void:

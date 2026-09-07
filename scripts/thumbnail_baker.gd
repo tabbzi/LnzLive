@@ -35,5 +35,7 @@ func _run():
 				print("Failed to load: " + file_name)
 				
 		file_name = dir.get_next()
-		
+	
+	dir.list_dir_end()
+	
 	print("--- Done! You may need to wait for Godot to re-scan the folder. ---")

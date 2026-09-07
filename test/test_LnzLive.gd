@@ -322,23 +322,6 @@ func test_lnzlive_intersect_ray_with_plane_oblique():
 	assert_not_null(result, "Oblique ray should find intersection.")
 	assert_almost_eq(result.y, 3.0, 0.01, "Intersection Y should be at plane height.")
 
-func test_lnzlive_find_closest_palette_index_no_match():
-	# Verify that find_closest_palette_index returns the closest index.
-	var palette = [Color(1, 0, 0), Color(0, 1, 0), Color(0, 0, 1)]
-	var target = Color(0.5, 0.5, 0.0)
-	var idx = LnzLiveUtils.find_closest_palette_index(palette, target)
-	# Red and green are equally close in RGB space: (0.5, 0.5, 0) vs (1,0,0) and (0,1,0)
-	# dist to red = 0.5^2 + 0.5^2 + 0 = 0.5
-	# dist to green = 0.5^2 + 0.5^2 + 0 = 0.5
-	# Tie goes to first (index 0)
-	assert_true(idx == 0 or idx == 1, "Should return one of the tied closest indices (0 or 1).")
-
-func test_lnzlive_find_closest_palette_index_empty():
-	# Verify that find_closest_palette_index returns 0 for empty palette.
-	var palette: Array = []
-	var idx = LnzLiveUtils.find_closest_palette_index(palette, Color(1, 0, 0))
-	assert_eq(idx, 0, "Empty palette should return index 0.")
-
 func test_lnzlive_parse_lsystem_rules():
 	# Verify that parse_lsystem_rules correctly splits rules by '='.
 	var rules_text = "A = B C\nB = A A\nC = B"

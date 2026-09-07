@@ -24,7 +24,9 @@ func _run():
 			_process_import_file(TEXTURE_PATH + file_name)
 			processed_count += 1
 		file_name = dir.get_next()
-		
+	
+	dir.list_dir_end()
+	
 	print("--- Done! Processed %d .import files. ---" % processed_count)
 	print("Note: You may need to restart Godot for the custom importer to take over.")
 

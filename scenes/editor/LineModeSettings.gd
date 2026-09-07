@@ -6,7 +6,6 @@ extends DraggablePanel
 ## 2. Show and hide the panel
 ## 3. Retrieve all current line properties (e.g., fuzz, color, thickness) set by the user
 
-var _is_loading_settings: bool = false
 var polygon_mode: bool = false
 
 signal polygon_mode_toggled(is_on)
@@ -117,63 +116,51 @@ func _on_setting_changed(_arg = null) -> void:
 	save_settings()
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
-		return
-
-	config.set_value("LineProperties", "fuzz", find_node("Fuzz").value)
-	config.set_value("LineProperties", "color", find_node("Color").text)
-	config.set_value("LineProperties", "left_outline_color", find_node("LeftOutlineColor").text)
-	config.set_value("LineProperties", "right_outline_color", find_node("RightOutlineColor").text)
-	config.set_value("LineProperties", "start_thickness", find_node("StartThickness").value)
-	config.set_value("LineProperties", "end_thickness", find_node("EndThickness").value)
-	config.set_value("LineProperties", "outline_type", find_node("OutlineType").value)
-	config.set_value("LineProperties", "draw_order", find_node("DrawOrder").value)
-
-	config.set_value("LineProperties", "replace_fuzz", find_node("ReplaceFuzz").pressed)
-	config.set_value("LineProperties", "replace_color", find_node("ReplaceColor").pressed)
-	config.set_value("LineProperties", "replace_left_outline_color", find_node("ReplaceLeftOutlineColor").pressed)
-	config.set_value("LineProperties", "replace_right_outline_color", find_node("ReplaceRightOutlineColor").pressed)
-	config.set_value("LineProperties", "replace_start_thickness", find_node("ReplaceStartThickness").pressed)
-	config.set_value("LineProperties", "replace_end_thickness", find_node("ReplaceEndThickness").pressed)
-	config.set_value("LineProperties", "replace_outline_type", find_node("ReplaceOutlineType").pressed)
-	config.set_value("LineProperties", "replace_draw_order", find_node("ReplaceDrawOrder").pressed)
-	config.set_value("LineProperties", "polygon_mode", find_node("PolygonModeCheckBox").pressed)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving LineMode settings: ", save_err)
+	var values: Dictionary = {}
+	values["fuzz"] = find_node("Fuzz").value
+	values["color"] = find_node("Color").text
+	values["left_outline_color"] = find_node("LeftOutlineColor").text
+	values["right_outline_color"] = find_node("RightOutlineColor").text
+	values["start_thickness"] = find_node("StartThickness").value
+	values["end_thickness"] = find_node("EndThickness").value
+	values["outline_type"] = find_node("OutlineType").value
+	values["draw_order"] = find_node("DrawOrder").value
+	values["replace_fuzz"] = find_node("ReplaceFuzz").pressed
+	values["replace_color"] = find_node("ReplaceColor").pressed
+	values["replace_left_outline_color"] = find_node("ReplaceLeftOutlineColor").pressed
+	values["replace_right_outline_color"] = find_node("ReplaceRightOutlineColor").pressed
+	values["replace_start_thickness"] = find_node("ReplaceStartThickness").pressed
+	values["replace_end_thickness"] = find_node("ReplaceEndThickness").pressed
+	values["replace_outline_type"] = find_node("ReplaceOutlineType").pressed
+	values["replace_draw_order"] = find_node("ReplaceDrawOrder").pressed
+	values["polygon_mode"] = find_node("PolygonModeCheckBox").pressed
+	LnzLiveUtils.save_config("LineProperties", values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("LineProperties", "user://settings.cfg")
+	if data.empty():
 		return
 
 	print("[STATUS] LineModeSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	find_node("Fuzz").value = config.get_value("LineProperties", "fuzz", 0)
-	find_node("Color").text = config.get_value("LineProperties", "color", "-1")
-	find_node("LeftOutlineColor").text = config.get_value("LineProperties", "left_outline_color", "-1")
-	find_node("RightOutlineColor").text = config.get_value("LineProperties", "right_outline_color", "-1")
-	find_node("StartThickness").value = config.get_value("LineProperties", "start_thickness", 100)
-	find_node("EndThickness").value = config.get_value("LineProperties", "end_thickness", 100)
-	find_node("OutlineType").value = config.get_value("LineProperties", "outline_type", 0)
-	find_node("DrawOrder").value = config.get_value("LineProperties", "draw_order", 0)
-
-	find_node("ReplaceFuzz").pressed = config.get_value("LineProperties", "replace_fuzz", true)
-	find_node("ReplaceColor").pressed = config.get_value("LineProperties", "replace_color", true)
-	find_node("ReplaceLeftOutlineColor").pressed = config.get_value("LineProperties", "replace_left_outline_color", true)
-	find_node("ReplaceRightOutlineColor").pressed = config.get_value("LineProperties", "replace_right_outline_color", true)
-	find_node("ReplaceStartThickness").pressed = config.get_value("LineProperties", "replace_start_thickness", true)
-	find_node("ReplaceEndThickness").pressed = config.get_value("LineProperties", "replace_end_thickness", true)
-	find_node("ReplaceOutlineType").pressed = config.get_value("LineProperties", "replace_outline_type", true)
-	find_node("ReplaceDrawOrder").pressed = config.get_value("LineProperties", "replace_draw_order", true)
-	find_node("PolygonModeCheckBox").pressed = config.get_value("LineProperties", "polygon_mode", false)
-
+	find_node("Fuzz").value = data.get("fuzz", 0)
+	find_node("Color").text = data.get("color", "-1")
+	find_node("LeftOutlineColor").text = data.get("left_outline_color", "-1")
+	find_node("RightOutlineColor").text = data.get("right_outline_color", "-1")
+	find_node("StartThickness").value = data.get("start_thickness", 100)
+	find_node("EndThickness").value = data.get("end_thickness", 100)
+	find_node("OutlineType").value = data.get("outline_type", 0)
+	find_node("DrawOrder").value = data.get("draw_order", 0)
+	find_node("ReplaceFuzz").pressed = data.get("replace_fuzz", true)
+	find_node("ReplaceColor").pressed = data.get("replace_color", true)
+	find_node("ReplaceLeftOutlineColor").pressed = data.get("replace_left_outline_color", true)
+	find_node("ReplaceRightOutlineColor").pressed = data.get("replace_right_outline_color", true)
+	find_node("ReplaceStartThickness").pressed = data.get("replace_start_thickness", true)
+	find_node("ReplaceEndThickness").pressed = data.get("replace_end_thickness", true)
+	find_node("ReplaceOutlineType").pressed = data.get("replace_outline_type", true)
+	find_node("ReplaceDrawOrder").pressed = data.get("replace_draw_order", true)
+	find_node("PolygonModeCheckBox").pressed = data.get("polygon_mode", false)
 	_is_loading_settings = false
 
 func _on_reset_defaults_pressed() -> void:

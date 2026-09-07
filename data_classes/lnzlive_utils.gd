@@ -638,40 +638,6 @@ static func get_hue(color: Color) -> float:
 		h += 360.0
 	return h
 
-static func get_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
-	if palette_colors.empty():
-		return 1
-	var best_index: int = -1
-	var min_dist: float = INF
-	for i in range(palette_colors.size()):
-		if i == 0:
-			continue
-		var c: Color = palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	if best_index == -1:
-		return 1
-	return best_index
-
-static func find_closest_palette_index(palette_colors: Array, target_color: Color) -> int:
-	if palette_colors.empty():
-		return 1
-	var best_index: int = -1
-	var min_dist: float = INF
-	for i in range(palette_colors.size()):
-		if i == 0:
-			continue
-		var c: Color = palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	if best_index == -1:
-		return 1
-	return best_index
-
 static func darken_color(color: Color, factor: float) -> Color:
 	return Color(
 		clamp(color.r * factor, 0.0, 1.0),
@@ -699,6 +665,32 @@ static func clamp_color_within_range(base_color: Color, factor: float, min_facto
 		result.a
 	)
 
+
+static func save_config(section: String, values: Dictionary, path: String) -> int:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(path)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("[WARNING] LnzLiveUtils: error loading existing config for save: ", err)
+		return err
+
+	for key in values.keys():
+		config.set_value(section, key, values[key])
+
+	var save_err: int = config.save(path)
+	if save_err != OK:
+		print("[WARNING] LnzLiveUtils: failed to save config to %s (Error: %s)" % [path, save_err])
+	return save_err
+
+static func load_config(section: String, path: String) -> Dictionary:
+	var result: Dictionary = {}
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(path)
+	if err != OK:
+		return result
+
+	for key in config.get_section_keys(section):
+		result[key] = config.get_value(section, key)
+	return result
 
 ### WEB UTILITIES ###
 static func web_file_dialog(accept_extensions: String) -> void:

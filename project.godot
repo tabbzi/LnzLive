@@ -111,6 +111,7 @@ config/icon="res://LnzLiveIcon.png"
 [autoload]
 
 KeyBallsData="*res://data_classes/key_balls_data.gd"
+PaletteCache="*res://data_classes/palette_cache.gd"
 
 [debug]
 

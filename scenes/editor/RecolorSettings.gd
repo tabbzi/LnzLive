@@ -8,6 +8,7 @@ signal apply_eye_colors(eye_colors_info)
 onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
 onready var swap_lines_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
 onready var bucket_container = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer
+onready var bucket_palette_grid: GridContainer = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll/PaletteGrid
 
 onready var color_swap_check_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
 
@@ -273,6 +274,7 @@ func _on_palette_changed(palette_name = "") -> void:
 			
 	img.unlock()
 	_refresh_all_previews()
+	populate_bucket_palette()
 
 func queue_bucket_change(ball_node: Node) -> void:
 	if not is_instance_valid(ball_node): return
@@ -384,6 +386,48 @@ func _on_ClearSwap_pressed() -> void:
 			if cb is CheckBox:
 				cb.pressed = true
 				
+	_refresh_all_previews()
+	populate_bucket_palette()
+
+func populate_bucket_palette() -> void:
+	if not is_instance_valid(bucket_palette_grid):
+		return
+
+	for child in bucket_palette_grid.get_children():
+		bucket_palette_grid.remove_child(child)
+		child.queue_free()
+
+	if cached_palette_colors.empty():
+		return
+
+	for i in range(cached_palette_colors.size()):
+		var c: Color = cached_palette_colors[i]
+		
+		var btn: Button = Button.new()
+		btn.rect_min_size = Vector2(24, 24)
+		
+		var style: StyleBoxFlat = StyleBoxFlat.new()
+		style.bg_color = c
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_width_top = 2
+		style.border_width_bottom = 2
+		style.border_color = Color(0, 0, 0, 0)
+		
+		var focus_style: StyleBoxFlat = style.duplicate()
+		focus_style.border_color = Color(1, 1, 1, 1)
+		
+		btn.add_stylebox_override("normal", style)
+		btn.add_stylebox_override("hover", style)
+		btn.add_stylebox_override("pressed", focus_style)
+		btn.add_stylebox_override("focus", focus_style)
+		
+		btn.connect("pressed", self, "_on_bucket_palette_color_selected", [i])
+		bucket_palette_grid.add_child(btn)
+
+func _on_bucket_palette_color_selected(index: int) -> void:
+	if bucket_color_edit:
+		bucket_color_edit.text = str(index)
 	_refresh_all_previews()
 
 func _gather_swap_data() -> Array:
@@ -785,21 +829,7 @@ func _on_RandomizeAfter_pressed() -> void:
 	_refresh_all_previews()
 
 func get_closest_palette_index(target_color: Color) -> int:
-	if cached_palette_colors.empty():
-		return 1
-	var best_index: int = -1
-	var min_dist: float = INF
-	for i in range(cached_palette_colors.size()):
-		if i == 0:
-			continue
-		var c: Color = cached_palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	if best_index == -1:
-		return 1
-	return best_index
+	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func get_color_from_index(index: int) -> Color:
 	if index >= 0 and index < cached_palette_colors.size():
@@ -825,15 +855,9 @@ func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: Stri
 	return new_max
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("[WARNING] RecolorSettings: error loading existing settings config for save: ", err)
-		return
-
+	var values: Dictionary = {}
 	if is_instance_valid(nose_ballz_check):
-		config.set_value(RECOLOR_SECTION, "nose_ballz", nose_ballz_check.pressed)
-
+		values["nose_ballz"] = nose_ballz_check.pressed
 	var check_container = color_swap_check_container
 	var checks: Dictionary = {}
 	for cb in check_container.get_children():
@@ -844,33 +868,21 @@ func save_settings() -> void:
 		for cb in check_container_2.get_children():
 			if cb is CheckBox:
 				checks[cb.name] = cb.pressed
-	config.set_value(RECOLOR_SECTION, "checks", checks)
-
-	var swaps = _gather_swap_data()
-	config.set_value(RECOLOR_SECTION, "swaps", swaps)
-
-	save_eye_colors_settings(config)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("[ERROR] RecolorSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
+	values["checks"] = checks
+	values["swaps"] = _gather_swap_data()
+	save_eye_colors_settings(values)
+	LnzLiveUtils.save_config(RECOLOR_SECTION, values, SETTINGS_PATH)
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
-		print("[WARNING] RecolorSettings: could not load config from %s, using defaults (Error: %d)" % [SETTINGS_PATH, err])
+	var data: Dictionary = LnzLiveUtils.load_config(RECOLOR_SECTION, SETTINGS_PATH)
+	if data.empty():
 		return
-
 	print("[STATUS] RecolorSettings: loading settings configuration")
 	_is_loading_settings = true
-
-	load_eye_colors_settings(config)
-
+	load_eye_colors_settings(data)
 	if is_instance_valid(nose_ballz_check):
-		nose_ballz_check.pressed = config.get_value(RECOLOR_SECTION, "nose_ballz", true)
-
-	var checks = config.get_value(RECOLOR_SECTION, "checks", {})
+		nose_ballz_check.pressed = data.get("nose_ballz", true)
+	var checks = data.get("checks", {})
 	for key in checks:
 		var found = false
 		for cb in color_swap_check_container.get_children():
@@ -886,8 +898,7 @@ func load_settings() -> void:
 						cb.pressed = checks[key]
 						found = true
 						break
-
-	var swaps = config.get_value(RECOLOR_SECTION, "swaps", [])
+	var swaps = data.get("swaps", [])
 	for i in range(swaps.size()):
 		var swap = swaps[i]
 		if i < swap_lines_container.get_child_count():
@@ -904,7 +915,6 @@ func load_settings() -> void:
 			new_line.find_node("AfterColor", true, false).text = swap.get("after_color", "")
 			new_line.find_node("AfterTexture", true, false).text = swap.get("after_texture", "")
 			new_line.find_node("ColorRampCheck", true, false).pressed = swap.get("is_ramp", false)
-
 	_is_loading_settings = false
 	_refresh_all_previews()
 
@@ -1208,35 +1218,34 @@ func _write_eye_colors_to_lnz(info: Dictionary) -> void:
 	lnz_text_edit.save_file(true)
 	lnz_text_edit.commit_full_snapshot("Eye Colors Apply")
 
-func save_eye_colors_settings(config: ConfigFile) -> void:
-	config.set_value(RECOLOR_SECTION, "eye_outline_left", int(eye_outline_left_edit.text) if eye_outline_left_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "eye_outline_right", int(eye_outline_right_edit.text) if eye_outline_right_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "eyelid_color_index", int(eyelid_edit.text) if eyelid_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "iris_outline_left", int(iris_outline_left_edit.text) if iris_outline_left_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "iris_outline_right", int(iris_outline_right_edit.text) if iris_outline_right_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "iris_color_left", int(iris_col_left_edit.text) if iris_col_left_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "iris_color_right", int(iris_col_right_edit.text) if iris_col_right_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "eye_color_left", int(eye_col_left_edit.text) if eye_col_left_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "eye_color_right", int(eye_col_right_edit.text) if eye_col_right_edit.text.is_valid_integer() else -1)
-	config.set_value(RECOLOR_SECTION, "eye_all", _eye_all)
-	config.set_value(RECOLOR_SECTION, "eye_lid", _eye_lid)
-	config.set_value(RECOLOR_SECTION, "eye_odd", _eye_odd)
-	config.set_value(RECOLOR_SECTION, "eye_firefly", _eye_firefly)
+func save_eye_colors_settings(values: Dictionary) -> void:
+	values["eye_outline_left"] = int(eye_outline_left_edit.text) if eye_outline_left_edit.text.is_valid_integer() else -1
+	values["eye_outline_right"] = int(eye_outline_right_edit.text) if eye_outline_right_edit.text.is_valid_integer() else -1
+	values["eyelid_color_index"] = int(eyelid_edit.text) if eyelid_edit.text.is_valid_integer() else -1
+	values["iris_outline_left"] = int(iris_outline_left_edit.text) if iris_outline_left_edit.text.is_valid_integer() else -1
+	values["iris_outline_right"] = int(iris_outline_right_edit.text) if iris_outline_right_edit.text.is_valid_integer() else -1
+	values["iris_color_left"] = int(iris_col_left_edit.text) if iris_col_left_edit.text.is_valid_integer() else -1
+	values["iris_color_right"] = int(iris_col_right_edit.text) if iris_col_right_edit.text.is_valid_integer() else -1
+	values["eye_color_left"] = int(eye_col_left_edit.text) if eye_col_left_edit.text.is_valid_integer() else -1
+	values["eye_color_right"] = int(eye_col_right_edit.text) if eye_col_right_edit.text.is_valid_integer() else -1
+	values["eye_all"] = _eye_all
+	values["eye_lid"] = _eye_lid
+	values["eye_odd"] = _eye_odd
+	values["eye_firefly"] = _eye_firefly
 
 
-func load_eye_colors_settings(config: ConfigFile) -> void:
+func load_eye_colors_settings(data: Dictionary) -> void:
 	if _is_loading_settings:
 		return
-	
-	var eye_outline_left = config.get_value(RECOLOR_SECTION, "eye_outline_left", -1)
-	var eye_outline_right = config.get_value(RECOLOR_SECTION, "eye_outline_right", -1)
-	var eyelid_idx = config.get_value(RECOLOR_SECTION, "eyelid_color_index", -1)
-	var iris_outline_left = config.get_value(RECOLOR_SECTION, "iris_outline_left", -1)
-	var iris_outline_right = config.get_value(RECOLOR_SECTION, "iris_outline_right", -1)
-	var iris_left_idx = config.get_value(RECOLOR_SECTION, "iris_color_left", -1)
-	var iris_right_idx = config.get_value(RECOLOR_SECTION, "iris_color_right", -1)
-	var eye_left_idx = config.get_value(RECOLOR_SECTION, "eye_color_left", -1)
-	var eye_right_idx = config.get_value(RECOLOR_SECTION, "eye_color_right", -1)
+	var eye_outline_left = data.get("eye_outline_left", -1)
+	var eye_outline_right = data.get("eye_outline_right", -1)
+	var eyelid_idx = data.get("eyelid_color_index", -1)
+	var iris_outline_left = data.get("iris_outline_left", -1)
+	var iris_outline_right = data.get("iris_outline_right", -1)
+	var iris_left_idx = data.get("iris_color_left", -1)
+	var iris_right_idx = data.get("iris_color_right", -1)
+	var eye_left_idx = data.get("eye_color_left", -1)
+	var eye_right_idx = data.get("eye_color_right", -1)
 	
 	if eye_outline_left >= 0:
 		eye_outline_left_edit.text = str(eye_outline_left)
@@ -1257,10 +1266,10 @@ func load_eye_colors_settings(config: ConfigFile) -> void:
 	if eye_right_idx >= 0:
 		eye_col_right_edit.text = str(eye_right_idx)
 	
-	_eye_all = config.get_value(RECOLOR_SECTION, "eye_all", false)
-	_eye_lid = config.get_value(RECOLOR_SECTION, "eye_lid", false)
-	_eye_odd = config.get_value(RECOLOR_SECTION, "eye_odd", false)
-	_eye_firefly = config.get_value(RECOLOR_SECTION, "eye_firefly", false)
+	_eye_all = data.get("eye_all", false)
+	_eye_lid = data.get("eye_lid", false)
+	_eye_odd = data.get("eye_odd", false)
+	_eye_firefly = data.get("eye_firefly", false)
 	
 	if is_instance_valid(all_check):
 		all_check.pressed = _eye_all

@@ -199,8 +199,6 @@ onready var _pixel_mode: CheckBox = find_node("PixelMode")
 
 var pet_node: Node = null
 
-var _is_loading_settings: bool = false
-
 var cached_palette_colors: Array = []
 
 var _ordered_color_index: int = 0
@@ -294,17 +292,7 @@ func _on_palette_changed(palette_name = "") -> void:
 	_refresh_all_previews()
 
 func get_closest_palette_index(target_color: Color) -> int:
-	if cached_palette_colors.empty():
-		return 0
-	var best_index: int = 0
-	var min_dist: float = INF
-	for i in range(cached_palette_colors.size()):
-		var c: Color = cached_palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	return best_index
+	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func get_color_from_index(index: int) -> Color:
 	if index >= 0 and index < cached_palette_colors.size():
@@ -1144,103 +1132,79 @@ func _on_setting_changed(_arg = null) -> void:
 	save_settings()
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		return
-
-	var p: Dictionary = get_properties()
-	
-	for key in p.keys():
-		config.set_value("AutoPaintballer", key, p[key])
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving AutoPaintballerSettings: ", save_err)
+	var values: Dictionary = get_properties()
+	LnzLiveUtils.save_config("AutoPaintballer", values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("AutoPaintballer", "user://settings.cfg")
+	if data.empty():
 		return
 
 	print("[STATUS] AutoPaintballerSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	_affected_ballz.text = config.get_value("AutoPaintballer", "affected_ballz", "")
-	_distribution.selected = config.get_value("AutoPaintballer", "distribution", 0)
-	_num_spots.value = config.get_value("AutoPaintballer", "num_spots", 25.0)
-	_ordered.pressed = config.get_value("AutoPaintballer", "ordered", false)
-	_use_seed.pressed = config.get_value("AutoPaintballer", "use_seed", false)
-	_seed_edit.text = config.get_value("AutoPaintballer", "seed", "")
-
-	_size_min.value = config.get_value("AutoPaintballer", "size_min", 10.0)
-	_size_max.value = config.get_value("AutoPaintballer", "size_max", 20.0)
-	_pixel_mode.pressed = config.get_value("AutoPaintballer", "pixel_mode", false)
-	
-	if _color_list: _color_list.text = config.get_value("AutoPaintballer", "color_list", "")
-	if _outline_color_list: _outline_color_list.text = config.get_value("AutoPaintballer", "outline_color_list", "244")
-	
-	_texture_list.text = config.get_value("AutoPaintballer", "texture_list", "0")
-	_outline_type_min.value = config.get_value("AutoPaintballer", "outline_type_min", -1.0)
-	_outline_type_max.value = config.get_value("AutoPaintballer", "outline_type_max", -1.0)
-	_fuzz_min.value = config.get_value("AutoPaintballer", "fuzz_min", 0.0)
-	_fuzz_max.value = config.get_value("AutoPaintballer", "fuzz_max", 0.0)
-	_group.value = config.get_value("AutoPaintballer", "group", 0.0)
-	_anchored.pressed = config.get_value("AutoPaintballer", "anchored", true)
-
-	_spiral_turns.value = config.get_value("AutoPaintballer", "spiral_turns", 5.0)
-	_star_point_size.value = config.get_value("AutoPaintballer", "star_point_size", 4.0)
-	_star_points.value = config.get_value("AutoPaintballer", "star_points", 5.0)
-	_ray_length.value = config.get_value("AutoPaintballer", "ray_length", 4.0)
-	_rainbow_angle.value = config.get_value("AutoPaintballer", "rainbow_angle", 0.0)
-	_rainbow_curvature.value = config.get_value("AutoPaintballer", "rainbow_curvature", 0.0)
-	_rainbow_width.value = config.get_value("AutoPaintballer", "rainbow_width", 0.5)
-	_rainbow_length.value = config.get_value("AutoPaintballer", "rainbow_length", 1.0)
-
-	_band_direction.selected = config.get_value("AutoPaintballer", "band_direction", 0)
-	_num_bands.value = config.get_value("AutoPaintballer", "num_bands", 5.0)
-	_band_spacing.value = config.get_value("AutoPaintballer", "band_spacing", 0.5)
-	_band_offset.value = config.get_value("AutoPaintballer", "band_offset", 0.0)
-	_band_angle.value = config.get_value("AutoPaintballer", "band_angle", 0.0)
-	_grid_size.value = config.get_value("AutoPaintballer", "grid_size", 5.0)
-	_num_clusters.value = config.get_value("AutoPaintballer", "num_clusters", 3.0)
-	_num_rings.value = config.get_value("AutoPaintballer", "num_rings", 3.0)
-
-	_noise_scale.value = config.get_value("AutoPaintballer", "noise_scale", 10.0)
-	_noise_threshold.value = config.get_value("AutoPaintballer", "noise_threshold", 0.5)
-	_noise_octaves.value = config.get_value("AutoPaintballer", "noise_octaves", 3.0)
-	_voronoi_cells.value = config.get_value("AutoPaintballer", "voronoi_cells", 5.0)
-	_voronoi_edge_size.value = config.get_value("AutoPaintballer", "voronoi_edge_size", 0.05)
-	_wave_degree_l.value = config.get_value("AutoPaintballer", "wave_degree_l", 2.0)
-	_wave_order_m.value = config.get_value("AutoPaintballer", "wave_order_m", 1.0)
-	_wave_threshold.value = config.get_value("AutoPaintballer", "wave_threshold", 0.6)
-
-	_stripe_feed_rate.value = config.get_value("AutoPaintballer", "stripe_feed_rate", 0.07)
-	_stripe_kill_rate.value = config.get_value("AutoPaintballer", "stripe_kill_rate", 0.05)
-	_diffusion_activator.value = config.get_value("AutoPaintballer", "diffusion_b", 0.5)
-	_diffusion_inhibitor.value = config.get_value("AutoPaintballer", "diffusion_a", 1.0)
-	_stripe_timestep.value = config.get_value("AutoPaintballer", "stripe_timestep", 1.0)
-
-	_leopard_radius_min.value = config.get_value("AutoPaintballer", "leopard_radius_min", 0.05)
-	_leopard_radius_max.value = config.get_value("AutoPaintballer", "leopard_radius_max", 0.1)
-	_leopard_irregularity.value = config.get_value("AutoPaintballer", "leopard_irregularity", 0.3)
-	_leopard_completeness.value = config.get_value("AutoPaintballer", "leopard_completeness", 0.75)
-	_leopard_paired_colors.pressed = config.get_value("AutoPaintballer", "leopard_use_paired_colors", false)
-
-	_fractal_iterations.value = config.get_value("AutoPaintballer", "fractal_iterations", 5.0)
-	_fractal_angle.value = config.get_value("AutoPaintballer", "fractal_angle", 90.0)
-	_fractal_preset.selected = config.get_value("AutoPaintballer", "fractal_preset", 0)
-	_fractal_axiom.text = config.get_value("AutoPaintballer", "fractal_axiom", "F")
-	_fractal_rules.text = config.get_value("AutoPaintballer", "fractal_rules", "")
-
-	_halfie_axis.selected = config.get_value("AutoPaintballer", "halfie_axis", 0)
-	_halfie_side.selected = config.get_value("AutoPaintballer", "halfie_side", 0)
-
+	_affected_ballz.text = data.get("affected_ballz", "")
+	_distribution.selected = data.get("distribution", 0)
+	_num_spots.value = data.get("num_spots", 25.0)
+	_ordered.pressed = data.get("ordered", false)
+	_use_seed.pressed = data.get("use_seed", false)
+	_seed_edit.text = data.get("seed", "")
+	_size_min.value = data.get("size_min", 10.0)
+	_size_max.value = data.get("size_max", 20.0)
+	_pixel_mode.pressed = data.get("pixel_mode", false)
+	if _color_list: _color_list.text = data.get("color_list", "")
+	if _outline_color_list: _outline_color_list.text = data.get("outline_color_list", "244")
+	_texture_list.text = data.get("texture_list", "0")
+	_outline_type_min.value = data.get("outline_type_min", -1.0)
+	_outline_type_max.value = data.get("outline_type_max", -1.0)
+	_fuzz_min.value = data.get("fuzz_min", 0.0)
+	_fuzz_max.value = data.get("fuzz_max", 0.0)
+	_group.value = data.get("group", 0.0)
+	_anchored.pressed = data.get("anchored", true)
+	_spiral_turns.value = data.get("spiral_turns", 5.0)
+	_star_point_size.value = data.get("star_point_size", 4.0)
+	_star_points.value = data.get("star_points", 5.0)
+	_ray_length.value = data.get("ray_length", 4.0)
+	_rainbow_angle.value = data.get("rainbow_angle", 0.0)
+	_rainbow_curvature.value = data.get("rainbow_curvature", 0.0)
+	_rainbow_width.value = data.get("rainbow_width", 0.5)
+	_rainbow_length.value = data.get("rainbow_length", 1.0)
+	_band_direction.selected = data.get("band_direction", 0)
+	_num_bands.value = data.get("num_bands", 5.0)
+	_band_spacing.value = data.get("band_spacing", 0.5)
+	_band_offset.value = data.get("band_offset", 0.0)
+	_band_angle.value = data.get("band_angle", 0.0)
+	_grid_size.value = data.get("grid_size", 5.0)
+	_num_clusters.value = data.get("num_clusters", 3.0)
+	_num_rings.value = data.get("num_rings", 3.0)
+	_noise_scale.value = data.get("noise_scale", 10.0)
+	_noise_threshold.value = data.get("noise_threshold", 0.5)
+	_noise_octaves.value = data.get("noise_octaves", 3.0)
+	_voronoi_cells.value = data.get("voronoi_cells", 5.0)
+	_voronoi_edge_size.value = data.get("voronoi_edge_size", 0.05)
+	_wave_degree_l.value = data.get("wave_degree_l", 2.0)
+	_wave_order_m.value = data.get("wave_order_m", 1.0)
+	_wave_threshold.value = data.get("wave_threshold", 0.6)
+	_stripe_feed_rate.value = data.get("stripe_feed_rate", 0.07)
+	_stripe_kill_rate.value = data.get("stripe_kill_rate", 0.05)
+	_diffusion_activator.value = data.get("diffusion_b", 0.5)
+	_diffusion_inhibitor.value = data.get("diffusion_a", 1.0)
+	_stripe_timestep.value = data.get("stripe_timestep", 1.0)
+	_leopard_radius_min.value = data.get("leopard_radius_min", 0.05)
+	_leopard_radius_max.value = data.get("leopard_radius_max", 0.1)
+	_leopard_irregularity.value = data.get("leopard_irregularity", 0.3)
+	_leopard_completeness.value = data.get("leopard_completeness", 0.75)
+	_leopard_paired_colors.pressed = data.get("leopard_use_paired_colors", false)
+	_fractal_iterations.value = data.get("fractal_iterations", 5.0)
+	_fractal_angle.value = data.get("fractal_angle", 90.0)
+	_fractal_preset.selected = data.get("fractal_preset", 0)
+	_fractal_axiom.text = data.get("fractal_axiom", "F")
+	_fractal_rules.text = data.get("fractal_rules", "")
+	_halfie_axis.selected = data.get("halfie_axis", 0)
+	_halfie_side.selected = data.get("halfie_side", 0)
 	_on_Distribution_item_selected(_distribution.selected)
 	_on_FractalPreset_item_selected(_fractal_preset.selected)
 	_on_UseSeed_toggled(_use_seed.pressed)
-
 	_is_loading_settings = false
 	_refresh_all_previews()
 
