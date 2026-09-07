@@ -3404,7 +3404,6 @@ func _on_variation_visibility_changed() -> void:
 # _restore_auto_paintballer_selection
 
 func _update_paintball_mode_ui() -> void:
-	print("[STATUS] PetViewContainer: updating paintball mode UI (visible: %s)" % paintball_mode)
 	if paintball_mode:
 		_ensure_panel_visible(paintball_settings_instance)
 
