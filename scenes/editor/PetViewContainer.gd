@@ -3091,7 +3091,7 @@ func _redo_queued_move() -> void:
 func _record_paint_action(paintballs_added: Array) -> void:
 	if paintballs_added.empty():
 		return
-	print("[STATUS] PetViewContainer: Recording paint action with %d paintballs" % paintballs_added.size())
+	# print("[STATUS] PetViewContainer: Recording paint action with %d paintballs" % paintballs_added.size())
 	paint_history.append(paintballs_added)
 	paint_redo_stack.clear()
 	_cap_history_arrays()
@@ -3704,7 +3704,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
-		print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
+		# print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
 		
 		# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
 		# var _perf_stat_end: int = OS.get_static_memory_usage()
