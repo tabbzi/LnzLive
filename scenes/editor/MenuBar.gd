@@ -66,6 +66,62 @@ onready var pet_view_container: Control = get_parent().get_parent()
 onready var scene_root: Node = get_tree().root.get_node("Root/SceneRoot")
 onready var lnz_text_edit: Control = scene_root.get_node("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 
+onready var _tool_checkboxes: Array = [
+	$ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox,
+	$ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton,
+	$ToolOptionButton/PopupPanel/ToolOptionContainer/ViewVariationsCheckBox,
+]
+
+onready var _tool_menu_ids: Array = [
+	ToolMenu.AUTO_PAINTBALLER,
+	ToolMenu.VIEW_PALETTE,
+	ToolMenu.VIEW_VARIATIONS,
+]
+
+onready var _mode_checkboxes: Array = [
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/SelectCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/PaintballModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/ProjectModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/PresetModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/LineModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/MoveModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/RecolorModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/TextureEditorModeCheckBox,
+]
+
+onready var _mode_menu_ids: Array = [
+	ModeMenu.SELECT,
+	ModeMenu.PAINTBALL,
+	ModeMenu.SHAPE,
+	ModeMenu.PRESET,
+	ModeMenu.LINE,
+	ModeMenu.MOVE,
+	ModeMenu.RECOLOR,
+	ModeMenu.TEXTURE_EDITOR,
+]
+
+onready var _render_checkboxes: Array = [
+	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PolygonCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/LineCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PaintballCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/AddballCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/BallCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox,
+	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls,
+	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox,
+]
+
+onready var _render_menu_ids: Array = [
+	RenderMenu.DRAW_POLYGONS,
+	RenderMenu.DRAW_LINES,
+	RenderMenu.DRAW_PAINTBALLS,
+	RenderMenu.DRAW_ADDBALLS,
+	RenderMenu.DRAW_BALLS,
+	RenderMenu.SHOW_OMITTED,
+	RenderMenu.SHOW_SPECIAL,
+	RenderMenu.TRANSPARENCY,
+]
+
 func _ready() -> void:
 	file_menu_btn.flat = false
 	tool_menu_btn.flat = false
@@ -80,6 +136,8 @@ func _ready() -> void:
 	_setup_render_menu()
 	_setup_export_menu()
 	_setup_help_menu()
+	
+	_setup_popup_sync()
 
 func _style_popup(popup: PopupMenu) -> void:
 	popup.add_font_override("font", preload("res://resources/fonts/font_pixel_maz_24.tres"))
@@ -202,32 +260,25 @@ func _setup_help_menu() -> void:
 	popup.add_item("Petz Paletteiare", HelpMenu.PALETTEIARE)
 	popup.connect("id_pressed", self, "_on_help_menu_id_pressed")
 
-func _process(_delta: float) -> void:
-	# Keep visual Menus fully synced with PetViewContainer's legacy internal state
-	var tool_popup: PopupMenu = tool_menu_btn.get_popup()
-	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.AUTO_PAINTBALLER), $ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox.pressed)
-	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.VIEW_PALETTE), $ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton.pressed)
-	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.VIEW_VARIATIONS), $ToolOptionButton/PopupPanel/ToolOptionContainer/ViewVariationsCheckBox.pressed)
-	
-	var mode_popup: PopupMenu = mode_menu_btn.get_popup()
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.SELECT), $ModeOptionButton/PopupPanel/ModeOptionContainer/SelectCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.PAINTBALL), $ModeOptionButton/PopupPanel/ModeOptionContainer/PaintballModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.SHAPE), $ModeOptionButton/PopupPanel/ModeOptionContainer/ProjectModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.PRESET), $ModeOptionButton/PopupPanel/ModeOptionContainer/PresetModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.LINE), $ModeOptionButton/PopupPanel/ModeOptionContainer/LineModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.MOVE), $ModeOptionButton/PopupPanel/ModeOptionContainer/MoveModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.RECOLOR), $ModeOptionButton/PopupPanel/ModeOptionContainer/RecolorModeCheckBox.pressed)
-	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.TEXTURE_EDITOR), $ModeOptionButton/PopupPanel/ModeOptionContainer/TextureEditorModeCheckBox.pressed)
+func _setup_popup_sync() -> void:
+	tool_menu_btn.get_popup().connect("about_to_show", self, "_sync_tool_menu")
+	mode_menu_btn.get_popup().connect("about_to_show", self, "_sync_mode_menu")
+	render_menu_btn.get_popup().connect("about_to_show", self, "_sync_render_menu")
 
-	var render_popup: PopupMenu = render_menu_btn.get_popup()
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_POLYGONS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PolygonCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_LINES), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/LineCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_PAINTBALLS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PaintballCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_ADDBALLS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/AddballCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_BALLS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/BallCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.SHOW_OMITTED), $RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.SHOW_SPECIAL), $RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls.pressed)
-	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.TRANSPARENCY), $RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox.pressed)
+func _sync_tool_menu() -> void:
+	var popup: PopupMenu = tool_menu_btn.get_popup()
+	for i in range(_tool_checkboxes.size()):
+		popup.set_item_checked(popup.get_item_index(_tool_menu_ids[i]), _tool_checkboxes[i].pressed)
+
+func _sync_mode_menu() -> void:
+	var popup: PopupMenu = mode_menu_btn.get_popup()
+	for i in range(_mode_checkboxes.size()):
+		popup.set_item_checked(popup.get_item_index(_mode_menu_ids[i]), _mode_checkboxes[i].pressed)
+
+func _sync_render_menu() -> void:
+	var popup: PopupMenu = render_menu_btn.get_popup()
+	for i in range(_render_checkboxes.size()):
+		popup.set_item_checked(popup.get_item_index(_render_menu_ids[i]), _render_checkboxes[i].pressed)
 
 func _on_file_menu_id_pressed(id: int) -> void:
 	match id:

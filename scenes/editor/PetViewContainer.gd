@@ -2065,6 +2065,11 @@ func set_mode(new_mode: int) -> void:
 		_enter_mode(new_mode)
 		_update_mode_panel_visibility(_get_mode_settings_instance(new_mode), true)
 		_update_paintball_mode_ui()
+	else:
+		if sidebar_controller:
+			var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
+			if tree_tab:
+				sidebar_controller.switch_to_tab(tree_tab)
 
 	_sync_mode_checkboxes()
 
