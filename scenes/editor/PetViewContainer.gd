@@ -55,7 +55,7 @@ onready var view_palette_check_box: CheckBox = find_node("ViewPaletteButton")
 onready var reference_image_bg: TextureRect = get_tree().root.find_node("ReferenceImageBg", true, false)
 
 onready var view_variations_check_box: CheckBox = find_node("ViewVariationsCheckBox")
-onready var variation_tree: Tree = get_tree().root.get_node(
+onready var variation_tree: Panel = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/Variations"
 )
 

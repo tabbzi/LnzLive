@@ -1,5 +1,8 @@
-extends Tree
+extends Panel
 ## VariationTree.gd - Manages the tree view for selecting and configuring pet variations
+
+onready var randomize_button: Button = $VBoxContainer/RandomizeButton
+onready var tree_node: Tree = $VBoxContainer/ScrollContainer/Tree
 
 var dog_generator = null
 var lnz_parser = null
@@ -88,14 +91,14 @@ func populate_tree() -> void:
 	if _sections_map == null or typeof(_sections_map) != TYPE_DICTIONARY:
 		return
 
-	clear()
-	var root: TreeItem = create_item()
+	tree_node.clear()
+	var root: TreeItem = tree_node.create_item()
 	if root == null:
 		return
-	set_hide_root(true)
-	set_columns(1)
-	set_column_title(0, "Variation Viewer")
-	set_column_titles_visible(true)
+	tree_node.set_hide_root(true)
+	tree_node.set_columns(1)
+	tree_node.set_column_title(0, "Variation Tree")
+	tree_node.set_column_titles_visible(true)
 
 	var sections = _sorted_sections()
 	var config = dog_generator.current_variation_config
@@ -103,11 +106,11 @@ func populate_tree() -> void:
 	var global_suffixes = _extract_global_suffixes(sections)
 
 	if global_ids.size() > 0:
-		var g_folder: TreeItem = create_item(root)
+		var g_folder: TreeItem = tree_node.create_item(root)
 		g_folder.set_text(0, "Global Variations")
 		g_folder.set_selectable(0, false)
 		for gid in global_ids:
-			var item: TreeItem = create_item(g_folder)
+			var item: TreeItem = tree_node.create_item(g_folder)
 			_setup_check_item(item, "Global Variation #" + str(gid), {"type": "global", "id": gid})
 			item.set_checked(0, _is_global_id_active(sections, gid, config))
 
@@ -118,7 +121,7 @@ func populate_tree() -> void:
 				var parts: Array = (sk as String).split(".")
 				var g_id: int = parts[0].to_int()
 				var suffix: String = parts[1]
-				var item: TreeItem = create_item(g_folder)
+				var item: TreeItem = tree_node.create_item(g_folder)
 				_setup_check_item(item, "Global Variation #" + str(g_id) + "." + suffix + " (linked)", {"type": "global_suffix", "id": g_id, "suffix": suffix})
 				item.set_checked(0, _is_global_suffix_active(sections, g_id, suffix, config))
 
@@ -126,7 +129,7 @@ func populate_tree() -> void:
 		var section_data = _get_section_data(section)
 		if section_data == null or not _section_has_variations(section_data):
 			continue
-		var section_item: TreeItem = create_item(root)
+		var section_item: TreeItem = tree_node.create_item(root)
 		section_item.set_text(0, section)
 		section_item.set_selectable(0, false)
 
@@ -135,7 +138,7 @@ func populate_tree() -> void:
 		var sorted_block_keys = _block_keys_sorted(section_data)
 
 		for subblock_key in sorted_block_keys:
-			var block_item: TreeItem = create_item(section_item)
+			var block_item: TreeItem = tree_node.create_item(section_item)
 			block_item.set_text(0, "Block " + str(subblock_key))
 			block_item.set_selectable(0, false)
 
@@ -147,6 +150,10 @@ func populate_tree() -> void:
 					if id_data != null and typeof(id_data) == TYPE_DICTIONARY and id_data.has(subblock_key):
 						var clone = item_data.duplicate()
 						clone["subblock_key"] = subblock_key
+						var blk_name = ""
+						if clone.has("subblock_names") and clone.subblock_names.has(subblock_key):
+							blk_name = clone.subblock_names[subblock_key]
+						clone["display_name"] = blk_name
 						child_items.append(clone)
 				elif t == "suffix" and str(item_data.get("subblock_key", "")) == str(subblock_key):
 					child_items.append(item_data)
@@ -157,7 +164,7 @@ func populate_tree() -> void:
 
 			child_items.sort_custom(self, "_sort_variation_items")
 			for item_data in child_items:
-				var item: TreeItem = create_item(block_item)
+				var item: TreeItem = tree_node.create_item(block_item)
 				_setup_check_item(item, _build_item_label(item_data), _build_item_meta(item_data, section, subblock_key))
 				item.set_checked(0, _is_section_item_active(section, item_data, config))
 
@@ -187,7 +194,12 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 			continue
 		var val = section_data[id]
 		if typeof(val) == TYPE_DICTIONARY:
-			var display_name = _extract_display_name(val, id)
+			var subblock_names = {}
+			for key in val:
+				if typeof(val[key]) == TYPE_OBJECT:
+					var blk = val[key]
+					if blk.name != "Variation " + str(id):
+						subblock_names[key] = blk.name
 			var int_count = 0
 			var first_start_line = 0
 			for key in val:
@@ -195,7 +207,7 @@ func _collect_top_level_items(section: String, section_data) -> Array:
 					int_count += 1
 				if typeof(val[key]) == TYPE_OBJECT and val[key].start_line > 0 and first_start_line == 0:
 					first_start_line = val[key].start_line
-			items.append({"id": id, "type": "bare", "is_group": true, "is_linked": false, "int_count": int_count, "display_name": display_name, "start_line": first_start_line})
+			items.append({"id": id, "type": "bare", "is_group": true, "is_linked": false, "int_count": int_count, "subblock_names": subblock_names, "start_line": first_start_line})
 			for key in val:
 				if typeof(key) == TYPE_STRING:
 					var subblock = val[key]
@@ -257,25 +269,17 @@ func _sort_variation_items(a, b) -> bool:
 	return false
 
 func _ready() -> void:
-	connect("item_edited", self, "_on_item_edited")
-	connect("item_selected", self, "_on_item_selected")
-	_create_randomize_button()
+	tree_node.connect("item_edited", self, "_on_item_edited")
+	tree_node.connect("item_selected", self, "_on_item_selected")
+	randomize_button.connect("pressed", self, "_on_randomize_pressed")
 	randomize()
-
-func _create_randomize_button() -> void:
-	var hbox = HBoxContainer.new()
-	add_child(hbox)
-	var btn = Button.new()
-	btn.text = "Randomize Variation (click me!)"
-	btn.connect("pressed", self, "_on_randomize_pressed")
-	hbox.add_child(btn)
 
 func _on_randomize_pressed() -> void:
 	randomize_variations()
 
 func _on_item_edited() -> void:
-	var item: TreeItem = get_edited()
-	if item == null or get_edited_column() != 0:
+	var item: TreeItem = tree_node.get_edited()
+	if item == null or tree_node.get_edited_column() != 0:
 		return
 	var meta = item.get_metadata(0)
 	if meta == null:
@@ -298,7 +302,7 @@ func _on_item_edited() -> void:
 	dog_generator.recompose_model()
 
 func _on_item_selected() -> void:
-	var item: TreeItem = get_selected()
+	var item: TreeItem = tree_node.get_selected()
 	if item == null:
 		return
 	var meta = item.get_metadata(0)
@@ -719,7 +723,7 @@ func _sync_parser_exclusions(config: Dictionary) -> void:
 
 
 func _update_tree_checks(config: Dictionary) -> void:
-	var root: TreeItem = get_root()
+	var root: TreeItem = tree_node.get_root()
 	if root == null:
 		return
 	_sync_item_checks(root, config)
@@ -835,7 +839,7 @@ func _find_child_by_text(parent: TreeItem, text: String) -> TreeItem:
 	return null
 
 func _sync_global_siblings(gid: int) -> void:
-	var root: TreeItem = get_root()
+	var root: TreeItem = tree_node.get_root()
 	if root == null:
 		return
 	var folder: TreeItem = _find_child_by_text(root, "Global Variations")
@@ -876,15 +880,6 @@ func _get_id_data(section: String, id: int):
 
 func _make_suffix_key(id: int, suffix: String) -> String:
 	return str(id) + "." + suffix
-
-func _extract_display_name(id_data, id: int) -> String:
-	for key in id_data:
-		if typeof(id_data[key]) == TYPE_OBJECT:
-			var blk = id_data[key]
-			if blk.name != "Variation " + str(id):
-				return blk.name
-			break
-	return ""
 
 func _section_has_variations(section_data) -> bool:
 	for id in section_data:

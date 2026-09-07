@@ -1,8 +1,151 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://scenes/editor/VariationTree.gd" type="Script" id=1]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=3]
 
-[node name="VariationTree" type="Tree"]
+[sub_resource type="DynamicFont" id=1]
+size = 36
+font_data = ExtResource( 2 )
+
+[sub_resource type="StyleBoxFlat" id=2]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.14902, 0.235294, 0.235294, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="DynamicFont" id=3]
+size = 30
+font_data = ExtResource( 2 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=5]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.294118, 0.403922, 0.403922, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=6]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.25098, 0.25098, 0.25098, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[node name="VariationTree" type="Panel"]
+margin_right = 500.0
+margin_bottom = 625.0
+rect_min_size = Vector2( 300, 625 )
+rect_clip_content = true
+custom_styles/panel = ExtResource( 3 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 1 )
+margin_left = 15.0
+margin_top = 15.0
+margin_right = -15.0
+margin_bottom = -15.0
+rect_min_size = Vector2( 250, 0 )
+rect_clip_content = true
+custom_constants/separation = 6
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+margin_right = 470.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 1 )
+text = "Variation Viewer"
+
+[node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 31.0
+margin_right = 470.0
+margin_bottom = 81.0
+rect_min_size = Vector2( 0, 50 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HelpVBox" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
+margin_right = 470.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HelpLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/HelpVBox"]
+margin_right = 470.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/normal = SubResource( 2 )
+custom_fonts/normal_font = SubResource( 3 )
+text = "Toggle variations on/off to compare how they affect the pet. Click 'Randomize Variation' to randomly assign variations across all sections.
+
+Each variation block (#N) contains alternative data for that section. Linked suffixes (.A, .B, etc.) share the same variation across multiple sections."
+
+[node name="RandomizeButton" type="Button" parent="VBoxContainer"]
+margin_top = 87.0
+margin_right = 470.0
+margin_bottom = 112.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Randomize Variation (click me!)"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 118.0
+margin_right = 470.0
+margin_bottom = 595.0
+rect_min_size = Vector2( 0, 400 )
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tree" type="Tree" parent="VBoxContainer/ScrollContainer"]
+margin_right = 470.0
+margin_bottom = 477.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
