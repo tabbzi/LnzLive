@@ -76,8 +76,7 @@ func randomize_variations() -> void:
 						config[section] = {}
 					config[section][pick.suffix] = suffix_key
 
-	for section in sections:
-		_rebuild_section_exclusions(section, config)
+	_rebuild_section_exclusions(sections, config)
 	_update_tree_checks(config)
 	_sync_parser_exclusions(config)
 	dog_generator.recompose_model()
@@ -292,8 +291,8 @@ func _on_item_edited() -> void:
 		_handle_section_toggle(meta, checked, config)
 
 	var sections = _sorted_sections()
-	for section in sections:
-		_rebuild_section_exclusions(section, config)
+	if _should_rebuild_exclusions(sections, config):
+		_rebuild_section_exclusions(sections, config)
 	_update_tree_checks(config)
 	_sync_parser_exclusions(config)
 	dog_generator.recompose_model()
@@ -414,7 +413,64 @@ func _handle_subblock_toggle(section: String, id: int, subblock_key, checked: bo
 		if config.has(section) and config[section].empty():
 			config[section] = _build_fallback_dict_for_subblock(section, subblock_key)
 
-func _rebuild_section_exclusions(section: String, config: Dictionary) -> void:
+func _rebuild_section_exclusions(sections: Array, config: Dictionary) -> void:
+	var cache_key = "_excl_cache"
+	var prev_cache = config.get(cache_key, {})
+	config[cache_key] = {}
+	var changed = false
+	for section in sections:
+		var excl_key = section + "_excluded"
+		var prev_data = prev_cache.get(section)
+		_rebuild_section_exclusions_single(section, config)
+		var new_data = config.get(excl_key, null)
+		config[cache_key][section] = new_data
+		if prev_data == null or not _arrays_equal(prev_data, new_data):
+			changed = true
+	if not changed:
+		config.erase(cache_key)
+
+func _should_rebuild_exclusions(sections: Array, config: Dictionary) -> bool:
+	var cache_key = "_excl_cache"
+	var cache = config.get(cache_key, null)
+	if cache == null:
+		return true
+	for section in sections:
+		var excl_key = section + "_excluded"
+		var cached_data = cache.get(section, null)
+		var current_data = config.get(excl_key, null)
+		if cached_data == null or not _arrays_equal(cached_data, current_data):
+			return true
+	return false
+
+func _arrays_equal(a, b) -> bool:
+	if typeof(a) != TYPE_ARRAY or typeof(b) != TYPE_ARRAY:
+		return a == b
+	if a.size() != b.size():
+		return false
+	for i in range(a.size()):
+		if typeof(a[i]) == TYPE_DICTIONARY and typeof(b[i]) == TYPE_DICTIONARY:
+			if not _dicts_equal(a[i], b[i]):
+				return false
+		elif a[i] != b[i]:
+			return false
+	return true
+
+func _dicts_equal(a, b) -> bool:
+	if typeof(a) != TYPE_DICTIONARY or typeof(b) != TYPE_DICTIONARY:
+		return a == b
+	if a.size() != b.size():
+		return false
+	for k in a:
+		if not b.has(k):
+			return false
+		if typeof(a[k]) == TYPE_DICTIONARY and typeof(b[k]) == TYPE_DICTIONARY:
+			if not _dicts_equal(a[k], b[k]):
+				return false
+		elif a[k] != b[k]:
+			return false
+	return true
+
+func _rebuild_section_exclusions_single(section: String, config: Dictionary) -> void:
 	var sec_data = _get_section_data(section)
 	if sec_data == null:
 		return
