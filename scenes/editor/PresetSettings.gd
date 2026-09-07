@@ -8,8 +8,6 @@ extends DraggablePanel
 ## 4. Handle advanced list transformations (mirroring and custom/preset rotation)
 ## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
-var _is_loading_settings: bool = false
-
 signal eyedropper_toggled(is_on)
 signal apply_to_selection
 signal unselect_all
@@ -814,74 +812,56 @@ func _connect_settings_signals() -> void:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
-		return
-
-	config.set_value("PresetProperties", "size", size_spinbox.value)
-	config.set_value("PresetProperties", "size_mode", size_mode_option.selected)
-	config.set_value("PresetProperties", "color", color_edit.text)
-	config.set_value("PresetProperties", "outline_color", outline_color_edit.text)
-	config.set_value("PresetProperties", "outline", outline_spinbox.value)
-	config.set_value("PresetProperties", "fuzz", fuzz_spinbox.value)
-	config.set_value("PresetProperties", "texture", texture_spinbox.value)
-	
-	config.set_value("PresetProperties", "include_size", include_size_chk.pressed)
-	config.set_value("PresetProperties", "include_color", include_color_chk.pressed)
-	config.set_value("PresetProperties", "include_outline_color", include_outline_color_chk.pressed)
-	config.set_value("PresetProperties", "include_outline", include_outline_chk.pressed)
-	config.set_value("PresetProperties", "include_fuzz", include_fuzz_chk.pressed)
-	config.set_value("PresetProperties", "include_texture", include_texture_chk.pressed)
-	
-	config.set_value("PresetProperties", "size_scale", size_scale_spin.value)
-	config.set_value("PresetProperties", "pos_scale", pos_scale_spin.value)
-	config.set_value("PresetProperties", "link_scale", link_scale_chk.pressed)
-	
-	config.set_value("PresetProperties", "include_paintballz", include_paintballz_chk.pressed)
-	config.set_value("PresetProperties", "scale_paintballz", scale_paintballz_chk.pressed)
-	
-	config.set_value("PresetProperties", "paintballz_data", _base_paintballz_data)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving PresetSettings: ", save_err)
+	var values: Dictionary = {}
+	values["size"] = size_spinbox.value
+	values["size_mode"] = size_mode_option.selected
+	values["color"] = color_edit.text
+	values["outline_color"] = outline_color_edit.text
+	values["outline"] = outline_spinbox.value
+	values["fuzz"] = fuzz_spinbox.value
+	values["texture"] = texture_spinbox.value
+	values["include_size"] = include_size_chk.pressed
+	values["include_color"] = include_color_chk.pressed
+	values["include_outline_color"] = include_outline_color_chk.pressed
+	values["include_outline"] = include_outline_chk.pressed
+	values["include_fuzz"] = include_fuzz_chk.pressed
+	values["include_texture"] = include_texture_chk.pressed
+	values["size_scale"] = size_scale_spin.value
+	values["pos_scale"] = pos_scale_spin.value
+	values["link_scale"] = link_scale_chk.pressed
+	values["include_paintballz"] = include_paintballz_chk.pressed
+	values["scale_paintballz"] = scale_paintballz_chk.pressed
+	values["paintballz_data"] = _base_paintballz_data
+	LnzLiveUtils.save_config("PresetProperties", values, "user://settings.cfg")
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("PresetProperties", "user://settings.cfg")
+	if data.empty():
 		return
 	
 	print("[STATUS] PresetSettings: loading settings configuration")
 	_is_loading_settings = true
 
-	size_spinbox.value = config.get_value("PresetProperties", "size", 10.0)
-	size_mode_option.selected = config.get_value("PresetProperties", "size_mode", 2)
-	color_edit.text = config.get_value("PresetProperties", "color", "0")
-	outline_color_edit.text = config.get_value("PresetProperties", "outline_color", "0")
-	outline_spinbox.value = config.get_value("PresetProperties", "outline", -1.0)
-	fuzz_spinbox.value = config.get_value("PresetProperties", "fuzz", 0.0)
-	texture_spinbox.value = config.get_value("PresetProperties", "texture", -1.0)
-	
-	include_size_chk.pressed = config.get_value("PresetProperties", "include_size", true)
-	include_color_chk.pressed = config.get_value("PresetProperties", "include_color", true)
-	include_outline_color_chk.pressed = config.get_value("PresetProperties", "include_outline_color", true)
-	include_outline_chk.pressed = config.get_value("PresetProperties", "include_outline", true)
-	include_fuzz_chk.pressed = config.get_value("PresetProperties", "include_fuzz", true)
-	include_texture_chk.pressed = config.get_value("PresetProperties", "include_texture", true)
-	
-	size_scale_spin.value = config.get_value("PresetProperties", "size_scale", 1.0)
-	pos_scale_spin.value = config.get_value("PresetProperties", "pos_scale", 1.0)
-	link_scale_chk.pressed = config.get_value("PresetProperties", "link_scale", false)
-	
-	include_paintballz_chk.pressed = config.get_value("PresetProperties", "include_paintballz", true)
-	scale_paintballz_chk.pressed = config.get_value("PresetProperties", "scale_paintballz", false)
-	
-	_base_paintballz_data = config.get_value("PresetProperties", "paintballz_data", [])
+	size_spinbox.value = data.get("size", 10.0)
+	size_mode_option.selected = data.get("size_mode", 2)
+	color_edit.text = data.get("color", "0")
+	outline_color_edit.text = data.get("outline_color", "0")
+	outline_spinbox.value = data.get("outline", -1.0)
+	fuzz_spinbox.value = data.get("fuzz", 0.0)
+	texture_spinbox.value = data.get("texture", -1.0)
+	include_size_chk.pressed = data.get("include_size", true)
+	include_color_chk.pressed = data.get("include_color", true)
+	include_outline_color_chk.pressed = data.get("include_outline_color", true)
+	include_outline_chk.pressed = data.get("include_outline", true)
+	include_fuzz_chk.pressed = data.get("include_fuzz", true)
+	include_texture_chk.pressed = data.get("include_texture", true)
+	size_scale_spin.value = data.get("size_scale", 1.0)
+	pos_scale_spin.value = data.get("pos_scale", 1.0)
+	link_scale_chk.pressed = data.get("link_scale", false)
+	include_paintballz_chk.pressed = data.get("include_paintballz", true)
+	scale_paintballz_chk.pressed = data.get("scale_paintballz", false)
+	_base_paintballz_data = data.get("paintballz_data", [])
 	_populate_tree_from_base()
-	
 	_is_loading_settings = false
 
 func _on_reset_defaults_pressed() -> void:

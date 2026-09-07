@@ -14,6 +14,8 @@ var is_docked: bool = false
 var dock_button: Button
 var original_rect_size: Vector2
 
+var _is_loading_settings: bool = false
+
 func _ready() -> void:
 	get_viewport().connect("size_changed", self, "_on_viewport_resized")
 

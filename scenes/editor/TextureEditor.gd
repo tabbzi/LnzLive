@@ -31,7 +31,6 @@ enum GameMode {
 }
 
 var current_mode: int = GameMode.PETZ
-var _is_loading_settings: bool = false
 
 var current_tool: int = Tool.PENCIL
 var current_brush_shape: int = BrushShape.SQUARE
@@ -184,49 +183,42 @@ func _initialize_canvas() -> void:
 		quadrant_overlay.update()
 
 func load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	if config.load(SETTINGS_PATH) == OK:
-		print("[STATUS] TextureEditor: loading settings configuration")
-		_is_loading_settings = true
-		brush_size_spin.value = config.get_value("TextureEditor", "brush_size", 1.0)
-		brush_spacing_spin.value = config.get_value("TextureEditor", "brush_spacing", 1.0)
-		dither_amount_spin.value = config.get_value("TextureEditor", "dither_amount", 0.5)
-		
-		var shape_idx: int = config.get_value("TextureEditor", "brush_shape", BrushShape.SQUARE)
-		brush_shape_option.select(shape_idx)
-		current_brush_shape = shape_idx
-		
-		var pat_idx: int = config.get_value("TextureEditor", "brush_pattern", BrushPattern.SOLID)
-		brush_pattern_option.select(pat_idx)
-		current_brush_pattern = pat_idx
-		
-		contiguous_check_box.pressed = config.get_value("TextureEditor", "contiguous", true)
-		ramp_recolor_check.pressed = config.get_value("TextureEditor", "ramp_recolor", false)
-		use_secondary_check.pressed = config.get_value("TextureEditor", "use_secondary", false)
-		mirror_h_btn.pressed = config.get_value("TextureEditor", "mirror_h", false)
-		mirror_v_btn.pressed = config.get_value("TextureEditor", "mirror_v", false)
-
-		show_quadrants_check.pressed = config.get_value("TextureEditor", "show_quadrants", false)
-
-		_is_loading_settings = false
+	var data: Dictionary = LnzLiveUtils.load_config("TextureEditor", "user://settings.cfg")
+	if data.empty():
+		return
+	print("[STATUS] TextureEditor: loading settings configuration")
+	_is_loading_settings = true
+	brush_size_spin.value = data.get("brush_size", 1.0)
+	brush_spacing_spin.value = data.get("brush_spacing", 1.0)
+	dither_amount_spin.value = data.get("dither_amount", 0.5)
+	var shape_idx: int = data.get("brush_shape", BrushShape.SQUARE)
+	brush_shape_option.select(shape_idx)
+	current_brush_shape = shape_idx
+	var pat_idx: int = data.get("brush_pattern", BrushPattern.SOLID)
+	brush_pattern_option.select(pat_idx)
+	current_brush_pattern = pat_idx
+	contiguous_check_box.pressed = data.get("contiguous", true)
+	ramp_recolor_check.pressed = data.get("ramp_recolor", false)
+	use_secondary_check.pressed = data.get("use_secondary", false)
+	mirror_h_btn.pressed = data.get("mirror_h", false)
+	mirror_v_btn.pressed = data.get("mirror_v", false)
+	show_quadrants_check.pressed = data.get("show_quadrants", false)
+	_is_loading_settings = false
 
 func save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	config.load(SETTINGS_PATH)
-	
-	config.set_value("TextureEditor", "brush_size", brush_size_spin.value)
-	config.set_value("TextureEditor", "brush_spacing", brush_spacing_spin.value)
-	config.set_value("TextureEditor", "dither_amount", dither_amount_spin.value)
-	config.set_value("TextureEditor", "brush_shape", current_brush_shape)
-	config.set_value("TextureEditor", "brush_pattern", current_brush_pattern)
-	config.set_value("TextureEditor", "contiguous", contiguous_check_box.pressed)
-	config.set_value("TextureEditor", "ramp_recolor", ramp_recolor_check.pressed)
-	config.set_value("TextureEditor", "use_secondary", use_secondary_check.pressed)
-	config.set_value("TextureEditor", "mirror_h", mirror_h_btn.pressed)
-	config.set_value("TextureEditor", "mirror_v", mirror_v_btn.pressed)
-	config.set_value("TextureEditor", "show_quadrants", show_quadrants_check.pressed)
-	
-	config.save(SETTINGS_PATH)
+	var values: Dictionary = {}
+	values["brush_size"] = brush_size_spin.value
+	values["brush_spacing"] = brush_spacing_spin.value
+	values["dither_amount"] = dither_amount_spin.value
+	values["brush_shape"] = current_brush_shape
+	values["brush_pattern"] = current_brush_pattern
+	values["contiguous"] = contiguous_check_box.pressed
+	values["ramp_recolor"] = ramp_recolor_check.pressed
+	values["use_secondary"] = use_secondary_check.pressed
+	values["mirror_h"] = mirror_h_btn.pressed
+	values["mirror_v"] = mirror_v_btn.pressed
+	values["show_quadrants"] = show_quadrants_check.pressed
+	LnzLiveUtils.save_config("TextureEditor", values, "user://settings.cfg")
 
 func _trigger_setting_save(_ignored_value = null) -> void:
 	if _is_loading_settings: return

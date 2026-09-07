@@ -700,6 +700,32 @@ static func clamp_color_within_range(base_color: Color, factor: float, min_facto
 	)
 
 
+static func save_config(section: String, values: Dictionary, path: String) -> int:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(path)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("[WARNING] LnzLiveUtils: error loading existing config for save: ", err)
+		return err
+
+	for key in values.keys():
+		config.set_value(section, key, values[key])
+
+	var save_err: int = config.save(path)
+	if save_err != OK:
+		print("[WARNING] LnzLiveUtils: failed to save config to %s (Error: %s)" % [path, save_err])
+	return save_err
+
+static func load_config(section: String, path: String) -> Dictionary:
+	var result: Dictionary = {}
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(path)
+	if err != OK:
+		return result
+
+	for key in config.get_section_keys(section):
+		result[key] = config.get_value(section, key)
+	return result
+
 ### WEB UTILITIES ###
 static func web_file_dialog(accept_extensions: String) -> void:
 	JavaScript.eval("""

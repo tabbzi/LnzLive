@@ -93,36 +93,25 @@ func popup_centered(size: Vector2 = Vector2.ZERO) -> void:
 	raise()
 
 func _save_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
-		return
-
-	config.set_value("ShaderProperties", "mode", mode_option.selected)
-	config.set_value("ShaderProperties", "input_x", input_x_spinbox.value)
-	config.set_value("ShaderProperties", "input_y", input_y_spinbox.value)
-	config.set_value("ShaderProperties", "affected_by_size", size_checkbox.pressed)
-	config.set_value("ShaderProperties", "affected_by_rotation", rotation_checkbox.pressed)
-	config.set_value("ShaderProperties", "flat_colors", flat_colors_checkbox.pressed)
-
-	var save_err: int = config.save(SETTINGS_PATH)
-	if save_err != OK:
-		print("Error saving ShaderSettings: ", save_err)
+	var values: Dictionary = {}
+	values["mode"] = mode_option.selected
+	values["input_x"] = input_x_spinbox.value
+	values["input_y"] = input_y_spinbox.value
+	values["affected_by_size"] = size_checkbox.pressed
+	values["affected_by_rotation"] = rotation_checkbox.pressed
+	values["flat_colors"] = flat_colors_checkbox.pressed
+	LnzLiveUtils.save_config("ShaderProperties", values, SETTINGS_PATH)
 
 func _load_settings() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK:
+	var data: Dictionary = LnzLiveUtils.load_config("ShaderProperties", SETTINGS_PATH)
+	if data.empty():
 		return
 
 	_is_loading_settings = true
-
-	mode_option.selected = config.get_value("ShaderProperties", "mode", 1)
-	input_x_spinbox.value = config.get_value("ShaderProperties", "input_x", 0.0)
-	input_y_spinbox.value = config.get_value("ShaderProperties", "input_y", 0.0)
-	size_checkbox.pressed = config.get_value("ShaderProperties", "affected_by_size", true)
-	rotation_checkbox.pressed = config.get_value("ShaderProperties", "affected_by_rotation", false)
-	flat_colors_checkbox.pressed = config.get_value("ShaderProperties", "flat_colors", false)
-
+	mode_option.selected = data.get("mode", 1)
+	input_x_spinbox.value = data.get("input_x", 0.0)
+	input_y_spinbox.value = data.get("input_y", 0.0)
+	size_checkbox.pressed = data.get("affected_by_size", true)
+	rotation_checkbox.pressed = data.get("affected_by_rotation", false)
+	flat_colors_checkbox.pressed = data.get("flat_colors", false)
 	_is_loading_settings = false
