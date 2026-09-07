@@ -8,6 +8,7 @@ signal apply_eye_colors(eye_colors_info)
 onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
 onready var swap_lines_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
 onready var bucket_container = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer
+onready var bucket_palette_grid: GridContainer = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll/PaletteGrid
 
 onready var color_swap_check_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
 
@@ -273,6 +274,7 @@ func _on_palette_changed(palette_name = "") -> void:
 			
 	img.unlock()
 	_refresh_all_previews()
+	populate_bucket_palette()
 
 func queue_bucket_change(ball_node: Node) -> void:
 	if not is_instance_valid(ball_node): return
@@ -384,6 +386,48 @@ func _on_ClearSwap_pressed() -> void:
 			if cb is CheckBox:
 				cb.pressed = true
 				
+	_refresh_all_previews()
+	populate_bucket_palette()
+
+func populate_bucket_palette() -> void:
+	if not is_instance_valid(bucket_palette_grid):
+		return
+
+	for child in bucket_palette_grid.get_children():
+		bucket_palette_grid.remove_child(child)
+		child.queue_free()
+
+	if cached_palette_colors.empty():
+		return
+
+	for i in range(cached_palette_colors.size()):
+		var c: Color = cached_palette_colors[i]
+		
+		var btn: Button = Button.new()
+		btn.rect_min_size = Vector2(24, 24)
+		
+		var style: StyleBoxFlat = StyleBoxFlat.new()
+		style.bg_color = c
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_width_top = 2
+		style.border_width_bottom = 2
+		style.border_color = Color(0, 0, 0, 0)
+		
+		var focus_style: StyleBoxFlat = style.duplicate()
+		focus_style.border_color = Color(1, 1, 1, 1)
+		
+		btn.add_stylebox_override("normal", style)
+		btn.add_stylebox_override("hover", style)
+		btn.add_stylebox_override("pressed", focus_style)
+		btn.add_stylebox_override("focus", focus_style)
+		
+		btn.connect("pressed", self, "_on_bucket_palette_color_selected", [i])
+		bucket_palette_grid.add_child(btn)
+
+func _on_bucket_palette_color_selected(index: int) -> void:
+	if bucket_color_edit:
+		bucket_color_edit.text = str(index)
 	_refresh_all_previews()
 
 func _gather_swap_data() -> Array:
