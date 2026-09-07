@@ -2282,7 +2282,7 @@ func is_hidden_ball(ball_no):
 	return _hidden_balls.has(ball_no)
 
 func hide_ball(ball_no):
-	print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
+	# print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
 	if not _hidden_balls.has(ball_no):
 		_hidden_balls.append(ball_no)
 		emit_signal("hidden_balls_changed", _hidden_balls.size())
