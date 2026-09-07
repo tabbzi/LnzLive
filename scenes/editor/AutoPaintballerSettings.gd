@@ -292,17 +292,7 @@ func _on_palette_changed(palette_name = "") -> void:
 	_refresh_all_previews()
 
 func get_closest_palette_index(target_color: Color) -> int:
-	if cached_palette_colors.empty():
-		return 0
-	var best_index: int = 0
-	var min_dist: float = INF
-	for i in range(cached_palette_colors.size()):
-		var c: Color = cached_palette_colors[i]
-		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
-		if dist < min_dist:
-			min_dist = dist
-			best_index = i
-	return best_index
+	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func get_color_from_index(index: int) -> Color:
 	if index >= 0 and index < cached_palette_colors.size():

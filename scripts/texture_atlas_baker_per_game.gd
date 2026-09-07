@@ -64,6 +64,9 @@ func _run():
 
 	for size_key in groups.keys():
 		var textures = groups[size_key]
+		
+		PaletteCache.rebuild_palette_lookup_table(babyz_palette)
+		
 		var size_parts = size_key.split("x")
 		var tex_w = int(size_parts[0])
 		var tex_h = int(size_parts[1])
@@ -112,7 +115,7 @@ func _run():
 					if _babyz_cache.has(color_key):
 						babyz_idx = _babyz_cache[color_key]
 					else:
-						babyz_idx = _get_closest_index(pixel_color, babyz_palette)
+						babyz_idx = PaletteCache.get_palette_index_fast(babyz_palette, pixel_color)
 						_babyz_cache[color_key] = babyz_idx
 					
 					# Write both
