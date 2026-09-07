@@ -65,48 +65,38 @@ func populate_colors() -> void:
 		vbox.add_child(label)
 		return
 
-	color_grid = GridContainer.new()
-	vbox.add_child(color_grid)
-
 	var img: Image = pal_texture.get_data()
 	img.lock()
-
-	var current_font_size: float = pixel_font.size
-	var dynamic_size: float = max(24.0, current_font_size + 12.0)
-	var cell_vector: Vector2 = Vector2(dynamic_size, dynamic_size)
-
-	var color_index: int = 0
+	
+	var colors: Array = []
 	for y in range(img.get_height()):
 		for x in range(img.get_width()):
 			var color: Color = img.get_pixel(x, y)
-
-			var color_rect: ColorRect = ColorRect.new()
-			color_rect.color = color
-			color_rect.rect_min_size = cell_vector
-
-			var label: Label = Label.new()
-			label.add_font_override("font", pixel_font)
-			label.text = str(color_index)
-			label.align = Label.ALIGN_CENTER
-			label.valign = Label.VALIGN_CENTER
-
-			var luminance: float = color.r * 0.299 + color.g * 0.587 + color.b * 0.114
-			label.add_color_override("font_color", Color.black if luminance > 0.5 else Color.white)
-
-			color_rect.add_child(label)
-			label.set_anchors_and_margins_preset(Control.PRESET_WIDE)
-
-			color_grid.add_child(color_rect)
-			color_index += 1
-
+			colors.append(color)
+	
 	img.unlock()
+	
+	color_grid = GridContainer.new()
+	vbox.add_child(color_grid)
+	
+	PaletteGrid.populate_grid(
+		color_grid,
+		colors,
+		PaletteGrid.CellType.COLOR_RECT,
+		max(22.0, pixel_font.size * 2 + 4),
+		0,
+		0,
+		"",
+		"",
+		self
+	)
 	
 	call_deferred("_on_vbox_resized")
 
 func _on_vbox_resized() -> void:
 	if not color_grid or color_grid.get_child_count() == 0:
 		return
-		
+	
 	var available_width: float = scroll_view.rect_size.x
 	
 	var v_scroll: VScrollBar = scroll_view.get_v_scrollbar()
@@ -116,15 +106,10 @@ func _on_vbox_resized() -> void:
 	var margin_container: MarginContainer = vbox.get_parent() 
 	if margin_container is MarginContainer:
 		available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
-
-	var cell_width: float = color_grid.get_child(0).rect_min_size.x
-	var spacing: float = color_grid.get_constant("hseparation")
 	
-	if cell_width + spacing > 0:
-		var calculated_columns: int = max(1, floor(available_width / (cell_width + spacing)))
-		if color_grid.columns != calculated_columns:
-			color_grid.columns = calculated_columns
-		
+	var cell_width: float = color_grid.get_child(0).rect_min_size.x
+	PaletteGrid.recalculate_columns(color_grid, available_width, cell_width, 0, 0)
+
 func load_palette_texture(palette_filename: String) -> Texture:
 	var texture: Texture = null
 	var clean_filename: String = palette_filename.strip_edges()

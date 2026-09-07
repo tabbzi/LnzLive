@@ -155,7 +155,6 @@ func _ready() -> void:
 	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
-
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
 
 func _input(event: InputEvent) -> void:
@@ -244,10 +243,6 @@ func _on_BrushPatternOption_item_selected(index: int) -> void:
 	save_settings()
 
 func populate_palette() -> void:
-	for child in palette_grid.get_children():
-		palette_grid.remove_child(child)
-		child.queue_free()
-
 	palette_colors.clear()
 	_color_hash_cache.clear()
 
@@ -265,30 +260,19 @@ func populate_palette() -> void:
 			var c: Color = img.get_pixel(x, y)
 			palette_colors.append(c)
 
-			var btn: Button = Button.new()
-			btn.rect_min_size = Vector2(24, 24)
-			
-			var style: StyleBoxFlat = StyleBoxFlat.new()
-			style.bg_color = c
-			style.border_width_left = 2
-			style.border_width_right = 2
-			style.border_width_top = 2
-			style.border_width_bottom = 2
-			style.border_color = Color(0, 0, 0, 0) # Transparent
-			
-			var focus_style: StyleBoxFlat = style.duplicate()
-			focus_style.border_color = Color(1, 1, 1, 1) # Solid White
-			
-			btn.add_stylebox_override("normal", style)
-			btn.add_stylebox_override("hover", style)
-			btn.add_stylebox_override("pressed", focus_style)
-			btn.add_stylebox_override("focus", focus_style)
-
-			btn.connect("pressed", self, "_on_palette_color_selected", [palette_colors.size() - 1])
-			btn.connect("gui_input", self, "_on_palette_color_gui_input", [palette_colors.size() - 1])
-			palette_grid.add_child(btn)
-
 	img.unlock()
+
+	PaletteGrid.populate_grid(
+		palette_grid,
+		palette_colors,
+		PaletteGrid.CellType.BUTTON,
+		24.0,
+		0,
+		0,
+		"_on_palette_color_selected",
+		"_on_palette_color_gui_input",
+		self
+	)
 
 	if palette_colors.size() > 0:
 		if current_color_index >= 0 and current_color_index < palette_colors.size():
@@ -296,7 +280,7 @@ func populate_palette() -> void:
 		else:
 			_on_palette_color_selected(0)
 
-	_on_palette_scroll_resized()
+	PaletteGrid.recalculate_columns(palette_grid, $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x, 24.0, 0, 16)
 
 func _get_closest_palette_index(c: Color, preferred_base: int = -1) -> int:
 	if preferred_base >= 0 and preferred_base + 10 <= palette_colors.size():
@@ -961,7 +945,4 @@ func _on_QuadrantOverlay_draw() -> void:
 		quadrant_overlay.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _on_palette_scroll_resized() -> void:
-	if palette_grid and palette_grid is GridContainer:
-		var available_width: float = $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x
-		var new_columns: int = max(1, int((available_width - 16) / 28.0))
-		palette_grid.columns = new_columns
+	PaletteGrid.recalculate_columns(palette_grid, $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x, 24.0, 0, 16)

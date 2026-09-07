@@ -126,6 +126,8 @@ func _ready() -> void:
 	
 	_populate_color_theory_options()
 		
+	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll.connect("resized", self, "_on_bucket_scroll_resized")
+	
 	_on_palette_changed()
 	_setup_eye_colors()
 	load_settings()
@@ -393,37 +395,25 @@ func populate_bucket_palette() -> void:
 	if not is_instance_valid(bucket_palette_grid):
 		return
 
-	for child in bucket_palette_grid.get_children():
-		bucket_palette_grid.remove_child(child)
-		child.queue_free()
+	PaletteGrid.populate_grid(
+		bucket_palette_grid,
+		cached_palette_colors,
+		PaletteGrid.CellType.BUTTON,
+		24.0,
+		0,
+		0,
+		"_on_bucket_palette_color_selected",
+		"",
+		self
+	)
+ 
+	_on_bucket_scroll_resized()
 
-	if cached_palette_colors.empty():
-		return
 
-	for i in range(cached_palette_colors.size()):
-		var c: Color = cached_palette_colors[i]
-		
-		var btn: Button = Button.new()
-		btn.rect_min_size = Vector2(24, 24)
-		
-		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = c
-		style.border_width_left = 2
-		style.border_width_right = 2
-		style.border_width_top = 2
-		style.border_width_bottom = 2
-		style.border_color = Color(0, 0, 0, 0)
-		
-		var focus_style: StyleBoxFlat = style.duplicate()
-		focus_style.border_color = Color(1, 1, 1, 1)
-		
-		btn.add_stylebox_override("normal", style)
-		btn.add_stylebox_override("hover", style)
-		btn.add_stylebox_override("pressed", focus_style)
-		btn.add_stylebox_override("focus", focus_style)
-		
-		btn.connect("pressed", self, "_on_bucket_palette_color_selected", [i])
-		bucket_palette_grid.add_child(btn)
+func _on_bucket_scroll_resized() -> void:
+	var scroll: Control = bucket_palette_grid.get_parent()
+	if is_instance_valid(scroll):
+		PaletteGrid.recalculate_columns(bucket_palette_grid, scroll.rect_size.x, 24.0, 0, 16)
 
 func _on_bucket_palette_color_selected(index: int) -> void:
 	if bucket_color_edit:

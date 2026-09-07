@@ -69,6 +69,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/paintball_data.gd"
 }, {
+"base": "Reference",
+"class": "PaletteGrid",
+"language": "GDScript",
+"path": "res://data_classes/palette_grid.gd"
+}, {
 "base": "Node",
 "class": "PolyData",
 "language": "GDScript",
@@ -92,6 +97,7 @@ _global_script_class_icons={
 "LnzLiveUtils": "",
 "LnzParser": "",
 "PaintBallData": "",
+"PaletteGrid": "",
 "PolyData": "",
 "Section": ""
 }
