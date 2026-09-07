@@ -9,6 +9,40 @@ const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
 const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
 const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
 
+static func format_ball_ranges(ball_ids: Array) -> String:
+	if ball_ids.empty():
+		return ""
+	
+	ball_ids.sort()
+	
+	var start: int = ball_ids[0]
+	var prev: int = start
+	var ranges: Array = []
+	
+	for i in range(1, ball_ids.size()):
+		var curr: int = ball_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+	
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+	
+	var result: String = ""
+	for i in range(ranges.size()):
+		if i > 0:
+			result += ","
+		result += str(ranges[i])
+	return result
+
 static func parse_number_list(s: String, allow_negatives: bool = false) -> Array:
 	var result: Array = []
 	var parts: PoolStringArray = s.split(",", false)

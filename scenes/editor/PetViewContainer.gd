@@ -2128,7 +2128,10 @@ func _exit_mode(mode: int) -> void:
 				if tree_tab:
 					sidebar_controller.switch_to_tab(tree_tab)
 		Mode.PRESET:
-			pass
+			for b in selected_balls:
+				if is_instance_valid(b) and b.has_method("apply_outline_state"):
+					b.apply_outline_state(b.OutlineState.NONE)
+			selected_balls.clear()
 		Mode.RECOLOR:
 			recolor_settings_instance.clear_buckets()
 		Mode.PROJECT:
@@ -2167,8 +2170,12 @@ func _enter_mode(mode: int) -> void:
 					preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
 				if pet_node.lnz.palette:
 					preset_settings_instance.set_palette(pet_node.lnz.palette)
-		Mode.RECOLOR, Mode.PROJECT, Mode.AUTO_PAINTBALLER, Mode.TEXTURE_EDITOR:
+			_update_selected_ballz_from_affected_text(preset_settings_instance)
+		Mode.RECOLOR, Mode.PROJECT, Mode.TEXTURE_EDITOR:
 			pass
+		Mode.AUTO_PAINTBALLER:
+			if is_instance_valid(pet_node):
+				_on_affected_list_changed(auto_paintballer_settings_instance.get_affected_ball_ids())
 
 func _sync_mode_checkboxes() -> void:
 	if select_check_box.pressed != selecting_on:
@@ -2593,6 +2600,31 @@ func _on_affected_list_changed(ids: Array) -> void:
 		if ball and is_instance_valid(ball):
 			selected_balls.append(ball)
 
+	var all_balls: Array = _get_all_visual_balls()
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+func _update_selected_ballz_from_affected_text(settings_instance) -> void:
+	if not is_instance_valid(settings_instance):
+		return
+	var affected_text: String = ""
+	if settings_instance.has_node("VBoxContainer/ScrollContainer/VBoxContainer/AffectedBallz"):
+		affected_text = settings_instance.get_node("VBoxContainer/ScrollContainer/VBoxContainer/AffectedBallz").text
+	elif settings_instance.has("scroll_vbox"):
+		var affected_node = settings_instance.scroll_vbox.get_node_or_null("AffectedBallz")
+		if affected_node:
+			affected_text = affected_node.text
+	if affected_text.strip_edges() == "":
+		return
+	var ids: Array = LnzLiveUtils.parse_number_list(affected_text)
+	if ids.empty():
+		return
+	selected_balls.clear()
+	for id in ids:
+		var ball: Spatial = find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			selected_balls.append(ball)
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):

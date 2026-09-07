@@ -228,43 +228,7 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 	if _affected_ballz and _affected_ballz.has_focus():
 		return
 
-	ball_ids.sort()
-	
-	if ball_ids.empty():
-		if _affected_ballz:
-			_affected_ballz.text = ""
-		return
-	
-	var start: int = ball_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-	
-	for i in range(1, ball_ids.size()):
-		var curr: int = ball_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-			
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-		
-	## Replaced PoolStringArray allocation with plain Array.
-	## Godot 3.2 has no Array.join(), so build string manually.
-	if _affected_ballz:
-		var s: String = ""
-		for i in range(ranges.size()):
-			if i > 0:
-				s += ","
-			s += str(ranges[i])
-		_affected_ballz.text = s
+	_affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
 
 func update_pivot_max(max_balls: int) -> void:
 	if _pivot_ball:

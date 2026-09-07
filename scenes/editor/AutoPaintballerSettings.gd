@@ -1054,36 +1054,7 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 	if not _affected_ballz or _affected_ballz.has_focus():
 		return
 
-	if ball_ids.empty():
-		_affected_ballz.text = ""
-		return
-
-	ball_ids.sort()
-	var start: int = ball_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-	
-	for i in range(1, ball_ids.size()):
-		var curr: int = ball_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-			
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-		
-	var temp_pool: PoolStringArray = PoolStringArray(ranges)
-	_affected_ballz.text = temp_pool.join(",")
-	temp_pool.resize(0)
-	
+	_affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
 	_on_AffectedBallz_text_changed(_affected_ballz.text)
 
 func _on_UnselectButton_pressed() -> void:
@@ -1486,4 +1457,7 @@ func _get_random_static_accent() -> String:
 	if randf() > 0.4:
 		return "244"
 	return str(randi() % (214 - 150 + 1) + 150)
+
+func get_affected_ball_ids() -> Array:
+	return LnzLiveUtils.parse_number_list(_affected_ballz.text)
 

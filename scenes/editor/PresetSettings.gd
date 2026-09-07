@@ -772,36 +772,7 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 	if affected_ballz.has_focus():
 		return
 
-	ball_ids.sort()
-
-	if ball_ids.empty():
-		affected_ballz.text = ""
-		return
-
-	var start: int = ball_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-
-	for i in range(1, ball_ids.size()):
-		var curr: int = ball_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-
-	var res_str: PoolStringArray = PoolStringArray(ranges)
-	affected_ballz.text = res_str.join(",")
-	res_str.resize(0)
+	affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
 
 func _connect_settings_signals() -> void:
 	include_paintballz_chk.connect("toggled", self, "_on_property_changed")
