@@ -353,12 +353,10 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 			commit_full_snapshot("User Save")
 
 	var save_path = output_path
-	var user_path_needed = false
 	if save_path.empty():
 		save_path = filepath
-		user_path_needed = true
 
-	if user_path_needed or (save_path == null or save_path.empty()) or (not is_user_file and output_path.empty()):
+	if save_path == null or save_path.empty() or (not is_user_file and output_path.empty()):
 		var dir = Directory.new()
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
