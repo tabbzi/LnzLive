@@ -302,8 +302,17 @@ func queue_bucket_change(ball_node: Node) -> void:
 	if props.has("texture_id"):
 		var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
-			var tex: Texture = pet_node.load_texture_from_list(props.texture_id, pet_node.lnz.texture_list)
-			if tex: ball_node.texture = tex
+			var tex_id = props.texture_id
+			if tex_id >= 0 and tex_id < pet_node.lnz.texture_list.size():
+				var tex: Texture = pet_node.load_texture_from_list(tex_id, pet_node.lnz.texture_list)
+				if tex: 
+					ball_node.texture = tex
+					var tex_info = pet_node.lnz.texture_list[tex_id]
+					ball_node.transparent_color = tex_info.transparent_color
+					if tex_info.has("texture_size") and tex_info.texture_size != null:
+						ball_node.texture_size = tex_info.texture_size
+			else:
+				ball_node.texture = null
 
 	if ball_node.has_method("update_ball"):
 		ball_node.update_ball()

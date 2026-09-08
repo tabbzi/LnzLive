@@ -1764,8 +1764,14 @@ func restore_ball_visual_states(ball_nos: Array):
 
 		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
 			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
+			var tex_info = lnz.texture_list[data.texture_id]
+			visual_node.transparent_color = tex_info.transparent_color
+			if tex_info.has("texture_size") and tex_info.texture_size != null:
+				visual_node.texture_size = tex_info.texture_size
 		else:
 			visual_node.texture = null
+			visual_node.transparent_color = 0
+			visual_node.texture_size = Vector2(256, 256)
 
 		if visual_node.has_method("update_ball"):
 			visual_node.update_ball()
