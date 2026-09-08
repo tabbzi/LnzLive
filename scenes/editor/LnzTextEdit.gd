@@ -412,8 +412,7 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 		emit_signal("file_saved", save_path)
 		_set_text_preserve(get_text()) 
 
-	if not output_path.empty():
-		filepath = save_path
+	filepath = save_path
 
 	print("[TIME] LnzTextEdit: save_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + save_path.get_file())
 
