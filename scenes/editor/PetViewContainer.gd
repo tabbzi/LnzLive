@@ -3383,7 +3383,10 @@ func _on_view_variations_toggled(is_on: bool) -> void:
 		if lnz_data:
 			variation_tree.dog_generator = pet_node
 			variation_tree.lnz_parser = lnz_data
-		variation_tree.populate_tree()
+			var text_edit = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+			variation_tree.setup(pet_node, lnz_data, text_edit)
+		else:
+			variation_tree.populate_tree()
 
 func _on_variation_visibility_changed() -> void:
 	if view_variations_check_box.pressed != variation_tree.visible:

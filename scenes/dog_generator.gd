@@ -166,6 +166,7 @@ func _ready():
 	editor.connect("find_polygon", self, "_on_LnzTextEdit_find_polygon")
 	editor.connect("find_move", self, "_on_LnzTextEdit_find_move")
 	editor.connect("find_project_ball", self, "_on_LnzTextEdit_find_project_ball")
+	editor.connect("file_saved", self, "_on_OptionButton_file_saved")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	_animation_container = pet_view.get_node("VBoxContainer/AnimationContainer")
 	t_pose_checkbox = _animation_container.get_node("TPoseCheckBox")
@@ -408,6 +409,7 @@ func _on_OptionButton_file_selected(file_name):
 	generate_pet(file_name)
 
 func _on_OptionButton_file_saved(file_name):
+	print("[DEBUG] dog_generator: _on_OptionButton_file_saved called with: " + str(file_name))
 	generate_pet(file_name)
 
 
@@ -505,9 +507,12 @@ func generate_pet(file_path):
 			else:
 				current_variation_config[section_name] = null
 
-	var variation_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/Variations")
-	if variation_tree:
-		variation_tree.setup(self, lnz)
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if pet_view and pet_view.has_node("variation_tree"):
+		var variation_tree = pet_view.get_node("variation_tree")
+		if is_instance_valid(variation_tree):
+			var text_edit = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+			variation_tree.setup(self, lnz, text_edit)
 
 	KeyBallsData.species = lnz_info.species
 	KeyBallsData.build_bodyarea_map()

@@ -323,7 +323,7 @@ func save_backup():
 		console_log.log_message(msg)
 
 
-func save_file(skip_history: bool = false, silent: bool = false):
+func save_file(skip_history: bool = false, silent: bool = false, output_path: String = ""):
 	var t_start = OS.get_ticks_msec()
 
 	if text.length() > 10 * 1024 * 1024:
@@ -352,7 +352,13 @@ func save_file(skip_history: bool = false, silent: bool = false):
 		if not skip_history:
 			commit_full_snapshot("User Save")
 
-	if filepath == null or filepath.empty() or not is_user_file:
+	var save_path = output_path
+	var user_path_needed = false
+	if save_path.empty():
+		save_path = filepath
+		user_path_needed = true
+
+	if user_path_needed or (save_path == null or save_path.empty()) or (not is_user_file and output_path.empty()):
 		var dir = Directory.new()
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
@@ -368,22 +374,36 @@ func save_file(skip_history: bool = false, silent: bool = false):
 		var possible_file_name = "user://resources/" + base_name + ".lnz"
 		if dir.file_exists(possible_file_name):
 			possible_file_name = "user://resources/" + base_name + "_" + str(OS.get_unix_time()) + ".lnz"
-		filepath = possible_file_name
+		save_path = possible_file_name
+		is_user_file = true
+
+	elif output_path.begins_with("user://"):
+		var dir = Directory.new()
+		dir.open("user://")
+		dir.make_dir_recursive("resources")
+		if dir.file_exists(save_path):
+			var base = output_path.get_file().get_basename()
+			save_path = "user://resources/" + base + "_" + str(OS.get_unix_time()) + ".lnz"
 		is_user_file = true
 
 	var dir = Directory.new()
 	dir.open("user://")
 	dir.make_dir("resources")
 	
+	var tmp_path = save_path + ".tmp"
 	var file = File.new()
-	var err = file.open(filepath, File.WRITE)
+	var err = file.open(tmp_path, File.WRITE)
 
 	if err != OK:
-			printerr("Failed to open file for writing: ", filepath)
+			printerr("Failed to open file for writing: ", tmp_path)
 			return
 
 	file.store_string(text)
 	file.close()
+	
+	var rename_err = dir.rename(tmp_path, save_path)
+	if rename_err != OK:
+		printerr("Atomic save failed to rename temp file: ", tmp_path, " -> ", save_path, " error: ", rename_err)
 
 	if not silent:
 		var msg = "Saved LNZ and Applied Changes!"
@@ -391,10 +411,13 @@ func save_file(skip_history: bool = false, silent: bool = false):
 		if console_log:
 			console_log.log_message(msg)
 
-		emit_signal("file_saved", filepath)
+		emit_signal("file_saved", save_path)
 		_set_text_preserve(get_text()) 
 
-	print("[TIME] LnzTextEdit: save_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
+	if not output_path.empty():
+		filepath = save_path
+
+	print("[TIME] LnzTextEdit: save_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + save_path.get_file())
 
 func _on_Tree_backup_file():
 	save_backup()
@@ -1550,6 +1573,32 @@ func _replace_section_content(section_name: String, new_lines: Array):
 			final_text += "\n"
 
 		_insert_text_at_cursor_at_line(start_line, final_text)
+
+func replace_sections(sections: Dictionary):
+	var all_lines = get_text().split("\n", false)
+	var result_lines = []
+	var flattened_sections = sections.keys()
+	
+	var i = 0
+	while i < all_lines.size():
+		var line = all_lines[i].strip_edges()
+		var is_replaced = false
+		for section in flattened_sections:
+			if line == "[" + section + "]":
+				result_lines.append_array(sections[section])
+				i += 1
+				while i < all_lines.size():
+					var next_line = all_lines[i].strip_edges()
+					if next_line.begins_with("[") and next_line.length() > 1:
+						break
+					i += 1
+				is_replaced = true
+				break
+		if not is_replaced:
+			result_lines.append(all_lines[i])
+			i += 1
+	
+	_set_text_preserve(_join_array(result_lines, "\n"))
 
 func _on_set_column_confirmed():
 	var col_idx = col_input.text.to_int()

@@ -841,3 +841,87 @@ func get_z_shade_slope(reader: VirtualFileLineReader) -> void:
 		var parsed_lines: Array = get_parsed_lines(reader, ["slope"])
 		if parsed_lines.size() > 0:
 			z_shade_slope = int(parsed_lines[0].slope)
+
+func flatten_section(section_name: String, active_config: Dictionary) -> Array:
+	var result = []
+	
+	if not sections_map.has(section_name):
+		return result
+	
+	var section_data = sections_map[section_name]
+	if typeof(section_data) != TYPE_DICTIONARY:
+		return result
+	
+	result.append("[" + section_name + "]")
+	
+	_flatten_append_block(result, section_data, 0)
+	
+	for subblock_key in active_config:
+		var val = active_config[subblock_key]
+		var parsed_id = _flatten_resolve_id(val)
+		var parsed_suffix = _flatten_resolve_suffix(val)
+		
+		if parsed_id == 0 or not section_data.has(parsed_id):
+			continue
+		
+		var id_data = section_data[parsed_id]
+		if typeof(id_data) == TYPE_DICTIONARY:
+			# Find the right subblock within this variation
+			var target_block = null
+			if typeof(subblock_key) == TYPE_INT and id_data.has(subblock_key):
+				target_block = id_data[subblock_key]
+			elif parsed_suffix != "" and id_data.has(parsed_suffix):
+				target_block = id_data[parsed_suffix]
+			elif id_data.has(0):
+				target_block = id_data[0]
+			
+			if typeof(target_block) == TYPE_OBJECT:
+				_flatten_append_lines(result, target_block.lines)
+		elif typeof(id_data) == TYPE_OBJECT:
+			# Bare variation block (no subblocks)
+			_flatten_append_lines(result, id_data.lines)
+	
+	return result
+
+func _flatten_append_block(result: Array, section_data: Dictionary, id: int) -> void:
+	if not section_data.has(id):
+		return
+	var block = section_data[id]
+	if typeof(block) == TYPE_OBJECT:
+		_flatten_append_lines(result, block.lines)
+	elif typeof(block) == TYPE_DICTIONARY:
+		for sk in block:
+			var sub = block[sk]
+			if typeof(sub) == TYPE_OBJECT:
+				_flatten_append_lines(result, sub.lines)
+
+func _flatten_append_lines(result: Array, lines: Array) -> void:
+	for line in lines:
+		var stripped = line.strip_edges()
+		if stripped == "":
+			continue
+		elif stripped.begins_with("#") and stripped.length() > 1 and stripped[1].is_valid_integer():
+			# Skip #N variation headers
+			continue
+		elif stripped == "##":
+			# Skip ## subblock separators
+			continue
+		else:
+			result.append(line)
+
+func _flatten_resolve_id(val) -> int:
+	if typeof(val) == TYPE_INT:
+		return val
+	if typeof(val) == TYPE_STRING:
+		var parts = (val as String).split(".")
+		if parts.size() >= 1 and parts[0].is_valid_integer():
+			return parts[0].to_int()
+	return 0
+
+func _flatten_resolve_suffix(val) -> String:
+	if typeof(val) != TYPE_STRING:
+		return ""
+	var parts = (val as String).split(".")
+	if parts.size() == 2:
+		return parts[1]
+	return ""

@@ -3,17 +3,22 @@ extends Panel
 
 onready var randomize_button: Button = $VBoxContainer/RandomizeButton
 onready var tree_node: Tree = $VBoxContainer/ScrollContainer/Tree
+onready var flatten_button: Button = $VBoxContainer/FlattenButton
 
 var dog_generator = null
 var lnz_parser = null
 var _sections_map = null
 var _current_file_path = ""
+var _text_edit = null
 
-func setup(p_dog_generator: Node, p_lnz_parser: Node) -> void:
+func setup(p_dog_generator: Node, p_lnz_parser, p_text_edit = null) -> void:
 	dog_generator = p_dog_generator
 	lnz_parser = p_lnz_parser
 	_current_file_path = dog_generator.last_loaded_filepath
+	_text_edit = p_text_edit
 	populate_tree()
+	_update_flatten_button_state()
+	_update_randomize_button_state()
 
 func randomize_variations() -> void:
 	var config = dog_generator.current_variation_config
@@ -272,10 +277,18 @@ func _ready() -> void:
 	tree_node.connect("item_edited", self, "_on_item_edited")
 	tree_node.connect("item_selected", self, "_on_item_selected")
 	randomize_button.connect("pressed", self, "_on_randomize_pressed")
+	flatten_button.connect("pressed", self, "_on_flatten_pressed")
+	if dog_generator != null:
+		_update_flatten_button_state()
+		_update_randomize_button_state()
 	randomize()
 
 func _on_randomize_pressed() -> void:
+	if dog_generator == null or lnz_parser == null:
+		return
 	randomize_variations()
+	_update_flatten_button_state()
+	_update_randomize_button_state()
 
 func _on_item_edited() -> void:
 	var item: TreeItem = tree_node.get_edited()
@@ -299,7 +312,11 @@ func _on_item_edited() -> void:
 		_rebuild_section_exclusions(sections, config)
 	_update_tree_checks(config)
 	_sync_parser_exclusions(config)
+	_update_flatten_button_state()
+	_update_randomize_button_state()
 	dog_generator.recompose_model()
+	_update_flatten_button_state()
+	_update_randomize_button_state()
 
 func _on_item_selected() -> void:
 	var item: TreeItem = tree_node.get_selected()
@@ -959,3 +976,93 @@ func _get_subblock(section: String, id: int, sk):
 	if typeof(val) == TYPE_DICTIONARY and val.has(sk):
 		return val[sk]
 	return null
+
+func _update_flatten_button_state() -> void:
+	if not is_instance_valid(flatten_button):
+		return
+	if lnz_parser == null or lnz_parser.sections_map == null:
+		flatten_button.disabled = true
+		return
+	var has_variations = false
+	for section in lnz_parser.sections_map:
+		var sec_data = lnz_parser.sections_map[section]
+		if typeof(sec_data) == TYPE_DICTIONARY:
+			for id in sec_data:
+				if id > 0:
+					has_variations = true
+					break
+		if has_variations:
+			break
+	flatten_button.disabled = not has_variations
+
+func _update_randomize_button_state() -> void:
+	if not is_instance_valid(randomize_button):
+		return
+	if lnz_parser == null or lnz_parser.sections_map == null:
+		randomize_button.disabled = true
+		return
+	var has_variations = false
+	for section in lnz_parser.sections_map:
+		var sec_data = lnz_parser.sections_map[section]
+		if typeof(sec_data) == TYPE_DICTIONARY:
+			for id in sec_data:
+				if id > 0:
+					has_variations = true
+					break
+		if has_variations:
+			break
+	randomize_button.disabled = not has_variations
+
+func _on_flatten_pressed() -> void:
+	if dog_generator == null:
+		return
+	var config = dog_generator.current_variation_config
+	var has_variations = false
+	for section in config:
+		var cfg = config[section]
+		if typeof(cfg) == TYPE_DICTIONARY:
+			for sk in cfg:
+				if cfg[sk] != 0:
+					has_variations = true
+					break
+		if has_variations:
+			break
+	if not has_variations:
+		print("[STATUS] VariationTree: No active variations to flatten.")
+		return
+	
+	var flattened = {}
+	var sections = _sorted_sections()
+	for section in sections:
+		var cfg = config.get(section, {})
+		if typeof(cfg) == TYPE_DICTIONARY and not cfg.empty():
+			flattened[section] = lnz_parser.flatten_section(section, cfg)
+	
+	if flattened.empty():
+		return
+	
+	var text_edit = _text_edit
+	if not text_edit:
+		text_edit = get_tree().root.get_node(
+			"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
+		)
+	
+	text_edit.replace_sections(flattened)
+	
+	var timestamped_filename = ""
+	var timestamped_path = "user://resources/unnamed_" + str(OS.get_unix_time()) + ".lnz"
+	if text_edit.filepath and not text_edit.filepath.empty():
+		var base_dir = text_edit.filepath.get_base_dir()
+		if not base_dir.begins_with("res://"):
+			var base_name = text_edit.filepath.get_file().get_basename()
+			timestamped_filename = base_name + "_" + str(OS.get_unix_time()) + ".lnz"
+			timestamped_path = base_dir + "/" + timestamped_filename
+	
+	text_edit.save_file(true, true, timestamped_path)
+	text_edit.commit_full_snapshot("Flatten Variations to Base")
+	
+	var text_edit_filepath = text_edit.filepath
+	if text_edit_filepath:
+		text_edit.emit_signal("file_saved", text_edit_filepath)
+	
+	print("[STATUS] VariationTree: Flattened " + str(flattened.size()) + " sections.")

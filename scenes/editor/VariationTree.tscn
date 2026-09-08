@@ -129,8 +129,20 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Randomize Variation (click me!)"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+[node name="FlattenButton" type="Button" parent="VBoxContainer"]
 margin_top = 118.0
+margin_right = 470.0
+margin_bottom = 143.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Flatten Variations to Base Data"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 149.0
 margin_right = 470.0
 margin_bottom = 595.0
 rect_min_size = Vector2( 0, 400 )
@@ -141,7 +153,7 @@ __meta__ = {
 
 [node name="Tree" type="Tree" parent="VBoxContainer/ScrollContainer"]
 margin_right = 470.0
-margin_bottom = 477.0
+margin_bottom = 446.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
