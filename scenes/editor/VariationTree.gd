@@ -1049,14 +1049,16 @@ func _on_flatten_pressed() -> void:
 	
 	text_edit.replace_sections(flattened)
 	
-	var timestamped_filename = ""
 	var timestamped_path = "user://resources/unnamed_" + str(OS.get_unix_time()) + ".lnz"
 	if text_edit.filepath and not text_edit.filepath.empty():
 		var base_dir = text_edit.filepath.get_base_dir()
-		if not base_dir.begins_with("res://"):
-			var base_name = text_edit.filepath.get_file().get_basename()
-			timestamped_filename = base_name + "_" + str(OS.get_unix_time()) + ".lnz"
-			timestamped_path = base_dir + "/" + timestamped_filename
+		
+		if base_dir.begins_with("res://"):
+			base_dir = "user://resources"
+			
+		var base_name = text_edit.filepath.get_file().get_basename()
+		var timestamped_filename = base_name + "_" + str(OS.get_unix_time()) + ".lnz"
+		timestamped_path = base_dir + "/" + timestamped_filename
 	
 	text_edit.save_file(true, true, timestamped_path)
 	text_edit.commit_full_snapshot("Flatten Variations to Base")
