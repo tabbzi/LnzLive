@@ -705,7 +705,20 @@ func _on_AutofillSwap_pressed() -> void:
 	_refresh_all_previews()
 
 func _process_section_for_autofill(lnz_text_edit: TextEdit, section_name: String, color_idx: int, texture_idx: int, pair_counts: Dictionary) -> void:
-	pair_counts = LnzLiveUtils.count_color_texture_pairs(lnz_text_edit, section_name, color_idx, texture_idx)
+	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
+	if bounds.empty(): return
+
+	for i in range(bounds.start, bounds.end):
+		var line: String = lnz_text_edit.get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"): continue
+
+		var parts: Array = lnz_text_edit.split_line(line)
+		if parts.size() > max(color_idx, texture_idx):
+			var color: String = parts[color_idx]
+			var texture: String = parts[texture_idx]
+			var key: String = color + "," + texture
+			if not pair_counts.has(key): pair_counts[key] = 0
+			pair_counts[key] += 1
 
 func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 	return a.count > b.count
@@ -829,7 +842,22 @@ func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: String, texture_idx: int, current_max: int) -> int:
-	return LnzLiveUtils.find_max_texture_id(lnz_text_edit, section_name, texture_idx, current_max)
+	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
+	if bounds.empty(): return current_max
+
+	var new_max: int = current_max
+	for i in range(bounds.start, bounds.end):
+		var line: String = lnz_text_edit.get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"): continue
+
+		var parts: Array = lnz_text_edit.split_line(line)
+		if parts.size() > texture_idx:
+			var texture_str: String = parts[texture_idx]
+			if texture_str.is_valid_integer():
+				var texture_id: int = int(texture_str)
+				if texture_id > new_max:
+						new_max = texture_id
+	return new_max
 
 func save_settings() -> void:
 	var values: Dictionary = {}
