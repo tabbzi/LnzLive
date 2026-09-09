@@ -529,14 +529,14 @@ func generate_pet(file_path):
 				var line = f.get_line()
 				if line.begins_with("; MODEL: "):
 					comment_model = line.substr(9).strip_edges()
-					print(comment_model)
+					print("[STATUS] dog_generator: Auto-detected model: " + comment_model)
 					if console_log:
 						console_log.log_message(
 							"Auto-detected %s as game model from LNZ comment!" % comment_model
 						)
 				elif line.begins_with("; GAME: "):
 					comment_game = line.substr(8).strip_edges()
-					print(comment_game)
+					print("[STATUS] dog_generator: Auto-detected game: " + comment_game)
 					if console_log:
 						console_log.log_message(
 							"Auto-detected %s as game palette from LNZ comment!" % comment_game

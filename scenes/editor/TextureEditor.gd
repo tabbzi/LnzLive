@@ -96,7 +96,7 @@ func _ready() -> void:
 	if not dir.dir_exists("user://resources/textures"):
 		var err: int = dir.make_dir_recursive("user://resources/textures")
 		if err != OK and err != ERR_ALREADY_EXISTS:
-			print("Failed to create textures directory.")
+			printerr("[ERROR] TextureEditor: Failed to create textures directory.")
 
 	size_option_btn.add_item("32 x 32", 32)
 	size_option_btn.add_item("64 x 64", 64)
@@ -715,7 +715,7 @@ func _on_SaveButton_pressed() -> void:
 func save_indexed_bmp(path: String) -> void:
 	var f: File = File.new()
 	if f.open(path, File.WRITE) != OK:
-		print("Failed to save BMP at ", path)
+		printerr("[ERROR] TextureEditor: Failed to save BMP at ", path)
 		return
 
 	var w: int = int(canvas_size.x)
@@ -773,7 +773,7 @@ func save_indexed_bmp(path: String) -> void:
 
 	active_image.unlock()
 	f.close()
-	print("Saved texture to ", path)
+	print("[STATUS] TextureEditor: Saved texture to ", path)
 
 func _get_background_color() -> Color:
 	if palette_colors.size() > 253:
@@ -839,7 +839,7 @@ func _on_LoadButton_pressed() -> void:
 		active_image.unlock()
 		
 		active_texture.set_data(active_image)
-		print("Loaded texture purely from raw index: ", fname)
+		print("[STATUS] TextureEditor: Loaded texture purely from raw index: ", fname)
 
 	# RGB or cached texture
 	else:
@@ -858,7 +858,7 @@ func _on_LoadButton_pressed() -> void:
 				loaded_tex = preloader.get_resource(fname.to_lower())
 
 		if not loaded_tex:
-			print("Failed to load texture: ", fname)
+			printerr("[ERROR] TextureEditor: Failed to load texture: ", fname)
 			return
 
 		var img: Image = loaded_tex.get_data()
@@ -895,7 +895,7 @@ func _on_LoadButton_pressed() -> void:
 		img.unlock()
 		
 		active_texture.set_data(active_image)
-		print("Loaded texture via Godot fallback (RGB mapped): ", fname)
+		print("[STATUS] TextureEditor: Loaded texture via Godot fallback (RGB mapped): ", fname)
 
 func _sync_size_ui(w: int, h: int) -> void:
 	var found_size: bool = false

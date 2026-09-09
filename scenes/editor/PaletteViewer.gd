@@ -24,7 +24,7 @@ func _ready() -> void:
 		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")
 		populate_colors()
 	else:
-		print("PaletteViewer Error: Could not find dog_generator node.")
+		printerr("[ERROR] PaletteViewer: Could not find dog_generator node.")
 
 	vbox.connect("resized", self, "_on_vbox_resized")
 	

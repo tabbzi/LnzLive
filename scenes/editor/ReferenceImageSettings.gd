@@ -140,7 +140,7 @@ func _on_import_file_selected(path: String) -> void:
 			option_button.select(idx)
 			_on_option_button_item_selected(idx)
 	else:
-		print("Error copying reference image: ", err)
+		printerr("[ERROR] ReferenceImageSettings: Error copying reference image: ", err)
 
 func _on_clear_folder_button_pressed() -> void:
 	var dir: Directory = Directory.new()

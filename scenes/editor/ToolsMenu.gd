@@ -552,7 +552,7 @@ func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 func _on_AutofillButton_pressed() -> void:
 	var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	if not is_instance_valid(lnz_text_edit):
-		print("LnzTextEdit not found")
+		printerr("[ERROR] ToolsMenu: LnzTextEdit not found")
 		return
 
 	var pair_counts: Dictionary = {}
@@ -607,7 +607,7 @@ func _on_RandomizeButton_pressed() -> void:
 
 	var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	if not is_instance_valid(lnz_text_edit):
-		print("LnzTextEdit not found")
+		printerr("[ERROR] ToolsMenu: LnzTextEdit not found")
 		return
 
 	var max_texture_id: int = -1

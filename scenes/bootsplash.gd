@@ -55,7 +55,7 @@ func load_settings() -> void:
 		OS.center_window()
 	
 	else:
-		print("Error loading window settings: ", err)
+		printerr("[ERROR] bootsplash: Error loading window settings: ", err)
 		OS.center_window()
 
 func _on_Timer_timeout() -> void:

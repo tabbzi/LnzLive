@@ -182,9 +182,9 @@ func _on_SaveDialog_file_selected(path: String, content_bytes: PoolByteArray) ->
 	if file.open(path, File.WRITE) == OK:
 		file.store_buffer(content_bytes)
 		file.close()
-		print("File saved successfully to: " + path)
+		print("[STATUS] ExportButtonOBJ: File saved successfully to: " + path)
 	else:
-		print("Error saving file to: " + path)
+		printerr("[ERROR] ExportButtonOBJ: Error saving file to: " + path)
 		
 	content_bytes.resize(0)
 

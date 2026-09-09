@@ -140,7 +140,7 @@ func save_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
+		printerr("[ERROR] UserSettings: Error loading settings for save: ", err)
 
 	config.set_value("Display", "fullscreen", OS.window_fullscreen)
 	config.set_value("Display", "maximized", OS.window_maximized)
@@ -164,7 +164,7 @@ func save_settings() -> void:
 	
 	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
-		print("Error saving window settings: ", save_err)
+		printerr("[ERROR] UserSettings: Error saving window settings: ", save_err)
 
 func load_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
@@ -296,7 +296,7 @@ func _apply_global_font_settings() -> void:
 	if using_alt_font:
 		cascadia_data = load("res://resources/fonts/CascadiaCode.ttf")
 		if not cascadia_data:
-			print("WARNING: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+			print("[WARNING] UserSettings: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
 
 	var keys_to_erase: Array = []
 	for id in base_fonts.keys():

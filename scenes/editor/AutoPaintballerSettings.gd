@@ -465,7 +465,7 @@ func _on_RandomizeButton_pressed() -> void:
 	var texture_list_str: String = properties["texture_list"]
 	var texture_list: Array = LnzLiveUtils.parse_number_list(texture_list_str, true) # Allow negatives
 	if texture_list.empty() and not texture_list_str.strip_edges().empty():
-		push_warning("Could not parse [Texture List] so using default.")
+		push_warning("[WARNING] AutoPaintballerSettings: Could not parse [Texture List] so using default.")
 		texture_list.append(-1)
 	elif texture_list.empty():
 		texture_list.append(-1)
