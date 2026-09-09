@@ -291,11 +291,6 @@ func _on_palette_changed(palette_name = "") -> void:
 func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
-func get_color_from_index(index: int) -> Color:
-	if index >= 0 and index < cached_palette_colors.size():
-		return cached_palette_colors[index]
-	return Color.white
-
 func _on_UseSeed_toggled(button_pressed: bool) -> void:
 	_seed_edit.editable = button_pressed
 
@@ -1369,7 +1364,7 @@ func _generate_surprise_color_string() -> String:
 		_on_palette_changed()
 		
 	var base_index: int = randi() % 255 + 1
-	var base_color: Color = get_color_from_index(base_index)
+	var base_color: Color = LnzLiveUtils.color_from_index(base_index, cached_palette_colors)
 	
 	var p_type: int = randi() % 5
 	var generated_colors: Array = []

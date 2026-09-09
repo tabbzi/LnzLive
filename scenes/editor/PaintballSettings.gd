@@ -242,8 +242,8 @@ func _on_InterpolateColors_pressed() -> void:
 				var interp_idx: int = int(round(lerp(c1_idx, c2_idx, t)))
 				new_list.append(interp_idx)
 		else:
-			var col1: Color = get_color_from_index(c1_idx)
-			var col2: Color = get_color_from_index(c2_idx)
+			var col1: Color = LnzLiveUtils.color_from_index(c1_idx, cached_palette_colors)
+			var col2: Color = LnzLiveUtils.color_from_index(c2_idx, cached_palette_colors)
 			for step in range(1, steps + 1):
 				var t: float = float(step) / float(steps + 1)
 				var interp_col: Color = col1.linear_interpolate(col2, t)
@@ -290,7 +290,7 @@ func _on_GeneratePaletteButton_pressed() -> void:
 		else:
 			base_index = randi() % 255 + 1
 		
-	var base_color: Color = get_color_from_index(base_index)
+	var base_color: Color = LnzLiveUtils.color_from_index(base_index, cached_palette_colors)
 	
 	var p_type: int = 0
 	if is_instance_valid(type_select):
@@ -492,11 +492,6 @@ func _on_palette_changed(palette_name = "") -> void:
 	_refresh_slot_buttons()
 	_design_canvas.update()
 	_refresh_all_previews()
-
-func get_color_from_index(index: int) -> Color:
-	if index >= 0 and index < cached_palette_colors.size():
-		return cached_palette_colors[index]
-	return Color.white
 
 func is_design_mode_active() -> bool:
 	return _tab_container.current_tab == 1

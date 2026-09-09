@@ -792,7 +792,7 @@ func _on_RandomizeAfter_pressed() -> void:
 			seed_color = theory_seed_picker.color
 		else:
 			var rand_idx: int = randi() % 255 + 1
-			seed_color = get_color_from_index(rand_idx)
+			seed_color = LnzLiveUtils.color_from_index(rand_idx, cached_palette_colors)
 		
 	var use_natural: bool = false
 	if is_instance_valid(natural_colors_check):
@@ -854,11 +854,6 @@ func _on_RandomizeAfter_pressed() -> void:
 
 func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
-
-func get_color_from_index(index: int) -> Color:
-	if index >= 0 and index < cached_palette_colors.size():
-		return cached_palette_colors[index]
-	return Color.white
 
 func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: String, texture_idx: int, current_max: int) -> int:
 	return LnzLiveUtils.find_max_texture_id(lnz_text_edit, section_name, texture_idx, current_max)

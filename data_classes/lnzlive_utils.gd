@@ -831,6 +831,10 @@ static func queue_free_safe(node: Node) -> void:
 	if is_instance_valid(node):
 		node.queue_free()
 
+static func color_from_index(index: int, palette: Array) -> Color:
+	if index >= 0 and index < palette.size():
+		return palette[index]
+	return Color.white
 static func ensure_web_ref_dir() -> void:
 	JavaScript.eval("""
 	if (!window.fileUploadData) window.fileUploadData = {}
