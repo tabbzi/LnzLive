@@ -527,35 +527,8 @@ func get_properties() -> Dictionary:
 
 func export_paintball_json() -> void:
 	print("[STATUS] PaintballSettings: started exporting paintball JSON (HTML5 feature: %s)" % OS.has_feature("HTML5"))
-	if OS.has_feature("HTML5"):
-		var settings_dict: Dictionary = get_properties()
-		settings_dict["exporter"] = "LnzLive"
-		var json_string: String = JSON.print(settings_dict, "  ")
-		var filename: String = str("LnzLive_paintball_preset_", OS.get_unix_time(), ".json")
-		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
-		var js_code: String = """
-		var element = document.createElement('a');
-		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
-		element.style.display = 'none';
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		"""
-		JavaScript.eval(js_code)
-		print("[STATUS] PaintballSettings: triggered web download for %s" % filename)
-	else:
-		var file_dialog: FileDialog = FileDialog.new()
-		file_dialog.window_title = "Export Paintball Preset"
-		file_dialog.mode = FileDialog.MODE_SAVE_FILE
-		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-		file_dialog.filters = ["*.json ; JSON Preset"]
-		file_dialog.rect_min_size = Vector2(400, 400)
-		file_dialog.current_file = str("LnzLive_paintball_preset_", OS.get_unix_time(), ".json")
-		file_dialog.connect("file_selected", self, "_save_settings_file")
-		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-		get_tree().root.add_child(file_dialog)
-		file_dialog.popup_centered_ratio(0.6)
+	var settings_dict: Dictionary = get_properties()
+	LnzLiveUtils.export_json_preset(settings_dict, "LnzLive_paintball_preset", self, "_save_settings_file")
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
 	LnzLiveUtils.queue_free_safe(dialog)
@@ -616,18 +589,12 @@ func _on_web_import_completed(args: Array) -> void:
 
 func _load_preset_file(path: String) -> void:
 	print("[STATUS] PaintballSettings: attempting to load preset from %s" % path)
-	var file: File = File.new()
-	if file.open(path, File.READ) == OK:
-		var text: String = file.get_as_text()
-		var json_res = JSON.parse(text)
-		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
-			print("[STATUS] PaintballSettings: successfully loaded and parsed preset file")
-			_apply_settings_dict(json_res.result)
-		else:
-			print("[ERROR] PaintballSettings: failed to parse JSON preset from %s (Error code: %d)" % [path, json_res.error])
-		file.close()
+	var json_res = LnzLiveUtils.load_json_preset(path)
+	if typeof(json_res) == TYPE_DICTIONARY and not json_res.empty():
+		print("[STATUS] PaintballSettings: successfully loaded and parsed preset file")
+		_apply_settings_dict(json_res)
 	else:
-		print("[ERROR] PaintballSettings: failed to open preset file for reading: %s" % path)
+		print("[ERROR] PaintballSettings: failed to parse JSON preset from %s" % path)
 
 func _apply_settings_dict(data: Dictionary) -> void:
 	print("[STATUS] PaintballSettings: applying settings dictionary")

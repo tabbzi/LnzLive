@@ -835,6 +835,49 @@ static func color_from_index(index: int, palette: Array) -> Color:
 	if index >= 0 and index < palette.size():
 		return palette[index]
 	return Color.white
+
+static func export_json_preset(settings_dict: Dictionary, preset_name: String, callback_target: Node, callback_method: String, exporter_name: String = "LnzLive") -> void:
+	settings_dict["exporter"] = exporter_name
+	var json_string: String = JSON.print(settings_dict, "  ")
+	var filename: String = str(preset_name, "_", OS.get_unix_time(), ".json")
+	
+	if OS.has_feature("HTML5"):
+		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
+		var js_code: String = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + filename + """');
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Export " + preset_name + " Preset"
+		file_dialog.mode = FileDialog.MODE_SAVE_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.current_file = filename
+		file_dialog.connect("file_selected", callback_target, callback_method)
+		file_dialog.connect("popup_hide", callback_target, "_on_file_dialog_closed")
+		if is_instance_valid(callback_target):
+			callback_target.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+static func load_json_preset(file_path: String) -> Dictionary:
+	var result: Dictionary = {}
+	var file: File = File.new()
+	if file.open(file_path, File.READ) == OK:
+		var text: String = file.get_as_text()
+		file.close()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+			result = json_res.result
+	return result
+
 static func ensure_web_ref_dir() -> void:
 	JavaScript.eval("""
 	if (!window.fileUploadData) window.fileUploadData = {}

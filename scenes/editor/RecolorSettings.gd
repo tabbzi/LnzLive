@@ -560,37 +560,10 @@ func export_recolor_json() -> void:
 	var swaps = _gather_swap_data()
 	var checks = _get_check_states()
 	var settings_dict: Dictionary = {
-		"exporter": "LnzLive",
 		"swaps": swaps,
 		"checks": checks
 	}
-	var json_string: String = JSON.print(settings_dict, "  ")
-	var filename: String = str("LnzLive_recolor_preset_", OS.get_unix_time(), ".json")
-	
-	if OS.has_feature("HTML5"):
-		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
-		var js_code: String = """
-		var element = document.createElement('a');
-		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
-		element.style.display = 'none';
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		"""
-		JavaScript.eval(js_code)
-	else:
-		var file_dialog: FileDialog = FileDialog.new()
-		file_dialog.window_title = "Export Recolor Preset"
-		file_dialog.mode = FileDialog.MODE_SAVE_FILE
-		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-		file_dialog.filters = ["*.json ; JSON Preset"]
-		file_dialog.rect_min_size = Vector2(400, 400)
-		file_dialog.current_file = filename
-		file_dialog.connect("file_selected", self, "_save_recolor_file")
-		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-		get_tree().root.add_child(file_dialog)
-		file_dialog.popup_centered_ratio(0.6)
+	LnzLiveUtils.export_json_preset(settings_dict, "LnzLive_recolor_preset", self, "_save_recolor_file")
 
 func _on_ImportPresetButton_pressed() -> void:
 	if OS.has_feature("HTML5"):

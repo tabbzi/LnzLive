@@ -938,35 +938,8 @@ func export_autopaintballer_json() -> void:
 	var settings_dict: Dictionary = get_properties()
 	settings_dict["format"] = "LnzLive Preset"
 	settings_dict["version"] = 1
-	settings_dict["exporter"] = "LnzLive"
 	settings_dict["exporter_version"] = "3.2"
-	var json_string: String = JSON.print(settings_dict, "  ")
-	var filename: String = str("LnzLive_autopaintballer_preset_", OS.get_unix_time(), ".json")
-
-	if OS.has_feature("HTML5"):
-		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
-		var js_code: String = """
-		var element = document.createElement('a');
-		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
-		element.style.display = 'none';
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		"""
-		JavaScript.eval(js_code)
-	else:
-		var file_dialog: FileDialog = FileDialog.new()
-		file_dialog.window_title = "Export Auto Paintballer Preset"
-		file_dialog.mode = FileDialog.MODE_SAVE_FILE
-		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-		file_dialog.filters = ["*.json ; JSON Preset"]
-		file_dialog.rect_min_size = Vector2(400, 400)
-		file_dialog.current_file = filename
-		file_dialog.connect("file_selected", self, "_save_settings_file")
-		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-		get_tree().root.add_child(file_dialog)
-		file_dialog.popup_centered_ratio(0.6)
+	LnzLiveUtils.export_json_preset(settings_dict, "LnzLive_autopaintballer_preset", self, "_save_settings_file")
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
 	LnzLiveUtils.queue_free_safe(dialog)
@@ -1019,13 +992,9 @@ func _on_web_import_completed(args: Array) -> void:
 		_apply_settings_dict(json_res.result)
 
 func _load_preset_file(path: String) -> void:
-	var file: File = File.new()
-	if file.open(path, File.READ) == OK:
-		var text: String = file.get_as_text()
-		var json_res = JSON.parse(text)
-		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
-			_apply_settings_dict(json_res.result)
-		file.close()
+	var json_res = LnzLiveUtils.load_json_preset(path)
+	if typeof(json_res) == TYPE_DICTIONARY and not json_res.empty():
+		_apply_settings_dict(json_res)
 
 func add_affected_ball(ball_no: int) -> void:
 	var current_text: String = _affected_ballz.text
