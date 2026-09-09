@@ -387,6 +387,12 @@ func _ready() -> void:
 		shader_settings_instance.connect("texture_affected_by_rotation_changed", self, "_on_texture_affected_by_rotation_changed")
 		shader_settings_instance.connect("texture_flat_colors_changed", self, "_on_texture_flat_colors_changed")
 		# shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
+
+		if is_instance_valid(pet_node):
+			shader_settings_instance.connect("texture_rotation_mode_changed", pet_node, "_on_shader_rotation_mode_changed")
+			shader_settings_instance.connect("texture_rotation_input_changed", pet_node, "_on_shader_rotation_input_changed")
+			shader_settings_instance.connect("texture_affected_by_size_changed", pet_node, "_on_shader_affected_by_size_changed")
+			shader_settings_instance.connect("texture_affected_by_rotation_changed", pet_node, "_on_shader_affected_by_rotation_changed")
 		
 #		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 #		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
@@ -414,19 +420,11 @@ func _ready() -> void:
 	)
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
-	call_deferred("_sync_shader_settings_to_pet")
 	_setup_3d_gizmos()
 
 	# check flipped view...
 	tex.rect_scale.x = -1.0
 	tex.rect_pivot_offset = tex.rect_size / 2.0
-
-func _sync_shader_settings_to_pet():
-	if is_instance_valid(shader_settings_instance) and is_instance_valid(pet_node):
-		pet_node._shader_rotation_mode = shader_settings_instance.get_mode()
-		pet_node._shader_rotation_input = shader_settings_instance.get_input_vec()
-		pet_node._shader_affected_by_size = shader_settings_instance.get_affected_by_size()
-		pet_node._shader_affected_by_rotation = shader_settings_instance.get_affected_by_rotation()
 
 func _on_reference_image_updated(config_data: Dictionary) -> void:
 	update_config_reference_image(config_data)

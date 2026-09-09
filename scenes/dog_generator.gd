@@ -140,6 +140,17 @@ signal hidden_balls_changed(count)
 
 signal palette_changed(palette_name)
 
+func _on_shader_rotation_mode_changed(mode: int) -> void:
+	_shader_rotation_mode = mode
+
+func _on_shader_rotation_input_changed(input_vec: Vector2) -> void:
+	_shader_rotation_input = input_vec
+
+func _on_shader_affected_by_size_changed(is_affected: bool) -> void:
+	_shader_affected_by_size = is_affected
+
+func _on_shader_affected_by_rotation_changed(is_affected: bool) -> void:
+	_shader_affected_by_rotation = is_affected
 
 ### SETUP & INITIALIZATION ###
 # _ready
