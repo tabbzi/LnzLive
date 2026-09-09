@@ -86,48 +86,54 @@ var cached_palette_colors: Array = []
 
 onready var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader")
 
-var design_color_slots: Array = [
-	{
-		"color": "105",
-		"outline_color": "244",
-		"texture": "0",
-		"outline_type": -1,
-		"fuzz": 0,
-		"group": 0,
-		"anchored": true,
-		"display_color": Color(1, 1, 0)
-	},
-	{
-		"color": "95",
-		"outline_color": "244",
-		"texture": "0",
-		"outline_type": -1,
-		"fuzz": 0,
-		"group": 0,
-		"anchored": true,
-		"display_color": Color(1, 0, 0)
-	},
-	{
-		"color": "145",
-		"outline_color": "244",
-		"texture": "0",
-		"outline_type": -1,
-		"fuzz": 0,
-		"group": 0,
-		"anchored": true,
-		"display_color": Color(0, 1, 0)
-	},
-	{
-		"color": "155",
-		"outline_color": "244",
-		"texture": "0",
-		"outline_type": -1,
-		"fuzz": 0,
-		"group": 0,
-		"anchored": true,
-		"display_color": Color(0, 0, 1)
-	}
-]
+const DEFAULT_DESIGN_SLOTS: Array = [
+		{
+			"color": "105",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 1, 0)
+		},
+		{
+			"color": "95",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 0, 0)
+		},
+		{
+			"color": "145",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 1, 0)
+		},
+		{
+			"color": "155",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 0, 1)
+		}
+	]
+
+var design_color_slots: Array = []
 
 const DESIGN_CANVAS_SIZE: float = 200.0
 
@@ -857,52 +863,9 @@ func _on_clear_design_pressed() -> void:
 	print("[STATUS] PaintballSettings: design canvas cleared")
 	_design_canvas.clear()
 	
-	design_color_slots = [
-		{
-			"color": "105",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"scale": 100,
-			"display_color": Color(1, 1, 0)
-		},
-		{
-			"color": "95",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"scale": 100,
-			"display_color": Color(1, 0, 0)
-		},
-		{
-			"color": "145",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"scale": 100,
-			"display_color": Color(0, 1, 0)
-		},
-		{
-			"color": "155",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"scale": 100,
-			"display_color": Color(0, 0, 1)
-		}
-	]
+	design_color_slots.clear()
+	for s in DEFAULT_DESIGN_SLOTS:
+		design_color_slots.append(s.duplicate(true))
 
 	_refresh_slot_buttons()
 	_design_canvas.emit_signal("design_changed")
@@ -1387,48 +1350,9 @@ func _on_reset_defaults_pressed() -> void:
 	_design_total_diameter_max.value = 30.0
 	_design_pixel_mode.pressed = false
 
-	design_color_slots = [
-		{
-			"color": "105",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"display_color": Color(1, 1, 0)
-		},
-		{
-			"color": "95",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"display_color": Color(1, 0, 0)
-		},
-		{
-			"color": "145",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"display_color": Color(0, 1, 0)
-		},
-		{
-			"color": "155",
-			"outline_color": "244",
-			"texture": "0",
-			"outline_type": -1,
-			"fuzz": 0,
-			"group": 0,
-			"anchored": true,
-			"display_color": Color(0, 0, 1)
-		}
-	]
+	design_color_slots.clear()
+	for s in DEFAULT_DESIGN_SLOTS:
+		design_color_slots.append(s.duplicate(true))
 	_refresh_slot_buttons()
 	_on_design_tool_toggled(null)
 
