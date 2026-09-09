@@ -11,15 +11,7 @@ var polygon_mode: bool = false
 signal polygon_mode_toggled(is_on)
 
 func _ready() -> void:
-	var viewport_size: Vector2 = get_viewport().size
-	var panel: Control = self
-	var panel_size: Vector2 = panel.rect_size
-	
-	var default_x: float = (viewport_size.x - panel_size.x) / 2.0
-	var default_y: float = viewport_size.y - panel_size.y - 10.0
-	var default_pos: Vector2 = Vector2(default_x, default_y)
-	
-	panel.restore_position(default_pos)
+	restore_position(_default_position())
 
 	_connect_settings_signals()
 	load_settings()
@@ -191,9 +183,19 @@ func _update_polygon_mode() -> void:
 	var check_box: Button = find_node("PolygonModeCheckBox")
 	if check_box:
 		polygon_mode = check_box.pressed
+		_update_polygon_label()
 		emit_signal("polygon_mode_toggled", polygon_mode)
+
+func _update_polygon_label() -> void:
+	var check_box: Button = find_node("PolygonModeCheckBox")
+	if check_box:
+		if polygon_mode:
+			check_box.text = "Polygon Mode"
+		else:
+			check_box.text = "Line Mode"
 
 func _on_PolygonModeCheckBox_toggled(is_on: bool) -> void:
 	polygon_mode = is_on
+	_update_polygon_label()
 	save_settings()
 	emit_signal("polygon_mode_toggled", is_on)

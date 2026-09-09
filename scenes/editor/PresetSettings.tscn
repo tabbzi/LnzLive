@@ -89,7 +89,7 @@ anti_aliasing = false
 [node name="PresetSettings" type="Panel"]
 margin_right = 500.0
 margin_bottom = 1150.0
-rect_min_size = Vector2( 300, 650 )
+rect_min_size = Vector2( 525, 1175 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )

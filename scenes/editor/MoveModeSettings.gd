@@ -68,15 +68,7 @@ var _constraint_buttons: Array = []
 const _mirror_axes: Array = ["MirrorX", "MirrorY", "MirrorZ"]
 
 func _ready() -> void:
-	var viewport_size: Vector2 = get_viewport().size
-	var panel: Control = self
-	var panel_size: Vector2 = panel.rect_size
-	
-	var default_x: float = (viewport_size.x - panel_size.x) / 2.0
-	var default_y: float = viewport_size.y - panel_size.y - 10.0
-	var default_pos: Vector2 = Vector2(default_x, default_y)
-	
-	panel.restore_position(default_pos)
+	restore_position(_default_position())
 	
 	_apply_button.connect("pressed", self, "_on_ApplyButton_pressed")
 	_clear_button.connect("pressed", self, "_on_ClearButton_pressed")

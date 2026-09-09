@@ -101,7 +101,7 @@ anti_aliasing = false
 [node name="PaintballSettings" type="Panel"]
 margin_right = 500.0
 margin_bottom = 1000.0
-rect_min_size = Vector2( 300, 600 )
+rect_min_size = Vector2( 525, 1025 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )

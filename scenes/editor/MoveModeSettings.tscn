@@ -83,7 +83,7 @@ anti_aliasing = false
 [node name="MoveModeSettings" type="Panel"]
 margin_right = 500.0
 margin_bottom = 625.0
-rect_min_size = Vector2( 300, 625 )
+rect_min_size = Vector2( 525, 1000 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )

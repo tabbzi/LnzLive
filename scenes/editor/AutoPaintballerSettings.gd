@@ -212,15 +212,7 @@ func _ready() -> void:
 	if pet_node:
 		pet_node.connect("palette_changed", self, "_on_palette_changed")
 		
-	var viewport_size: Vector2 = get_viewport().size
-	var panel: Control = self
-	var panel_size: Vector2 = panel.rect_size
-	
-	var default_x: float = (viewport_size.x - panel_size.x) / 2.0
-	var default_y: float = viewport_size.y - panel_size.y - 10.0
-	var default_pos: Vector2 = Vector2(default_x, default_y)
-	
-	panel.restore_position(default_pos)
+	restore_position(_default_position())
 	
 	_randomize_button.connect("pressed", self, "_on_RandomizeButton_pressed")
 	_affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")

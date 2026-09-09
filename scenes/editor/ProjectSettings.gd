@@ -58,14 +58,7 @@ func _ready() -> void:
 	# Hide by default
 	hide()
 
-	var viewport_size: Vector2 = get_viewport().size
-	var panel_size: Vector2 = self.rect_size
-	
-	var default_x: float = (viewport_size.x - panel_size.x) / 2
-	var default_y: float = viewport_size.y - panel_size.y - 10
-	var default_pos: Vector2 = Vector2(default_x, default_y)
-	
-	self.restore_position(default_pos)
+	restore_position(_default_position())
 
 	_connect_settings_signals()
 	load_settings()

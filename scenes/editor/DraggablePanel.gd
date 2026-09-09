@@ -12,7 +12,9 @@ var drag_start: Vector2 = Vector2.ZERO
 var is_docked: bool = false
 
 var dock_button: Button
+var resize_grip: Control
 var original_rect_size: Vector2
+var _resize_start_size: Vector2 = Vector2.ZERO
 
 var _is_loading_settings: bool = false
 
@@ -34,6 +36,42 @@ func _ready() -> void:
 	dock_button.connect("pressed", self, "_on_dock_button_pressed")
 	
 	update_buttons()
+	_create_resize_grip()
+
+func _create_resize_grip() -> void:
+	resize_grip = Control.new()
+	resize_grip.name = "ResizeGrip"
+	resize_grip.mouse_filter = Control.MOUSE_FILTER_STOP
+	resize_grip.set_anchors_and_margins_preset(Control.PRESET_BOTTOM_RIGHT)
+	resize_grip.margin_left = -20
+	resize_grip.margin_top = -20
+	resize_grip.margin_right = 0
+	resize_grip.margin_bottom = 0
+	resize_grip.connect("draw", self, "_on_resize_grip_draw")
+	resize_grip.connect("gui_input", self, "_on_resize_grip_input")
+	add_child(resize_grip)
+	_hide_resize_grip()
+
+func _on_resize_grip_draw() -> void:
+	var w: float = rect_size.x
+	var h: float = rect_size.y
+	var lines: int = 4
+	var step: float = min(w, h) / lines
+	
+	for i in range(1, lines + 1):
+		var y: float = h - step * i
+		var x: float = w - step * i
+		draw_line(Vector2(x, y), Vector2(w, y), Color(0.5, 0.5, 0.5, 0.7), 1.0)
+		draw_line(Vector2(x, y), Vector2(x, h), Color(0.5, 0.5, 0.5, 0.7), 1.0)
+
+func _show_resize_grip() -> void:
+	if resize_grip:
+		resize_grip.visible = true
+		resize_grip.update()
+
+func _hide_resize_grip() -> void:
+	if resize_grip:
+		resize_grip.visible = false
 
 func _stylize_button(btn: Button, btn_text: String) -> void:
 	btn.text = btn_text
@@ -67,6 +105,24 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion and dragging:
 		rect_global_position = get_global_mouse_position() - drag_start
 
+func _on_resize_grip_input(event: InputEvent) -> void:
+	if is_docked:
+		return
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				_resize_start_size = rect_size
+				dragging = true
+				drag_start = get_global_mouse_position()
+			else:
+				dragging = false
+				save_position()
+	elif event is InputEventMouseMotion and dragging:
+		var delta: Vector2 = get_global_mouse_position() - drag_start
+		rect_size = _resize_start_size + delta
+		if resize_grip:
+			resize_grip.update()
+
 func save_position() -> void:
 	if is_docked: return
 	var config: ConfigFile = ConfigFile.new()
@@ -88,8 +144,9 @@ func _on_viewport_resized() -> void:
 
 func _get_clamped_position() -> Vector2:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var new_x: float = clamp(rect_global_position.x, 0, max(0, viewport_size.x - rect_size.x))
-	var new_y: float = clamp(rect_global_position.y, 0, max(0, viewport_size.y - rect_size.y))
+	var panel_size: Vector2 = get_panel_size()
+	var new_x: float = clamp(rect_global_position.x, 0, max(0, viewport_size.x - panel_size.x))
+	var new_y: float = clamp(rect_global_position.y, 0, max(0, viewport_size.y - panel_size.y))
 	return Vector2(new_x, new_y)
 
 func _on_dock_button_pressed() -> void:
@@ -108,6 +165,7 @@ func set_docked(docked: bool) -> void:
 	dragging = false
 	
 	if is_docked:
+		_hide_resize_grip()
 		set_anchors_and_margins_preset(Control.PRESET_WIDE)
 		margin_left = 0
 		margin_right = 0
@@ -117,8 +175,9 @@ func set_docked(docked: bool) -> void:
 		size_flags_vertical = SIZE_EXPAND_FILL
 	else:
 		set_anchors_and_margins_preset(Control.PRESET_TOP_LEFT)
-		rect_size = original_rect_size
-		restore_position(rect_global_position)
+		rect_size = rect_min_size
+		_show_resize_grip()
+		restore_position(_default_position())
 
 	update_buttons()
 
@@ -127,3 +186,17 @@ func update_buttons() -> void:
 		dock_button.text = "Pop out"
 	else:
 		dock_button.text = "Dock"
+
+func _default_position() -> Vector2:
+	var viewport_size: Vector2 = get_viewport().size
+	var panel_size: Vector2 = get_panel_size()
+	var default_x: float = (viewport_size.x - panel_size.x) / 2.0
+	var default_y: float = viewport_size.y - panel_size.y - 10.0
+	return Vector2(default_x, default_y)
+
+func get_panel_size() -> Vector2:
+	if is_docked:
+		return rect_size
+	if original_rect_size.x > 0 and original_rect_size.y > 0:
+		return original_rect_size
+	return rect_min_size

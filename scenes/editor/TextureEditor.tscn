@@ -65,16 +65,11 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="TextureEditor" type="Panel"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_right = -1420.0
-rect_min_size = Vector2( 300, 0 )
-size_flags_horizontal = 3
-size_flags_vertical = 3
+rect_min_size = Vector2( 495, 1100 )
 custom_styles/panel = ExtResource( 3 )
 script = ExtResource( 1 )
 __meta__ = {
-"_edit_use_anchors_": false
+	"_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]

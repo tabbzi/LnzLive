@@ -73,7 +73,7 @@ anti_aliasing = false
 [node name="ProjectSettings" type="Panel"]
 margin_right = 500.0
 margin_bottom = 925.0
-rect_min_size = Vector2( 300, 1000 )
+rect_min_size = Vector2( 525, 1370 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )

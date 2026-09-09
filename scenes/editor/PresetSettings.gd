@@ -152,14 +152,7 @@ func _ready() -> void:
 
 	connect("visibility_changed", self, "_on_visibility_changed")
 	
-	var viewport_size: Vector2 = get_viewport().size
-	var panel_size: Vector2 = panel.rect_size
-	
-	var default_x: float = (viewport_size.x - panel_size.x) / 2
-	var default_y: float = viewport_size.y - panel_size.y - 10
-	var default_pos: Vector2 = Vector2(default_x, default_y)
-	
-	panel.restore_position(default_pos)
+	restore_position(_default_position())
 
 	if not is_inside_tree():
 		return
