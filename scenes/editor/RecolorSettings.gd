@@ -55,6 +55,7 @@ onready var bottom_row = header_container.get_node("BottomRow")
 onready var random_seed_check: CheckBox = bottom_row.get_node_or_null("RandomSeedCheckBox")
 onready var natural_colors_check: CheckBox = bottom_row.get_node_or_null("NaturalColorsOnly")
 onready var texturable_only_check: CheckBox = bottom_row.get_node_or_null("TexturableOnly")
+onready var tex_list_check: CheckBox = bottom_row.get_node_or_null("TexListCheck")
 
 onready var check_container_2 = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2
 onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("NoseBallz")
@@ -120,6 +121,9 @@ func _ready() -> void:
 	if is_instance_valid(nose_ballz_check):
 		nose_ballz_check.connect("toggled", self, "_on_nose_ballz_toggled")
 	
+	if is_instance_valid(tex_list_check):
+		tex_list_check.connect("toggled", self, "_on_tex_list_toggled")
+	
 	_populate_color_theory_options()
 		
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll.connect("resized", self, "_on_bucket_scroll_resized")
@@ -151,6 +155,10 @@ func _on_random_seed_toggled(is_on: bool) -> void:
 	pass
 
 func _on_nose_ballz_toggled(is_on: bool) -> void:
+	if _is_loading_settings: return
+	save_settings()
+
+func _on_tex_list_toggled(is_on: bool) -> void:
 	if _is_loading_settings: return
 	save_settings()
 
@@ -754,9 +762,14 @@ func _on_RandomizeAfter_pressed() -> void:
 	if not is_instance_valid(lnz_text_edit): return
 
 	var max_texture_id: int = -1
-	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Ballz Info]", 7, max_texture_id)
-	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Add Ball]", 13, max_texture_id)
-	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Paint Ballz]", 10, max_texture_id)
+	if is_instance_valid(tex_list_check) and tex_list_check.pressed:
+		var pet_node = LnzLiveUtils.get_pet_node(get_tree().root)
+		if pet_node and pet_node.lnz and pet_node.lnz.texture_list and not pet_node.lnz.texture_list.empty():
+			max_texture_id = pet_node.lnz.texture_list.size() - 1
+	else:
+		max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Ballz Info]", 7, max_texture_id)
+		max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Add Ball]", 13, max_texture_id)
+		max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Paint Ballz]", 10, max_texture_id)
 
 	if max_texture_id == -1: max_texture_id = 0
 
@@ -863,6 +876,8 @@ func save_settings() -> void:
 	var values: Dictionary = {}
 	if is_instance_valid(nose_ballz_check):
 		values["nose_ballz"] = nose_ballz_check.pressed
+	if is_instance_valid(tex_list_check):
+		values["tex_list"] = tex_list_check.pressed
 	var check_container = color_swap_check_container
 	var checks: Dictionary = {}
 	for cb in check_container.get_children():
@@ -887,6 +902,8 @@ func load_settings() -> void:
 	load_eye_colors_settings(data)
 	if is_instance_valid(nose_ballz_check):
 		nose_ballz_check.pressed = data.get("nose_ballz", true)
+	if is_instance_valid(tex_list_check):
+		tex_list_check.pressed = data.get("tex_list", false)
 	var checks = data.get("checks", {})
 	for key in checks:
 		var found = false

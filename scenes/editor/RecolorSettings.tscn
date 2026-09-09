@@ -538,11 +538,18 @@ custom_fonts/font = SubResource( 4 )
 text = "Natural (10-120)"
 
 [node name="TexturableOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
-margin_left = 219.0
-margin_right = 406.0
-margin_bottom = 29.0
-custom_fonts/font = SubResource( 4 )
-text = "Texturable (10-140)"
+	margin_left = 219.0
+	margin_right = 406.0
+	margin_bottom = 29.0
+	custom_fonts/font = SubResource( 4 )
+	text = "Texturable (10-140)"
+
+[node name="TexListCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
+	margin_left = 410.0
+	margin_right = 530.0
+	margin_bottom = 29.0
+	custom_fonts/font = SubResource( 4 )
+	text = "Use Tex List"
 
 [node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 443.0
