@@ -47,6 +47,15 @@ static func format_ball_ranges(ball_ids: Array) -> String:
 		result += str(ranges[i])
 	return result
 
+static func update_ball_text(node: Control, ball_ids: Array, callback_target = null, callback_method = "") -> void:
+	if not node or node.has_focus():
+		return
+
+	node.text = format_ball_ranges(ball_ids)
+
+	if callback_target != null and callback_method != "":
+		callback_target.call(callback_method, node.text)
+
 static func parse_number_list(s: String, allow_negatives: bool = false) -> Array:
 	var result: Array = []
 	var parts: PoolStringArray = s.split(",", false)

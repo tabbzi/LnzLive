@@ -1003,11 +1003,7 @@ func add_affected_ball(ball_no: int) -> void:
 	_on_AffectedBallz_text_changed(_affected_ballz.text)
 
 func update_selected_balls_text(ball_ids: Array) -> void:
-	if not _affected_ballz or _affected_ballz.has_focus():
-		return
-
-	_affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
-	_on_AffectedBallz_text_changed(_affected_ballz.text)
+	LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids, self, "_on_AffectedBallz_text_changed")
 
 func _on_UnselectButton_pressed() -> void:
 	emit_signal("unselect_all")

@@ -217,10 +217,7 @@ func apply_nudge_axis(axis: String, dirsign: float) -> void:
 		emit_signal("nudge_selection", vector)
 
 func update_selected_balls_text(ball_ids: Array) -> void:
-	if _affected_ballz and _affected_ballz.has_focus():
-		return
-
-	_affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
+	LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
 
 func update_pivot_max(max_balls: int) -> void:
 	if _pivot_ball:

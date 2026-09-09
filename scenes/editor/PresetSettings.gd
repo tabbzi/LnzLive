@@ -15,6 +15,7 @@ signal select_balls_by_ids(ids)
 
 onready var panel: Control = self
 onready var scroll_vbox = $VBoxContainer/ScrollContainer/VBoxContainer
+onready var _affected_ballz: Control = scroll_vbox.get_node("AffectedBallz")
 onready var paintballz_text_edit: TextEdit = scroll_vbox.get_node("RawLnzContainer/PaintballzTextEdit")
 onready var set_paintballz_button: Button = scroll_vbox.get_node("RawLnzContainer/SetPaintballzButton")
 onready var get_paintballz_button: Button = scroll_vbox.get_node("RawLnzContainer/GetPaintballzButton")
@@ -124,9 +125,8 @@ func _ready() -> void:
 	var unselect_btn: Button = scroll_vbox.get_node("SelectionActions/UnselectButton")
 	unselect_btn.connect("pressed", self, "_on_UnselectButton_pressed")
 
-	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
-	affected_ballz.connect("text_entered", self, "_on_AffectedBallz_text_entered")
-	affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
+	_affected_ballz.connect("text_entered", self, "_on_AffectedBallz_text_entered")
+	_affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
 
 	paintballz_tree.columns = 12
 	paintballz_tree.set_column_titles_visible(true)
@@ -759,18 +759,14 @@ func _on_UnselectButton_pressed() -> void:
 func _on_AffectedBallz_text_entered(new_text: String) -> void:
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_balls_by_ids", ids)
-	scroll_vbox.get_node("AffectedBallz").release_focus()
+	_affected_ballz.release_focus()
 
 func _on_AffectedBallz_text_changed(new_text: String) -> void:
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_balls_by_ids", ids)
 
 func update_selected_balls_text(ball_ids: Array) -> void:
-	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
-	if affected_ballz.has_focus():
-		return
-
-	affected_ballz.text = LnzLiveUtils.format_ball_ranges(ball_ids)
+	LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
 
 func _connect_settings_signals() -> void:
 	include_paintballz_chk.connect("toggled", self, "_on_property_changed")
