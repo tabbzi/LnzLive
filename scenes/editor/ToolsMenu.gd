@@ -605,7 +605,7 @@ func _process_section_for_autofill(lnz_text_edit: Node, section_name: String, co
 func _on_RandomizeButton_pressed() -> void:
 	randomize()
 
-	var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	if not is_instance_valid(lnz_text_edit):
 		print("LnzTextEdit not found")
 		return
