@@ -9,6 +9,10 @@ const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
 const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
 const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
 
+const PATH_TEXTEDIT = "Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
+const PATH_PETROOT = "Root/PetRoot/Node"
+const PATH_PETVIEW = "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
+
 static func format_ball_ranges(ball_ids: Array) -> String:
 	if ball_ids.empty():
 		return ""
@@ -581,7 +585,7 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	f.close()
 
 	var target_tex: Texture = BABYZ_PALETTE if is_babyz_mode else DEFAULT_PALETTE
-	var target_palette: Array = extract_palette_from_image(target_tex)
+	var target_palette: Array = extract_palette_from_rampimg(target_tex)
 
 	var diff: float = verify_palette_compatibility(bmp_palette, target_palette)
 	
@@ -606,10 +610,10 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 
 	return { "w": w, "h": h, "data": index_data }
 
-static func extract_palette_from_image(tex: Texture) -> Array:
+static func extract_palette_from_rampimg(tex: Texture) -> Array:
 	var img: Image = tex.get_data()
 	if img == null:
-		print("[ERROR] extract_palette_from_image: Texture data is null!")
+		print("[ERROR] extract_palette_from_rampimg: Texture data is null!")
 		return []
 		
 	img.lock()
@@ -804,6 +808,28 @@ static func web_prompt_import_text(callback_target: Object, callback_method: Str
 	var cb = JavaScript.create_callback(callback_target, callback_method)
 	JavaScript.get_interface("window").godotTextImport = cb
 	JavaScript.eval(js_code)
+
+static func get_lnz_text_edit(root_node: Node) -> Node:
+	return root_node.get_node_or_null(PATH_TEXTEDIT)
+
+static func get_pet_view_container(root_node: Node) -> Node:
+	return root_node.get_node_or_null(PATH_PETVIEW)
+
+static func get_pet_node(root_node: Node, node_name: String = "") -> Node:
+	if node_name != "":
+		var full_path: String = PATH_PETROOT + "/" + node_name
+		var result: Node = root_node.get_node_or_null(full_path)
+		if result != null:
+			return result
+		return null
+	var result: Node = root_node.get_node_or_null(PATH_PETROOT)
+	if result != null:
+		return result
+	return root_node.get_node_or_null("Root/PetRoot")
+
+static func queue_free_safe(node: Node) -> void:
+	if is_instance_valid(node):
+		node.queue_free()
 
 static func ensure_web_ref_dir() -> void:
 	JavaScript.eval("""

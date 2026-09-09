@@ -134,16 +134,13 @@ func _ready() -> void:
 	mirror_h_btn.connect("toggled", self, "_trigger_setting_save")
 	mirror_v_btn.connect("toggled", self, "_trigger_setting_save")
 
-	if get_tree().get_root().has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
-	elif get_tree().get_root().has_node("Root/PetRoot"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")
 		current_mode = GameMode.BABYZ if dog_generator.is_babyz_mode else GameMode.PETZ
 
-		var lte: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+		var lte: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 		if lte:
 			lte.connect("text_changed", self, "_on_lnz_text_changed")
 

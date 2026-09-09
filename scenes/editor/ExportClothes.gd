@@ -20,10 +20,7 @@ const KIND_PETZ: Array = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_B
 const KIND_BABYZ: Array = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses", "EarringL", "EarringR", "Tail"]
 
 func _ready() -> void:
-	if get_tree().root.has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
-	elif get_tree().root.has_node("Root/PetRoot"):
-		dog_generator = get_tree().root.get_node("Root/PetRoot")
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 
 func open(target_ball_no: int = -1) -> void:
 	popup_centered()

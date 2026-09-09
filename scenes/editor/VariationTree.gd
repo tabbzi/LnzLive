@@ -324,7 +324,7 @@ func _on_item_selected() -> void:
 		return
 	var meta = item.get_metadata(0)
 	if meta != null and meta.has("start_line"):
-		var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+		var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 		if lnz_text_edit != null:
 			lnz_text_edit.cursor_set_line(meta.start_line)
 			lnz_text_edit.center_viewport_to_cursor()
@@ -1043,9 +1043,7 @@ func _on_flatten_pressed() -> void:
 	
 	var text_edit = _text_edit
 	if not text_edit:
-		text_edit = get_tree().root.get_node(
-			"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
-		)
+		text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	
 	text_edit.replace_sections(flattened)
 	

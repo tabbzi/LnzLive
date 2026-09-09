@@ -71,9 +71,7 @@ var _eye_lid: bool = false
 var _eye_odd: bool = false
 var _eye_firefly: bool = false
 
-onready var lnz_text_edit: TextEdit = get_tree().root.get_node(
-	"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
-)
+onready var lnz_text_edit: TextEdit = get_tree().root.get_node_or_null(LnzLiveUtils.PATH_TEXTEDIT)
 
 var is_docked: bool = false
 
@@ -86,11 +84,7 @@ const NATURAL_COLORS: Array = [10, 20, 30, 40, 50, 60, 90, 100, 110, 120]
 const TEXTURABLE_COLORS: Array = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
 
 func _ready() -> void:
-	if get_tree().get_root().has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
-	elif get_tree().get_root().has_node("Root/PetRoot"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
-		
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
 
@@ -200,7 +194,7 @@ func _on_remove_line_pressed(line: Control) -> void:
 		_refresh_all_previews()
 
 func _on_bucket_property_changed(new_text: String) -> void:
-	var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	if pet_node and bucket_texture_edit.text != "":
 		var tex_idx: int = int(bucket_texture_edit.text)
 		if pet_node.lnz and pet_node.lnz.texture_list:
@@ -299,7 +293,7 @@ func queue_bucket_change(ball_node: Node) -> void:
 	if is_instance_valid(bucket_no_texture_rotate_check):
 		checkbox_on = bucket_no_texture_rotate_check.pressed
 	
-	var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	var original_tile_texture = false
 	if pet_node and pet_node.lnz:
 		original_tile_texture = not pet_node.lnz.no_texture_rotate.has(ball_no)
@@ -343,7 +337,7 @@ func _on_ClearBucket_pressed() -> void:
 	clear_buckets()
 
 func clear_buckets() -> void:
-	var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	if pet_node and pet_node.has_method("restore_ball_visual_states"):
 		pet_node.restore_ball_visual_states(queued_bucket_changes.keys())
 	
@@ -640,8 +634,7 @@ func _on_web_import_completed(args: Array) -> void:
 		print("[ERROR] RecolorSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
-	if is_instance_valid(dialog):
-		dialog.queue_free()
+	LnzLiveUtils.queue_free_safe(dialog)
 
 func _save_recolor_file(path: String) -> void:
 	var swaps = _gather_swap_data()
@@ -660,17 +653,12 @@ func _save_recolor_file(path: String) -> void:
 		print("[STATUS] RecolorSettings: exported to ", path)
 
 func _load_recolor_file(path: String) -> void:
-	var file: File = File.new()
-	var err = file.open(path, File.READ)
-	if err == OK:
-		var text: String = file.get_as_text()
-		file.close()
-		var json_res = JSON.parse(text)
-		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
-			print("[STATUS] RecolorSettings: loaded from ", path)
-			_apply_swap_data(json_res.result)
-		else:
-			print("[ERROR] RecolorSettings: failed to parse JSON from %s (Error code: %d)" % [path, json_res.error])
+	var json_res = LnzLiveUtils.load_json_preset(path)
+	if typeof(json_res) == TYPE_DICTIONARY and not json_res.empty():
+		print("[STATUS] RecolorSettings: loaded from ", path)
+		_apply_swap_data(json_res)
+	else:
+		print("[ERROR] RecolorSettings: failed to parse JSON from %s" % path)
 
 func _on_AutofillSwap_pressed() -> void:
 	if not is_instance_valid(lnz_text_edit): return
@@ -744,20 +732,7 @@ func _on_AutofillSwap_pressed() -> void:
 	_refresh_all_previews()
 
 func _process_section_for_autofill(lnz_text_edit: TextEdit, section_name: String, color_idx: int, texture_idx: int, pair_counts: Dictionary) -> void:
-	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
-	if bounds.empty(): return
-
-	for i in range(bounds.start, bounds.end):
-		var line: String = lnz_text_edit.get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"): continue
-
-		var parts: Array = lnz_text_edit.split_line(line)
-		if parts.size() > max(color_idx, texture_idx):
-			var color: String = parts[color_idx]
-			var texture: String = parts[texture_idx]
-			var key: String = color + "," + texture
-			if not pair_counts.has(key): pair_counts[key] = 0
-			pair_counts[key] += 1
+	pair_counts = LnzLiveUtils.count_color_texture_pairs(lnz_text_edit, section_name, color_idx, texture_idx)
 
 func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 	return a.count > b.count
@@ -886,22 +861,7 @@ func get_color_from_index(index: int) -> Color:
 	return Color.white
 
 func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: String, texture_idx: int, current_max: int) -> int:
-	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
-	if bounds.empty(): return current_max
-
-	var new_max: int = current_max
-	for i in range(bounds.start, bounds.end):
-		var line: String = lnz_text_edit.get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"): continue
-
-		var parts: Array = lnz_text_edit.split_line(line)
-		if parts.size() > texture_idx:
-			var texture_str: String = parts[texture_idx]
-			if texture_str.is_valid_integer():
-				var texture_id: int = int(texture_str)
-				if texture_id > new_max:
-						new_max = texture_id
-	return new_max
+	return LnzLiveUtils.find_max_texture_id(lnz_text_edit, section_name, texture_idx, current_max)
 
 func save_settings() -> void:
 	var values: Dictionary = {}

@@ -207,10 +207,7 @@ var _ordered_texture_index: int = 0
 var _ordered_ball_index: int = 0
 
 func _ready() -> void:
-	if get_tree().root.has_node("Root/PetRoot/Node"):
-		pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-	elif get_tree().root.has_node("Root/PetRoot"):
-		pet_node = get_tree().root.get_node("Root/PetRoot")
+	pet_node = LnzLiveUtils.get_pet_node(get_tree().root)
 		
 	if pet_node:
 		pet_node.connect("palette_changed", self, "_on_palette_changed")
@@ -977,8 +974,7 @@ func export_autopaintballer_json() -> void:
 		file_dialog.popup_centered_ratio(0.6)
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
-	if is_instance_valid(dialog):
-		dialog.queue_free()
+	LnzLiveUtils.queue_free_safe(dialog)
 
 func _save_settings_file(path: String) -> void:
 	var settings_dict: Dictionary = get_properties()

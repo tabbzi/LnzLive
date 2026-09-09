@@ -87,10 +87,7 @@ func _ready() -> void:
 	if recolor_menu:
 		recolor_menu.add_stylebox_override("panel", panel_style)
 	
-	if get_tree().get_root().has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
-	elif get_tree().get_root().has_node("Root/PetRoot"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 		
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
@@ -220,7 +217,7 @@ func _on_LineEdit_gui_input(event: InputEvent) -> void:
 func _on_RecolorMenu_id_pressed(id: int) -> void:
 	current_action = id
 	if id == 9: # color swap
-		var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		var pet_view: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 		if pet_view:
 			pet_view.recolor_mode_check_box.pressed = true
 	else:
@@ -228,7 +225,7 @@ func _on_RecolorMenu_id_pressed(id: int) -> void:
 		get_parent().get_node("ColorPopup").popup()
 
 func _on_RecolorMenuButton_pressed() -> void:
-	var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var pet_view: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 	if pet_view:
 		pet_view.recolor_mode_check_box.pressed = true
 
@@ -236,7 +233,7 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 	if index >= get_item_count(): return
 
 	if get_item_text(index).begins_with("Exit "):
-		var pet_view: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		var pet_view: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 		if is_instance_valid(pet_view):
 			pet_view.paintball_check_box.pressed = false
 			pet_view.line_mode_check_box.pressed = false
@@ -287,7 +284,7 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 
 		ToolsAction.CONNECT_LINEZ: # Connect by Linez
 			if is_instance_valid(selected_visual_ball):
-				var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+				var pet_view: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 				pet_view.line_mode_close = true
 				pet_view.line_mode_check_box.pressed = true
 				pet_view.polygon_mode = false
@@ -325,7 +322,7 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 
 		ToolsAction.BALL_INFO: # Jump to ball
 			if is_ball_selected:
-				var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+				var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 				if is_instance_valid(lnz_text_edit):
 					lnz_text_edit.select_ball(0, ball_no, is_addball, -1)
 			return
@@ -348,7 +345,7 @@ func _on_ToolsMenu_about_to_show() -> void:
 	var is_ball_selected: bool = false
 	var b_name: String = "Unknown Ball"
 	
-	var pet_view: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var pet_view: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 	var active_mode: String = ""
 	if is_instance_valid(pet_view):
 		if pet_view.move_mode: active_mode = "Move Mode"
@@ -365,7 +362,7 @@ func _on_ToolsMenu_about_to_show() -> void:
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = is_instance_valid(selected_visual_ball)
 
-		var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+		var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 		if is_instance_valid(lnz_text_edit):
 			b_name = lnz_text_edit.get_ball_name(ball_no)
 
@@ -553,7 +550,7 @@ func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 	return a.count > b.count
 
 func _on_AutofillButton_pressed() -> void:
-	var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	if not is_instance_valid(lnz_text_edit):
 		print("LnzTextEdit not found")
 		return

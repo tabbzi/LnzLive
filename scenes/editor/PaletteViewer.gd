@@ -18,10 +18,7 @@ onready var scroll_view = $VBoxContainer/ScrollContainer
 onready var pixel_font: Font = load("res://resources/fonts/font_pixel_code_14.tres")
 
 func _ready() -> void:
-	if get_tree().get_root().has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
-	elif get_tree().get_root().has_node("Root/PetRoot"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 		
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")

@@ -163,7 +163,7 @@ func _on_RestoreDefaultsButton_pressed() -> void:
 	_populate_projections_tree()
 
 func _on_CopyFromLNZButton_pressed() -> void:
-	var lnz_text_edit: TextEdit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var lnz_text_edit: TextEdit = LnzLiveUtils.get_lnz_text_edit(get_tree().root) as TextEdit
 	var projections: Array = lnz_text_edit.get_project_ball_section()
 
 	projections_tree.clear()

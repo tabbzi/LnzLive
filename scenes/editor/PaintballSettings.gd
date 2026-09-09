@@ -161,10 +161,7 @@ func _ready() -> void:
 	
 	panel.restore_position(default_pos)
 
-	if get_tree().get_root().has_node("Root/PetRoot/Node"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
-	elif get_tree().get_root().has_node("Root/PetRoot"):
-		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 		
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
@@ -566,8 +563,7 @@ func export_paintball_json() -> void:
 		file_dialog.popup_centered_ratio(0.6)
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
-	if is_instance_valid(dialog):
-		dialog.queue_free()
+	LnzLiveUtils.queue_free_safe(dialog)
 
 func _save_settings_file(path: String) -> void:
 	var settings_dict: Dictionary = get_properties()
@@ -1134,7 +1130,7 @@ func _populate_slots_tree() -> void:
 		item.set_metadata(0, i)
 
 func get_color_preview_icon(color_index: int) -> ImageTexture:
-	var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	if not pet_node: return null
 	if pet_node.has_method("generate_color_icon"):
 		return pet_node.generate_color_icon(color_index)

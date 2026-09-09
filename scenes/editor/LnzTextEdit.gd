@@ -30,8 +30,8 @@ extends TextEdit
 
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = self
-onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+onready var pet_view = LnzLiveUtils.get_pet_view_container(get_tree().root)
+onready var pet_node = LnzLiveUtils.get_pet_node(get_tree().root)
 
 var px_scale: float setget , get_px_scale
 var lnz_scale: float setget , get_lnz_scale

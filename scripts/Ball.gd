@@ -346,7 +346,7 @@ func turn_off_highlight() -> void:
 		apply_outline_state(OutlineState.NONE)
 		return
 
-	var pet_container: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var pet_container: Node = LnzLiveUtils.get_pet_view_container(get_tree().root)
 	if pet_container and pet_container.has_method("get_visual_state_for_ball"):
 		var new_state: int = pet_container.get_visual_state_for_ball(self)
 		apply_outline_state(new_state)

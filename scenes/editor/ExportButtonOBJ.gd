@@ -10,10 +10,16 @@ func _ready() -> void:
 	connect("pressed", self, "_on_pressed")
 
 func _on_pressed() -> void:
-	var pet_node: Node = get_tree().root.get_node("Root/PetRoot/Node")
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
+	if pet_node == null:
+		print("[ERROR] ExportButtonOBJ: could not find pet node")
+		return
 	var anim_idx: int = pet_node.current_animation
 	var start_idx: int = pet_node.bhd.animation_ranges[anim_idx].actual_start
-	var text_edit: Control = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var text_edit: Control = LnzLiveUtils.get_lnz_text_edit(get_tree().root) as Control
+	if text_edit == null:
+		print("[ERROR] ExportButtonOBJ: could not find text edit")
+		return
 	var filename: String = text_edit.filepath.get_file().get_basename() + "_" + str(anim_idx) + "_" + str(start_idx) + ".obj"
 	var content_bytes: PoolByteArray = _export_current_model()
 
@@ -25,7 +31,7 @@ func _export_current_model() -> PoolByteArray:
 	obj_lines.append("# Exported Petz Model")
 	obj_lines.append("o Petz\n")
 
-	var dog: Node = get_tree().root.get_node("Root/PetRoot/Node")
+	var dog: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	var pixel_world_size: float = dog.pixel_world_size
 	var lines: Array = dog.lnz.lines
 	var polys: Array = dog.lnz.polygons

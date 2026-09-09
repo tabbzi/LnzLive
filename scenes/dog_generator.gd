@@ -91,7 +91,7 @@ var _skip_next_rebuild = false
 var current_variation_config = {}
 var last_loaded_filepath = ""
 
-onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+onready var pet_view = LnzLiveUtils.get_pet_view_container(get_tree().root)
 onready var console_log = pet_view.find_node("ConsoleLog", true, false)
 # if console_log:
 # 	console_log.log_message("")
@@ -160,7 +160,7 @@ func _ready():
 	else:
 		print("[ERROR] dog_generator: failed to open texture atlas manifest")
 
-	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var editor = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
 	editor.connect("find_paintball", self, "_on_LnzTextEdit_find_paintball")
 	editor.connect("find_polygon", self, "_on_LnzTextEdit_find_polygon")
@@ -507,11 +507,11 @@ func generate_pet(file_path):
 			else:
 				current_variation_config[section_name] = null
 
-	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var pet_view = LnzLiveUtils.get_pet_view_container(get_tree().root)
 	if pet_view and pet_view.has_node("variation_tree"):
 		var variation_tree = pet_view.get_node("variation_tree")
 		if is_instance_valid(variation_tree):
-			var text_edit = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+			var text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 			variation_tree.setup(self, lnz, text_edit)
 
 	KeyBallsData.species = lnz_info.species
@@ -2676,9 +2676,7 @@ func _on_apply_auto_paintballz():
 		
 	print("[STATUS] Node: _on_apply_auto_paintballz: appended %d paintballs to pending queue" % processed_count)
 
-	var lnz_text_edit = get_tree().root.get_node(
-		"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
-	)
+	var lnz_text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	if lnz_text_edit:
 		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
 		lnz_text_edit.apply_paintballz()

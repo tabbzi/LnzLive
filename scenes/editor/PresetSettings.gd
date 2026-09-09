@@ -175,7 +175,7 @@ func _ready() -> void:
 	_update_paintballz_tree_color_icons()
 
 func _refresh_active_palette_from_dog_generator() -> void:
-	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
 	if dog_gen:
 		if dog_gen.has_method("get_is_babyz_mode"):
 			if dog_gen.get_is_babyz_mode():
@@ -193,7 +193,7 @@ func _refresh_active_palette_from_dog_generator() -> void:
 		active_palette = LnzLiveUtils.DEFAULT_PALETTE
 
 func _connect_dog_generator_signal() -> void:
-	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
 	if dog_gen and dog_gen.has_signal("palette_changed"):
 		if dog_gen.is_connected("palette_changed", self, "_on_dog_generator_palette_changed"):
 			dog_gen.disconnect("palette_changed", self, "_on_dog_generator_palette_changed")
@@ -254,7 +254,7 @@ func set_palette(palette_name) -> void:
 	_update_recolor_rules_previews()
 
 func _get_current_palette_texture() -> Texture:
-	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
 	if dog_gen:
 		if dog_gen.has_method("get_is_babyz_mode"):
 			if dog_gen.get_is_babyz_mode():
@@ -474,7 +474,7 @@ func _split_and_clean_paintball(line: String) -> Array:
 	return cleaned_parts
 
 func _load_texture(texture_filename: String) -> Texture:
-	var root_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var root_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	if root_node and root_node.has_method("load_texture"):
 		return root_node.load_texture(texture_filename, get_tree().root.get_node("Root/ResourcePreloader"))
 
@@ -1066,7 +1066,7 @@ func _update_recolor_rules_previews() -> void:
 			LnzLiveUtils.update_color_list_previews(ac_prev, ac.text, _get_cached_palette_colors())
 
 func _get_cached_palette_colors() -> Array:
-	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
 	var is_babyz: bool = false
 	
 	if dog_gen:

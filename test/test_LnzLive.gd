@@ -396,8 +396,8 @@ func test_lnzlive_verify_palette_compatibility():
 	var diff = LnzLiveUtils.verify_palette_compatibility(pal1, pal2)
 	assert_almost_eq(diff, 0.0, 0.01, "Identical palettes should have zero difference.")
 
-func test_lnzlive_extract_palette_from_image():
-	# Verify that extract_palette_from_image extracts 256 colors from a texture.
+func test_lnzlive_extract_palette_from_rampimg():
+	# Verify that extract_palette_from_rampimg extracts 256 colors from ramp image
 	var img = Image.new()
 	img.create(256, 1, false, Image.FORMAT_RGBA8)
 	img.lock()
@@ -406,7 +406,7 @@ func test_lnzlive_extract_palette_from_image():
 	img.unlock()
 	var tex = ImageTexture.new()
 	tex.create_from_image(img)
-	var palette = LnzLiveUtils.extract_palette_from_image(tex)
+	var palette = LnzLiveUtils.extract_palette_from_rampimg(tex)
 	assert_eq(palette.size(), 256, "Should extract 256 palette entries.")
 
 func test_lnzlive_requantize_bmp_data():

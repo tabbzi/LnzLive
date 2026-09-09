@@ -28,8 +28,8 @@ const INDEX_GAME_TEXTURES: int = 3
 const INDEX_USER_TEXTURES: int = 4
 const INDEX_USER_PALETTES: int = 5
 
-onready var pet_view_container: Control = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-onready var lnz_text_edit: Control = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+onready var pet_view_container: Control = LnzLiveUtils.get_pet_view_container(get_tree().root)
+onready var lnz_text_edit: Control = LnzLiveUtils.get_lnz_text_edit(get_tree().root) as Control
 
 var examples: TreeItem
 var local_storage: TreeItem
@@ -593,7 +593,7 @@ func rescan_textures(reload_model: bool = false) -> void:
 	scan_local_textures()
 
 	if reload_model:
-		var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+		var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 		if pet_node and pet_node.has_method("clear_texture_cache"):
 			pet_node.clear_texture_cache()
 			if pet_node.lnz:
@@ -1298,8 +1298,7 @@ func _count_files_in_dir(path: String) -> int:
 	return count
 
 func _on_file_dialog_closed(dialog: FileDialog) -> void:
-	if is_instance_valid(dialog):
-		dialog.queue_free()
+	LnzLiveUtils.queue_free_safe(dialog)
 
 func _on_SaveDialog_file_selected(path: String, content_bytes: PoolByteArray) -> void:
 	var file: File = File.new()

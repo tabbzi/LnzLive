@@ -29,11 +29,9 @@ onready var default_font: Font = get_font("font")
 onready var file_tree: Tree = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree"
 )
-onready var lnz_text_edit: TextEdit = get_tree().root.get_node(
-	"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
-)
+onready var lnz_text_edit: TextEdit = LnzLiveUtils.get_lnz_text_edit(get_tree().root) as TextEdit
 onready var pet_view: Control = self
-onready var pet_node: Node = get_tree().root.get_node("Root/PetRoot/Node")
+onready var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 
 var px_scale: float setget , get_px_scale
 var lnz_scale: float setget , get_lnz_scale
@@ -3396,7 +3394,7 @@ func _on_view_variations_toggled(is_on: bool) -> void:
 		if lnz_data:
 			variation_tree.dog_generator = pet_node
 			variation_tree.lnz_parser = lnz_data
-			var text_edit = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+			var text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 			variation_tree.setup(pet_node, lnz_data, text_edit)
 		else:
 			variation_tree.populate_tree()
