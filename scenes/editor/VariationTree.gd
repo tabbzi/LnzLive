@@ -98,7 +98,7 @@ func populate_tree() -> void:
 
 	tree_node.clear()
 	var root: TreeItem = tree_node.create_item()
-	if root == null:
+	if not is_instance_valid(root):
 		return
 	tree_node.set_hide_root(true)
 	tree_node.set_columns(1)
@@ -121,7 +121,7 @@ func populate_tree() -> void:
 
 	if global_suffixes.size() > 0:
 		var g_folder: TreeItem = _find_child_by_text(root, "Global Variations")
-		if g_folder != null:
+		if is_instance_valid(g_folder):
 			for sk in global_suffixes:
 				var parts: Array = (sk as String).split(".")
 				var g_id: int = parts[0].to_int()
@@ -278,13 +278,13 @@ func _ready() -> void:
 	tree_node.connect("item_selected", self, "_on_item_selected")
 	randomize_button.connect("pressed", self, "_on_randomize_pressed")
 	flatten_button.connect("pressed", self, "_on_flatten_pressed")
-	if dog_generator != null:
+	if is_instance_valid(dog_generator):
 		_update_flatten_button_state()
 		_update_randomize_button_state()
 	randomize()
 
 func _on_randomize_pressed() -> void:
-	if dog_generator == null or lnz_parser == null:
+	if not is_instance_valid(dog_generator) or not is_instance_valid(lnz_parser):
 		return
 	randomize_variations()
 	_update_flatten_button_state()
@@ -292,7 +292,7 @@ func _on_randomize_pressed() -> void:
 
 func _on_item_edited() -> void:
 	var item: TreeItem = tree_node.get_edited()
-	if item == null or tree_node.get_edited_column() != 0:
+	if not is_instance_valid(item) or tree_node.get_edited_column() != 0:
 		return
 	var meta = item.get_metadata(0)
 	if meta == null:
@@ -320,10 +320,10 @@ func _on_item_edited() -> void:
 
 func _on_item_selected() -> void:
 	var item: TreeItem = tree_node.get_selected()
-	if item == null:
+	if not is_instance_valid(item):
 		return
 	var meta = item.get_metadata(0)
-	if meta != null and meta.has("start_line"):
+	if is_instance_valid(meta) and meta.has("start_line"):
 		var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 		if lnz_text_edit != null:
 			lnz_text_edit.cursor_set_line(meta.start_line)
@@ -747,9 +747,9 @@ func _update_tree_checks(config: Dictionary) -> void:
 
 func _sync_item_checks(item: TreeItem, config: Dictionary) -> void:
 	var child: TreeItem = item.get_children()
-	while child != null:
+	while is_instance_valid(child):
 		var meta = child.get_metadata(0)
-		if meta != null:
+		if is_instance_valid(meta):
 			var mtype = meta.get("type", "")
 			if mtype == "global":
 				var sections = _sorted_sections()
@@ -849,7 +849,7 @@ func _is_subblock_active(config: Dictionary, section: String, id: int, subblock_
 
 func _find_child_by_text(parent: TreeItem, text: String) -> TreeItem:
 	var child: TreeItem = parent.get_children()
-	while child != null:
+	while is_instance_valid(child):
 		if child.get_text(0) == text:
 			return child
 		child = child.get_next()
@@ -857,13 +857,13 @@ func _find_child_by_text(parent: TreeItem, text: String) -> TreeItem:
 
 func _sync_global_siblings(gid: int) -> void:
 	var root: TreeItem = tree_node.get_root()
-	if root == null:
+	if not is_instance_valid(root):
 		return
 	var folder: TreeItem = _find_child_by_text(root, "Global Variations")
-	if folder == null:
+	if not is_instance_valid(folder):
 		return
 	var child: TreeItem = folder.get_children()
-	while child != null:
+	while is_instance_valid(child):
 		var meta = child.get_metadata(0)
 		if meta != null and meta.get("id", -1) != gid:
 			child.set_checked(0, false)
@@ -1014,7 +1014,7 @@ func _update_randomize_button_state() -> void:
 	randomize_button.disabled = not has_variations
 
 func _on_flatten_pressed() -> void:
-	if dog_generator == null:
+	if not is_instance_valid(dog_generator):
 		return
 	var config = dog_generator.current_variation_config
 	var has_variations = false

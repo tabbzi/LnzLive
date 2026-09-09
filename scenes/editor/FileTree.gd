@@ -559,7 +559,7 @@ func _on_Tree_item_activated() -> void:
 func rescan(selected_filepath = null) -> void:
 	var t_start: int = OS.get_ticks_msec()
 	var was_collapsed: bool = true
-	if local_storage != null:
+	if is_instance_valid(local_storage):
 		was_collapsed = local_storage.collapsed
 		_save_subfolder_states(local_storage)
 		root.remove_child(local_storage)
@@ -584,7 +584,7 @@ func _save_subfolder_states(item: TreeItem) -> void:
 	
 func rescan_textures(reload_model: bool = false) -> void:
 	var was_collapsed: bool = true
-	if local_storage_textures != null:
+	if is_instance_valid(local_storage_textures):
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
 	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
@@ -601,7 +601,7 @@ func rescan_textures(reload_model: bool = false) -> void:
 
 func rescan_palettes() -> void:
 	var was_collapsed: bool = true
-	if local_storage_palettes != null:
+	if is_instance_valid(local_storage_palettes):
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
@@ -617,7 +617,7 @@ func rescan_bases() -> void:
 	if not dir.dir_exists(bases_dir):
 		dir.make_dir(bases_dir)
 		
-	if local_storage_bases != null:
+	if is_instance_valid(local_storage_bases):
 		was_collapsed = local_storage_bases.collapsed
 		root.remove_child(local_storage_bases)
 	local_storage_bases = create_item(root, INDEX_BASE_LNZ)

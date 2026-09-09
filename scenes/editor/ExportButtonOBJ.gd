@@ -11,13 +11,13 @@ func _ready() -> void:
 
 func _on_pressed() -> void:
 	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
-	if pet_node == null:
+	if not is_instance_valid(pet_node):
 		print("[ERROR] ExportButtonOBJ: could not find pet node")
 		return
 	var anim_idx: int = pet_node.current_animation
 	var start_idx: int = pet_node.bhd.animation_ranges[anim_idx].actual_start
 	var text_edit: Control = LnzLiveUtils.get_lnz_text_edit(get_tree().root) as Control
-	if text_edit == null:
+	if not is_instance_valid(text_edit):
 		print("[ERROR] ExportButtonOBJ: could not find text edit")
 		return
 	var filename: String = text_edit.filepath.get_file().get_basename() + "_" + str(anim_idx) + "_" + str(start_idx) + ".obj"
@@ -81,7 +81,7 @@ func _export_current_model() -> PoolByteArray:
 	for ld in lines:
 		var b1: Node = by_no.get(ld.start)
 		var b2: Node = by_no.get(ld.end)
-		if b1 == null or b2 == null: continue
+		if not is_instance_valid(b1) or not is_instance_valid(b2): continue
 
 		var p1: Vector3 = b1.global_transform.origin
 		var p2: Vector3 = b2.global_transform.origin

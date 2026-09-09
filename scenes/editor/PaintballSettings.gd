@@ -404,7 +404,7 @@ func _process(delta: float) -> void:
 				var engine_scale: float = 1.0
 				if is_instance_valid(dog_generator):
 					if "pixel_world_size" in dog_generator: pixel_scale = dog_generator.pixel_world_size
-					if "lnz" in dog_generator and dog_generator.lnz != null:
+					if "lnz" in dog_generator and is_instance_valid(dog_generator.lnz):
 						if "scales" in dog_generator.lnz:
 							engine_scale = dog_generator.lnz.scales.x
 

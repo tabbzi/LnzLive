@@ -243,7 +243,7 @@ func populate_palette() -> void:
 	palette_colors.clear()
 	_color_hash_cache.clear()
 
-	if dog_generator == null or dog_generator.current_palette_texture == null:
+	if not is_instance_valid(dog_generator) or dog_generator.current_palette_texture == null:
 		return
 
 	var pal_texture = dog_generator.current_palette_texture

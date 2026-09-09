@@ -948,7 +948,7 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 	parent.move_child(hbox, pos)
 
 	hbox.add_child(le)
-	if orig_owner != null:
+	if is_instance_valid(orig_owner):
 		hbox.owner = orig_owner
 	le.owner = orig_owner
 	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -956,7 +956,7 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 	var preview_container = HBoxContainer.new()
 	preview_container.name = le_name + "_Preview"
 	hbox.add_child(preview_container)
-	if orig_owner != null:
+	if is_instance_valid(orig_owner):
 		preview_container.owner = orig_owner
 
 	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):

@@ -1382,7 +1382,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		var point4 = ball_map.get(polygon.ball4)
 
 		# Check if the points exist
-		if point1 == null or point2 == null or point3 == null or point4 == null or not is_instance_valid(point1) or not is_instance_valid(point2) or not is_instance_valid(point3) or not is_instance_valid(point4):
+		if not is_instance_valid(point1) or not is_instance_valid(point2) or not is_instance_valid(point3) or not is_instance_valid(point4):
 			print(
 				(
 					"Could not make a polygon between "
@@ -1497,7 +1497,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	for line in line_data:
 		var start = ball_map.get(line.start)
 		var end = ball_map.get(line.end)
-		if start == null or end == null or not is_instance_valid(start) or not is_instance_valid(end):
+		if not is_instance_valid(start) or not is_instance_valid(end):
 			print("[WARNING] dog_generator: generate_lines: could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
 

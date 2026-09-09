@@ -39,7 +39,7 @@ func populate_colors() -> void:
 		vbox.remove_child(child)
 		child.queue_free()
 
-	if dog_generator == null or dog_generator.lnz == null:
+	if not is_instance_valid(dog_generator) or dog_generator.lnz == null:
 		title_label.text = "No palette loaded"
 		var label: Label = Label.new()
 		label.text = "No pet loaded"
@@ -127,7 +127,7 @@ func load_palette_texture(palette_filename: String) -> Texture:
 	return texture
 
 func _on_palette_selected(filename_no_ext: String) -> void:
-	if dog_generator.lnz == null:
+	if not is_instance_valid(dog_generator.lnz):
 		return 
 		
 	dog_generator.lnz.palette = filename_no_ext + ".png"
