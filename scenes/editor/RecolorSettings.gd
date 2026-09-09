@@ -17,6 +17,7 @@ onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/B
 onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
 onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
 onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
+onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/NoTextureRotateCheck
 
 onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
@@ -60,6 +61,7 @@ onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("Nos
 
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
+var _saved_visual_states: Dictionary = {} # ball_no -> {tile_texture: bool, _no_texture_rotate: bool}
 
 var dog_generator: Node = null
 var cached_palette_colors: Array = []
@@ -293,6 +295,27 @@ func queue_bucket_change(ball_node: Node) -> void:
 	if bucket_fuzz_edit.text != "": props["fuzz"] = int(bucket_fuzz_edit.text)
 	if bucket_texture_edit.text != "": props["texture_id"] = int(bucket_texture_edit.text)
 
+	var checkbox_on = false
+	if is_instance_valid(bucket_no_texture_rotate_check):
+		checkbox_on = bucket_no_texture_rotate_check.pressed
+	
+	var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var original_tile_texture = false
+	if pet_node and pet_node.lnz:
+		original_tile_texture = not pet_node.lnz.no_texture_rotate.has(ball_no)
+	
+	if not _saved_visual_states.has(ball_no):
+		_saved_visual_states[ball_no] = {
+			"tile_texture": original_tile_texture,
+			"_no_texture_rotate": checkbox_on
+		}
+	else:
+		_saved_visual_states[ball_no]["_no_texture_rotate"] = checkbox_on
+	
+	var final_tile_texture = not checkbox_on
+	if ball_node.has_method("set_tile_texture"):
+		ball_node.tile_texture = final_tile_texture
+	
 	queued_bucket_changes[ball_no] = props
 
 	if props.has("color_index"): ball_node.color_index = props.color_index
@@ -300,7 +323,6 @@ func queue_bucket_change(ball_node: Node) -> void:
 	if props.has("outline"): ball_node.outline = props.outline
 	if props.has("fuzz"): ball_node.fuzz_amount = props.fuzz
 	if props.has("texture_id"):
-		var pet_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
 			var tex_id = props.texture_id
 			if tex_id >= 0 and tex_id < pet_node.lnz.texture_list.size():
@@ -325,12 +347,40 @@ func clear_buckets() -> void:
 	if pet_node and pet_node.has_method("restore_ball_visual_states"):
 		pet_node.restore_ball_visual_states(queued_bucket_changes.keys())
 	
+	for ball_no in _saved_visual_states:
+		if pet_node and pet_node.has_method("find_visual_ball_by_no"):
+			var ball = pet_node.find_visual_ball_by_no(ball_no)
+			if ball and is_instance_valid(ball) and ball.has_method("set_tile_texture"):
+				ball.tile_texture = _saved_visual_states[ball_no].get("tile_texture", ball.tile_texture)
+	
 	queued_bucket_changes.clear()
+	_saved_visual_states.clear()
 
 func _on_ApplyBucket_pressed() -> void:
 	if not queued_bucket_changes.empty():
+		var to_add: Array = []
+		var to_remove: Array = []
+		for ball_no in queued_bucket_changes:
+			if _saved_visual_states.has(ball_no):
+				var no_texture_rotate = _saved_visual_states[ball_no].get("_no_texture_rotate", false)
+				if no_texture_rotate:
+					to_add.append(ball_no)
+				else:
+					to_remove.append(ball_no)
+		
+		if not to_add.empty() or not to_remove.empty():
+			if is_instance_valid(lnz_text_edit):
+				lnz_text_edit.save_backup()
+				if not to_add.empty():
+					lnz_text_edit.write_no_texture_rotate_batch(to_add)
+				if not to_remove.empty():
+					lnz_text_edit.remove_no_texture_rotate_batch(to_remove)
+				lnz_text_edit.save_file(true)
+				lnz_text_edit.commit_full_snapshot("Updated No Texture Rotate entries")
+		
 		emit_signal("apply_batch_bucket", queued_bucket_changes.duplicate())
 		queued_bucket_changes.clear()
+		_saved_visual_states.clear()
 
 func _on_RecolorButton_pressed() -> void:
 	if not queued_bucket_changes.empty():

@@ -436,6 +436,14 @@ margin_right = 458.0
 margin_bottom = 186.0
 pressed = true
 
+[node name="NoTextureRotateCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
+margin_left = 88.0
+margin_top = 190.0
+margin_right = 458.0
+margin_bottom = 210.0
+custom_fonts/font = SubResource( 6 )
+text = "No Texture Rotate"
+
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 580.0
 margin_right = 458.0

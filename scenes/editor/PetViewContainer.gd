@@ -1309,6 +1309,10 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 					if pet_node.lnz.paintballs.has(ball_no):
 						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
 					preset_settings_instance.set_properties(properties)
+					if is_instance_valid(pet_node.lnz):
+						var current_ntrot = pet_node.lnz.no_texture_rotate.has(ball_no)
+						if is_instance_valid(preset_settings_instance.no_texture_rotate_chk):
+							preset_settings_instance.no_texture_rotate_chk.pressed = current_ntrot
 			else:  # Brush mode
 				var properties: Dictionary = preset_settings_instance.get_properties()
 				var ref_size: int = int(round(preset_settings_instance.size_spinbox.value))
@@ -1364,6 +1368,15 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						properties["paintballz"] = scaled_paintballz
 						
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
+				
+				if properties.has("no_texture_rotate"):
+					var no_texture_rotate: bool = properties.no_texture_rotate
+					if no_texture_rotate:
+						lnz_text_edit.write_no_texture_rotate_entry(ball_no)
+						target_ball.tile_texture = false
+					else:
+						lnz_text_edit.remove_no_texture_rotate_entry(ball_no)
+						target_ball.tile_texture = true
 		return true
 
 	return false

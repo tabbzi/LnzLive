@@ -21,6 +21,7 @@ extends TextEdit
 #	LNZ TEXT EDITING
 #	LNZ DATA GETTERS
 #	LNZ DATA SETTERS
+#	LNZ DATA SECTIONS
 #	VISUAL NODE SIGNALS
 #	TOOLS MENU SIGNALS
 #	MIRRORING & SYMMETRY
@@ -2900,6 +2901,203 @@ func set_batch_moves(moves_dict: Dictionary):
 		
 	save_file(true)
 	commit_full_snapshot("Randomized [Move] entries")
+
+### LNZ DATA SECTIONS ###
+# write_no_texture_rotate_entry
+# remove_no_texture_rotate_entry
+# write_no_texture_rotate_batch
+
+func write_no_texture_rotate_entry(ball_no: int) -> void:
+	var section_tag = "[No Texture Rotate]"
+	var bounds = get_section_bounds(section_tag)
+	
+	if bounds.empty():
+		var first_section_result = search("[", 0, 0, 0)
+
+		if not first_section_result.empty():
+			var first_section_line = first_section_result[SEARCH_RESULT_LINE]
+			var all_lines = get_text().split("\n")
+			all_lines.insert(first_section_line, section_tag)
+			text = all_lines.join("\n")
+		else:
+			var insert_line = get_line_count()
+			_insert_text_at_cursor_at_line(insert_line, section_tag + "\n")
+
+		bounds = get_section_bounds(section_tag)
+
+		if bounds.empty():
+			return
+	
+	bounds = get_section_bounds(section_tag)
+
+	if bounds.empty():
+		return
+	
+	if has_no_texture_rotate_entry(ball_no, bounds):
+		return
+	
+	var insert_line = _find_insertion_line(bounds.start, bounds.end)
+	
+	var line_to_insert = str(ball_no) + "\n"
+	_insert_text_at_cursor_at_line(insert_line, line_to_insert)
+	save_file(true)
+	commit_full_snapshot("Added ball %d to No Texture Rotate" % ball_no)
+
+
+func remove_no_texture_rotate_entry(ball_no: int) -> void:
+	var section_tag = "[No Texture Rotate]"
+	var bounds = get_section_bounds(section_tag)
+	if bounds.empty():
+		return
+	
+	var target_line = -1
+	var target = str(ball_no)
+
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		if line.begins_with("["):
+			break
+
+		var data_part = line
+		var comment_idx = line.find(";")
+
+		if comment_idx != -1:
+			data_part = line.substr(0, comment_idx).strip_edges()
+
+		if data_part == target:
+			target_line = i
+			break
+	
+	if target_line != -1:
+		var lines = get_text().split("\n", false)
+		var new_lines: Array = []
+
+		for i in range(lines.size()):
+			if i != target_line:
+				new_lines.append(lines[i])
+
+		text = _join_array(new_lines, "\n")
+
+
+func remove_no_texture_rotate_batch(ball_nos: Array) -> void:
+	if ball_nos.empty():
+		return
+	
+	var section_tag = "[No Texture Rotate]"
+	var bounds = get_section_bounds(section_tag)
+
+	if bounds.empty():
+		return
+	
+	var lines_to_remove: Array = []
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		if line.begins_with("["):
+			break
+
+		var data_part = line
+		var comment_idx = line.find(";")
+		if comment_idx != -1:
+			data_part = line.substr(0, comment_idx).strip_edges()
+
+		if data_part.is_valid_integer():
+			var data_val = int(data_part)
+			for ball_no in ball_nos:
+				if data_val == ball_no:
+					lines_to_remove.append(i)
+					break
+	
+	if lines_to_remove.empty():
+		return
+	
+	lines_to_remove.sort()
+	lines_to_remove.invert()
+	
+	var text_lines = get_text().split("\n", false)
+	var new_lines: Array = []
+	
+	for i in range(text_lines.size()):
+		if not i in lines_to_remove:
+			new_lines.append(text_lines[i])
+
+	text = _join_array(new_lines, "\n")
+
+
+func write_no_texture_rotate_batch(ball_nos: Array) -> void:
+	if ball_nos.empty():
+		return
+	
+	save_backup()
+	
+	var section_tag = "[No Texture Rotate]"
+	var bounds = get_section_bounds(section_tag)
+	
+	if bounds.empty():
+		var first_section_result = search("[", 0, 0, 0)
+
+		if not first_section_result.empty():
+			var first_section_line = first_section_result[SEARCH_RESULT_LINE]
+			var all_lines = get_text().split("\n")
+			all_lines.insert(first_section_line, section_tag)
+			text = all_lines.join("\n")
+		else:
+			var insert_line = get_line_count()
+			_insert_text_at_cursor_at_line(insert_line, section_tag + "\n")
+
+		bounds = get_section_bounds(section_tag)
+
+		if bounds.empty():
+			return
+	
+	var lines_to_add = []
+
+	for ball_no in ball_nos:
+		if not has_no_texture_rotate_entry(ball_no, bounds):
+			lines_to_add.append(str(ball_no))
+	
+	if not lines_to_add.empty():
+		var insert_line = _find_insertion_line(bounds.start, bounds.end)
+		var text_to_insert = ""
+
+		for entry in lines_to_add:
+			text_to_insert += entry + "\n"
+
+		_insert_text_at_cursor_at_line(insert_line, text_to_insert)
+	
+	save_file(true)
+	commit_full_snapshot("Batch added %d entries to No Texture Rotate" % lines_to_add.size())
+
+
+func has_no_texture_rotate_entry(ball_no: int, bounds: Dictionary) -> bool:
+	var target = str(ball_no)
+
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		if line.begins_with("["):
+			break
+
+		var data_part = line
+		var comment_idx = line.find(";")
+
+		if comment_idx != -1:
+			data_part = line.substr(0, comment_idx).strip_edges()
+
+		if data_part == target:
+			return true
+			
+	return false
 
 
 ### VISUAL NODE SIGNALS ###

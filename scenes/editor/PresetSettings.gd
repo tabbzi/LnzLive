@@ -47,6 +47,7 @@ onready var include_outline_color_chk: CheckBox = base_properties_grid.get_node(
 onready var include_outline_chk: CheckBox = base_properties_grid.get_node("IncludeOutlineCheckBox")
 onready var include_fuzz_chk: CheckBox = base_properties_grid.get_node("IncludeFuzzCheckBox")
 onready var include_texture_chk: CheckBox = base_properties_grid.get_node("IncludeTextureCheckBox")
+onready var no_texture_rotate_chk: CheckBox = scroll_vbox.get_node("BasePropertiesGrid/NoTextureRotateCheck")
 
 onready var size_spinbox: SpinBox = base_properties_grid.get_node("SizeContainer/SizeSpinBox")
 onready var size_mode_option: OptionButton = base_properties_grid.get_node("SizeContainer/SizeModeOption")
@@ -671,6 +672,7 @@ func get_properties() -> Dictionary:
 	if include_texture_chk.pressed:
 		properties["texture_id"] = int(texture_spinbox.value)
 
+	properties["no_texture_rotate"] = no_texture_rotate_chk.pressed if is_instance_valid(no_texture_rotate_chk) else false
 	properties["apply_ballz"] = true
 	properties["apply_paintballz"] = include_paintballz_chk.pressed
 	properties["scale_paintballz"] = scale_paintballz_chk.pressed
@@ -708,6 +710,9 @@ func set_properties(properties: Dictionary) -> void:
 		fuzz_spinbox.value = properties.fuzz
 	if properties.has("texture_id"):
 		texture_spinbox.value = properties.texture_id
+
+	if is_instance_valid(no_texture_rotate_chk):
+		no_texture_rotate_chk.pressed = properties.get("no_texture_rotate", false)
 
 	roll_spinbox.value = 0
 	pitch_spinbox.value = 0
@@ -797,6 +802,7 @@ func save_settings() -> void:
 	values["include_outline"] = include_outline_chk.pressed
 	values["include_fuzz"] = include_fuzz_chk.pressed
 	values["include_texture"] = include_texture_chk.pressed
+	values["no_texture_rotate"] = no_texture_rotate_chk.pressed if is_instance_valid(no_texture_rotate_chk) else false
 	values["size_scale"] = size_scale_spin.value
 	values["pos_scale"] = pos_scale_spin.value
 	values["link_scale"] = link_scale_chk.pressed
@@ -826,6 +832,8 @@ func load_settings() -> void:
 	include_outline_chk.pressed = data.get("include_outline", true)
 	include_fuzz_chk.pressed = data.get("include_fuzz", true)
 	include_texture_chk.pressed = data.get("include_texture", true)
+	if is_instance_valid(no_texture_rotate_chk):
+		no_texture_rotate_chk.pressed = data.get("no_texture_rotate", false)
 	size_scale_spin.value = data.get("size_scale", 1.0)
 	pos_scale_spin.value = data.get("pos_scale", 1.0)
 	link_scale_chk.pressed = data.get("link_scale", false)
@@ -852,6 +860,8 @@ func _on_reset_defaults_pressed() -> void:
 	include_outline_chk.pressed = true
 	include_fuzz_chk.pressed = true
 	include_texture_chk.pressed = true
+	if is_instance_valid(no_texture_rotate_chk):
+		no_texture_rotate_chk.pressed = false
 	
 	size_scale_spin.value = 1.0
 	pos_scale_spin.value = 1.0
