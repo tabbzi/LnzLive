@@ -135,6 +135,8 @@ const DEFAULT_DESIGN_SLOTS: Array = [
 
 var design_color_slots: Array = []
 
+var _pending_paintball_count: int = 0
+
 const DESIGN_CANVAS_SIZE: float = 200.0
 
 func _ready() -> void:
@@ -436,17 +438,49 @@ func _process(delta: float) -> void:
 	else:
 		for item in items:
 			item.dict["walk_done"] = true
+	
+	_update_paintball_buttons()
 
 func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
+func get_pending_paintball_count() -> int:
+	if is_instance_valid(dog_generator):
+		if dog_generator.has_method("get_pending_paintball_nodes"):
+			return dog_generator.get_pending_paintball_nodes().size()
+		if dog_generator.has_method("get_pending_paintballs_data"):
+			return dog_generator.get_pending_paintballs_data().size()
+		var arr = dog_generator.get("_pending_paintballs_data")
+		if arr == null:
+			arr = dog_generator.get("pending_paintballs")
+		if arr is Array:
+			return arr.size()
+	return 0
+
+func _update_paintball_buttons() -> void:
+	_pending_paintball_count = get_pending_paintball_count()
+	
+	if _pending_paintball_count > 0:
+		_apply_button.text = "Apply (%d)" % _pending_paintball_count
+	else:
+		_apply_button.text = "Apply"
+	
+	if _clear_button:
+		_clear_button.disabled = _pending_paintball_count == 0
+
 func _on_ApplyButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: apply_paintballz signal emitted")
 	emit_signal("apply_paintballz")
+	_pending_paintball_count = 0
+	_apply_button.text = "Apply"
+	_clear_button.disabled = true
 
 func _on_ClearButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: clear_paintballz signal emitted")
 	emit_signal("clear_paintballz")
+	_pending_paintball_count = 0
+	_apply_button.text = "Apply"
+	_clear_button.disabled = true
 
 func _on_DeleteModeCheckBox_toggled(is_on: bool) -> void:
 	print("[STATUS] PaintballSettings: delete_mode_toggled signal emitted, is_on: %s" % is_on)

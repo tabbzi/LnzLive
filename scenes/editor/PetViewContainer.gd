@@ -671,7 +671,7 @@ func _process(_delta: float) -> void:
 			body = "Design Mode: Stamp pattern onto ball.\nScroll to Rotate | Ctrl+Scroll to Scale."
 			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		else:
-			var 			freeline_on: bool = (
+			var freeline_on: bool = (
 				freeline_check_box.pressed
 				or Input.is_key_pressed(KEY_SHIFT)
 			)
