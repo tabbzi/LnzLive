@@ -173,6 +173,9 @@ var shader_settings_instance: Control
 var diameter_min_spinbox: SpinBox
 var diameter_max_spinbox: SpinBox
 var eraser_check_box: CheckBox
+var freeline_check_box: CheckBox
+var straight_line_check_box: CheckBox
+var target_option_button: OptionButton
 var pivot_ball_spinbox: SpinBox
 var use_pivot_check_box: CheckBox
 
@@ -403,6 +406,9 @@ func _ready() -> void:
 	diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 	diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 	eraser_check_box = paintball_settings_instance.find_node("EraserCheckBox")
+	freeline_check_box = paintball_settings_instance.find_node("FreelineCheckBox")
+	straight_line_check_box = paintball_settings_instance.find_node("StraightLineCheckBox")
+	target_option_button = paintball_settings_instance.find_node("Target")
 	pivot_ball_spinbox = move_mode_settings_instance.find_node("PivotBall")
 	use_pivot_check_box = move_mode_settings_instance.find_node("UsePivotCheckBox")
 
@@ -649,7 +655,7 @@ func _process(_delta: float) -> void:
 
 	elif paintball_mode:
 		#paintball_settings_instance.sync_camera(camera.global_transform)
-		var delete_mode: bool = paintball_settings_instance.find_node("EraserCheckBox").pressed
+		var delete_mode: bool = eraser_check_box.pressed
 		var temp_eraser_active: bool = Input.is_key_pressed(KEY_CONTROL)
 		var is_design_mode: bool = paintball_settings_instance.is_design_mode_active()
 
@@ -665,14 +671,14 @@ func _process(_delta: float) -> void:
 			body = "Design Mode: Stamp pattern onto ball.\nScroll to Rotate | Ctrl+Scroll to Scale."
 			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		else:
-			var freeline_on: bool = (
-				paintball_settings_instance.find_node("FreelineCheckBox").pressed
+			var 			freeline_on: bool = (
+				freeline_check_box.pressed
 				or Input.is_key_pressed(KEY_SHIFT)
 			)
 			var straight_line_on: bool = (
 				freeline_on
 				and (
-					paintball_settings_instance.find_node("StraightLineCheckBox").pressed
+					straight_line_check_box.pressed
 					or Input.is_key_pressed(KEY_ALT)
 					or Input.is_key_pressed(KEY_L)
 				)
@@ -1524,7 +1530,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			target_ball = paintball_target_ball
 		else:
-			var target_mode: int = paintball_settings_instance.find_node("Target").selected
+			var target_mode: int = target_option_button.selected
 			if target_mode == 0:  # Hovered Ball
 				target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 			else:  # Selected Ball
@@ -2170,7 +2176,7 @@ func _enter_mode(mode: int) -> void:
 			_ordered_color_index = 0
 			_ordered_outline_color_index = 0
 			_ordered_texture_index = 0
-			paintball_settings_instance.find_node("Target").selected = 0
+			target_option_button.selected = 0
 		Mode.LINE:
 			pass
 		Mode.PRESET:
@@ -3426,9 +3432,9 @@ func _update_paintball_mode_ui() -> void:
 		mouse_default_cursor_shape = CURSOR_ARROW
 
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
-			paintball_settings_instance.find_node("Target").disabled = true
+			target_option_button.disabled = true
 		else:
-			paintball_settings_instance.find_node("Target").disabled = false
+			target_option_button.disabled = false
 	else:
 		_set_pending_paintballs_visible(false)
 
@@ -3454,7 +3460,7 @@ func _on_paintball_mode_for_ball_toggled(ball: Spatial) -> void:
 	close_paintball_on_apply = true
 	paintball_target_ball = ball
 	set_active_selected_ball(ball)
-	paintball_settings_instance.find_node("Target").selected = 1
+	target_option_button.selected = 1
 	if not paintball_check_box.pressed:
 		paintball_check_box.pressed = true
 	else:
