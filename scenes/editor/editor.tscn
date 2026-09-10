@@ -1,4 +1,4 @@
-[gd_scene load_steps=59 format=2]
+[gd_scene load_steps=56 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -28,7 +28,6 @@
 [ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=27]
 [ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="DynamicFont" id=28]
 [ext_resource path="res://resources/fonts/font_pixel_operator_default.tres" type="DynamicFont" id=29]
-[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=31]
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/icons/ico_ref_img.png" type="Texture" id=34]
@@ -119,26 +118,18 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [sub_resource type="DynamicFont" id=8]
-size = 36
-font_data = ExtResource( 31 )
-
-[sub_resource type="DynamicFont" id=9]
-size = 30
-font_data = ExtResource( 31 )
-
-[sub_resource type="DynamicFont" id=10]
 size = 12
 font_data = ExtResource( 12 )
 
-[sub_resource type="DynamicFontData" id=11]
+[sub_resource type="DynamicFontData" id=9]
 font_path = "res://resources/fonts/PixelCode.ttf"
 
-[sub_resource type="DynamicFont" id=12]
+[sub_resource type="DynamicFont" id=10]
 size = 14
 extra_spacing_top = -8
-font_data = SubResource( 11 )
+font_data = SubResource( 9 )
 
-[sub_resource type="StyleBoxFlat" id=13]
+[sub_resource type="StyleBoxFlat" id=11]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -150,7 +141,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=14]
+[sub_resource type="StyleBoxFlat" id=12]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -414,12 +405,12 @@ flat = true
 
 [node name="Variations" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs" instance=ExtResource( 43 )]
 visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
 margin_left = 1.0
 margin_top = 25.0
 margin_right = -1.0
 margin_bottom = -1.0
-custom_fonts/title_button_font = SubResource( 8 )
-custom_fonts/font = SubResource( 9 )
 
 [node name="SidebarSpacer" type="Control" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 visible = false
@@ -1029,7 +1020,7 @@ script = ExtResource( 21 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-font = SubResource( 10 )
+font = SubResource( 8 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
 margin_left = 104.0
@@ -1056,7 +1047,7 @@ margin_top = 30.0
 margin_right = 655.0
 margin_bottom = 105.0
 rect_min_size = Vector2( 475, 75 )
-custom_fonts/font = SubResource( 12 )
+custom_fonts/font = SubResource( 10 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."
 align = 1
@@ -1120,7 +1111,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-01"
+text = "PB-beta-v1.4.8-preview-02"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1294,9 +1285,9 @@ rect_clip_content = true
 [node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_right = 81.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Next"
 
@@ -1304,9 +1295,9 @@ text = "Find Next"
 margin_left = 85.0
 margin_right = 168.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Prev"
 
@@ -1314,9 +1305,9 @@ text = "Find Prev"
 margin_left = 172.0
 margin_right = 247.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace"
 
@@ -1324,9 +1315,9 @@ text = "Replace"
 margin_left = 251.0
 margin_right = 352.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace All"
 
@@ -1334,9 +1325,9 @@ text = "Replace All"
 margin_left = 356.0
 margin_right = 475.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Match Case"
 
@@ -1344,9 +1335,9 @@ text = "Match Case"
 margin_left = 479.0
 margin_right = 609.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Whole Words"
 
@@ -1355,9 +1346,9 @@ margin_left = 613.0
 margin_right = 743.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 13 )
-custom_styles/pressed = SubResource( 13 )
-custom_styles/normal = SubResource( 14 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
 custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
