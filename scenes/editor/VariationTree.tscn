@@ -113,7 +113,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "Toggle variations on/off to compare how they affect the pet. Click 'Randomize Variation' to randomly assign variations across all sections.
+text = "Toggle variations on/off to compare how they affect the pet. Click 'Randomize Variations' to randomly assign variations across all sections. Click 'Flatten Variations' to commit currently viewed variations and remove all other blocks. Does NOT flatten to base data (overrides sections will remain).
 
 Each variation block (#N) contains alternative data for that section. Linked suffixes (.A, .B, etc.) share the same variation across multiple sections."
 
@@ -127,7 +127,7 @@ custom_styles/focus = SubResource( 5 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
-text = "Randomize Variation (click me!)"
+text = "Randomize Variations"
 
 [node name="FlattenButton" type="Button" parent="VBoxContainer"]
 margin_top = 118.0
@@ -139,7 +139,7 @@ custom_styles/focus = SubResource( 5 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
-text = "Flatten Variations to Base Data"
+text = "Flatten Variations"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 149.0
