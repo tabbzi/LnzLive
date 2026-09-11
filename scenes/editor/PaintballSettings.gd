@@ -39,6 +39,10 @@ onready var _anchored: CheckBox = find_node("Anchored")
 onready var _target: OptionButton = find_node("Target")
 onready var _freeline_checkbox: CheckBox = find_node("FreelineCheckBox")
 onready var _straight_line_checkbox: CheckBox = find_node("StraightLineCheckBox")
+onready var _brush_btn: Button = find_node("BrushBtn")
+onready var _line_btn: Button = find_node("LineBtn")
+onready var _hline_btn: Button = find_node("HLineBtn")
+onready var _vline_btn: Button = find_node("VLineBtn")
 onready var _spacing: SpinBox = find_node("Spacing")
 onready var _jitter: SpinBox = find_node("Jitter")
 onready var _ordered: CheckBox = find_node("Ordered")
@@ -175,6 +179,24 @@ func _ready() -> void:
 	_setup_slots_tree()
 	load_settings()
 	set_process(true)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.control:
+		var mode: int = -1
+		if event.scancode == KEY_B:
+			mode = 0
+		elif event.scancode == KEY_L:
+			mode = 1
+		elif event.scancode == KEY_H:
+			mode = 2
+		elif event.scancode == KEY_V:
+			mode = 3
+		
+		if mode >= 0:
+			_sync_design_line_mode(mode)
+			_design_canvas._line_mode = mode
+			_design_canvas.update()
+			save_settings()
 
 func _setup_color_previews() -> void:
 	LnzLiveUtils.setup_preview_wrapper(self, _color, "Color")
@@ -546,6 +568,7 @@ func get_properties() -> Dictionary:
 	properties["target_mode"] = _target.selected
 	properties["freeline"] = _freeline_checkbox.pressed
 	properties["straight_line"] = _straight_line_checkbox.pressed
+	properties["line_mode"] = _get_design_line_mode()
 	properties["spacing"] = _spacing.value
 	properties["jitter"] = _jitter.value
 	properties["ordered"] = _ordered.pressed
@@ -647,6 +670,7 @@ func _apply_settings_dict(data: Dictionary) -> void:
 	if data.has("target_mode"): _target.selected = data["target_mode"]
 	if data.has("freeline"): _freeline_checkbox.pressed = data["freeline"]
 	if data.has("straight_line"): _straight_line_checkbox.pressed = data["straight_line"]
+	if data.has("line_mode"): _sync_design_line_mode(data["line_mode"])
 	if data.has("spacing"): _spacing.value = data["spacing"]
 	if data.has("jitter"): _jitter.value = data["jitter"]
 	if data.has("ordered"): _ordered.pressed = data["ordered"]
@@ -780,6 +804,10 @@ func _connect_settings_signals() -> void:
 	_target.connect("item_selected", self, "_on_setting_changed")
 	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
 	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
+	_line_btn.connect("toggled", self, "_on_line_btn_toggled")
+	_hline_btn.connect("toggled", self, "_on_hline_btn_toggled")
+	_vline_btn.connect("toggled", self, "_on_vline_btn_toggled")
+	_brush_btn.connect("toggled", self, "_on_brush_btn_toggled")
 	_spacing.connect("value_changed", self, "_on_setting_changed")
 	_jitter.connect("value_changed", self, "_on_setting_changed")
 	_ordered.connect("toggled", self, "_on_setting_changed")
@@ -830,6 +858,7 @@ func _on_design_tool_toggled(_arg = null) -> void:
 	_design_canvas.mirror_y = _mirror_y.pressed
 	_design_canvas.eraser_mode = _canvas_eraser.pressed
 	_design_canvas.straight_line_enabled = _straight_line_checkbox.pressed
+	_design_canvas._line_mode = _get_design_line_mode()
 	_design_canvas.update()
 	save_settings()
 
@@ -904,6 +933,7 @@ func _on_clear_design_pressed() -> void:
 	_refresh_slot_buttons()
 	_design_canvas.emit_signal("design_changed")
 	_on_palette_changed()
+	_sync_design_line_mode(0)
 
 func _on_export_pattern_pressed() -> void:
 	var author: String = _pattern_info_dialog.find_node("AuthorEdit").text.strip_edges()
@@ -1234,6 +1264,7 @@ func save_settings() -> void:
 	values["target"] = _target.selected
 	values["freeline"] = _freeline_checkbox.pressed
 	values["straight_line"] = _straight_line_checkbox.pressed
+	values["line_mode"] = _get_design_line_mode()
 	values["spacing"] = _spacing.value
 	values["jitter"] = _jitter.value
 	values["ordered"] = _ordered.pressed
@@ -1255,6 +1286,7 @@ func save_settings() -> void:
 	design_values["mirror_y"] = _mirror_y.pressed
 	design_values["canvas_eraser"] = _canvas_eraser.pressed
 	design_values["straight_line"] = _straight_line_checkbox.pressed
+	design_values["line_mode"] = _get_design_line_mode()
 	design_values["design_jitter"] = _design_jitter.value
 	design_values["rotate_jitter"] = _rotate_jitter.value
 	design_values["rotate_fixed"] = _rotate_fixed.pressed
@@ -1322,11 +1354,16 @@ func load_settings() -> void:
 				design_color_slots[i].outline_color = old_slot.outline_color
 				design_color_slots[i].texture = old_slot.texture
 				design_color_slots[i].outline_type = old_slot.outline_type
+		else:
+			design_color_slots.clear()
+			for s in DEFAULT_DESIGN_SLOTS:
+				design_color_slots.append(s.duplicate(true))
 
 	_mirror_x.pressed = design_data.get("mirror_x", false)
 	_mirror_y.pressed = design_data.get("mirror_y", false)
 	_canvas_eraser.pressed = design_data.get("canvas_eraser", false)
 	_straight_line_checkbox.pressed = design_data.get("straight_line", false)
+	_sync_design_line_mode(design_data.get("line_mode", 0))
 	_design_jitter.value = design_data.get("design_jitter", 0.0)
 	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
 	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
@@ -1361,6 +1398,10 @@ func _on_reset_defaults_pressed() -> void:
 	_target.selected = 0
 	_freeline_checkbox.pressed = false
 	_straight_line_checkbox.pressed = false
+	_line_btn.pressed = false
+	_hline_btn.pressed = false
+	_vline_btn.pressed = false
+	_brush_btn.pressed = true
 	_spacing.value = 5.0
 	_jitter.value = 0.0
 	_ordered.pressed = false
@@ -1393,4 +1434,79 @@ func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = false
 	save_settings()
 	_on_palette_changed()
-	_refresh_all_previews()
+
+func _get_design_line_mode() -> int:
+	if _brush_btn.pressed:
+		return 0
+	elif _line_btn.pressed:
+		return 1
+	elif _hline_btn.pressed:
+		return 2
+	elif _vline_btn.pressed:
+		return 3
+	return 0
+
+func _sync_design_line_mode(mode: int) -> void:
+	_brush_btn.set_block_signals(true)
+	_line_btn.set_block_signals(true)
+	_hline_btn.set_block_signals(true)
+	_vline_btn.set_block_signals(true)
+	
+	if mode == 0:
+		_brush_btn.pressed = true
+		_line_btn.pressed = false
+		_hline_btn.pressed = false
+		_vline_btn.pressed = false
+	elif mode == 1:
+		_brush_btn.pressed = false
+		_line_btn.pressed = true
+		_hline_btn.pressed = false
+		_vline_btn.pressed = false
+	elif mode == 2:
+		_brush_btn.pressed = false
+		_line_btn.pressed = false
+		_hline_btn.pressed = true
+		_vline_btn.pressed = false
+	elif mode == 3:
+		_brush_btn.pressed = false
+		_line_btn.pressed = false
+		_hline_btn.pressed = false
+		_vline_btn.pressed = true
+	
+	_brush_btn.set_block_signals(false)
+	_line_btn.set_block_signals(false)
+	_hline_btn.set_block_signals(false)
+	_vline_btn.set_block_signals(false)
+	
+	_brush_btn.release_focus()
+	_line_btn.release_focus()
+	_hline_btn.release_focus()
+	_vline_btn.release_focus()
+
+func _on_line_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 1
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 1)
+
+func _on_hline_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 2
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 2)
+
+func _on_vline_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 3
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 3)
+
+func _on_brush_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 0
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 0)

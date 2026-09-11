@@ -22,6 +22,16 @@ var eraser_mode: bool = false
 var straight_line_enabled: bool = false
 var _last_click_pos: Vector2 = Vector2(-1, -1)
 
+enum LineMode {
+	OFF = 0,
+	DIAGONAL = 1,
+	HORIZONTAL = 2,
+	VERTICAL = 3
+}
+var _line_mode: int = LineMode.OFF
+var _line_start_pos: Vector2 = Vector2(-1, -1)
+var _line_end_pos: Vector2 = Vector2(-1, -1)
+
 var slot_data_ref: Array = []
 
 func _ready() -> void:
@@ -34,37 +44,16 @@ func _gui_input(event: InputEvent) -> void:
 		last_draw_pos = event.position
 		var current_pos: Vector2 = event.position
 
-		var is_straight_line: bool = straight_line_enabled or Input.is_key_pressed(KEY_SHIFT)
-
-		if is_straight_line and _last_click_pos != Vector2(-1, -1):
-			var check_pos: Vector2 = _last_click_pos
-
-			if Input.is_key_pressed(KEY_X):
-				current_pos.y = check_pos.y
-			elif Input.is_key_pressed(KEY_Y):
-				current_pos.x = check_pos.x
-
-			var dist: float = check_pos.distance_to(current_pos)
-			var rect_size: Vector2 = get_rect().size
-			var step_dist: float = (brush_spacing / 100.0) * rect_size.x
-			var steps: int = max(1, round(dist / max(1.0, step_dist)))
-
-			for i in range(1, steps + 1):
-				var t: float = float(i) / float(steps)
-				var interp_pos: Vector2 = check_pos.linear_interpolate(current_pos, t)
-				var norm_x: float = (interp_pos.x - rect_size.x / 2.0) / (rect_size.x / 2.0)
-				var norm_y: float = (interp_pos.y - rect_size.y / 2.0) / (rect_size.y / 2.0)
-				if abs(norm_x) <= 1.0 and abs(norm_y) <= 1.0:
-					var pb: Dictionary = {
-						"x": norm_x,
-						"y": norm_y,
-						"diameter": brush_size,
-						"color_slot": current_color_slot
-					}
-					design_paintballs.append(pb)
+		if _line_mode != LineMode.OFF and _line_start_pos == Vector2(-1, -1):
+			_line_start_pos = current_pos
+			_line_end_pos = current_pos
 			update()
-			emit_signal("design_changed")
-		elif eraser_mode:
+			return
+
+		if _line_mode != LineMode.OFF and _line_start_pos != Vector2(-1, -1):
+			return
+
+		if eraser_mode:
 			_erase_at(current_pos)
 		else:
 			_add_paintball_symmetric(current_pos)
@@ -74,32 +63,29 @@ func _gui_input(event: InputEvent) -> void:
 
 	elif event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
 		is_drawing = false
+		if _line_mode != LineMode.OFF and _line_start_pos != Vector2(-1, -1):
+			_commit_line()
+			_line_start_pos = Vector2(-1, -1)
+			_line_end_pos = Vector2(-1, -1)
+			update()
 
 	elif event is InputEventMouseMotion:
 		current_mouse_pos = event.position
 		update()
-		if is_drawing:
+		if _line_mode != LineMode.OFF and _line_start_pos != Vector2(-1, -1):
+			var constrained_pos: Vector2 = event.position
+			if _line_mode == LineMode.HORIZONTAL:
+				constrained_pos.y = _line_start_pos.y
+			elif _line_mode == LineMode.VERTICAL:
+				constrained_pos.x = _line_start_pos.x
+			_line_end_pos = constrained_pos
+			update()
+		elif is_drawing:
 			var rect_size: Vector2 = get_rect().size
 			var pixel_spacing: float = (brush_spacing / 100.0) * rect_size.x
 			if event.position.distance_to(last_draw_pos) >= pixel_spacing:
 				if eraser_mode:
 					_erase_at(event.position)
-				elif straight_line_enabled:
-					# Straight line: stamp points continuously while dragging
-					var center: Vector2 = rect_size / 2.0
-					var relative: Vector2 = event.position - center
-					var norm_x: float = relative.x / (rect_size.x / 2.0)
-					var norm_y: float = relative.y / (rect_size.y / 2.0)
-					if abs(norm_x) <= 1.0 and abs(norm_y) <= 1.0:
-						var pb: Dictionary = {
-							"x": norm_x,
-							"y": norm_y,
-							"diameter": brush_size,
-							"color_slot": current_color_slot
-						}
-						design_paintballs.append(pb)
-						update()
-						emit_signal("design_changed")
 				else:
 					_add_paintball_symmetric(event.position)
 				last_draw_pos = event.position
@@ -192,7 +178,14 @@ func _draw() -> void:
 	if mirror_x:
 		draw_line(Vector2(center.x, 0), Vector2(center.x, rect_size.y), Color(1, 0.5, 0.5, 0.5), 2.0)
 	if mirror_y:
-		draw_line(Vector2(0, center.y), Vector2(rect_size.x, center.y), Color(0.5, 0.5, 1, 0.5), 2.0)
+		draw_line(Vector2(0, center.y), Vector2(center.x, center.y), Color(0.5, 0.5, 1, 0.5), 2.0)
+
+	if _line_mode != LineMode.OFF and _line_start_pos != Vector2(-1, -1) and _line_end_pos != Vector2(-1, -1):
+		var preview_color: Color = Color(1, 1, 0, 0.7)
+		var line_width: float = 2.0
+		draw_line(_line_start_pos, _line_end_pos, preview_color, line_width)
+		
+		draw_circle(_line_start_pos, 4.0, Color(1, 1, 0, 0.9))
 
 	# Draw paintballs
 	for pb in design_paintballs:
@@ -232,3 +225,37 @@ func _on_mouse_exited() -> void:
 	is_mouse_inside = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	update()
+
+func _get_active_line_mode() -> int:
+	return _line_mode
+
+func _commit_line() -> void:
+	if _line_start_pos == Vector2(-1, -1) or _line_end_pos == Vector2(-1, -1):
+		return
+	
+	var rect_size: Vector2 = get_rect().size
+	var start_norm_x: float = (_line_start_pos.x - rect_size.x / 2.0) / (rect_size.x / 2.0)
+	var start_norm_y: float = (_line_start_pos.y - rect_size.y / 2.0) / (rect_size.y / 2.0)
+	var end_norm_x: float = (_line_end_pos.x - rect_size.x / 2.0) / (rect_size.x / 2.0)
+	var end_norm_y: float = (_line_end_pos.y - rect_size.y / 2.0) / (rect_size.y / 2.0)
+	
+	var dist: float = _line_start_pos.distance_to(_line_end_pos)
+	var step_dist: float = (brush_spacing / 100.0) * rect_size.x
+	var steps: int = max(1, round(dist / max(1.0, step_dist)))
+	
+	for i in range(1, steps + 1):
+		var t: float = float(i) / float(steps)
+		var interp_x: float = start_norm_x + (end_norm_x - start_norm_x) * t
+		var interp_y: float = start_norm_y + (end_norm_y - start_norm_y) * t
+		
+		if abs(interp_x) <= 1.0 and abs(interp_y) <= 1.0:
+			var pb: Dictionary = {
+				"x": interp_x,
+				"y": interp_y,
+				"diameter": brush_size,
+				"color_slot": current_color_slot
+			}
+			design_paintballs.append(pb)
+	
+	update()
+	emit_signal("design_changed")
