@@ -4,8 +4,8 @@
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=2]
 
 [node name="UserSettingsDialog" type="WindowDialog"]
-margin_right = 350.0
-margin_bottom = 350.0
+margin_right = 450.0
+margin_bottom = 400.0
 window_title = "User Settings"
 script = ExtResource( 1 )
 __meta__ = {
@@ -160,3 +160,28 @@ margin_left = 167.0
 margin_right = 330.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+margin_top = 250.0
+margin_right = 330.0
+margin_bottom = 254.0
+
+[node name="TexturePathLabel" type="Label" parent="VBoxContainer"]
+margin_top = 264.0
+margin_right = 330.0
+margin_bottom = 278.0
+text = "Default Texture Path"
+align = 1
+
+[node name="TexturePathHBox" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 282.0
+margin_right = 330.0
+margin_bottom = 306.0
+
+[node name="TexturePathEdit" type="LineEdit" parent="VBoxContainer/TexturePathHBox"]
+anchor_left = 0.015
+anchor_top = 0.083
+anchor_right = 0.985
+anchor_bottom = 0.917
+size_flags_horizontal = 3
+text = "\\resource\\textures\\"

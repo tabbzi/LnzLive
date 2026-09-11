@@ -1334,6 +1334,26 @@ func get_section_bounds(section_tag: String) -> Dictionary:
 		"empties": empty_count
 	}
 
+func add_texture_entry(line_content: String) -> void:
+	var bounds = get_section_bounds("[Texture List]")
+	if bounds.empty():
+		print("[WARNING] LnzTextEdit: No [Texture List] section found")
+		return
+	
+	var insert_line: int = bounds.start - 1
+	for i in range(bounds.start, bounds.end):
+		var line: String = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
+		insert_line = i
+	
+	var total_lines: int = get_line_count()
+	for i in range(total_lines, insert_line + 1, -1):
+		set_line(i, get_line(i - 1))
+	set_line(insert_line + 1, line_content)
+	
+	cursor_set_line(insert_line + 1)
+
 func get_current_section_name() -> String:
 	var current_line = cursor_get_line()
 	for i in range(current_line, -1, -1):

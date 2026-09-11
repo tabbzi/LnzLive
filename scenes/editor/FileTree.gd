@@ -19,6 +19,19 @@ var current_import_type: int = ImportType.NONE
 enum SortMode { ALPHABETICAL, MODIFIED_DATE }
 var current_sort_mode: int = SortMode.ALPHABETICAL
 
+enum RmbAction {
+	DELETE = 0,
+	RENAME,
+	BACKUP,
+	COPY_FILENAME,
+	EXPORT_FILE,
+	NEW_FOLDER,
+	MOVE_TO,
+	DUPLICATE,
+	ADD_TO_BASES,
+	ADD_TO_TEXTURE_LIST
+}
+
 const MAX_RECURSION_DEPTH: int = 3
 
 const INDEX_EXAMPLE: int = 0
@@ -135,11 +148,6 @@ func _ready() -> void:
 		upload_popup.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 
 	var popup: PopupMenu = $ItemPopupMenu
-	if popup.get_item_count() < 9: # Increased count to accommodate new items
-		popup.add_item("New Folder", 5)
-		popup.add_item("Move To...", 6)
-		popup.add_item("Duplicate", 7)
-		popup.add_item("Add to Bases", 8)
 
 	var dir: Directory = Directory.new()
 	var lnz_dir_path: String = example_file_location + "lnz/"
@@ -1056,7 +1064,7 @@ func _on_Tree_item_rmb_selected(position: Vector2) -> void:
 	if items.size() > 1:
 		for i in range($ItemPopupMenu.get_item_count()):
 			var id: int = $ItemPopupMenu.get_item_id(i)
-			var allowed_multi: bool = (id == 0 or id == 5 or id == 6)
+			var allowed_multi: bool = (id == RmbAction.DELETE or id == RmbAction.NEW_FOLDER or id == RmbAction.MOVE_TO)
 			$ItemPopupMenu.set_item_disabled(i, !allowed_multi)
 	else:
 		var item: TreeItem = get_selected()
@@ -1069,33 +1077,63 @@ func _on_Tree_item_rmb_selected(position: Vector2) -> void:
 		var is_local_content: bool = false
 		var is_local_file: bool = false
 		var is_bases_file: bool = false
+		var is_game_texture: bool = false
+		var is_user_texture: bool = false
 		
-		var curr: TreeItem = p
+		var curr: TreeItem = item
 		while curr:
+			var parent: TreeItem = curr.get_parent()
+			if is_instance_valid(parent):
+				var parent_text: String = parent.get_text(0)
+				if parent_text == "Game Textures":
+					is_game_texture = true
+				elif parent_text == "User Textures":
+					is_user_texture = true
+				elif parent_text in ["User LNZ", "User Textures", "User Palettes", "Base LNZ"]:
+					is_local_content = true
+				if parent_text in ["User LNZ", "Base LNZ"]:
+					is_local_file = true
+				if parent_text == "Base LNZ":
+					is_bases_file = true
 			if curr == local_storage or curr == local_storage_textures or curr == local_storage_palettes or curr == local_storage_bases:
 				is_local_content = true
 			if curr == local_storage or curr == local_storage_bases:
 				is_local_file = true
 			if curr == local_storage_bases:
 				is_bases_file = true
-			curr = curr.get_parent()
+			if curr == res_textures:
+				is_game_texture = true
+			if curr == local_storage_textures:
+				is_user_texture = true
+			curr = parent
 
 		for i in range($ItemPopupMenu.get_item_count()):
 			var id: int = $ItemPopupMenu.get_item_id(i)
-			if id == 0: $ItemPopupMenu.set_item_disabled(i, !is_local_content) # Delete
-			elif id == 1: $ItemPopupMenu.set_item_disabled(i, !is_local_content) # Rename
-			elif id == 2: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Backup
-			elif id == 3: $ItemPopupMenu.set_item_disabled(i, false) # Copy Filename
-			elif id == 4: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Export File
-			elif id == 5: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # New Folder
-			elif id == 6: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # Move To...
-			elif id == 7: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Duplicate
-			elif id == 8: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Add to Bases
+			if id == RmbAction.DELETE:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_content) # Delete
+			elif id == RmbAction.RENAME:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_content) # Rename
+			elif id == RmbAction.BACKUP:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Backup
+			elif id == RmbAction.COPY_FILENAME:
+				$ItemPopupMenu.set_item_disabled(i, false) # Copy Filename - always enabled
+			elif id == RmbAction.EXPORT_FILE:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Export File
+			elif id == RmbAction.NEW_FOLDER:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file) # New Folder
+			elif id == RmbAction.MOVE_TO:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file) # Move To...
+			elif id == RmbAction.DUPLICATE:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Duplicate
+			elif id == RmbAction.ADD_TO_BASES:
+				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Add to Bases
+			elif id == RmbAction.ADD_TO_TEXTURE_LIST:
+				$ItemPopupMenu.set_item_disabled(i, (!is_game_texture and !is_user_texture) or is_dir) # Add to Texture List
 
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id: int) -> void:
-	if id == 0: # delete file/folder
+	if id == RmbAction.DELETE: # delete file/folder
 		var items: Array = get_all_selected()
 		if items.size() == 0: return
 		
@@ -1126,7 +1164,7 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		rescan_palettes()
 		rescan_bases()
 
-	elif id == 1: # rename file
+	elif id == RmbAction.RENAME: # rename file
 		var item: TreeItem = get_selected()
 		if not item: return
 		
@@ -1138,18 +1176,18 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
 		
-	elif id == 2: # backup
+	elif id == RmbAction.BACKUP: # backup
 		emit_signal("backup_file")
 		
-	elif id == 3: # copy file name
+	elif id == RmbAction.COPY_FILENAME: # copy file name
 		var item: TreeItem = get_selected()
 		if not item: return
 		var meta = item.get_metadata(0)
 		if is_valid_filepath(meta):
 			var filename: String = str(meta).get_file()
 			OS.set_clipboard(filename)
-			
-	elif id == 4: # export file
+		
+	elif id == RmbAction.EXPORT_FILE: # export file
 		var item: TreeItem = get_selected()
 		if not item: return
 		
@@ -1169,16 +1207,16 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		
 		_save_file_as(filename, content_bytes)
 		
-	elif id == 5: # New Folder
+	elif id == RmbAction.NEW_FOLDER: # New Folder
 		var timestamp: String = str(OS.get_unix_time())
 		new_folder_input.text = "new_folder_" + timestamp 
 		new_folder_dialog.popup_centered(Vector2(250, 100))
 		
-	elif id == 6: # Move To
+	elif id == RmbAction.MOVE_TO: # Move To
 		_populate_move_dropdown()
 		move_dialog.popup_centered(Vector2(300, 100))
 		
-	elif id == 7: # Duplicate
+	elif id == RmbAction.DUPLICATE: # Duplicate
 		var items: Array = get_all_selected()
 		if items.size() != 1: return
 		
@@ -1211,7 +1249,7 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		else:
 			print("[WARNING] FileTree: Duplicate name already exists: ", new_filepath)
 		
-	elif id == 8: # Add to Bases
+	elif id == RmbAction.ADD_TO_BASES: # Add to Bases
 		var items: Array = get_all_selected()
 		if items.size() != 1: return
 		
@@ -1256,6 +1294,114 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 				print("[ERROR] FileTree: Failed to copy. Destination path invalid or permission denied.")
 			else:
 				print("[ERROR] FileTree: Failed to copy to Bases: " + str(err))
+
+	elif id == RmbAction.ADD_TO_TEXTURE_LIST: # Add to Texture List
+		var item: TreeItem = get_selected()
+		if not item: return
+		var item_meta = item.get_metadata(0)
+		if not is_valid_filepath(item_meta): return
+		var item_filepath: String = str(item_meta)
+		if item_filepath.ends_with("/"): return
+		
+		var filename: String = item.get_text(0)
+		var tex_filename: String = str(item.get_metadata(0)).get_file()
+		if not tex_filename.to_lower().ends_with(".bmp"):
+			print("[WARNING] FileTree: Only BMP files can be added to Texture List: " + tex_filename)
+			return
+		
+		var is_user_tex: bool = false
+		var check_parent: TreeItem = item.get_parent()
+		while check_parent:
+			if check_parent == local_storage_textures:
+				is_user_tex = true
+				break
+			check_parent = check_parent.get_parent()
+		
+		_add_to_texture_list(item_filepath, is_user_tex)
+
+func _add_to_texture_list(source_path: String, is_user_texture: bool = false) -> void:
+	var pet_node = LnzLiveUtils.get_pet_node(get_tree().root)
+	if not pet_node or not is_instance_valid(pet_node):
+		print("[ERROR] FileTree: Could not find pet node to update Texture List")
+		return
+	
+	var lnz = pet_node.lnz
+	if not lnz:
+		print("[WARNING] FileTree: No LNZ loaded, cannot add to Texture List")
+		return
+	
+	if not lnz.texture_list:
+		lnz.texture_list = []
+	
+	var tex_filename: String = source_path.get_file()
+	var tex_index: int = lnz.texture_list.size()
+	
+	var bmp_info: Dictionary = _get_bmp_dimensions(source_path)
+	var width: int = bmp_info.get("width", 0)
+	var height: int = bmp_info.get("height", 0)
+	
+	lnz.texture_list.append({
+		"filename": tex_filename,
+		"transparent_color": 0,
+		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
+	})
+	
+	var display_path: String = _get_display_path(source_path, is_user_texture)
+	var tex_line: String = display_path + " 0 " + str(width) + " " + str(height)
+	
+	print("[STATUS] FileTree: Added '%s' as texture index %d to Texture List (size: %dx%d, transparency: 0)" % [tex_filename, tex_index, width, height])
+	
+	if lnz_text_edit:
+		#lnz_text_edit.save_backup()
+		lnz_text_edit.add_texture_entry(tex_line)
+		#lnz_text_edit.save_file(true)
+		lnz_text_edit.commit_full_snapshot("Added texture to Texture List: %s" % tex_filename)
+
+func _get_bmp_dimensions(path: String) -> Dictionary:
+	var result: Dictionary = {"width": 0, "height": 0}
+	var f: File = File.new()
+	if f.open(path, File.READ) != OK:
+		return result
+	
+	if f.get_len() < 54:
+		f.close()
+		return result
+	
+	if f.get_8() != 66 or f.get_8() != 77:
+		f.close()
+		return result
+	
+	f.seek(10)
+	var pixel_offset: int = f.get_32()
+	
+	f.seek(14)
+	var header_size: int = f.get_32()
+	
+	var w: int = 0
+	var h: int = 0
+	
+	if header_size == 12:
+		w = f.get_16()
+		h = f.get_16()
+	elif header_size >= 40:
+		w = f.get_32()
+		h = f.get_32()
+	
+	f.close()
+	
+	result["width"] = w
+	result["height"] = abs(h)
+	return result
+
+func _get_display_path(source_path: String, is_user_texture: bool = false) -> String:
+	if is_user_texture:
+		var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
+		var tex_path: String = "\\resource\\textures\\"
+		if is_instance_valid(user_settings):
+			tex_path = user_settings.default_texture_path
+		return tex_path + source_path.get_file()
+	
+	return "\\art\\textures\\" + source_path.get_file()
 
 func _delete_dir_recursive(path: String, depth: int = 0) -> void:
 	if depth > MAX_RECURSION_DEPTH:

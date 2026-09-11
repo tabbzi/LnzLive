@@ -43,6 +43,7 @@ var file_tree_expanded_sections: Dictionary = {
 var max_history_size: int = 25
 var stretch_mode: int = SceneTree.STRETCH_MODE_2D
 var stretch_aspect: int = SceneTree.STRETCH_ASPECT_EXPAND
+var default_texture_path: String = "\\resource\\textures\\"
 
 func _ready() -> void:
 	var global_theme: Theme = Theme.new()
@@ -80,6 +81,7 @@ func _ready() -> void:
 		settings_dialog.connect("max_history_changed", self, "_on_max_history_changed")
 		settings_dialog.connect("stretch_mode_changed", self, "_on_stretch_mode_changed")
 		settings_dialog.connect("stretch_aspect_changed", self, "_on_stretch_aspect_changed")
+		settings_dialog.connect("texture_path_changed", self, "_on_texture_path_changed")
 
 	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
 
@@ -89,7 +91,7 @@ func _on_toggle_ref_image_btn_pressed() -> void:
 		ref_settings.toggle_reference_image()
 
 func _on_user_settings_pressed() -> void:
-	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect)
+	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, default_texture_path)
 	settings_dialog.popup_centered()
 
 func _on_delimiter_changed(new_delim: String) -> void:
@@ -110,6 +112,10 @@ func _on_stretch_mode_changed(new_mode: int) -> void:
 func _on_stretch_aspect_changed(new_aspect: int) -> void:
 	stretch_aspect = new_aspect
 	_apply_screen_shrink(shrink_spinner.value)
+	save_settings()
+
+func _on_texture_path_changed(new_path: String) -> void:
+	default_texture_path = new_path
 	save_settings()
 
 func _on_window_size_changed() -> void:
@@ -156,6 +162,8 @@ func save_settings() -> void:
 
 	config.set_value("Display", "using_alt_font", using_alt_font)
 	config.set_value("Display", "font_size_offset", font_size_offset)
+	
+	config.set_value("TexturePaths", "default_texture_path", default_texture_path)
 
 	if file_tree and file_tree.has_method("get_expanded_states"):
 		file_tree_expanded_sections = file_tree.get_expanded_states()
@@ -229,6 +237,8 @@ func load_settings() -> void:
 
 		using_alt_font = config.get_value("Display", "using_alt_font", false)
 		font_size_offset = config.get_value("Display", "font_size_offset", 0)
+
+		default_texture_path = config.get_value("TexturePaths", "default_texture_path", "\\resource\\textures\\")
 
 	else:
 		OS.center_window()

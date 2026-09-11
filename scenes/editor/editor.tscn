@@ -315,7 +315,7 @@ __meta__ = {
 margin_top = 674.0
 margin_right = 132.0
 margin_bottom = 744.0
-items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Backup File", null, 0, false, true, 2, 0, null, "", false, "Copy Filename", null, 0, false, true, 3, 0, null, "", false, "Export File", null, 0, false, true, 4, 0, null, "", false ]
+items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Backup File", null, 0, false, true, 2, 0, null, "", false, "Copy Filename", null, 0, false, true, 3, 0, null, "", false, "Export File", null, 0, false, true, 4, 0, null, "", false, "New Folder", null, 0, false, false, 5, 0, null, "", false, "Move To...", null, 0, false, false, 6, 0, null, "", false, "Duplicate", null, 0, false, false, 7, 0, null, "", false, "Add to Bases", null, 0, false, false, 8, 0, null, "", false, "Add to Texture List", null, 0, false, false, 9, 0, null, "", false ]
 
 [node name="FileDialog" type="FileDialog" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu"]
 visible = true
