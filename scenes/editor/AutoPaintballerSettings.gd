@@ -199,6 +199,8 @@ onready var _pixel_mode: CheckBox = find_node("PixelMode")
 
 var pet_node: Node = null
 
+var _pending_paintball_count: int = 0
+
 var cached_palette_colors: Array = []
 
 var _ordered_color_index: int = 0
@@ -285,6 +287,33 @@ func get_closest_palette_index(target_color: Color) -> int:
 
 func _on_UseSeed_toggled(button_pressed: bool) -> void:
 	_seed_edit.editable = button_pressed
+
+func _process(_delta: float) -> void:
+	if _is_loading_settings:
+		return
+	
+	var pet: Node = LnzLiveUtils.get_pet_node(get_tree().root)
+	if not is_instance_valid(pet):
+		return
+	
+	var count: int = 0
+	if pet.has_method("get_auto_paintball_nodes"):
+		count = pet.get_auto_paintball_nodes().size()
+	elif "_auto_paintballs_data" in pet:
+		count = pet._auto_paintballs_data.size()
+	
+	if count != _pending_paintball_count:
+		_pending_paintball_count = count
+		_update_auto_paintball_buttons()
+
+func _update_auto_paintball_buttons() -> void:
+	if _pending_paintball_count > 0:
+		_apply_button.text = "Apply (%d)" % _pending_paintball_count
+	else:
+		_apply_button.text = "Apply"
+	
+	if _clear_button:
+		_clear_button.disabled = _pending_paintball_count == 0
 
 func _on_RandomSystemButton_pressed() -> void:
 	var random_system: Dictionary = LnzLiveUtils.generate_random_lsystem()
@@ -843,9 +872,17 @@ func _generate_fractal_pattern(p: Dictionary, ball_no: int, color_list: Array, o
 	return pbs
 
 func _on_ApplyButton_pressed() -> void:
+	_pending_paintball_count = 0
+	_apply_button.text = "Apply"
+	if _clear_button:
+		_clear_button.disabled = true
 	emit_signal("apply_auto_paintballz")
 
 func _on_ClearButton_pressed() -> void:
+	_pending_paintball_count = 0
+	_apply_button.text = "Apply"
+	if _clear_button:
+		_clear_button.disabled = true
 	emit_signal("clear_auto_paintballz")
 
 func _create_paintball(pos: Vector3, size: float, ball_no: int, properties: Dictionary, color_list: Array, outline_color_list: Array, texture_list: Array) -> PaintBallData:

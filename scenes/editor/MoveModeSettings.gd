@@ -22,6 +22,8 @@ signal select_locked_balls_by_ids
 
 var current_constraint_mode: String = "free" # free, x, y, z, xy, xz, yz
 
+var _pending_move_count: int = 0
+
 onready var _apply_button: Button = find_node("ApplyButton")
 onready var _clear_button: Button = find_node("ClearButton")
 onready var _unselect_button: Button = find_node("UnselectButton")
@@ -162,8 +164,10 @@ func _setup_group_buttons() -> void:
 
 
 func set_queued_count(count: int) -> void:
+	_pending_move_count = count
 	if _queued_label:
 		_queued_label.text = "Queued Moves: " + str(count)
+	_update_move_buttons()
 
 func get_constraints() -> Dictionary:
 	var res: Dictionary = {"x": false, "y": false, "z": false}
@@ -232,6 +236,15 @@ func _on_ApplyButton_pressed() -> void:
 
 func _on_ClearButton_pressed() -> void:
 	emit_signal("clear_moves")
+
+func _update_move_buttons() -> void:
+	if _pending_move_count > 0:
+		_apply_button.text = "Apply (%d)" % _pending_move_count
+	else:
+		_apply_button.text = "Apply"
+	
+	if _clear_button:
+		_clear_button.disabled = _pending_move_count == 0
 
 func _on_UnselectButton_pressed() -> void:
 	emit_signal("unselect_all")

@@ -18,6 +18,8 @@ onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/Buck
 onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
 onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
 onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/NoTextureRotateCheck
+onready var bucket_apply_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton
+onready var bucket_clear_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton
 
 onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
@@ -63,6 +65,7 @@ onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("Nos
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
 var _saved_visual_states: Dictionary = {} # ball_no -> {tile_texture: bool, _no_texture_rotate: bool}
+var _pending_bucket_count: int = 0
 
 var dog_generator: Node = null
 var cached_palette_colors: Array = []
@@ -320,6 +323,9 @@ func queue_bucket_change(ball_node: Node) -> void:
 	
 	queued_bucket_changes[ball_no] = props
 
+	_pending_bucket_count = queued_bucket_changes.size()
+	_update_bucket_buttons()
+
 	if props.has("color_index"): ball_node.color_index = props.color_index
 	if props.has("outline_color_index"): ball_node.outline_color_index = props.outline_color_index
 	if props.has("outline"): ball_node.outline = props.outline
@@ -357,6 +363,17 @@ func clear_buckets() -> void:
 	
 	queued_bucket_changes.clear()
 	_saved_visual_states.clear()
+	_pending_bucket_count = 0
+	_update_bucket_buttons()
+
+func _update_bucket_buttons() -> void:
+	if _pending_bucket_count > 0:
+		bucket_apply_button.text = "Apply Bucket (%d)" % _pending_bucket_count
+	else:
+		bucket_apply_button.text = "Apply Bucket"
+	
+	if bucket_clear_button:
+		bucket_clear_button.disabled = _pending_bucket_count == 0
 
 func _on_ApplyBucket_pressed() -> void:
 	if not queued_bucket_changes.empty():
@@ -383,6 +400,9 @@ func _on_ApplyBucket_pressed() -> void:
 		emit_signal("apply_batch_bucket", queued_bucket_changes.duplicate())
 		queued_bucket_changes.clear()
 		_saved_visual_states.clear()
+	
+	_pending_bucket_count = 0
+	_update_bucket_buttons()
 
 func _on_RecolorButton_pressed() -> void:
 	if not queued_bucket_changes.empty():
