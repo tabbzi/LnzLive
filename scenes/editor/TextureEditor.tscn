@@ -155,6 +155,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "64 x 64"
+hint_tooltip = "Canvas size for new texture"
 
 [node name="ZoomLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
 margin_top = 34.0
@@ -173,6 +174,7 @@ margin_bottom = 58.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "4x"
+hint_tooltip = "Zoom level for canvas"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 62.0
@@ -243,6 +245,7 @@ custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 pressed = true
 text = "Pencil"
+hint_tooltip = "Draw with primary color"
 
 [node name="EraserButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_left = 232.0
@@ -257,6 +260,7 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 text = "Eraser"
+hint_tooltip = "Erase pixels to transparent"
 
 [node name="EyedropperButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_top = 29.0
@@ -271,6 +275,7 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 text = "Eyedropper"
+hint_tooltip = "Pick a color from canvas"
 
 [node name="FillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_left = 232.0
@@ -286,6 +291,7 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 text = "Fill"
+hint_tooltip = "Flood fill connected pixels"
 
 [node name="ContiguousCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_top = 58.0
@@ -295,6 +301,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 pressed = true
 text = "Contiguous"
+hint_tooltip = "Only fill connected pixels of same color"
 
 [node name="BrushHBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 440.0
@@ -324,6 +331,7 @@ size_flags_horizontal = 3
 min_value = 1.0
 max_value = 32.0
 value = 1.0
+hint_tooltip = "Brush size in pixels"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
 margin_top = 28.0
@@ -348,6 +356,7 @@ size_flags_horizontal = 3
 min_value = 1.0
 max_value = 32.0
 value = 1.0
+hint_tooltip = "Distance between brush strokes"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
 margin_top = 56.0
@@ -371,6 +380,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Square"
+hint_tooltip = "Square or circular brush shape"
 
 [node name="DitherHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 527.0
@@ -395,6 +405,7 @@ margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Solid"
+hint_tooltip = "Fill pattern (Solid, Checker, Stripes, Bayer, Noise)"
 
 [node name="AmountLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox"]
 margin_top = 32.0
@@ -414,6 +425,7 @@ size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 value = 0.5
+hint_tooltip = "Amount of pattern intensity (0-1)"
 
 [node name="MirrorHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 586.0
@@ -427,6 +439,7 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Mirror Horizontal"
+hint_tooltip = "Mirror strokes horizontally across canvas center"
 
 [node name="MirrorVCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox"]
 margin_left = 232.0
@@ -435,6 +448,7 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Mirror Vertical"
+hint_tooltip = "Mirror strokes vertically across canvas center"
 
 [node name="ShowQuadrantsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 619.0
@@ -443,6 +457,7 @@ margin_bottom = 648.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Show Quadrant Guides"
+hint_tooltip = "Show quadrant guide crosshair overlay"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 652.0
@@ -462,6 +477,7 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Use 2nd Color"
+hint_tooltip = "Apply secondary color to non-dither pixels"
 
 [node name="RampRecolorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
 margin_left = 232.0
@@ -470,6 +486,7 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Ramp Recolor"
+hint_tooltip = "Recolor by palette ramp index range"
 
 [node name="ColorContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 693.0
@@ -560,6 +577,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "new_texture"
 placeholder_text = "Filename"
+hint_tooltip = "Name for saved texture file"
 
 [node name="SaveButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
 margin_left = 62.0
@@ -600,6 +618,7 @@ margin_bottom = 31.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Load from List"
+hint_tooltip = "Load a texture from the model or custom list"
 
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton" to="." method="_on_SizeOptionButton_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton" to="." method="_on_ZoomOptionButton_item_selected"]

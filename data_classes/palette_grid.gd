@@ -39,6 +39,7 @@ static func populate_grid(
 		if cell_type == CellType.BUTTON:
 			var btn: Button = Button.new()
 			btn.rect_min_size = Vector2(cell_size, cell_size)
+			btn.hint_tooltip = "Color index " + str(i)
 			
 			var style: StyleBoxFlat = StyleBoxFlat.new()
 			style.bg_color = c
@@ -68,6 +69,7 @@ static func populate_grid(
 			var color_rect: ColorRect = ColorRect.new()
 			color_rect.color = c
 			color_rect.rect_min_size = Vector2(cell_size, cell_size)
+			color_rect.hint_tooltip = "Color index " + str(i)
 			
 			var label: Label = Label.new()
 			label.text = str(i)
