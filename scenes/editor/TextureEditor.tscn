@@ -222,7 +222,7 @@ margin_bottom = 345.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 0.4, 1, 0.8, 1 )
-text = "Tool: Pencil"
+text = "Tool: Brush"
 autowrap = true
 
 [node name="ToolsHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
@@ -232,7 +232,7 @@ margin_bottom = 436.0
 size_flags_horizontal = 3
 columns = 2
 
-[node name="PencilButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
+[node name="BrushButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_right = 228.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
@@ -244,7 +244,7 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 pressed = true
-text = "Pencil"
+text = "Brush"
 hint_tooltip = "Draw with primary color"
 
 [node name="EraserButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
@@ -623,7 +623,7 @@ hint_tooltip = "Load a texture from the model or custom list"
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton" to="." method="_on_SizeOptionButton_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton" to="." method="_on_ZoomOptionButton_item_selected"]
 [connection signal="gui_input" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect" to="." method="_on_TextureRect_gui_input"]
-[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/PencilButton" to="." method="_on_PencilButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton" to="." method="_on_BrushButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton" to="." method="_on_EraserButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton" to="." method="_on_EyedropperButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton" to="." method="_on_FillButton_pressed"]

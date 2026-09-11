@@ -5,7 +5,7 @@ extends DraggablePanel
 const BAYER4: Array = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
 enum Tool {
-	PENCIL,
+	BRUSH,
 	ERASER,
 	FILL,
 	EYEDROPPER
@@ -32,7 +32,7 @@ enum GameMode {
 
 var current_mode: int = GameMode.PETZ
 
-var current_tool: int = Tool.PENCIL
+var current_tool: int = Tool.BRUSH
 var current_brush_shape: int = BrushShape.SQUARE
 var current_brush_pattern: int = BrushPattern.SOLID
 var current_color_index: int = 0
@@ -73,7 +73,7 @@ onready var secondary_color_label: Label = $VBoxContainer/ScrollContainer/VBoxCo
 
 onready var current_tool_label: Label = $VBoxContainer/ScrollContainer/VBoxContainer/CurrentToolLabel
 
-onready var pencil_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/PencilButton
+onready var brush_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton
 onready var eraser_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton
 onready var fill_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton
 onready var contiguous_check_box: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/ContiguousCheckBox
@@ -317,7 +317,7 @@ func _on_palette_color_selected(index) -> void:
 		active_color_label.add_color_override("font_color", Color(1, 1, 1))
 	
 	if current_tool == Tool.EYEDROPPER:
-		_on_PencilButton_pressed()
+		_on_BrushButton_pressed()
 
 func _on_palette_color_gui_input(event: InputEvent, index: int) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_RIGHT:
@@ -418,14 +418,14 @@ func _on_ActiveTexturesOption_item_selected(index: int) -> void:
 	active_textures_option.select(0)
 
 func _update_tool_buttons() -> void:
-	pencil_btn.pressed = (current_tool == Tool.PENCIL)
+	brush_btn.pressed = (current_tool == Tool.BRUSH)
 	eraser_btn.pressed = (current_tool == Tool.ERASER)
 	fill_btn.pressed = (current_tool == Tool.FILL)
 	eyedropper_btn.pressed = (current_tool == Tool.EYEDROPPER)
 	
 	match current_tool:
-		Tool.PENCIL:
-			current_tool_label.text = "Tool: Pencil"
+		Tool.BRUSH:
+			current_tool_label.text = "Tool: Brush"
 		Tool.ERASER:
 			current_tool_label.text = "Tool: Eraser"
 		Tool.FILL:
@@ -433,8 +433,8 @@ func _update_tool_buttons() -> void:
 		Tool.EYEDROPPER:
 			current_tool_label.text = "Tool: Eyedrop"
 
-func _on_PencilButton_pressed() -> void:
-	current_tool = Tool.PENCIL
+func _on_BrushButton_pressed() -> void:
+	current_tool = Tool.BRUSH
 	_update_tool_buttons()
 
 func _on_EraserButton_pressed() -> void:
@@ -478,8 +478,8 @@ func _handle_canvas_input(pos: Vector2) -> void:
 	active_image.lock()
 	var brush_size: int = int(brush_size_spin.value)
 
-	if current_tool in [Tool.PENCIL, Tool.ERASER]:
-		var target_color: Color = current_color if current_tool == Tool.PENCIL else _get_background_color()
+	if current_tool in [Tool.BRUSH, Tool.ERASER]:
+		var target_color: Color = current_color if current_tool == Tool.BRUSH else _get_background_color()
 
 		if last_draw_pos.x == -1:
 			_draw_brush(x, y, brush_size, target_color)
