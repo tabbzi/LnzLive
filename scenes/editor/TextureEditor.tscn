@@ -206,6 +206,15 @@ size_flags_horizontal = 3
 expand = true
 stretch_mode = 1
 
+[node name="LinePreview" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="QuadrantOverlay" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -244,8 +253,8 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 pressed = true
-text = "Brush"
-hint_tooltip = "Draw with primary color"
+text = "Brush [Ctrl+B]"
+hint_tooltip = "Draw with primary color (CTRL+B)"
 
 [node name="EraserButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_left = 232.0
@@ -260,7 +269,7 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 text = "Eraser"
-hint_tooltip = "Erase pixels to transparent"
+hint_tooltip = "Erase pixels to transparent (CTRL+E)"
 
 [node name="EyedropperButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_top = 29.0
@@ -274,8 +283,23 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "Eyedropper"
-hint_tooltip = "Pick a color from canvas"
+text = "Eyedropper [Ctrl+Q]"
+hint_tooltip = "Pick a color from canvas (CTRL+Q)"
+
+[node name="LineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
+margin_top = 58.0
+margin_right = 228.0
+margin_bottom = 87.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 4 )
+toggle_mode = true
+text = "Line [Ctrl+L]"
+hint_tooltip = "Draw diagonal straight line (CTRL+L)"
 
 [node name="FillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_left = 232.0
@@ -290,8 +314,8 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "Fill"
-hint_tooltip = "Flood fill connected pixels"
+text = "Fill [Ctrl+F]"
+hint_tooltip = "Flood fill connected pixels (CTRL+F)"
 
 [node name="ContiguousCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_top = 58.0
@@ -302,6 +326,38 @@ custom_fonts/font = SubResource( 4 )
 pressed = true
 text = "Contiguous"
 hint_tooltip = "Only fill connected pixels of same color"
+
+[node name="HLineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
+margin_left = 232.0
+margin_top = 58.0
+margin_right = 460.0
+margin_bottom = 87.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 4 )
+toggle_mode = true
+text = "H-Line [Ctrl+H]"
+hint_tooltip = "Draw horizontal straight line (CTRL+H)"
+
+[node name="VLineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
+margin_left = 232.0
+margin_top = 86.0
+margin_right = 460.0
+margin_bottom = 115.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 4 )
+toggle_mode = true
+text = "V-Line [Ctrl+V]"
+hint_tooltip = "Draw vertical straight line (CTRL+V)"
 
 [node name="BrushHBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 440.0
@@ -623,8 +679,12 @@ hint_tooltip = "Load a texture from the model or custom list"
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton" to="." method="_on_SizeOptionButton_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton" to="." method="_on_ZoomOptionButton_item_selected"]
 [connection signal="gui_input" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect" to="." method="_on_TextureRect_gui_input"]
+[connection signal="draw" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/LinePreview" to="." method="_on_LinePreview_draw"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton" to="." method="_on_BrushButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton" to="." method="_on_EraserButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/LineButton" to="." method="_on_LineButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/HLineButton" to="." method="_on_HLineButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/VLineButton" to="." method="_on_VLineButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton" to="." method="_on_EyedropperButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton" to="." method="_on_FillButton_pressed"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer3/BrushShapeOption" to="." method="_on_BrushShapeOption_item_selected"]

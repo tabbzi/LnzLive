@@ -8,7 +8,10 @@ enum Tool {
 	BRUSH,
 	ERASER,
 	FILL,
-	EYEDROPPER
+	EYEDROPPER,
+	LINE,
+	HLINE,
+	VLINE
 }
 
 enum BrushShape {
@@ -52,6 +55,8 @@ var last_draw_pos: Vector2 = Vector2(-1, -1)
 var is_drawing: bool = false
 var _canvas_dirty: bool = false # Flag to prevent GPU stalling
 
+var line_start_pos: Vector2 = Vector2(-1, -1)
+
 var dog_generator: Node = null
 
 onready var size_option_btn: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton
@@ -75,6 +80,9 @@ onready var current_tool_label: Label = $VBoxContainer/ScrollContainer/VBoxConta
 
 onready var brush_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton
 onready var eraser_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton
+onready var line_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/LineButton
+onready var hline_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/HLineButton
+onready var vline_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/VLineButton
 onready var fill_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton
 onready var contiguous_check_box: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/ContiguousCheckBox
 onready var eyedropper_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton
@@ -88,6 +96,7 @@ onready var active_textures_option: OptionButton = $VBoxContainer/ScrollContaine
 
 onready var show_quadrants_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowQuadrantsCheckBox
 onready var quadrant_overlay: CanvasItem = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/QuadrantOverlay
+onready var line_preview: Control = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/LinePreview
 
 func _ready() -> void:
 	set_process(true)
@@ -155,8 +164,36 @@ func _ready() -> void:
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and not event.pressed and event.button_index == BUTTON_LEFT:
-		if is_drawing:
+	if event is InputEventKey:
+		if event.pressed and not event.echo:
+			if event.control:
+				var tool_to_switch: int = -1
+				if event.scancode == KEY_L:
+					tool_to_switch = Tool.LINE
+				elif event.scancode == KEY_H:
+					tool_to_switch = Tool.HLINE
+				elif event.scancode == KEY_V:
+					tool_to_switch = Tool.VLINE
+				elif event.scancode == KEY_B:
+					tool_to_switch = Tool.BRUSH
+				elif event.scancode == KEY_E:
+					tool_to_switch = Tool.ERASER
+				elif event.scancode == KEY_Q:
+					tool_to_switch = Tool.EYEDROPPER
+				elif event.scancode == KEY_F:
+					tool_to_switch = Tool.FILL
+				
+				if tool_to_switch != -1 and tool_to_switch != current_tool:
+					current_tool = tool_to_switch
+					_clear_line_state()
+					_update_tool_buttons()
+					_trigger_setting_save()
+
+	if event is InputEventMouseButton and not event.pressed and event.button_index == BUTTON_MIDDLE:
+		if is_drawing and current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
+			_commit_line()
+			_clear_line_state()
+		elif is_drawing:
 			is_drawing = false
 			_on_pen_up()
 
@@ -420,18 +457,27 @@ func _on_ActiveTexturesOption_item_selected(index: int) -> void:
 func _update_tool_buttons() -> void:
 	brush_btn.pressed = (current_tool == Tool.BRUSH)
 	eraser_btn.pressed = (current_tool == Tool.ERASER)
+	line_btn.pressed = (current_tool == Tool.LINE)
+	hline_btn.pressed = (current_tool == Tool.HLINE)
+	vline_btn.pressed = (current_tool == Tool.VLINE)
 	fill_btn.pressed = (current_tool == Tool.FILL)
 	eyedropper_btn.pressed = (current_tool == Tool.EYEDROPPER)
 	
 	match current_tool:
 		Tool.BRUSH:
-			current_tool_label.text = "Tool: Brush"
+			current_tool_label.text = "Tool: Brush [Ctrl+B]"
 		Tool.ERASER:
-			current_tool_label.text = "Tool: Eraser"
+			current_tool_label.text = "Tool: Eraser [Ctrl+E]"
+		Tool.LINE:
+			current_tool_label.text = "Tool: Line [Ctrl+L]"
+		Tool.HLINE:
+			current_tool_label.text = "Tool: H-Line [Ctrl+H]"
+		Tool.VLINE:
+			current_tool_label.text = "Tool: V-Line [Ctrl+V]"
 		Tool.FILL:
-			current_tool_label.text = "Tool: Fill"
+			current_tool_label.text = "Tool: Fill [Ctrl+F]"
 		Tool.EYEDROPPER:
-			current_tool_label.text = "Tool: Eyedrop"
+			current_tool_label.text = "Tool: Eyedrop [Ctrl+Q]"
 
 func _on_BrushButton_pressed() -> void:
 	current_tool = Tool.BRUSH
@@ -449,17 +495,91 @@ func _on_EyedropperButton_pressed() -> void:
 	current_tool = Tool.EYEDROPPER
 	_update_tool_buttons()
 
+func _on_LineButton_pressed() -> void:
+	current_tool = Tool.LINE
+	_clear_line_state()
+	_update_tool_buttons()
+
+func _on_HLineButton_pressed() -> void:
+	current_tool = Tool.HLINE
+	_clear_line_state()
+	_update_tool_buttons()
+
+func _on_VLineButton_pressed() -> void:
+	current_tool = Tool.VLINE
+	_clear_line_state()
+	_update_tool_buttons()
+
+func _clear_line_state() -> void:
+	line_start_pos = Vector2(-1, -1)
+	if is_instance_valid(line_preview):
+		line_preview.update()
+
 func _on_TextureRect_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
 				is_drawing = true
-				_handle_canvas_input(event.position)
+				# Shift-click constrains to line mode temporarily
+				if Input.is_key_pressed(KEY_SHIFT) and not current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
+					var tex_size: Vector2 = texture_rect.rect_size
+					var ratio: Vector2 = canvas_size / tex_size
+					var img_pos: Vector2 = event.position * ratio
+					line_start_pos = Vector2(int(img_pos.x), int(img_pos.y))
+					_line_end_pos = line_start_pos
+					line_preview.update()
+				elif current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
+					var tex_size: Vector2 = texture_rect.rect_size
+					var ratio: Vector2 = canvas_size / tex_size
+					var img_pos: Vector2 = event.position * ratio
+					line_start_pos = Vector2(int(img_pos.x), int(img_pos.y))
+					line_preview.update()
+				else:
+					_handle_canvas_input(event.position)
 			else:
 				is_drawing = false
-				_on_pen_up()
+				if current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE] or Input.is_key_pressed(KEY_SHIFT):
+					_commit_line()
+					_clear_line_state()
+				else:
+					_on_pen_up()
+		elif event.button_index == BUTTON_MIDDLE:
+			if event.pressed:
+				if current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
+					var tex_size: Vector2 = texture_rect.rect_size
+					var ratio: Vector2 = canvas_size / tex_size
+					var img_pos: Vector2 = event.position * ratio
+					line_start_pos = Vector2(int(img_pos.x), int(img_pos.y))
+					line_preview.update()
+				else:
+					is_drawing = true
+					_handle_canvas_input(event.position)
+			else:
+				if current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
+					_commit_line()
+					_clear_line_state()
+				else:
+					is_drawing = false
+					_on_pen_up()
 	elif event is InputEventMouseMotion:
-		if is_drawing:
+		if is_drawing and (current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE] or Input.is_key_pressed(KEY_SHIFT)) and line_start_pos != Vector2(-1, -1):
+			var tex_size: Vector2 = texture_rect.rect_size
+			var ratio: Vector2 = canvas_size / tex_size
+			var img_pos: Vector2 = event.position * ratio
+			var end_x: int = int(img_pos.x)
+			var end_y: int = int(img_pos.y)
+			
+			var start: Vector2 = line_start_pos
+			var end: Vector2
+			if current_tool == Tool.HLINE:
+				end = Vector2(end_x, start.y)
+			elif current_tool == Tool.VLINE:
+				end = Vector2(start.x, end_y)
+			else:
+				end = Vector2(end_x, end_y)
+			
+			_draw_line_preview(start, end)
+		elif is_drawing:
 			_handle_canvas_input(event.position)
 
 func _handle_canvas_input(pos: Vector2) -> void:
@@ -692,6 +812,42 @@ func _flood_fill(x: int, y: int, target_color: Color) -> void:
 
 func _on_pen_up() -> void:
 	last_draw_pos = Vector2(-1, -1)
+
+var _line_end_pos: Vector2 = Vector2(-1, -1)
+
+func _draw_line_preview(start: Vector2, end: Vector2) -> void:
+	_line_end_pos = end
+	if is_instance_valid(line_preview):
+		line_preview.update()
+
+func _commit_line() -> void:
+	if line_start_pos == Vector2(-1, -1) or _line_end_pos == Vector2(-1, -1):
+		return
+	
+	active_image.lock()
+	_bresenham_line(int(line_start_pos.x), int(line_start_pos.y), int(_line_end_pos.x), int(_line_end_pos.y), current_color)
+	active_image.unlock()
+	_canvas_dirty = true
+	_line_end_pos = Vector2(-1, -1)
+
+func _bresenham_line(x0: int, y0: int, x1: int, y1: int, color: Color) -> void:
+	var dx: int = abs(x1 - x0)
+	var sx: int = 1 if x0 < x1 else -1
+	var dy: int = -abs(y1 - y0)
+	var sy: int = 1 if y0 < y1 else -1
+	var err: int = dx + dy
+	
+	while true:
+		active_image.set_pixel(x0, y0, color)
+		if x0 == x1 and y0 == y1:
+			break
+		var e2: int = 2 * err
+		if e2 >= dy:
+			err += dy
+			x0 += sx
+		if e2 <= dx:
+			err += dx
+			y0 += sy
 
 func _on_SaveButton_pressed() -> void:
 	var fname: String = filename_line_edit.text.strip_edges()
@@ -940,6 +1096,20 @@ func _on_QuadrantOverlay_draw() -> void:
 		
 		# Reset transform to prevent affecting subsequent draw calls
 		quadrant_overlay.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _on_LinePreview_draw() -> void:
+	if line_start_pos == Vector2(-1, -1) or _line_end_pos == Vector2(-1, -1):
+		return
+	
+	var ratio: float = line_preview.rect_size.x / canvas_size.x
+	
+	var start_px: Vector2 = Vector2(line_start_pos.x * ratio, line_start_pos.y * ratio)
+	var end_px: Vector2 = Vector2(_line_end_pos.x * ratio, _line_end_pos.y * ratio)
+	
+	var preview_color: Color = Color(1, 1, 0, 0.7)
+	var line_width: float = max(1.0, current_zoom / 4.0)
+	
+	line_preview.draw_line(start_px, end_px, preview_color, line_width)
 
 func _on_palette_scroll_resized() -> void:
 	PaletteGrid.recalculate_columns(palette_grid, $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x, 24.0, 0, 16)
