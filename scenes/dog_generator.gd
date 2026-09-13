@@ -177,7 +177,6 @@ func _ready():
 	editor.connect("find_polygon", self, "_on_LnzTextEdit_find_polygon")
 	editor.connect("find_move", self, "_on_LnzTextEdit_find_move")
 	editor.connect("find_project_ball", self, "_on_LnzTextEdit_find_project_ball")
-	editor.connect("file_saved", self, "_on_OptionButton_file_saved")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	_animation_container = pet_view.get_node("VBoxContainer/AnimationContainer")
 	t_pose_checkbox = _animation_container.get_node("TPoseCheckBox")
@@ -494,7 +493,11 @@ func generate_pet(file_path):
 								if sec_data.has(v):
 									current_variation_config[section_name][sk] = v
 							elif typeof(v) == TYPE_STRING:
-								current_variation_config[section_name][sk] = v
+								var parts = (v as String).split(".")
+								if parts.size() == 2 and sec_data.has(parts[0].to_int()):
+									var id_data = sec_data[parts[0].to_int()]
+									if typeof(id_data) == TYPE_DICTIONARY and id_data.has(parts[1]):
+										current_variation_config[section_name][sk] = v
 					elif typeof(old_val) == TYPE_ARRAY:
 						for id in old_val:
 							if id != 0 and sec_data.has(id):
@@ -532,7 +535,11 @@ func generate_pet(file_path):
 								if sec_data.has(v):
 									current_variation_config[section_name][sk] = v
 							elif typeof(v) == TYPE_STRING:
-								current_variation_config[section_name][sk] = v
+								var parts = (v as String).split(".")
+								if parts.size() == 2 and sec_data.has(parts[0].to_int()):
+									var id_data = sec_data[parts[0].to_int()]
+									if typeof(id_data) == TYPE_DICTIONARY and id_data.has(parts[1]):
+										current_variation_config[section_name][sk] = v
 					elif typeof(old_val) == TYPE_ARRAY:
 						for id in old_val:
 							if id != 0 and sec_data.has(id):
