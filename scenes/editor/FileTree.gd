@@ -1336,7 +1336,7 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	var tex_filename: String = source_path.get_file()
 	var tex_index: int = lnz.texture_list.size()
 	
-	var bmp_info: Dictionary = _get_bmp_dimensions(source_path)
+	var bmp_info: Dictionary = LnzLiveUtils.get_bmp_dimensions(source_path)
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	
@@ -1356,42 +1356,6 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 		lnz_text_edit.add_texture_entry(tex_line)
 		#lnz_text_edit.save_file(true)
 		lnz_text_edit.commit_full_snapshot("Added texture to Texture List: %s" % tex_filename)
-
-func _get_bmp_dimensions(path: String) -> Dictionary:
-	var result: Dictionary = {"width": 0, "height": 0}
-	var f: File = File.new()
-	if f.open(path, File.READ) != OK:
-		return result
-	
-	if f.get_len() < 54:
-		f.close()
-		return result
-	
-	if f.get_8() != 66 or f.get_8() != 77:
-		f.close()
-		return result
-	
-	f.seek(10)
-	var pixel_offset: int = f.get_32()
-	
-	f.seek(14)
-	var header_size: int = f.get_32()
-	
-	var w: int = 0
-	var h: int = 0
-	
-	if header_size == 12:
-		w = f.get_16()
-		h = f.get_16()
-	elif header_size >= 40:
-		w = f.get_32()
-		h = f.get_32()
-	
-	f.close()
-	
-	result["width"] = w
-	result["height"] = abs(h)
-	return result
 
 func _get_display_path(source_path: String, is_user_texture: bool = false) -> String:
 	if is_user_texture:

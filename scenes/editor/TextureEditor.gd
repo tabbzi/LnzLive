@@ -1335,15 +1335,21 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	if not clean_path.ends_with(".bmp"):
 		clean_path += ".bmp"
 	
+	var bmp_info: Dictionary = LnzLiveUtils.get_bmp_dimensions(clean_path)
+	var width: int = bmp_info.get("width", 0)
+	var height: int = bmp_info.get("height", 0)
+	
+	var display_path: String = "\\resource\\textures\\" + clean_path.get_file()
+	
 	lnz.texture_list.append({
-		"filename": clean_path,
+		"filename": display_path,
 		"transparent_color": 0,
-		"texture_size": null
+		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
 	})
 	
 	if is_instance_valid(LnzLiveUtils.get_lnz_text_edit(get_tree().root)):
 		var lte = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
-		lte.add_texture_entry(clean_path + " 0 0 0")
+		lte.add_texture_entry(display_path + " 0 " + str(width) + " " + str(height))
 		lte.commit_full_snapshot("Added texture to Texture List: " + clean_path)
 
 func _on_filename_line_edit_text_changed(new_text: String) -> void:

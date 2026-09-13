@@ -486,6 +486,42 @@ static func verify_palette_compatibility(bmp_palette: Array, palette: Array) -> 
 	
 	return total_diff / float(samples)
 
+static func get_bmp_dimensions(path: String) -> Dictionary:
+	var result: Dictionary = {"width": 0, "height": 0}
+	var f: File = File.new()
+	if f.open(path, File.READ) != OK:
+		return result
+	
+	if f.get_len() < 54:
+		f.close()
+		return result
+	
+	if f.get_8() != 66 or f.get_8() != 77:
+		f.close()
+		return result
+	
+	f.seek(10)
+	var pixel_offset: int = f.get_32()
+	
+	f.seek(14)
+	var header_size: int = f.get_32()
+	
+	var w: int = 0
+	var h: int = 0
+	
+	if header_size == 12:
+		w = f.get_16()
+		h = f.get_16()
+	elif header_size >= 40:
+		w = f.get_32()
+		h = f.get_32()
+	
+	f.close()
+	
+	result["width"] = w
+	result["height"] = abs(h)
+	return result
+
 static func validate_8bit_bmp(path: String) -> Dictionary:
 	var f: File = File.new()
 	if f.open(path, File.READ) != OK:
