@@ -3001,6 +3001,8 @@ func remove_no_texture_rotate_entry(ball_no: int) -> void:
 				new_lines.append(lines[i])
 
 		text = _join_array(new_lines, "\n")
+		save_file(true)
+		commit_full_snapshot("Removed ball %d from No Texture Rotate" % ball_no)
 
 
 func remove_no_texture_rotate_batch(ball_nos: Array) -> void:
