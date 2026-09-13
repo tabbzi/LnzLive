@@ -1278,7 +1278,8 @@ func apply_texture_bucket(ball_node: Node) -> void:
 			var info_name: String = tex_info.filename.replace("\\", "/").strip_edges().to_lower()
 			if not info_name.ends_with(".bmp"):
 				info_name += ".bmp"
-			if info_name == bucket_target_texture_name:
+			var info_basename: String = info_name.get_file()
+			if info_basename == bucket_target_texture_name:
 				texture_index = i
 				break
 	
@@ -1292,7 +1293,8 @@ func apply_texture_bucket(ball_node: Node) -> void:
 					var info_name: String = tex_info.filename.replace("\\", "/").strip_edges().to_lower()
 					if not info_name.ends_with(".bmp"):
 						info_name += ".bmp"
-					if info_name == bucket_target_texture_name:
+					var info_basename: String = info_name.get_file()
+					if info_basename == bucket_target_texture_name:
 						texture_index = i
 						break
 	
@@ -1342,7 +1344,7 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	var display_path: String = "\\resource\\textures\\" + clean_path.get_file()
 	
 	lnz.texture_list.append({
-		"filename": display_path,
+		"filename": clean_path.get_file(),
 		"transparent_color": 0,
 		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
 	})
