@@ -503,6 +503,13 @@ func generate_pet(file_path):
 										current_variation_config[section_name][sk] = id
 								else:
 									current_variation_config[section_name][0] = id
+				else:
+					var val = sec_data[1]
+					if typeof(val) == TYPE_DICTIONARY:
+						for sk in val:
+							current_variation_config[section_name][sk] = 1
+					else:
+						current_variation_config[section_name][0] = 1
 			elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(0):
 				current_variation_config[section_name] = {}
 				var lowest = _find_lowest_variation_id_in_data(sec_data)
@@ -515,6 +522,25 @@ func generate_pet(file_path):
 						current_variation_config[section_name][0] = lowest
 				else:
 					current_variation_config[section_name][0] = 0
+				if old_config.has(section_name):
+					var old_val = old_config[section_name]
+					if typeof(old_val) == TYPE_DICTIONARY:
+						for sk in old_val:
+							var v = old_val[sk]
+							if typeof(v) == TYPE_INT and v != 0:
+								if sec_data.has(v):
+									current_variation_config[section_name][sk] = v
+							elif typeof(v) == TYPE_STRING:
+								current_variation_config[section_name][sk] = v
+					elif typeof(old_val) == TYPE_ARRAY:
+						for id in old_val:
+							if id != 0 and sec_data.has(id):
+								var sv = sec_data[id]
+								if typeof(sv) == TYPE_DICTIONARY:
+									for sk in sv:
+										current_variation_config[section_name][sk] = id
+								else:
+									current_variation_config[section_name][0] = id
 			else:
 				current_variation_config[section_name] = null
 
