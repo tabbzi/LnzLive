@@ -421,6 +421,7 @@ func _on_OptionButton_file_selected(file_name):
 
 func _on_OptionButton_file_saved(file_name):
 	print("[DEBUG] dog_generator: _on_OptionButton_file_saved called with: " + str(file_name))
+	_skip_next_rebuild = false
 	generate_pet(file_name)
 
 
@@ -680,6 +681,7 @@ func clear_lnz_data(keep_visuals: bool = false):
 	# 	if ball != null:
 	# 		ball.queue_free()
 	balls.clear()
+	_orig_lnz_pos.clear()
 
 	if not keep_visuals:
 		ball_map.clear()
@@ -893,7 +895,13 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	if new_create:
 		call_deferred("_finish_dependent_geometry", new_create)
 	else:
+		for key in ball_map:
+			var node = ball_map[key]
+			if is_instance_valid(node) and node is Spatial:
+				node.force_update_transform()
+				
 		apply_projections()
+		_update_paintball_transforms()
 		generate_polygons(
 			lnz_info.polygons,
 			lnz_info.species,
