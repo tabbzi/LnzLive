@@ -131,7 +131,7 @@ size_flags_vertical = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 453.0
-margin_bottom = 1248.0
+margin_bottom = 1281.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -249,16 +249,41 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 text = "Load from Texture List"
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 214.0
 margin_right = 453.0
-margin_bottom = 218.0
+margin_bottom = 243.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BucketCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
+margin_right = 224.0
+margin_bottom = 29.0
+hint_tooltip = "Apply texture from filename to clicked ball (CTRL+G)"
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+pressed = false
+text = "Bucket"
+
+[node name="NoTextureRotateCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
+margin_left = 228.0
+margin_right = 453.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+text = "No Texture Rotate"
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 247.0
+margin_right = 453.0
+margin_bottom = 251.0
 size_flags_horizontal = 3
 
 [node name="CanvasScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 222.0
+margin_top = 255.0
 margin_right = 453.0
-margin_bottom = 472.0
+margin_bottom = 505.0
 rect_min_size = Vector2( 0, 250 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -298,9 +323,9 @@ __meta__ = {
 }
 
 [node name="CurrentToolLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 476.0
+margin_top = 509.0
 margin_right = 453.0
-margin_bottom = 497.0
+margin_bottom = 530.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 0.4, 1, 0.8, 1 )
@@ -308,9 +333,9 @@ text = "Tool: Brush"
 autowrap = true
 
 [node name="ToolsHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 501.0
+margin_top = 534.0
 margin_right = 453.0
-margin_bottom = 617.0
+margin_bottom = 650.0
 size_flags_horizontal = 3
 columns = 2
 
@@ -433,9 +458,9 @@ toggle_mode = true
 text = "V-Line"
 
 [node name="BrushHBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 621.0
+margin_top = 654.0
 margin_right = 453.0
-margin_bottom = 704.0
+margin_bottom = 737.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
@@ -512,9 +537,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Square"
 
 [node name="DitherHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 708.0
+margin_top = 741.0
 margin_right = 453.0
-margin_bottom = 763.0
+margin_bottom = 796.0
 size_flags_horizontal = 3
 columns = 2
 
@@ -557,9 +582,9 @@ step = 0.01
 value = 0.5
 
 [node name="MirrorHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 767.0
+margin_top = 800.0
 margin_right = 453.0
-margin_bottom = 796.0
+margin_bottom = 829.0
 size_flags_horizontal = 3
 
 [node name="MirrorHCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox"]
@@ -580,9 +605,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Mirror Vertical"
 
 [node name="ShowHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 800.0
+margin_top = 833.0
 margin_right = 453.0
-margin_bottom = 829.0
+margin_bottom = 862.0
 
 [node name="TilingCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox"]
 margin_right = 224.0
@@ -605,15 +630,15 @@ custom_fonts/font = SubResource( 4 )
 text = "Show Quadrant Guides"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 833.0
+margin_top = 866.0
 margin_right = 453.0
-margin_bottom = 837.0
+margin_bottom = 870.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 841.0
+margin_top = 874.0
 margin_right = 453.0
-margin_bottom = 870.0
+margin_bottom = 903.0
 size_flags_horizontal = 3
 
 [node name="UseSecondaryCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
@@ -634,9 +659,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Ramp Recolor"
 
 [node name="ColorContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 874.0
+margin_top = 907.0
 margin_right = 453.0
-margin_bottom = 899.0
+margin_bottom = 932.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -686,15 +711,15 @@ __meta__ = {
 }
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 903.0
+margin_top = 936.0
 margin_right = 453.0
-margin_bottom = 907.0
+margin_bottom = 940.0
 size_flags_horizontal = 3
 
 [node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 911.0
+margin_top = 944.0
 margin_right = 453.0
-margin_bottom = 1211.0
+margin_bottom = 1244.0
 rect_min_size = Vector2( 0, 300 )
 size_flags_horizontal = 3
 
@@ -704,15 +729,15 @@ size_flags_horizontal = 3
 columns = 16
 
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1215.0
+margin_top = 1248.0
 margin_right = 453.0
-margin_bottom = 1219.0
+margin_bottom = 1252.0
 size_flags_horizontal = 3
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1223.0
+margin_top = 1256.0
 margin_right = 453.0
-margin_bottom = 1248.0
+margin_bottom = 1281.0
 hint_tooltip = "Reset canvas to background color"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
@@ -730,6 +755,8 @@ text = "Clear Canvas"
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/SaveButton" to="." method="_on_SaveButton_pressed"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption" to="." method="_on_ActiveTexturesOption_item_selected"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/LoadButton" to="." method="_on_LoadButton_pressed"]
+[connection signal="toggled" from="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/BucketCheckBox" to="." method="_on_BucketCheckBox_toggled"]
+[connection signal="toggled" from="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/NoTextureRotateCheckBox" to="." method="_on_NoTextureRotateCheckBox_toggled"]
 [connection signal="gui_input" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect" to="." method="_on_TextureRect_gui_input"]
 [connection signal="draw" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/LinePreview" to="." method="_on_LinePreview_draw"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton" to="." method="_on_BrushButton_pressed"]

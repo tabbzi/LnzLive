@@ -1881,6 +1881,20 @@ func _gui_input(event: InputEvent) -> void:
 			get_tree().set_input_as_handled()
 			return
 
+	if (
+		texture_editor_mode
+		and texture_editor_settings_instance.bucket_check.pressed
+		and event is InputEventMouseButton
+		and event.button_index == BUTTON_LEFT
+		and event.pressed
+	):
+		var target_ball: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+		if target_ball:
+			texture_editor_settings_instance.apply_texture_bucket(target_ball)
+			_reset_tab_state()
+			get_tree().set_input_as_handled()
+			return
+
 func _handle_camera_view_key_input(event: InputEventKey) -> bool:
 	if not event.pressed:
 		return false

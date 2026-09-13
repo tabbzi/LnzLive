@@ -36,6 +36,7 @@ enum GameMode {
 var current_mode: int = GameMode.PETZ
 
 var current_tool: int = Tool.BRUSH
+var bucket_target_texture_name: String = ""
 var current_brush_shape: int = BrushShape.SQUARE
 var current_brush_pattern: int = BrushPattern.SOLID
 var current_color_index: int = 0
@@ -90,6 +91,7 @@ onready var vline_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/Too
 onready var fill_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton
 onready var contiguous_check_box: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/ContiguousCheckBox
 onready var eyedropper_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton
+onready var bucket_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/BucketCheckBox
 onready var ramp_recolor_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/RampRecolorCheckBox
 
 onready var mirror_h_btn: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox/MirrorHCheckBox
@@ -97,6 +99,7 @@ onready var mirror_v_btn: CheckBox = $VBoxContainer/ScrollContainer/VBoxContaine
 
 onready var filename_line_edit = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/FileNameLineEdit
 onready var active_textures_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption
+onready var no_texture_rotate_chk: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/NoTextureRotateCheckBox
 
 onready var show_quadrants_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox/ShowQuadrantsCheckBox
 onready var tiling_toggle: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox/TilingCheckBox
@@ -164,6 +167,10 @@ func _ready() -> void:
 		call_deferred("_populate_active_textures")
 
 	_update_tool_buttons()
+	
+	bucket_target_texture_name = filename_line_edit.text.strip_edges().to_lower()
+	if not bucket_target_texture_name.ends_with(".bmp"):
+		bucket_target_texture_name += ".bmp"
 
 	zoom_option_btn.connect("item_selected", self, "_trigger_setting_save")
 	size_option_btn.connect("item_selected", self, "_trigger_setting_save")
@@ -173,6 +180,7 @@ func _ready() -> void:
 	tiling_toggle.connect("toggled", self, "_on_tiling_mode_toggled")
 	tiling_toggle.connect("toggled", self, "_trigger_setting_save")
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
+	filename_line_edit.connect("text_changed", self, "_on_filename_line_edit_text_changed")
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
@@ -199,6 +207,9 @@ func _input(event: InputEvent) -> void:
 					_clear_line_state()
 					_update_tool_buttons()
 					_trigger_setting_save()
+			elif event.scancode == KEY_G:
+				if is_instance_valid(bucket_check):
+					bucket_check.pressed = not bucket_check.pressed
 
 	if event is InputEventMouseButton and not event.pressed and event.button_index == BUTTON_MIDDLE:
 		if is_drawing and current_tool in [Tool.LINE, Tool.HLINE, Tool.VLINE]:
@@ -564,6 +575,9 @@ func _on_FillButton_pressed() -> void:
 func _on_EyedropperButton_pressed() -> void:
 	current_tool = Tool.EYEDROPPER
 	_update_tool_buttons()
+
+func _on_BucketCheckBox_toggled(button_pressed: bool) -> void:
+	pass
 
 func _on_LineButton_pressed() -> void:
 	current_tool = Tool.LINE
@@ -1248,3 +1262,95 @@ func _wrap_coordinate(pos: Vector2) -> Vector2:
 
 func _on_palette_scroll_resized() -> void:
 	PaletteGrid.recalculate_columns(palette_grid, $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x, 24.0, 0, 16)
+
+func apply_texture_bucket(ball_node: Node) -> void:
+	if not is_instance_valid(ball_node) or bucket_target_texture_name == "":
+		return
+	
+	var pet_node = LnzLiveUtils.get_pet_node(get_tree().root)
+	var lnz_texture_list: Array = []
+	if is_instance_valid(dog_generator) and dog_generator.lnz:
+		lnz_texture_list = dog_generator.lnz.texture_list
+	
+	var texture_index: int = -1
+	for i in range(lnz_texture_list.size()):
+		var tex_info = lnz_texture_list[i]
+		if typeof(tex_info) == TYPE_DICTIONARY and tex_info.has("filename"):
+			var info_name: String = tex_info.filename.replace("\\", "/").strip_edges().to_lower()
+			if not info_name.ends_with(".bmp"):
+				info_name += ".bmp"
+			if info_name == bucket_target_texture_name:
+				texture_index = i
+				break
+	
+	if texture_index == -1:
+		_add_texture_to_lnz_list(bucket_target_texture_name)
+		if is_instance_valid(dog_generator) and dog_generator.lnz:
+			lnz_texture_list = dog_generator.lnz.texture_list
+			for i in range(lnz_texture_list.size()):
+				var tex_info = lnz_texture_list[i]
+				if typeof(tex_info) == TYPE_DICTIONARY and tex_info.has("filename"):
+					var info_name: String = tex_info.filename.replace("\\", "/").strip_edges().to_lower()
+					if not info_name.ends_with(".bmp"):
+						info_name += ".bmp"
+					if info_name == bucket_target_texture_name:
+						texture_index = i
+						break
+	
+	if texture_index >= 0 and is_instance_valid(dog_generator):
+		var tex: Texture = dog_generator.load_texture_from_list(texture_index, lnz_texture_list)
+		if tex:
+			ball_node.texture = tex
+			var tex_info = lnz_texture_list[texture_index]
+			if tex_info.has("transparent_color"):
+				ball_node.transparent_color = tex_info.transparent_color
+			if tex_info.has("texture_size") and tex_info.texture_size != null:
+				ball_node.texture_size = tex_info.texture_size
+			var no_texture_rotate: bool = no_texture_rotate_chk.pressed if is_instance_valid(no_texture_rotate_chk) else false
+			var lte = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+			if is_instance_valid(lte):
+				var properties: Dictionary = {
+					"apply_ballz": true,
+					"apply_paintballz": false,
+					"texture_id": texture_index
+				}
+				lte.write_preset_to_ball(ball_node.ball_no, properties, null, false)
+				if no_texture_rotate:
+					lte.write_no_texture_rotate_entry(ball_node.ball_no)
+					ball_node.tile_texture = false
+				else:
+					lte.remove_no_texture_rotate_entry(ball_node.ball_no)
+					ball_node.tile_texture = true
+				if ball_node.has_method("update_ball"):
+					ball_node.update_ball()
+
+func _add_texture_to_lnz_list(texture_filename: String) -> void:
+	if not is_instance_valid(dog_generator) or not dog_generator.lnz:
+		return
+	
+	var lnz = dog_generator.lnz
+	if not lnz.texture_list:
+		lnz.texture_list = []
+	
+	var clean_path: String = texture_filename.replace("\\", "/").strip_edges().to_lower()
+	if not clean_path.ends_with(".bmp"):
+		clean_path += ".bmp"
+	
+	lnz.texture_list.append({
+		"filename": clean_path,
+		"transparent_color": 0,
+		"texture_size": null
+	})
+	
+	if is_instance_valid(LnzLiveUtils.get_lnz_text_edit(get_tree().root)):
+		var lte = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+		lte.add_texture_entry(clean_path + " 0 0 0")
+		lte.commit_full_snapshot("Added texture to Texture List: " + clean_path)
+
+func _on_filename_line_edit_text_changed(new_text: String) -> void:
+	bucket_target_texture_name = new_text.strip_edges().to_lower()
+	if not bucket_target_texture_name.ends_with(".bmp"):
+		bucket_target_texture_name += ".bmp"
+
+func _on_NoTextureRotateCheckBox_toggled(_button_pressed: bool) -> void:
+	pass
