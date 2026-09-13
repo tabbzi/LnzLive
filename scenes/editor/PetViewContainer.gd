@@ -1465,7 +1465,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				freeline_active = false
 
 				if is_straight_line:
-					var start_pos: Vector2 = freeline_path.front()
+					var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
 					var end_pos: Vector2 = event.position
 
 					if Input.is_key_pressed(KEY_X):
