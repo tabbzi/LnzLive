@@ -452,6 +452,7 @@ func generate_pet(file_path):
 		# _orig_world_pos.clear()
 
 		last_loaded_filepath = file_path
+		_clear_hidden_state_lists()
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
 			var sec_data = lnz.sections_map[section_name]
@@ -800,8 +801,6 @@ func recompose_model():
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	if new_create || lnz_info.species != KeyBallsData.species:
-		_clear_hidden_state_lists()
-		
 		_ball_to_lines_map.clear()
 		_ball_to_polygons_map.clear()
 		
