@@ -177,7 +177,6 @@ func _ready() -> void:
 	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
-	tiling_toggle.connect("toggled", self, "_on_tiling_mode_toggled")
 	tiling_toggle.connect("toggled", self, "_trigger_setting_save")
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
 	filename_line_edit.connect("text_changed", self, "_on_filename_line_edit_text_changed")
