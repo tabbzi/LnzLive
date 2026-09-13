@@ -48,6 +48,7 @@ var canvas_size: Vector2 = Vector2(64, 64)
 var current_zoom: int = 4
 var active_image: Image = null
 var active_texture: ImageTexture = null
+var is_tiling_enabled: bool = false
 
 var palette_colors: Array = []
 var _color_hash_cache: Dictionary = {} 
@@ -61,6 +62,9 @@ var dog_generator: Node = null
 
 onready var size_option_btn: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton
 onready var zoom_option_btn: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton
+onready var custom_width_spin: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/CustomWidthSpin
+onready var custom_height_spin: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/CustomHeightSpin
+onready var clear_button: Button = $VBoxContainer/ScrollContainer/VBoxContainer/ClearButton
 onready var texture_rect: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect
 onready var palette_grid: GridContainer = $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll/PaletteGrid
 onready var active_color_rect: ColorRect = $VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer/ActiveColorRect
@@ -94,7 +98,8 @@ onready var mirror_v_btn: CheckBox = $VBoxContainer/ScrollContainer/VBoxContaine
 onready var filename_line_edit = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/FileNameLineEdit
 onready var active_textures_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption
 
-onready var show_quadrants_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowQuadrantsCheckBox
+onready var show_quadrants_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox/ShowQuadrantsCheckBox
+onready var tiling_toggle: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox/TilingCheckBox
 onready var quadrant_overlay: CanvasItem = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/QuadrantOverlay
 onready var line_preview: Control = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/LinePreview
 
@@ -142,6 +147,8 @@ func _ready() -> void:
 	use_secondary_check.connect("toggled", self, "_trigger_setting_save")
 	mirror_h_btn.connect("toggled", self, "_trigger_setting_save")
 	mirror_v_btn.connect("toggled", self, "_trigger_setting_save")
+	custom_width_spin.connect("value_changed", self, "_on_custom_dimension_changed")
+	custom_height_spin.connect("value_changed", self, "_on_custom_dimension_changed")
 
 	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 
@@ -161,6 +168,8 @@ func _ready() -> void:
 	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
+	tiling_toggle.connect("toggled", self, "_on_tiling_mode_toggled")
+	tiling_toggle.connect("toggled", self, "_trigger_setting_save")
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
 
 func _input(event: InputEvent) -> void:
@@ -198,20 +207,47 @@ func _input(event: InputEvent) -> void:
 			_on_pen_up()
 
 func _process(_delta: float) -> void:
-	# GPU Optimization: Only upload image to GPU once per frame when dirty
 	if _canvas_dirty and active_texture and active_image:
 		active_texture.set_data(active_image)
+		if is_tiling_enabled:
+			_apply_tiled_texture()
 		_canvas_dirty = false
 
 func _initialize_canvas() -> void:
-	active_image = Image.new()
-	active_image.create(canvas_size.x, canvas_size.y, false, Image.FORMAT_RGBA8)
-	active_image.fill(_get_background_color())
+	var old_image: Image = active_image
+	var old_w: int = canvas_size.x
+	var old_h: int = canvas_size.y
+	
+	var new_image = Image.new()
+	new_image.create(canvas_size.x, canvas_size.y, false, Image.FORMAT_RGBA8)
+	new_image.fill(_get_background_color())
+	
+	if old_image != null and old_image.get_width() > 0 and old_image.get_height() > 0:
+		var src_x: float = max(0, floor((old_w - canvas_size.x) / 2.0))
+		var src_y: float = max(0, floor((old_h - canvas_size.y) / 2.0))
+		
+		var src_w: float = min(old_w, canvas_size.x)
+		var src_h: float = min(old_h, canvas_size.y)
+		
+		var dst_x: float = max(0, floor((canvas_size.x - old_w) / 2.0))
+		var dst_y: float = max(0, floor((canvas_size.y - old_h) / 2.0))
+		
+		var src_rect = Rect2(src_x, src_y, src_w, src_h)
+		new_image.blit_rect(old_image, src_rect, Vector2(dst_x, dst_y))
+		
+	active_image = new_image
 
-	active_texture = ImageTexture.new()
-	active_texture.create_from_image(active_image, 0)
+	if active_texture == null:
+		active_texture = ImageTexture.new()
+		
+	active_texture.create_from_image(active_image, Texture.FLAG_REPEAT)
 	texture_rect.texture = active_texture
-	texture_rect.rect_min_size = canvas_size * current_zoom
+	
+	_update_canvas_display_size()
+	
+	if is_tiling_enabled:
+		_apply_tiled_texture()
+
 	if quadrant_overlay:
 		quadrant_overlay.update()
 
@@ -236,6 +272,8 @@ func load_settings() -> void:
 	mirror_h_btn.pressed = data.get("mirror_h", false)
 	mirror_v_btn.pressed = data.get("mirror_v", false)
 	show_quadrants_check.pressed = data.get("show_quadrants", false)
+	is_tiling_enabled = data.get("tiling_enabled", false)
+	tiling_toggle.pressed = is_tiling_enabled
 	_is_loading_settings = false
 
 func save_settings() -> void:
@@ -251,6 +289,7 @@ func save_settings() -> void:
 	values["mirror_h"] = mirror_h_btn.pressed
 	values["mirror_v"] = mirror_v_btn.pressed
 	values["show_quadrants"] = show_quadrants_check.pressed
+	values["tiling_enabled"] = is_tiling_enabled
 	LnzLiveUtils.save_config("TextureEditor", values, "user://settings.cfg")
 
 func _trigger_setting_save(_ignored_value = null) -> void:
@@ -259,12 +298,53 @@ func _trigger_setting_save(_ignored_value = null) -> void:
 
 func _on_ZoomOptionButton_item_selected(index: int) -> void:
 	current_zoom = zoom_option_btn.get_item_id(index)
-	texture_rect.rect_min_size = canvas_size * current_zoom
+	_update_canvas_display_size()
 	quadrant_overlay.update()
+
+func _on_tiling_mode_toggled(button_pressed: bool) -> void:
+	is_tiling_enabled = button_pressed
+	_update_canvas_display_size()
+	_reapply_canvas_texture()
+	if quadrant_overlay:
+		quadrant_overlay.update()
+
+func _update_canvas_display_size() -> void:
+	var mult: float = 3.0 if is_tiling_enabled else 1.0
+	texture_rect.rect_min_size = canvas_size * current_zoom * mult
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+
+func _apply_tiled_texture() -> void:
+	if not is_tiling_enabled or not active_image:
+		return
+		
+	var src_w: int = active_image.get_width()
+	var src_h: int = active_image.get_height()
+	
+	var tiled_image: Image = Image.new()
+	tiled_image.create(src_w * 3, src_h * 3, false, Image.FORMAT_RGBA8)
+	
+	for ty in range(3):
+		for tx in range(3):
+			tiled_image.blit_rect(active_image, Rect2(0, 0, src_w, src_h), Vector2(tx * src_w, ty * src_h))
+			
+	if texture_rect.texture != active_texture and texture_rect.texture != null:
+		texture_rect.texture.set_data(tiled_image)
+	else:
+		var temp_texture: ImageTexture = ImageTexture.new()
+		temp_texture.create_from_image(tiled_image, Texture.FLAG_REPEAT)
+		texture_rect.texture = temp_texture
+
+func _reapply_canvas_texture() -> void:
+	if is_tiling_enabled and active_image:
+		_apply_tiled_texture()
+	else:
+		texture_rect.texture = active_texture
 
 func _on_SizeOptionButton_item_selected(index: int) -> void:
 	var size_val: int = size_option_btn.get_item_id(index)
 	canvas_size = Vector2(size_val, size_val)
+	custom_width_spin.value = size_val
+	custom_height_spin.value = size_val
 	_initialize_canvas()
 	quadrant_overlay.update()
 
@@ -409,33 +489,6 @@ func _populate_active_textures() -> void:
 				if not used_textures.has(txt_name):
 					used_textures.append(txt_name)
 
-	var dir: Directory = Directory.new()
-	var custom_textures: Array = []
-	if dir.open("user://resources/textures") == OK:
-		dir.list_dir_begin()
-		var file_name: String = dir.get_next()
-		while file_name != "":
-			if not dir.current_is_dir() and file_name.to_lower().ends_with(".bmp"):
-				var name_only: String = file_name.to_lower()
-				if used_textures.has(name_only):
-					custom_textures.append(file_name)
-			file_name = dir.get_next()
-
-	active_textures_option.add_separator()
-	active_textures_option.add_item("--- Custom Textures ---")
-	active_textures_option.set_item_disabled(active_textures_option.get_item_count() - 1, true)
-	
-	if custom_textures.size() > 0:
-		for t in custom_textures:
-			active_textures_option.add_item(t)
-	else:
-		active_textures_option.add_item("(No custom textures)")
-		active_textures_option.set_item_disabled(active_textures_option.get_item_count() - 1, true)
-
-	active_textures_option.add_separator()
-	active_textures_option.add_item("--- Model Textures ---")
-	active_textures_option.set_item_disabled(active_textures_option.get_item_count() - 1, true)
-	
 	if used_textures.size() > 0:
 		for t in used_textures:
 			active_textures_option.add_item(t)
@@ -465,19 +518,19 @@ func _update_tool_buttons() -> void:
 	
 	match current_tool:
 		Tool.BRUSH:
-			current_tool_label.text = "Tool: Brush [Ctrl+B]"
+			current_tool_label.text = "Tool: Brush"
 		Tool.ERASER:
-			current_tool_label.text = "Tool: Eraser [Ctrl+E]"
+			current_tool_label.text = "Tool: Eraser"
 		Tool.LINE:
-			current_tool_label.text = "Tool: Line [Ctrl+L]"
+			current_tool_label.text = "Tool: Line"
 		Tool.HLINE:
-			current_tool_label.text = "Tool: H-Line [Ctrl+H]"
+			current_tool_label.text = "Tool: H-Line"
 		Tool.VLINE:
-			current_tool_label.text = "Tool: V-Line [Ctrl+V]"
+			current_tool_label.text = "Tool: V-Line"
 		Tool.FILL:
-			current_tool_label.text = "Tool: Fill [Ctrl+F]"
+			current_tool_label.text = "Tool: Fill"
 		Tool.EYEDROPPER:
-			current_tool_label.text = "Tool: Eyedrop [Ctrl+Q]"
+			current_tool_label.text = "Tool: Eyedropper"
 
 func _on_BrushButton_pressed() -> void:
 	current_tool = Tool.BRUSH
@@ -584,15 +637,19 @@ func _on_TextureRect_gui_input(event: InputEvent) -> void:
 
 func _handle_canvas_input(pos: Vector2) -> void:
 	var tex_size: Vector2 = texture_rect.rect_size
-	var ratio: Vector2 = canvas_size / tex_size
+	
+	var mult: float = 3.0 if is_tiling_enabled else 1.0
+	var virtual_size: Vector2 = canvas_size * mult
+	var ratio: Vector2 = virtual_size / tex_size
 	var img_pos: Vector2 = pos * ratio
-	var x: int = int(img_pos.x)
-	var y: int = int(img_pos.y)
+	
+	var raw_x: int = int(floor(img_pos.x))
+	var raw_y: int = int(floor(img_pos.y))
 
-	if x < 0 or x >= canvas_size.x or y < 0 or y >= canvas_size.y:
+	if raw_x < 0 or raw_x >= virtual_size.x or raw_y < 0 or raw_y >= virtual_size.y:
 		return
 
-	var current_pos: Vector2 = Vector2(x, y)
+	var current_pos: Vector2 = Vector2(float(raw_x), float(raw_y))
 	var spacing: int = int(brush_spacing_spin.value)
 
 	active_image.lock()
@@ -602,7 +659,7 @@ func _handle_canvas_input(pos: Vector2) -> void:
 		var target_color: Color = current_color if current_tool == Tool.BRUSH else _get_background_color()
 
 		if last_draw_pos.x == -1:
-			_draw_brush(x, y, brush_size, target_color)
+			_draw_brush(raw_x, raw_y, brush_size, target_color)
 			last_draw_pos = current_pos
 		else:
 			var dist: float = current_pos.distance_to(last_draw_pos)
@@ -614,19 +671,21 @@ func _handle_canvas_input(pos: Vector2) -> void:
 			var steps: int = int(dist / spacing)
 
 			if steps == 0:
-				_draw_brush(x, y, brush_size, target_color)
+				_draw_brush(raw_x, raw_y, brush_size, target_color)
 				last_draw_pos = current_pos
 			else:
 				for i in range(1, steps + 1):
 					var t: float = float(i) / float(steps)
-					var ix: int = int(round(lerp(last_draw_pos.x, x, t)))
-					var iy: int = int(round(lerp(last_draw_pos.y, y, t)))
+					var ix: int = int(round(lerp(last_draw_pos.x, float(raw_x), t)))
+					var iy: int = int(round(lerp(last_draw_pos.y, float(raw_y), t)))
 					_draw_brush(ix, iy, brush_size, target_color)
 				last_draw_pos = current_pos
 	elif current_tool == Tool.FILL:
-		_flood_fill(x, y, current_color)
+		var wrapped: Vector2 = _wrap_coordinate(current_pos)
+		_flood_fill(int(wrapped.x), int(wrapped.y), current_color)
 	elif current_tool == Tool.EYEDROPPER:
-		var c: Color = active_image.get_pixel(x, y)
+		var wrapped: Vector2 = _wrap_coordinate(current_pos)
+		var c: Color = active_image.get_pixel(int(wrapped.x), int(wrapped.y))
 		if c.a > 0:
 			var best_idx: int = _get_closest_palette_index(c)
 			_on_palette_color_selected(best_idx)
@@ -657,7 +716,10 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color) -> void:
 			var px: int = start_x + bx
 			var py: int = start_y + by
 
-			if px >= 0 and px < canvas_size.x and py >= 0 and py < canvas_size.y:
+			var valid_x: bool = (px >= 0 and px < canvas_size.x) or is_tiling_enabled
+			var valid_y: bool = (py >= 0 and py < canvas_size.y) or is_tiling_enabled
+			
+			if valid_x and valid_y:
 				var use_pixel: bool = true
 				if current_brush_pattern == BrushPattern.CHECKER:
 					use_pixel = (px + py) % 2 == 0
@@ -692,8 +754,13 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color) -> void:
 					_draw_pixel(px, py, color)
 
 func _apply_pixel_color(px: int, py: int, brush_color: Color) -> void:
-	if px < 0 or px >= canvas_size.x or py < 0 or py >= canvas_size.y:
-		return
+	var wrapped: Vector2 = _wrap_coordinate(Vector2(float(px), float(py)))
+	px = int(wrapped.x)
+	py = int(wrapped.y)
+	
+	if not is_tiling_enabled:
+		if px < 0 or px >= canvas_size.x or py < 0 or py >= canvas_size.y:
+			return
 		
 	var final_color: Color = brush_color
 	
@@ -1054,20 +1121,61 @@ func _on_LoadButton_pressed() -> void:
 		print("[STATUS] TextureEditor: Loaded texture via Godot fallback (RGB mapped): ", fname)
 
 func _sync_size_ui(w: int, h: int) -> void:
+	custom_width_spin.value = w
+	custom_height_spin.value = h
 	var found_size: bool = false
 	for i in range(size_option_btn.get_item_count()):
-		if size_option_btn.get_item_id(i) == w:
+		if size_option_btn.get_item_id(i) == w and w == h:
 			size_option_btn.select(i)
 			found_size = true
 			break
 	if not found_size:
+		size_option_btn.clear()
+		size_option_btn.add_item("32 x 32", 32)
+		size_option_btn.add_item("64 x 64", 64)
+		size_option_btn.add_item("128 x 128", 128)
+		size_option_btn.add_item("256 x 256", 256)
 		size_option_btn.add_item(str(w) + " x " + str(h), w)
 		size_option_btn.select(size_option_btn.get_item_count() - 1)
 
 func _on_show_quadrants_toggled(_pressed: bool) -> void:
 	quadrant_overlay.update()
 
+func _on_custom_dimension_changed(_value: float) -> void:
+	if _is_loading_settings:
+		return
+	canvas_size.x = int(custom_width_spin.value)
+	canvas_size.y = int(custom_height_spin.value)
+	_initialize_canvas()
+	quadrant_overlay.update()
+
+func _on_ClearButton_pressed() -> void:
+	if active_image:
+		active_image.lock()
+		active_image.fill(_get_background_color())
+		active_image.unlock()
+		_canvas_dirty = true
+		if is_tiling_enabled:
+			_apply_tiled_texture()
+
 func _on_QuadrantOverlay_draw() -> void:
+	if is_tiling_enabled:
+		var w: float = quadrant_overlay.rect_size.x / 3.0
+		var h: float = quadrant_overlay.rect_size.y / 3.0
+		var border_col: Color = Color(1, 1, 1, 0.25)
+		
+		quadrant_overlay.draw_line(Vector2(w, 0), Vector2(w, quadrant_overlay.rect_size.y), border_col, 1.0)
+		quadrant_overlay.draw_line(Vector2(w * 2.0, 0), Vector2(w * 2.0, quadrant_overlay.rect_size.y), border_col, 1.0)
+		quadrant_overlay.draw_line(Vector2(0, h), Vector2(quadrant_overlay.rect_size.x, h), border_col, 1.0)
+		quadrant_overlay.draw_line(Vector2(0, h * 2.0), Vector2(quadrant_overlay.rect_size.x, h * 2.0), border_col, 1.0)
+		
+		var center_border: Color = Color(1, 1, 0, 0.8)
+		var center_thickness: float = max(2.0, current_zoom / 2.0)
+		quadrant_overlay.draw_line(Vector2(w, h), Vector2(w, h * 2.0), center_border, center_thickness)
+		quadrant_overlay.draw_line(Vector2(w, h * 2.0), Vector2(w * 2.0, h * 2.0), center_border, center_thickness)
+		quadrant_overlay.draw_line(Vector2(w * 2.0, h * 2.0), Vector2(w * 2.0, h), center_border, center_thickness)
+		quadrant_overlay.draw_line(Vector2(w * 2.0, h), Vector2(w, h), center_border, center_thickness)
+
 	if show_quadrants_check.pressed:
 		var size: Vector2 = quadrant_overlay.rect_size
 		var cx: float = size.x / 2.0
@@ -1110,6 +1218,16 @@ func _on_LinePreview_draw() -> void:
 	var line_width: float = max(1.0, current_zoom / 4.0)
 	
 	line_preview.draw_line(start_px, end_px, preview_color, line_width)
+
+func _wrap_coordinate(pos: Vector2) -> Vector2:
+	var wx: float = pos.x
+	var wy: float = pos.y
+	
+	if is_tiling_enabled:
+		wx = posmod(pos.x, float(canvas_size.x))
+		wy = posmod(pos.y, float(canvas_size.y))
+	
+	return Vector2(wx, wy)
 
 func _on_palette_scroll_resized() -> void:
 	PaletteGrid.recalculate_columns(palette_grid, $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x, 24.0, 0, 16)

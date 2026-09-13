@@ -65,11 +65,13 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="TextureEditor" type="Panel"]
+margin_right = 495.0
+margin_bottom = 1272.0
 rect_min_size = Vector2( 495, 1100 )
 custom_styles/panel = ExtResource( 3 )
 script = ExtResource( 1 )
 __meta__ = {
-	"_edit_use_anchors_": false
+"_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -88,7 +90,7 @@ __meta__ = {
 }
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
-margin_right = 470.0
+margin_right = 465.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
@@ -97,7 +99,7 @@ autowrap = true
 
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
-margin_right = 470.0
+margin_right = 465.0
 margin_bottom = 79.0
 rect_min_size = Vector2( 0, 50 )
 __meta__ = {
@@ -105,13 +107,13 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
-margin_right = 470.0
+margin_right = 465.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
-margin_right = 470.0
+margin_right = 465.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -122,26 +124,26 @@ Ramp Recolor converts 2nd color to 1st color in ramps."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0
-margin_right = 470.0
-margin_bottom = 1050.0
+margin_right = 465.0
+margin_bottom = 1242.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 461.0
-margin_bottom = 1073.0
+margin_right = 453.0
+margin_bottom = 1248.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="SizeHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 461.0
-margin_bottom = 58.0
+margin_right = 453.0
+margin_bottom = 86.0
 size_flags_horizontal = 3
 columns = 2
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
 margin_top = 3.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -149,57 +151,128 @@ text = "Size:"
 autowrap = true
 
 [node name="SizeOptionButton" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
-margin_left = 232.0
-margin_right = 460.0
+margin_left = 228.0
+margin_right = 452.0
 margin_bottom = 27.0
+hint_tooltip = "Canvas size for new texture"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "64 x 64"
-hint_tooltip = "Canvas size for new texture"
+
+[node name="CustomWidthSpin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
+margin_top = 31.0
+margin_right = 224.0
+margin_bottom = 55.0
+hint_tooltip = "Custom canvas width in pixels"
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 1024.0
+value = 64.0
+
+[node name="CustomHeightSpin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
+margin_left = 228.0
+margin_top = 31.0
+margin_right = 452.0
+margin_bottom = 55.0
+hint_tooltip = "Custom canvas height in pixels"
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 1024.0
+value = 64.0
 
 [node name="ZoomLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
-margin_top = 34.0
-margin_right = 228.0
-margin_bottom = 55.0
+margin_top = 62.0
+margin_right = 224.0
+margin_bottom = 83.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Zoom:"
 autowrap = true
 
 [node name="ZoomOptionButton" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox"]
-margin_left = 232.0
-margin_top = 31.0
-margin_right = 460.0
-margin_bottom = 58.0
+margin_left = 228.0
+margin_top = 59.0
+margin_right = 452.0
+margin_bottom = 86.0
+hint_tooltip = "Zoom level for canvas"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "4x"
-hint_tooltip = "Zoom level for canvas"
+
+[node name="SaveHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 90.0
+margin_right = 453.0
+margin_bottom = 210.0
+size_flags_horizontal = 3
+
+[node name="FileNameLineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
+margin_right = 453.0
+margin_bottom = 31.0
+hint_tooltip = "Name for saved texture file"
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+text = "new_texture"
+placeholder_text = "Filename"
+
+[node name="SaveButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
+margin_top = 35.0
+margin_right = 453.0
+margin_bottom = 60.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 4 )
+text = "Save as User Texture"
+
+[node name="ActiveTexturesOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
+margin_top = 64.0
+margin_right = 453.0
+margin_bottom = 91.0
+hint_tooltip = "Load a texture from the model or custom list"
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+text = "Load from List"
+
+[node name="LoadButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
+margin_top = 95.0
+margin_right = 453.0
+margin_bottom = 120.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 4 )
+text = "Load from Texture List"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 62.0
-margin_right = 461.0
-margin_bottom = 66.0
+margin_top = 214.0
+margin_right = 453.0
+margin_bottom = 218.0
 size_flags_horizontal = 3
 
 [node name="CanvasScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 70.0
-margin_right = 461.0
-margin_bottom = 320.0
+margin_top = 222.0
+margin_right = 453.0
+margin_bottom = 472.0
 rect_min_size = Vector2( 0, 250 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll"]
-margin_right = 461.0
+margin_right = 453.0
 margin_bottom = 250.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer"]
-margin_left = 198.0
+margin_left = 194.0
 margin_top = 93.0
-margin_right = 262.0
+margin_right = 258.0
 margin_bottom = 157.0
 rect_min_size = Vector2( 64, 64 )
 size_flags_horizontal = 3
@@ -225,9 +298,9 @@ __meta__ = {
 }
 
 [node name="CurrentToolLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 324.0
-margin_right = 461.0
-margin_bottom = 345.0
+margin_top = 476.0
+margin_right = 453.0
+margin_bottom = 497.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 0.4, 1, 0.8, 1 )
@@ -235,15 +308,16 @@ text = "Tool: Brush"
 autowrap = true
 
 [node name="ToolsHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 349.0
-margin_right = 461.0
-margin_bottom = 436.0
+margin_top = 501.0
+margin_right = 453.0
+margin_bottom = 617.0
 size_flags_horizontal = 3
 columns = 2
 
 [node name="BrushButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 25.0
+hint_tooltip = "Draw with primary color (CTRL+B)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -253,13 +327,13 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 pressed = true
-text = "Brush [Ctrl+B]"
-hint_tooltip = "Draw with primary color (CTRL+B)"
+text = "Brush"
 
 [node name="EraserButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_left = 232.0
-margin_right = 460.0
+margin_left = 228.0
+margin_right = 452.0
 margin_bottom = 25.0
+hint_tooltip = "Erase pixels to transparent (CTRL+E)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -269,12 +343,12 @@ custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
 text = "Eraser"
-hint_tooltip = "Erase pixels to transparent (CTRL+E)"
 
 [node name="EyedropperButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
 margin_top = 29.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 54.0
+hint_tooltip = "Pick a color from canvas (CTRL+Q)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -283,13 +357,14 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "Eyedropper [Ctrl+Q]"
-hint_tooltip = "Pick a color from canvas (CTRL+Q)"
+text = "Eyedropper"
 
 [node name="LineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_top = 58.0
-margin_right = 228.0
-margin_bottom = 87.0
+margin_left = 228.0
+margin_top = 29.0
+margin_right = 452.0
+margin_bottom = 54.0
+hint_tooltip = "Draw diagonal straight line (CTRL+L)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -298,14 +373,13 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "Line [Ctrl+L]"
-hint_tooltip = "Draw diagonal straight line (CTRL+L)"
+text = "Line"
 
 [node name="FillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_left = 232.0
-margin_top = 29.0
-margin_right = 460.0
-margin_bottom = 54.0
+margin_top = 58.0
+margin_right = 224.0
+margin_bottom = 87.0
+hint_tooltip = "Flood fill connected pixels (CTRL+F)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -314,24 +388,24 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "Fill [Ctrl+F]"
-hint_tooltip = "Flood fill connected pixels (CTRL+F)"
+text = "Fill"
 
 [node name="ContiguousCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
+margin_left = 228.0
 margin_top = 58.0
-margin_right = 228.0
+margin_right = 452.0
 margin_bottom = 87.0
+hint_tooltip = "Only fill connected pixels of same color"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 pressed = true
 text = "Contiguous"
-hint_tooltip = "Only fill connected pixels of same color"
 
 [node name="HLineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_left = 232.0
-margin_top = 58.0
-margin_right = 460.0
-margin_bottom = 87.0
+margin_top = 91.0
+margin_right = 224.0
+margin_bottom = 116.0
+hint_tooltip = "Draw horizontal straight line (CTRL+H)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -340,14 +414,14 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "H-Line [Ctrl+H]"
-hint_tooltip = "Draw horizontal straight line (CTRL+H)"
+text = "H-Line"
 
 [node name="VLineButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox"]
-margin_left = 232.0
-margin_top = 86.0
-margin_right = 460.0
-margin_bottom = 115.0
+margin_left = 228.0
+margin_top = 91.0
+margin_right = 452.0
+margin_bottom = 116.0
+hint_tooltip = "Draw vertical straight line (CTRL+V)"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -356,23 +430,22 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
 toggle_mode = true
-text = "V-Line [Ctrl+V]"
-hint_tooltip = "Draw vertical straight line (CTRL+V)"
+text = "V-Line"
 
 [node name="BrushHBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 440.0
-margin_right = 461.0
-margin_bottom = 523.0
+margin_top = 621.0
+margin_right = 453.0
+margin_bottom = 704.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
-margin_right = 461.0
+margin_right = 453.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 
 [node name="SizeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer"]
 margin_top = 1.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -380,24 +453,24 @@ text = "Brush:"
 autowrap = true
 
 [node name="BrushSizeSpin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 24.0
+hint_tooltip = "Brush size in pixels"
 size_flags_horizontal = 3
 min_value = 1.0
 max_value = 32.0
 value = 1.0
-hint_tooltip = "Brush size in pixels"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
 margin_top = 28.0
-margin_right = 461.0
+margin_right = 453.0
 margin_bottom = 52.0
 size_flags_horizontal = 3
 
 [node name="SpacingLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer2"]
 margin_top = 1.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -405,24 +478,24 @@ text = "Spacing:"
 autowrap = true
 
 [node name="BrushSpacingSpin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer2"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 24.0
+hint_tooltip = "Distance between brush strokes"
 size_flags_horizontal = 3
 min_value = 1.0
 max_value = 32.0
 value = 1.0
-hint_tooltip = "Distance between brush strokes"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox"]
 margin_top = 56.0
-margin_right = 461.0
+margin_right = 453.0
 margin_bottom = 83.0
 size_flags_horizontal = 3
 
 [node name="ShapeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer3"]
 margin_top = 3.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -430,24 +503,24 @@ text = "Shape:"
 autowrap = true
 
 [node name="BrushShapeOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer3"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 27.0
+hint_tooltip = "Square or circular brush shape"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Square"
-hint_tooltip = "Square or circular brush shape"
 
 [node name="DitherHBox" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 527.0
-margin_right = 461.0
-margin_bottom = 582.0
+margin_top = 708.0
+margin_right = 453.0
+margin_bottom = 763.0
 size_flags_horizontal = 3
 columns = 2
 
 [node name="PatternLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox"]
 margin_top = 3.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -455,17 +528,17 @@ text = "Pattern:"
 autowrap = true
 
 [node name="BrushPatternOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox"]
-margin_left = 232.0
-margin_right = 460.0
+margin_left = 228.0
+margin_right = 452.0
 margin_bottom = 27.0
+hint_tooltip = "Fill pattern (Solid, Checker, Stripes, Bayer, Noise)"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Solid"
-hint_tooltip = "Fill pattern (Solid, Checker, Stripes, Bayer, Noise)"
 
 [node name="AmountLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox"]
 margin_top = 32.0
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 53.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
@@ -473,87 +546,103 @@ text = "Amount:"
 autowrap = true
 
 [node name="DitherAmountSpin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox"]
-margin_left = 232.0
+margin_left = 228.0
 margin_top = 31.0
-margin_right = 460.0
+margin_right = 452.0
 margin_bottom = 55.0
+hint_tooltip = "Amount of pattern intensity (0-1)"
 size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 value = 0.5
-hint_tooltip = "Amount of pattern intensity (0-1)"
 
 [node name="MirrorHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 586.0
-margin_right = 461.0
-margin_bottom = 615.0
+margin_top = 767.0
+margin_right = 453.0
+margin_bottom = 796.0
 size_flags_horizontal = 3
 
 [node name="MirrorHCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox"]
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 29.0
+hint_tooltip = "Mirror strokes horizontally across canvas center"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Mirror Horizontal"
-hint_tooltip = "Mirror strokes horizontally across canvas center"
 
 [node name="MirrorVCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 29.0
+hint_tooltip = "Mirror strokes vertically across canvas center"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Mirror Vertical"
-hint_tooltip = "Mirror strokes vertically across canvas center"
 
-[node name="ShowQuadrantsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 619.0
-margin_right = 461.0
-margin_bottom = 648.0
+[node name="ShowHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 800.0
+margin_right = 453.0
+margin_bottom = 829.0
+
+[node name="TilingCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox"]
+margin_right = 224.0
+margin_bottom = 29.0
+hint_tooltip = "Repeat texture across edges for seamless wrapping"
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 4 )
+text = "Enable Tiling"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ShowQuadrantsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox"]
+margin_left = 228.0
+margin_right = 453.0
+margin_bottom = 29.0
+hint_tooltip = "Show quadrant guide crosshair overlay"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Show Quadrant Guides"
-hint_tooltip = "Show quadrant guide crosshair overlay"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 652.0
-margin_right = 461.0
-margin_bottom = 656.0
+margin_top = 833.0
+margin_right = 453.0
+margin_bottom = 837.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 660.0
-margin_right = 461.0
-margin_bottom = 689.0
+margin_top = 841.0
+margin_right = 453.0
+margin_bottom = 870.0
 size_flags_horizontal = 3
 
 [node name="UseSecondaryCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 29.0
+hint_tooltip = "Apply secondary color to non-dither pixels"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Use 2nd Color"
-hint_tooltip = "Apply secondary color to non-dither pixels"
 
 [node name="RampRecolorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 29.0
+hint_tooltip = "Recolor by palette ramp index range"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 4 )
 text = "Ramp Recolor"
-hint_tooltip = "Recolor by palette ramp index range"
 
 [node name="ColorContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 693.0
-margin_right = 461.0
-margin_bottom = 718.0
+margin_top = 874.0
+margin_right = 453.0
+margin_bottom = 899.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ActiveColorRect" type="ColorRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer"]
-margin_right = 228.0
+margin_right = 224.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 hint_tooltip = "Left-click on palette to select primary color"
@@ -574,8 +663,8 @@ __meta__ = {
 }
 
 [node name="ActiveSecondaryColorRect" type="ColorRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer"]
-margin_left = 232.0
-margin_right = 461.0
+margin_left = 228.0
+margin_right = 453.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 hint_tooltip = "Right-click on palette to pick secondary color"
@@ -597,48 +686,34 @@ __meta__ = {
 }
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 722.0
-margin_right = 461.0
-margin_bottom = 726.0
+margin_top = 903.0
+margin_right = 453.0
+margin_bottom = 907.0
 size_flags_horizontal = 3
 
 [node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 730.0
-margin_right = 461.0
-margin_bottom = 1030.0
+margin_top = 911.0
+margin_right = 453.0
+margin_bottom = 1211.0
 rect_min_size = Vector2( 0, 300 )
 size_flags_horizontal = 3
 
 [node name="PaletteGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll"]
-margin_right = 461.0
+margin_right = 453.0
 size_flags_horizontal = 3
 columns = 16
 
 [node name="HSeparator4" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1034.0
-margin_right = 461.0
-margin_bottom = 1038.0
+margin_top = 1215.0
+margin_right = 453.0
+margin_bottom = 1219.0
 size_flags_horizontal = 3
 
-[node name="SaveHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1042.0
-margin_right = 461.0
-margin_bottom = 1073.0
-size_flags_horizontal = 3
-
-[node name="FileNameLineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
-margin_right = 58.0
-margin_bottom = 31.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 4 )
-text = "new_texture"
-placeholder_text = "Filename"
-hint_tooltip = "Name for saved texture file"
-
-[node name="SaveButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
-margin_left = 62.0
-margin_right = 256.0
-margin_bottom = 31.0
+[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 1223.0
+margin_right = 453.0
+margin_bottom = 1248.0
+hint_tooltip = "Reset canvas to background color"
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
@@ -646,49 +721,25 @@ custom_styles/focus = SubResource( 6 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 4 )
-text = "Save to Local Textures"
-
-[node name="LoadButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
-margin_left = 260.0
-margin_right = 308.0
-margin_bottom = 31.0
-size_flags_horizontal = 3
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 7 )
-custom_styles/normal = SubResource( 6 )
-custom_fonts/font = SubResource( 4 )
-text = "Load"
-
-[node name="VSeparator" type="VSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
-margin_left = 312.0
-margin_right = 316.0
-margin_bottom = 31.0
-size_flags_horizontal = 3
-
-[node name="ActiveTexturesOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox"]
-margin_left = 320.0
-margin_right = 461.0
-margin_bottom = 31.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 4 )
-text = "Load from List"
-hint_tooltip = "Load a texture from the model or custom list"
+text = "Clear Canvas"
 
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton" to="." method="_on_SizeOptionButton_item_selected"]
+[connection signal="value_changed" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/CustomWidthSpin" to="." method="_on_custom_dimension_changed"]
+[connection signal="value_changed" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/CustomHeightSpin" to="." method="_on_custom_dimension_changed"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton" to="." method="_on_ZoomOptionButton_item_selected"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/SaveButton" to="." method="_on_SaveButton_pressed"]
+[connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption" to="." method="_on_ActiveTexturesOption_item_selected"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/LoadButton" to="." method="_on_LoadButton_pressed"]
 [connection signal="gui_input" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect" to="." method="_on_TextureRect_gui_input"]
 [connection signal="draw" from="VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/LinePreview" to="." method="_on_LinePreview_draw"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/BrushButton" to="." method="_on_BrushButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton" to="." method="_on_EraserButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton" to="." method="_on_EyedropperButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/LineButton" to="." method="_on_LineButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton" to="." method="_on_FillButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/HLineButton" to="." method="_on_HLineButton_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/VLineButton" to="." method="_on_VLineButton_pressed"]
-[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton" to="." method="_on_EyedropperButton_pressed"]
-[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton" to="." method="_on_FillButton_pressed"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer3/BrushShapeOption" to="." method="_on_BrushShapeOption_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox/BrushPatternOption" to="." method="_on_BrushPatternOption_item_selected"]
-[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/SaveButton" to="." method="_on_SaveButton_pressed"]
-[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/LoadButton" to="." method="_on_LoadButton_pressed"]
-[connection signal="item_selected" from="VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption" to="." method="_on_ActiveTexturesOption_item_selected"]
+[connection signal="toggled" from="VBoxContainer/ScrollContainer/VBoxContainer/ShowHBox/TilingCheckBox" to="." method="_on_tiling_mode_toggled"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/VBoxContainer/ClearButton" to="." method="_on_ClearButton_pressed"]
