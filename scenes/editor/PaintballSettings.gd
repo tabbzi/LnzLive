@@ -1434,6 +1434,7 @@ func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = false
 	save_settings()
 	_on_palette_changed()
+	_refresh_all_previews()
 
 func _get_design_line_mode() -> int:
 	if _brush_btn.pressed:
