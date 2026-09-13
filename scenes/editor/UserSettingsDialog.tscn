@@ -1,12 +1,14 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://scenes/editor/UserSettingsDialog.gd" type="Script" id=1]
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=2]
 
 [node name="UserSettingsDialog" type="WindowDialog"]
+visible = true
 margin_right = 450.0
 margin_bottom = 400.0
 window_title = "User Settings"
+resizable = true
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -25,78 +27,77 @@ __meta__ = {
 }
 
 [node name="LnzOptionsLabel" type="Label" parent="VBoxContainer"]
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 14.0
 text = "Editor Options"
 align = 1
 
 [node name="DelimiterHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 24.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 44.0
 
 [node name="Label" type="Label" parent="VBoxContainer/DelimiterHBox"]
 margin_top = 3.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Preferred Delimiter:"
 
 [node name="OptionButton" type="OptionButton" parent="VBoxContainer/DelimiterHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 
 [node name="MaxHistoryHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 54.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 78.0
 
 [node name="Label" type="Label" parent="VBoxContainer/MaxHistoryHBox"]
 margin_top = 5.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 19.0
 size_flags_horizontal = 3
 text = "Max History Actions:"
 
 [node name="SpinBox" type="SpinBox" parent="VBoxContainer/MaxHistoryHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-min_value = 5.0
-max_value = 100.0
-value = 25.0
 custom_icons/updown = ExtResource( 2 )
+min_value = 5.0
+value = 25.0
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
 margin_top = 88.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 92.0
 
 [node name="DisplayOptionsLabel" type="Label" parent="VBoxContainer"]
 margin_top = 102.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 116.0
 text = "Display Options"
 align = 1
 
 [node name="BgColorHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 126.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 146.0
 
 [node name="Label" type="Label" parent="VBoxContainer/BgColorHBox"]
 margin_top = 3.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Background Color:"
 
 [node name="ColorPickerButton" type="ColorPickerButton" parent="VBoxContainer/BgColorHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 color = Color( 0.168627, 0.45098, 0.45098, 1 )
@@ -104,84 +105,82 @@ edit_alpha = false
 
 [node name="ShrinkHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 156.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 180.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ShrinkHBox"]
 margin_top = 5.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 19.0
 size_flags_horizontal = 3
 text = "Screen Shrink:"
 
 [node name="SpinBox" type="SpinBox" parent="VBoxContainer/ShrinkHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 2 )
 min_value = 1.0
 max_value = 4.0
 step = 0.1
 value = 1.0
-custom_icons/updown = ExtResource( 2 )
 
 [node name="StretchModeHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 190.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 210.0
 
 [node name="Label" type="Label" parent="VBoxContainer/StretchModeHBox"]
 margin_top = 3.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Stretch Mode:"
 
 [node name="OptionButton" type="OptionButton" parent="VBoxContainer/StretchModeHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 
 [node name="StretchAspectHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 220.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 240.0
 
 [node name="Label" type="Label" parent="VBoxContainer/StretchAspectHBox"]
 margin_top = 3.0
-margin_right = 163.0
+margin_right = 213.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Stretch Aspect:"
 
 [node name="OptionButton" type="OptionButton" parent="VBoxContainer/StretchAspectHBox"]
-margin_left = 167.0
-margin_right = 330.0
+margin_left = 217.0
+margin_right = 430.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 margin_top = 250.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 254.0
 
 [node name="TexturePathLabel" type="Label" parent="VBoxContainer"]
 margin_top = 264.0
-margin_right = 330.0
+margin_right = 430.0
 margin_bottom = 278.0
 text = "Default Texture Path"
 align = 1
 
 [node name="TexturePathHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 282.0
-margin_right = 330.0
-margin_bottom = 306.0
+margin_top = 288.0
+margin_right = 430.0
+margin_bottom = 312.0
 
 [node name="TexturePathEdit" type="LineEdit" parent="VBoxContainer/TexturePathHBox"]
-anchor_left = 0.015
-anchor_top = 0.083
-anchor_right = 0.985
-anchor_bottom = 0.917
+margin_right = 430.0
+margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "\\resource\\textures\\"
