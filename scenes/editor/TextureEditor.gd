@@ -147,8 +147,8 @@ func _ready() -> void:
 	use_secondary_check.connect("toggled", self, "_trigger_setting_save")
 	mirror_h_btn.connect("toggled", self, "_trigger_setting_save")
 	mirror_v_btn.connect("toggled", self, "_trigger_setting_save")
-	custom_width_spin.connect("value_changed", self, "_on_custom_dimension_changed")
-	custom_height_spin.connect("value_changed", self, "_on_custom_dimension_changed")
+	custom_width_spin.connect("value_changed", self, "_trigger_setting_save")
+	custom_height_spin.connect("value_changed", self, "_trigger_setting_save")
 
 	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 
@@ -165,6 +165,8 @@ func _ready() -> void:
 
 	_update_tool_buttons()
 
+	zoom_option_btn.connect("item_selected", self, "_trigger_setting_save")
+	size_option_btn.connect("item_selected", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
@@ -274,6 +276,18 @@ func load_settings() -> void:
 	show_quadrants_check.pressed = data.get("show_quadrants", false)
 	is_tiling_enabled = data.get("tiling_enabled", false)
 	tiling_toggle.pressed = is_tiling_enabled
+	
+	current_zoom = data.get("zoom_level", 4)
+	canvas_size.x = data.get("canvas_width", 64)
+	canvas_size.y = data.get("canvas_height", 64)
+	
+	for i in range(zoom_option_btn.get_item_count()):
+		if zoom_option_btn.get_item_id(i) == current_zoom:
+			zoom_option_btn.select(i)
+			break
+	
+	_sync_size_ui(int(canvas_size.x), int(canvas_size.y))
+	
 	_is_loading_settings = false
 
 func save_settings() -> void:
@@ -290,6 +304,9 @@ func save_settings() -> void:
 	values["mirror_v"] = mirror_v_btn.pressed
 	values["show_quadrants"] = show_quadrants_check.pressed
 	values["tiling_enabled"] = is_tiling_enabled
+	values["zoom_level"] = current_zoom
+	values["canvas_width"] = canvas_size.x
+	values["canvas_height"] = canvas_size.y
 	LnzLiveUtils.save_config("TextureEditor", values, "user://settings.cfg")
 
 func _trigger_setting_save(_ignored_value = null) -> void:
