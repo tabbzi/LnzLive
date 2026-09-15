@@ -104,6 +104,7 @@ signal create_polygon
 signal ball_number_changed(ball_no)
 
 var max_move_head = 60
+const MIRROR_TOLERANCE: float = 3.0
 
 enum FilterMode { EXCLUDE, INCLUDE }
 
@@ -4006,6 +4007,31 @@ func _apply_color_to_section_addball_with_filter(section_name: String, color_fie
 # _mirror_projection_processor
 # _mirror_paintball_processor
 
+func _find_duplicate_addball_id(target_base: int, target_pos: Vector3) -> int:
+	var bounds = get_section_bounds("[Add Ball]")
+	if bounds.empty():
+		return -1
+	
+	var counter = KeyBallsData.max_base_ball_num
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+		
+		var parts = split_line(line)
+		if parts.size() < 4:
+			counter += 1
+			continue
+		
+		if parts[0].to_int() == target_base:
+			var pos = Vector3(parts[1].to_float(), parts[2].to_float(), parts[3].to_float())
+			if pos.distance_to(target_pos) <= MIRROR_TOLERANCE:
+				return counter
+		
+		counter += 1
+	
+	return -1
+
 func _mirror_l_to_r_full(reverse: bool = false):
 	save_backup()
 	
@@ -4325,8 +4351,8 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				
 				var is_src = false
 				if base in source_list: is_src = true
-				elif base in middle_balls_list:
-					if abs(x) > 0.001: is_src = true
+				if base in middle_balls_list:
+					if abs(x) > MIRROR_TOLERANCE: is_src = true
 					
 				if is_src:
 					var m_base = _resolve_mirror_id(base, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
@@ -4336,7 +4362,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 					mirror_parts[0] = str(m_base)
 					mirror_parts[2] = str(x * -1.0)
 					
-					var new_sig = _join_array(mirror_parts, delim)
+					var new_sig = _join_array(mirror_parts, delim) + " ; AUTO-MIRROR src: " + str(base)
 					
 					if !existing_paint_sigs.has(new_sig):
 						final_paint_lines_to_append.append(new_sig)
@@ -4500,6 +4526,14 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			for key in mirrored_attrs:
 				mirrored_parts[key] = mirrored_attrs[key]
 			
+			var mirrored_pos = Vector3(mirrored_parts[1].to_float(), mirrored_parts[2].to_float(), mirrored_parts[3].to_float())
+			var dup_id = _find_duplicate_addball_id(mirrored_ball_no, mirrored_pos)
+			
+			if dup_id != -1:
+				temp_addball_map[current_addball_no] = dup_id
+				data_idx += 1
+				continue
+			
 			var comment = " ; copyMirrLtoR_ball%d_to_ball%d" % [target_ball_no, mirrored_ball_no]
 			new_addball_lines.append(_join_array(mirrored_parts, delim) + comment)
 			temp_addball_map[current_addball_no] = new_addball_no
@@ -4533,6 +4567,8 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			
 			if processed_line != null and processed_line.size() > 0:
 				var comment = " ; copyMirrLtoR_ball%d_to_ball%d" % [target_ball_no, mirrored_ball_no]
+				if section_name == "[Paint Ballz]":
+					comment = " ; AUTO-MIRROR src: " + str(target_ball_no)
 				new_lines.append(_join_array(processed_line, delim) + comment)
 		
 		if !new_lines.empty():
@@ -4838,8 +4874,8 @@ func _is_ball_on_source_side(ball: int, source_list: Array, source_addballs_foun
 	if ball in source_addballs_found: return true
 	if ball in middle_balls_list:
 		if reverse:
-			return x_pos < -3.0 or x_pos > 3.0
-		return abs(x_pos) > 3.0
+			return x_pos < -MIRROR_TOLERANCE or x_pos > MIRROR_TOLERANCE
+		return abs(x_pos) > MIRROR_TOLERANCE
 	return false
 
 func _get_mirror_direction(reverse: bool) -> String:
