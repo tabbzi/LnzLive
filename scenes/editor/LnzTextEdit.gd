@@ -4101,7 +4101,7 @@ func _apply_section_colors(section_name: String, color_field: int, outline_field
 		if not str(outline_val).empty(): 
 			parts[outline_field] = str(outline_val)
 			
-		set_line(i, _join_array(parts, delim) + " ")
+		set_line(i, _join_array(parts, delim))
 		item_index += 1
 
 func _apply_color_to_section(section_name: String, color_field: int, outline_field: int, exclude_list: Array, color_val, outline_val) -> void:
