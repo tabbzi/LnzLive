@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=2]
+[gd_scene load_steps=58 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -12,6 +12,7 @@
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
 [ext_resource path="res://scenes/editor/RecolorLine.tscn" type="PackedScene" id=11]
 [ext_resource path="res://resources/fonts/MesseDuesseldorf.ttf" type="DynamicFontData" id=12]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=13]
 [ext_resource path="res://scenes/editor/UserSettings.gd" type="Script" id=14]
 [ext_resource path="res://resources/icons/ico_eyelid_neutral.png" type="Texture" id=15]
 [ext_resource path="res://resources/icons/ico_arr_R_A_mini.png" type="Texture" id=16]
@@ -152,6 +153,10 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
+
+[sub_resource type="DynamicFont" id=13]
+size = 36
+font_data = ExtResource( 13 )
 
 [node name="Root" type="Node"]
 
@@ -1441,6 +1446,33 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="ToolsMenu" type="PopupMenu" parent="SceneRoot"]
+margin_left = 250.0
+margin_top = 750.0
+margin_right = 450.0
+margin_bottom = 770.0
+rect_min_size = Vector2( 200, 0 )
+custom_styles/hover = ExtResource( 20 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+allow_search = true
+script = ExtResource( 10 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RecolorMenu" type="PopupMenu" parent="SceneRoot/ToolsMenu"]
+margin_right = 150.0
+margin_bottom = 214.0
+rect_min_size = Vector2( 150, 0 )
+custom_styles/hover = ExtResource( 20 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Tongue", null, 0, false, false, 8, 0, null, "", false, "Color Swap", null, 0, false, false, 9, 0, null, "", false ]
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="RenameDialog" type="AcceptDialog" parent="SceneRoot"]
 anchor_left = 0.5
 anchor_top = 0.5
@@ -1463,125 +1495,6 @@ margin_bottom = 32.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[node name="ReferenceImageSettings" parent="SceneRoot" instance=ExtResource( 44 )]
-visible = false
-
-[node name="ReferenceImagePopup" parent="SceneRoot" instance=ExtResource( 45 )]
-
-[node name="HelpPopupDialog" type="WindowDialog" parent="SceneRoot"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-margin_left = -250.0
-margin_top = -250.0
-margin_right = 250.0
-margin_bottom = 250.0
-custom_styles/panel = ExtResource( 19 )
-window_title = "Help"
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="RichTextLabel" type="RichTextLabel" parent="SceneRoot/HelpPopupDialog"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 10.0
-margin_top = 10.0
-margin_right = -10.0
-margin_bottom = -10.0
-custom_fonts/bold_font = ExtResource( 27 )
-custom_fonts/normal_font = ExtResource( 27 )
-bbcode_enabled = true
-bbcode_text = "[b]Basic Controls[/b]
-
-Load a sample pet by double-clicking it in the left-hand menu.
-
-Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zoom.
-
-Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
-
-[b]Editing Modes[/b]
-
-The editor has several modes for different tasks, available under the 'Mode' menu.
-
-- [b]Select Mode:[/b] Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
-- [b]Paintball Mode:[/b] Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
-- [b]Line Mode:[/b] Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
-- [b]Preset Mode:[/b] Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
-- [b]Shape Mode:[/b] Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
-
-[b]Backups[/b]
-
-Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
-
-[b]Tools Menu[/b]
-
-Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
-text = "Basic Controls
-
-Load a sample pet by double-clicking it in the left-hand menu.
-
-Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zoom.
-
-Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
-
-Editing Modes
-
-The editor has several modes for different tasks, available under the 'Mode' menu.
-
-- Select Mode: Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
-- Paintball Mode: Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
-- Line Mode: Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
-- Preset Mode: Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
-- Shape Mode: Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
-
-Backups
-
-Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
-
-Tools Menu
-
-Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="ColorPopup" type="Popup" parent="SceneRoot"]
-margin_left = 355.842
-margin_top = 104.77
-margin_right = 555.842
-margin_bottom = 144.77
-size_flags_horizontal = 3
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/ColorPopup"]
-margin_right = 40.0
-margin_bottom = 40.0
-
-[node name="LineEdit" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
-margin_right = 110.0
-margin_bottom = 25.0
-rect_min_size = Vector2( 0, 25 )
-size_flags_horizontal = 3
-custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
-max_length = 3
-placeholder_text = "color #"
-
-[node name="LineEdit2" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
-margin_top = 29.0
-margin_right = 110.0
-margin_bottom = 54.0
-rect_min_size = Vector2( 0, 25 )
-size_flags_horizontal = 3
-custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
-max_length = 3
-placeholder_text = "outcol #"
 
 [node name="RecolorPopup" type="ConfirmationDialog" parent="SceneRoot"]
 anchor_left = 0.5
@@ -1761,6 +1674,41 @@ margin_right = 284.0
 margin_bottom = 20.0
 custom_fonts/font = ExtResource( 35 )
 
+[node name="ColorPopup" type="Popup" parent="SceneRoot"]
+margin_left = 355.842
+margin_top = 104.77
+margin_right = 555.842
+margin_bottom = 144.77
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/ColorPopup"]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="LineEdit" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
+margin_right = 110.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 0, 25 )
+size_flags_horizontal = 3
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+max_length = 3
+placeholder_text = "color #"
+
+[node name="LineEdit2" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
+margin_top = 29.0
+margin_right = 110.0
+margin_bottom = 54.0
+rect_min_size = Vector2( 0, 25 )
+size_flags_horizontal = 3
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+max_length = 3
+placeholder_text = "outcol #"
+
 [node name="HeadMovePopup" type="Popup" parent="SceneRoot"]
 margin_left = 450.228
 margin_top = 104.77
@@ -1839,36 +1787,133 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ToolsMenu" type="PopupMenu" parent="SceneRoot"]
-margin_left = 250.0
-margin_top = 750.0
-margin_right = 450.0
-margin_bottom = 770.0
-rect_min_size = Vector2( 200, 0 )
-custom_styles/hover = ExtResource( 20 )
-custom_styles/panel = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
-allow_search = true
-script = ExtResource( 10 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="RecolorMenu" type="PopupMenu" parent="SceneRoot/ToolsMenu"]
-margin_right = 150.0
-margin_bottom = 214.0
-rect_min_size = Vector2( 150, 0 )
-custom_styles/hover = ExtResource( 20 )
-custom_styles/panel = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
-items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Tongue", null, 0, false, false, 8, 0, null, "", false, "Color Swap", null, 0, false, false, 9, 0, null, "", false ]
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="ExportClothes" parent="SceneRoot" instance=ExtResource( 37 )]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -250.0
+margin_top = -300.0
+margin_right = 250.0
+margin_bottom = 300.0
 
 [node name="UserSettingsDialog" parent="SceneRoot" instance=ExtResource( 40 )]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -225.0
+margin_top = -200.0
+margin_right = 275.0
+margin_bottom = 300.0
+rect_min_size = Vector2( 400, 400 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/title_font = SubResource( 13 )
+custom_colors/title_color = Color( 1, 1, 1, 1 )
+
+[node name="ReferenceImageSettings" parent="SceneRoot" instance=ExtResource( 44 )]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -350.0
+margin_top = -145.0
+margin_right = 350.0
+margin_bottom = 155.0
+rect_min_size = Vector2( 700, 300 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/title_font = SubResource( 13 )
+custom_colors/title_color = Color( 1, 1, 1, 1 )
+
+[node name="ReferenceImagePopup" parent="SceneRoot" instance=ExtResource( 45 )]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -200.0
+margin_top = -150.0
+margin_right = 200.0
+margin_bottom = 150.0
+
+[node name="HelpPopupDialog" type="WindowDialog" parent="SceneRoot"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -250.0
+margin_top = -250.0
+margin_right = 250.0
+margin_bottom = 250.0
+custom_styles/panel = ExtResource( 19 )
+window_title = "Help"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTextLabel" type="RichTextLabel" parent="SceneRoot/HelpPopupDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+custom_fonts/bold_font = ExtResource( 27 )
+custom_fonts/normal_font = ExtResource( 27 )
+bbcode_enabled = true
+bbcode_text = "[b]Basic Controls[/b]
+
+Load a sample pet by double-clicking it in the left-hand menu.
+
+Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zoom.
+
+Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
+
+[b]Editing Modes[/b]
+
+The editor has several modes for different tasks, available under the 'Mode' menu.
+
+- [b]Select Mode:[/b] Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
+- [b]Paintball Mode:[/b] Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
+- [b]Line Mode:[/b] Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
+- [b]Preset Mode:[/b] Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
+- [b]Shape Mode:[/b] Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
+
+[b]Backups[/b]
+
+Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
+
+[b]Tools Menu[/b]
+
+Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
+text = "Basic Controls
+
+Load a sample pet by double-clicking it in the left-hand menu.
+
+Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zoom.
+
+Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
+
+Editing Modes
+
+The editor has several modes for different tasks, available under the 'Mode' menu.
+
+- Select Mode: Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
+- Paintball Mode: Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
+- Line Mode: Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
+- Preset Mode: Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
+- Shape Mode: Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
+
+Backups
+
+Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
+
+Tools Menu
+
+Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]
 [connection signal="ball_mouse_enter" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_Node_ball_mouse_enter"]
@@ -1925,18 +1970,6 @@ __meta__ = {
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
-[connection signal="confirmed" from="SceneRoot/RenameDialog" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_RenameDialog_confirmed"]
-[connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
-[connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit2" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
-[connection signal="confirmed" from="SceneRoot/RecolorPopup" to="SceneRoot/ToolsMenu" method="_on_RecolorPopup_confirmed"]
-[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
-[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/AutofillButton" to="SceneRoot/ToolsMenu" method="_on_AutofillButton_pressed"]
-[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/RandomizeButton" to="SceneRoot/ToolsMenu" method="_on_RandomizeButton_pressed"]
-[connection signal="confirmed" from="SceneRoot/WebFileUploadPopup" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_web_file_upload_popup_confirmed"]
-[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
-[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditY" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
-[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditZ" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
-[connection signal="gui_input" from="SceneRoot/FuzzPopup/VBoxContainer/GlobalFuzzAmount" to="SceneRoot/ToolsMenu" method="_on_ApplyGlobalFuzz_gui_input"]
 [connection signal="about_to_show" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_about_to_show"]
 [connection signal="apply_global_fuzz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_global_fuzz"]
 [connection signal="clear_ball_paintballz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_clear_ball_paintballz"]
@@ -1954,3 +1987,15 @@ __meta__ = {
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="unomit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_unomit_ball"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]
+[connection signal="confirmed" from="SceneRoot/RenameDialog" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_RenameDialog_confirmed"]
+[connection signal="confirmed" from="SceneRoot/RecolorPopup" to="SceneRoot/ToolsMenu" method="_on_RecolorPopup_confirmed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/AutofillButton" to="SceneRoot/ToolsMenu" method="_on_AutofillButton_pressed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/RandomizeButton" to="SceneRoot/ToolsMenu" method="_on_RandomizeButton_pressed"]
+[connection signal="confirmed" from="SceneRoot/WebFileUploadPopup" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_web_file_upload_popup_confirmed"]
+[connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit2" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditY" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditZ" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/FuzzPopup/VBoxContainer/GlobalFuzzAmount" to="SceneRoot/ToolsMenu" method="_on_ApplyGlobalFuzz_gui_input"]
