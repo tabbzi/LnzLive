@@ -8,6 +8,8 @@ onready var spacer: Control = get_node("SidebarSpacer")
 onready var collapse_btn: Button = get_node("CollapseButton")
 
 var floating_layer: CanvasLayer = null
+var tooltip_label: Label = null
+var hovered_tab_idx: int = -1
 
 const UTILITY_TABS: Array = ["FileTree", "Palette", "Variations", "Texture"]
 
@@ -23,6 +25,20 @@ const TAB_ICONS: Dictionary = {
 	"Move": "res://resources/icons/ico_tab_move.png",
 	"Line": "res://resources/icons/ico_tab_line.png",
 	"Shape": "res://resources/icons/ico_tab_shape.png"
+}
+
+const TAB_TOOLTIPS: Dictionary = {
+	"FileTree": "File Tree",
+	"Palette": "Palette",
+	"Variations": "Variations",
+	"Texture": "Texture Editor",
+	"Paint": "Paint Mode",
+	"Recolor": "Recolor Mode",
+	"AutoPaint": "Auto Paintballer",
+	"Preset": "Preset Mode",
+	"Move": "Move Mode",
+	"Line": "Line Mode",
+	"Shape": "Shape Mode"
 }
 
 func _ready() -> void:
@@ -41,6 +57,33 @@ func _ready() -> void:
 
 	tab_container.connect("tab_changed", self, "_on_tab_changed")
 	collapse_btn.connect("pressed", self, "_on_collapse_pressed")
+
+	tooltip_label = Label.new()
+	tooltip_label.name = "TabTooltip"
+	
+	var custom_font: DynamicFont = DynamicFont.new()
+	custom_font.font_data = load("res://resources/fonts/pixel_maz.ttf")
+	custom_font.size = 30
+	tooltip_label.add_font_override("font", custom_font)
+	
+	var custom_style: StyleBoxFlat = StyleBoxFlat.new()
+	custom_style.bg_color = Color(0.294118, 0.403922, 0.403922, 1)
+	custom_style.content_margin_left = 5.0
+	custom_style.content_margin_right = 5.0
+	custom_style.content_margin_top = 2.0
+	custom_style.content_margin_bottom = 2.0
+	custom_style.corner_radius_top_left = 2
+	custom_style.corner_radius_top_right = 2
+	custom_style.corner_radius_bottom_left = 2
+	custom_style.corner_radius_bottom_right = 2
+	custom_style.anti_aliasing = false
+	tooltip_label.add_stylebox_override("normal", custom_style)
+
+	floating_layer.add_child(tooltip_label)
+	tooltip_label.hide()
+
+	tab_container.connect("gui_input", self, "_on_tab_container_gui_input")
+	tab_container.connect("mouse_exited", self, "_on_tab_container_mouse_exited")
 
 func add_tool_tab(control: Control, title: String) -> void:
 	if control == null or not is_instance_valid(control):
@@ -168,3 +211,57 @@ func _on_collapse_pressed() -> void:
 		
 		property_list_changed_notify()
 		minimum_size_changed()
+
+func _on_tab_container_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var mouse_pos: Vector2 = event.position
+		var is_hovering_any_tab: bool = false
+
+		var header_height: float = 0.0
+		if tab_container.get_child_count() > 0:
+			header_height = tab_container.get_child(0).rect_position.y
+
+		if mouse_pos.y > 0 and mouse_pos.y < header_height:
+			var current_x: float = 0.0
+			var style_fg: StyleBox = tab_container.get_stylebox("tab_fg", "TabContainer")
+			var style_bg: StyleBox = tab_container.get_stylebox("tab_bg", "TabContainer")
+
+			for i in range(tab_container.get_child_count()):
+				var child: Control = tab_container.get_child(i)
+
+				var style: StyleBox = style_fg if i == tab_container.current_tab else style_bg
+				var icon: Texture = tab_container.get_tab_icon(i)
+
+				var tab_width: float = style.get_minimum_size().x
+				if icon:
+					tab_width += icon.get_size().x
+
+				if mouse_pos.x >= current_x and mouse_pos.x <= current_x + tab_width:
+					is_hovering_any_tab = true
+
+					if hovered_tab_idx != i:
+						hovered_tab_idx = i
+						tooltip_label.text = TAB_TOOLTIPS.get(child.name, child.name)
+						tooltip_label.show()
+
+					var tooltip_pos: Vector2 = event.global_position + Vector2(15, 15)
+					var screen_size: Vector2 = get_viewport_rect().size
+
+					if tooltip_pos.x + tooltip_label.rect_size.x > screen_size.x:
+						tooltip_pos.x = event.global_position.x - tooltip_label.rect_size.x - 15
+					if tooltip_pos.y + tooltip_label.rect_size.y > screen_size.y:
+						tooltip_pos.y = event.global_position.y - tooltip_label.rect_size.y - 15
+
+					tooltip_label.rect_global_position = tooltip_pos
+					break
+
+				current_x += tab_width
+
+		if not is_hovering_any_tab and tooltip_label.visible:
+			hovered_tab_idx = -1
+			tooltip_label.hide()
+
+func _on_tab_container_mouse_exited() -> void:
+	hovered_tab_idx = -1
+	if tooltip_label:
+		tooltip_label.hide()
