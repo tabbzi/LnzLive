@@ -93,7 +93,7 @@ func _ready() -> void:
 	header_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	header_scroll.size_flags_vertical = SIZE_SHRINK_END
 	header_scroll.set_custom_minimum_size(Vector2(0, 36))
-	header_scroll.set_enable_h_scroll(false)
+	header_scroll.set_enable_h_scroll(true)
 	header_scroll.set_enable_v_scroll(false)
 	
 	header_hbox = HBoxContainer.new()
