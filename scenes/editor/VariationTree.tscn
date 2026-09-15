@@ -94,21 +94,21 @@ text = "Variation Viewer"
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 31.0
 margin_right = 470.0
-margin_bottom = 81.0
-rect_min_size = Vector2( 0, 50 )
+margin_bottom = 106.0
+rect_min_size = Vector2( 0, 75 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HelpVBox" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
 margin_right = 470.0
-margin_bottom = 50.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HelpLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/HelpVBox"]
 margin_right = 470.0
-margin_bottom = 50.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
@@ -118,9 +118,9 @@ text = "Toggle variations on/off to compare how they affect the pet. Click 'Rand
 Each variation block (#N) contains alternative data for that section. Linked suffixes (.A, .B, etc.) share the same variation across multiple sections."
 
 [node name="RandomizeButton" type="Button" parent="VBoxContainer"]
-margin_top = 87.0
+margin_top = 112.0
 margin_right = 470.0
-margin_bottom = 112.0
+margin_bottom = 137.0
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
 custom_styles/focus = SubResource( 5 )
@@ -130,9 +130,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Randomize Variations"
 
 [node name="FlattenButton" type="Button" parent="VBoxContainer"]
-margin_top = 118.0
+margin_top = 143.0
 margin_right = 470.0
-margin_bottom = 143.0
+margin_bottom = 168.0
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
 custom_styles/focus = SubResource( 5 )
@@ -142,7 +142,7 @@ custom_fonts/font = SubResource( 3 )
 text = "Flatten Variations"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
-margin_top = 149.0
+margin_top = 174.0
 margin_right = 470.0
 margin_bottom = 595.0
 rect_min_size = Vector2( 0, 400 )
@@ -153,7 +153,7 @@ __meta__ = {
 
 [node name="Tree" type="Tree" parent="VBoxContainer/ScrollContainer"]
 margin_right = 470.0
-margin_bottom = 446.0
+margin_bottom = 421.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3

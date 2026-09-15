@@ -88,7 +88,7 @@ __meta__ = {
 }
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
-margin_right = 470.0
+margin_right = 587.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Auto Paintballer"
@@ -96,22 +96,22 @@ autowrap = true
 
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
-margin_right = 470.0
-margin_bottom = 79.0
-rect_min_size = Vector2( 0, 50 )
+margin_right = 587.0
+margin_bottom = 104.0
+rect_min_size = Vector2( 0, 75 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
-margin_right = 470.0
-margin_bottom = 50.0
+margin_right = 587.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
-margin_right = 470.0
-margin_bottom = 50.0
+margin_right = 587.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
@@ -129,25 +129,25 @@ Remember to set color, or paintballz won't show.
 CTRL + click-drag to box select multiple ballz."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
-margin_top = 83.0
-margin_right = 470.0
+margin_top = 108.0
+margin_right = 587.0
 margin_bottom = 670.0
 size_flags_vertical = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 470.0
-margin_bottom = 587.0
+margin_right = 587.0
+margin_bottom = 562.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 470.0
+margin_right = 587.0
 margin_bottom = 25.0
 alignment = 1
 
 [node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 112.0
-margin_right = 208.0
+margin_left = 170.0
+margin_right = 266.0
 margin_bottom = 25.0
 hint_tooltip = "Generate new Paintballz based on current settings"
 mouse_default_cursor_shape = 2
@@ -160,8 +160,8 @@ custom_fonts/font = SubResource( 7 )
 text = "Randomize"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 212.0
-margin_right = 267.0
+margin_left = 270.0
+margin_right = 325.0
 margin_bottom = 25.0
 hint_tooltip = "Remove all pending auto-generated Paintballz"
 mouse_default_cursor_shape = 2
@@ -174,8 +174,8 @@ custom_fonts/font = SubResource( 7 )
 text = "Clear"
 
 [node name="SurpriseButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 271.0
-margin_right = 358.0
+margin_left = 329.0
+margin_right = 416.0
 margin_bottom = 25.0
 hint_tooltip = "Randomize distribution and all parameters for a surprise..."
 mouse_default_cursor_shape = 2
@@ -187,13 +187,39 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 7 )
 text = "Surprise!"
 
-[node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 29.0
-margin_right = 470.0
-margin_bottom = 60.0
+margin_right = 587.0
+margin_bottom = 54.0
+hint_tooltip = "Apply to commit pending Paintballz to LNZ"
+mouse_default_cursor_shape = 2
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 7 )
+text = "Apply"
+
+[node name="ResetDefaultsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 58.0
+margin_right = 587.0
+margin_bottom = 83.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 7 )
+text = "Reset Defaults"
+
+[node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 87.0
+margin_right = 587.0
+margin_bottom = 118.0
 
 [node name="Ordered" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions"]
-margin_right = 154.0
+margin_right = 193.0
 margin_bottom = 31.0
 hint_tooltip = "Cycle through colors/textures in order instead of randomly"
 size_flags_horizontal = 3
@@ -201,8 +227,8 @@ custom_fonts/font = SubResource( 7 )
 text = "Ordered"
 
 [node name="UseSeed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions"]
-margin_left = 158.0
-margin_right = 312.0
+margin_left = 197.0
+margin_right = 390.0
 margin_bottom = 31.0
 hint_tooltip = "Use a specific random seed for reproducible results"
 size_flags_horizontal = 3
@@ -210,8 +236,8 @@ custom_fonts/font = SubResource( 7 )
 text = "Use Seed"
 
 [node name="Seed" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerOptions"]
-margin_left = 316.0
-margin_right = 470.0
+margin_left = 394.0
+margin_right = 587.0
 margin_bottom = 31.0
 hint_tooltip = "Enter a number to reproduce a specific pattern"
 size_flags_horizontal = 3
@@ -220,32 +246,32 @@ editable = false
 placeholder_text = "Random Seed"
 
 [node name="AutoPaintballerWarning" type="RichTextLabel" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 64.0
-margin_right = 470.0
-margin_bottom = 130.0
+margin_top = 122.0
+margin_right = 587.0
+margin_bottom = 166.0
 custom_fonts/normal_font = SubResource( 7 )
 bbcode_enabled = true
 text = "Warning: experimental tool! Depending on number of spots and distribution modes, randomize could take a long time to preview."
 fit_content_height = true
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 134.0
-margin_right = 470.0
-margin_bottom = 529.0
+margin_top = 170.0
+margin_right = 587.0
+margin_bottom = 562.0
 size_flags_vertical = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer"]
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 469.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 24.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -253,8 +279,8 @@ text = "Affected Ballz"
 autowrap = true
 
 [node name="AffectedBallz" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 rect_clip_content = true
 hint_tooltip = "Comma-separated list of ball IDs to paint on (e.g. 1,2,5-10)"
@@ -263,7 +289,7 @@ placeholder_text = "e.g. 1,2,5-10"
 
 [node name="UnselectButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 28.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 53.0
 hint_tooltip = "Unselect affected ballz"
 mouse_default_cursor_shape = 2
@@ -277,12 +303,12 @@ text = "Unselect All"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 57.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 84.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
 margin_top = 3.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -290,8 +316,8 @@ text = "Distribution"
 autowrap = true
 
 [node name="Distribution" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 27.0
 hint_tooltip = "Choose the algorithm for placing spots"
 size_flags_horizontal = 3
@@ -302,7 +328,7 @@ selected = 0
 
 [node name="DescriptionLabel" type="RichTextLabel" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 88.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 110.0
 custom_fonts/normal_font = SubResource( 7 )
 bbcode_enabled = true
@@ -310,12 +336,12 @@ fit_content_height = true
 
 [node name="HBoxContainer12" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 114.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 138.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -323,8 +349,8 @@ text = "Number of Spots"
 autowrap = true
 
 [node name="NumSpots" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 hint_tooltip = "Target number of spots to generate"
 size_flags_horizontal = 3
@@ -335,13 +361,13 @@ value = 25.0
 
 [node name="SizeAdaptiveHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 142.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 182.0
 alignment = 1
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/SizeAdaptiveHBox"]
 margin_top = 9.0
-margin_right = 378.0
+margin_right = 495.0
 margin_bottom = 30.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -349,15 +375,15 @@ text = "Size Adaptive"
 autowrap = true
 
 [node name="SizeAdaptive" type="CheckButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/SizeAdaptiveHBox"]
-margin_left = 382.0
-margin_right = 458.0
+margin_left = 499.0
+margin_right = 575.0
 margin_bottom = 40.0
 hint_tooltip = "Scales number of spots by ballz size (fewer on smaller, more on larger)"
 size_flags_horizontal = 0
 
 [node name="ParamsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 186.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 186.0
 
 [node name="WaveContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
@@ -1369,7 +1395,7 @@ value = 3.0
 
 [node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 190.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 211.0
 custom_fonts/font = SubResource( 7 )
 text = "Property Ranges"
@@ -1378,12 +1404,12 @@ autowrap = true
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 215.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 239.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
 margin_top = 1.0
-margin_right = 150.0
+margin_right = 189.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1391,8 +1417,8 @@ text = "Diameter"
 autowrap = true
 
 [node name="SizeMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 193.0
+margin_right = 382.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum random spot size"
 size_flags_horizontal = 3
@@ -1401,8 +1427,8 @@ min_value = 1.0
 value = 10.0
 
 [node name="SizeMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 386.0
+margin_right = 575.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum random spot size"
 size_flags_horizontal = 3
@@ -1412,17 +1438,17 @@ value = 20.0
 
 [node name="HBoxContainerPixel" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 243.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 272.0
 
 [node name="Spacer" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerPixel"]
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 
 [node name="PixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerPixel"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 29.0
 hint_tooltip = "Use effective pixel size instead of diameter relative to ball size"
 size_flags_horizontal = 3
@@ -1431,12 +1457,12 @@ text = "Pixel Size"
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 276.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 300.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1444,8 +1470,8 @@ text = "Color"
 autowrap = true
 
 [node name="ColorList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 rect_clip_content = true
 hint_tooltip = "Comma-separated color indices (e.g. 1,2,5-10)"
@@ -1454,12 +1480,12 @@ placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 304.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 328.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1467,8 +1493,8 @@ text = "Texture"
 autowrap = true
 
 [node name="TextureList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 rect_clip_content = true
 hint_tooltip = "Comma-separated texture indices (e.g. -1,1-2,4)"
@@ -1478,12 +1504,12 @@ placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 332.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 356.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1491,8 +1517,8 @@ text = "Outline Color"
 autowrap = true
 
 [node name="OutlineColorList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 rect_clip_content = true
 hint_tooltip = "Comma-separated outline color indices"
@@ -1502,12 +1528,12 @@ placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 360.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 384.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
 margin_top = 1.0
-margin_right = 150.0
+margin_right = 189.0
 margin_bottom = 22.0
 hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 mouse_filter = 0
@@ -1517,8 +1543,8 @@ text = "Outline Type"
 autowrap = true
 
 [node name="OutlineTypeMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 193.0
+margin_right = 382.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum outline type index"
 size_flags_horizontal = 3
@@ -1528,8 +1554,8 @@ max_value = 10.0
 value = -1.0
 
 [node name="OutlineTypeMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 386.0
+margin_right = 575.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum outline type index"
 size_flags_horizontal = 3
@@ -1540,12 +1566,12 @@ value = -1.0
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 388.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 412.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
 margin_top = 1.0
-margin_right = 150.0
+margin_right = 189.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1553,16 +1579,16 @@ text = "Fuzz"
 autowrap = true
 
 [node name="FuzzMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 193.0
+margin_right = 382.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum fuzz"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="FuzzMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 386.0
+margin_right = 575.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum fuzz"
 size_flags_horizontal = 3
@@ -1570,12 +1596,12 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 416.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 440.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
 margin_top = 1.0
-margin_right = 227.0
+margin_right = 285.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1583,8 +1609,8 @@ text = "Group"
 autowrap = true
 
 [node name="Group" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
-margin_left = 231.0
-margin_right = 458.0
+margin_left = 289.0
+margin_right = 575.0
 margin_bottom = 24.0
 hint_tooltip = "Add Group index"
 size_flags_horizontal = 3
@@ -1592,12 +1618,12 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 444.0
-margin_right = 458.0
+margin_right = 575.0
 margin_bottom = 469.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
 margin_top = 2.0
-margin_right = 140.0
+margin_right = 179.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 7 )
@@ -1605,16 +1631,16 @@ text = "Anchored"
 autowrap = true
 
 [node name="Anchored" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
-margin_left = 144.0
-margin_right = 168.0
+margin_left = 183.0
+margin_right = 207.0
 margin_bottom = 25.0
 hint_tooltip = "Anchor Paintballz to not rotate over parent ball"
 size_flags_horizontal = 0
 pressed = true
 
 [node name="ImportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
-margin_left = 172.0
-margin_right = 313.0
+margin_left = 211.0
+margin_right = 391.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1626,8 +1652,8 @@ custom_fonts/font = SubResource( 7 )
 text = "Import JSON"
 
 [node name="ExportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
-margin_left = 317.0
-margin_right = 458.0
+margin_left = 395.0
+margin_right = 575.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1637,29 +1663,3 @@ custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 7 )
 text = "Export JSON"
-
-[node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 533.0
-margin_right = 470.0
-margin_bottom = 558.0
-hint_tooltip = "Apply to commit pending Paintballz to LNZ"
-mouse_default_cursor_shape = 2
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 7 )
-text = "Apply"
-
-[node name="ResetDefaultsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 562.0
-margin_right = 470.0
-margin_bottom = 587.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 7 )
-text = "Reset Defaults"

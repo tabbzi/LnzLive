@@ -114,29 +114,29 @@ __meta__ = {
 }
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Preset Mode"
 
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 33.0
-margin_right = 470.0
-margin_bottom = 83.0
-rect_min_size = Vector2( 0, 50 )
+margin_right = 495.0
+margin_bottom = 108.0
+rect_min_size = Vector2( 0, 75 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
-margin_right = 470.0
-margin_bottom = 50.0
+margin_right = 495.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
-margin_right = 470.0
-margin_bottom = 50.0
+margin_right = 495.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
@@ -145,25 +145,25 @@ text = "Chaos! Help text coming soon...
 This is an advanced mode. Tutorial coming soon too!"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
-margin_top = 91.0
-margin_right = 470.0
-margin_bottom = 1088.0
+margin_top = 116.0
+margin_right = 495.0
+margin_bottom = 1113.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 458.0
-margin_bottom = 1049.0
+margin_right = 483.0
+margin_bottom = 1086.0
 size_flags_horizontal = 3
 
 [node name="PreviewContainer" type="ViewportContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 200.0
 rect_min_size = Vector2( 0, 200 )
 stretch = true
 
 [node name="Viewport" type="Viewport" parent="VBoxContainer/ScrollContainer/VBoxContainer/PreviewContainer"]
-size = Vector2( 458, 200 )
+size = Vector2( 483, 200 )
 own_world = true
 world = SubResource( 4 )
 transparent_bg = true
@@ -186,18 +186,18 @@ environment = SubResource( 5 )
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 204.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 208.0
 
 [node name="ToolsContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 212.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 252.0
 alignment = 1
 
 [node name="EyedropperToggle" type="CheckButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ToolsContainer"]
-margin_left = 140.0
-margin_right = 317.0
+margin_left = 153.0
+margin_right = 330.0
 margin_bottom = 40.0
 custom_fonts/font = SubResource( 6 )
 text = "Eyedropper"
@@ -205,12 +205,12 @@ align = 1
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 256.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 260.0
 
 [node name="SelectionLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 264.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 285.0
 custom_fonts/font = SubResource( 6 )
 text = "Selected Ballz"
@@ -218,19 +218,19 @@ align = 1
 
 [node name="AffectedBallz" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 289.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 320.0
 custom_fonts/font = SubResource( 6 )
 placeholder_text = "e.g. 1,2,5-10"
 
 [node name="SelectionActions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 324.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 353.0
 alignment = 1
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SelectionActions"]
-margin_right = 150.0
+margin_right = 158.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -242,8 +242,8 @@ custom_fonts/font = ExtResource( 5 )
 text = "Apply to Ballz"
 
 [node name="UnselectButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SelectionActions"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 162.0
+margin_right = 320.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -255,8 +255,8 @@ custom_fonts/font = ExtResource( 5 )
 text = "Unselect"
 
 [node name="ExcludeEyesCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SelectionActions"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 324.0
+margin_right = 483.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
@@ -265,12 +265,12 @@ text = "Exclude Eyes"
 
 [node name="HSeparator_Selection" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 357.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 361.0
 
 [node name="SettingsLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 365.0
-margin_right = 458.0
+margin_right = 483.0
 margin_bottom = 386.0
 custom_fonts/font = SubResource( 6 )
 text = "Ballz Settings"
@@ -278,29 +278,29 @@ align = 1
 
 [node name="BasePropertiesGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 390.0
-margin_right = 458.0
-margin_bottom = 576.0
+margin_right = 483.0
+margin_bottom = 613.0
 custom_constants/vseparation = 8
 custom_constants/hseparation = 10
 columns = 3
 
 [node name="SizeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 2.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Size"
 
 [node name="SizeContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
-margin_right = 424.0
+margin_left = 229.0
+margin_right = 448.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.5
 
 [node name="SizeSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid/SizeContainer"]
-margin_right = 101.0
+margin_right = 107.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -308,8 +308,8 @@ min_value = -100.0
 value = 10.0
 
 [node name="SizeModeOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid/SizeContainer"]
-margin_left = 105.0
-margin_right = 207.0
+margin_left = 111.0
+margin_right = 219.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_fonts/font = ExtResource( 5 )
@@ -318,153 +318,152 @@ items = [ "Set", null, false, 0, null, "Sum", null, false, 1, null, "True", null
 selected = 2
 
 [node name="IncludeSizeCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
-margin_right = 458.0
+margin_left = 458.0
+margin_right = 482.0
 margin_bottom = 26.0
 pressed = true
 
 [node name="ColorLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 35.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 56.0
 custom_fonts/font = SubResource( 6 )
 text = "Color"
 
 [node name="ColorLineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
+margin_left = 229.0
 margin_top = 34.0
-margin_right = 424.0
+margin_right = 448.0
 margin_bottom = 58.0
 text = "0"
 max_length = 3
 placeholder_text = "color"
 
 [node name="IncludeColorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
+margin_left = 458.0
 margin_top = 34.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 58.0
 pressed = true
 
 [node name="OutlineColorLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 67.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 88.0
 custom_fonts/font = SubResource( 6 )
 text = "Outline Color"
 
 [node name="OutlineColorLineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
+margin_left = 229.0
 margin_top = 66.0
-margin_right = 424.0
+margin_right = 448.0
 margin_bottom = 90.0
 text = "0"
 max_length = 3
 placeholder_text = "outcol"
 
 [node name="IncludeOutlineColorCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
+margin_left = 458.0
 margin_top = 66.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 90.0
 pressed = true
 
 [node name="OutlineLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 99.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 120.0
 custom_fonts/font = SubResource( 6 )
 text = "Outline"
 
 [node name="OutlineSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
+margin_left = 229.0
 margin_top = 98.0
-margin_right = 424.0
+margin_right = 448.0
 margin_bottom = 122.0
 custom_icons/updown = ExtResource( 6 )
 min_value = -2.0
 value = -1.0
 
 [node name="IncludeOutlineCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
+margin_left = 458.0
 margin_top = 98.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 122.0
 pressed = true
 
 [node name="FuzzLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 131.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 152.0
 custom_fonts/font = SubResource( 6 )
 text = "Fuzz"
 
 [node name="FuzzSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
+margin_left = 229.0
 margin_top = 130.0
-margin_right = 424.0
+margin_right = 448.0
 margin_bottom = 154.0
 custom_icons/updown = ExtResource( 6 )
 
 [node name="IncludeFuzzCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
+margin_left = 458.0
 margin_top = 130.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 154.0
 pressed = true
 
 [node name="TextureLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
 margin_top = 163.0
-margin_right = 207.0
+margin_right = 219.0
 margin_bottom = 184.0
 custom_fonts/font = SubResource( 6 )
 text = "Texture"
 
 [node name="TextureSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 217.0
+margin_left = 229.0
 margin_top = 162.0
-margin_right = 424.0
+margin_right = 448.0
 margin_bottom = 186.0
 custom_icons/updown = ExtResource( 6 )
 min_value = -1.0
 value = -1.0
 
 [node name="IncludeTextureCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 434.0
+margin_left = 458.0
 margin_top = 162.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 186.0
 pressed = true
 
 [node name="NoTextureRotateCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BasePropertiesGrid"]
-margin_left = 88.0
-margin_top = 190.0
-margin_right = 458.0
-margin_bottom = 210.0
+margin_top = 194.0
+margin_right = 219.0
+margin_bottom = 223.0
 custom_fonts/font = SubResource( 6 )
 text = "No Texture Rotate"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 580.0
-margin_right = 458.0
-margin_bottom = 584.0
+margin_top = 617.0
+margin_right = 483.0
+margin_bottom = 621.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 588.0
-margin_right = 458.0
-margin_bottom = 609.0
+margin_top = 625.0
+margin_right = 483.0
+margin_bottom = 646.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Paintballz Settings"
 align = 1
 
 [node name="IncludeContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 613.0
-margin_right = 458.0
-margin_bottom = 642.0
+margin_top = 650.0
+margin_right = 483.0
+margin_bottom = 679.0
 
 [node name="IncludePaintballzCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/IncludeContainer"]
-margin_right = 222.0
+margin_right = 239.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
@@ -472,21 +471,21 @@ pressed = true
 text = "Apply Paintballz"
 
 [node name="ScalePaintballzCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/IncludeContainer"]
-margin_left = 226.0
-margin_right = 458.0
+margin_left = 243.0
+margin_right = 483.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Scale Paintballz to Ballz"
 
 [node name="MirrorGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 646.0
-margin_right = 458.0
-margin_bottom = 671.0
+margin_top = 683.0
+margin_right = 483.0
+margin_bottom = 708.0
 columns = 3
 
 [node name="MirrorXButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorGrid"]
-margin_right = 150.0
+margin_right = 158.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -498,8 +497,8 @@ custom_fonts/font = SubResource( 6 )
 text = "Mirror X"
 
 [node name="MirrorYButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorGrid"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 162.0
+margin_right = 320.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -511,8 +510,8 @@ custom_fonts/font = SubResource( 6 )
 text = "Mirror Y"
 
 [node name="MirrorZButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/MirrorGrid"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 324.0
+margin_right = 482.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -524,21 +523,21 @@ custom_fonts/font = SubResource( 6 )
 text = "Mirror Z"
 
 [node name="CustomRotationContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 675.0
-margin_right = 458.0
-margin_bottom = 699.0
+margin_top = 712.0
+margin_right = 483.0
+margin_bottom = 736.0
 
 [node name="LabelRoll" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
 margin_top = 1.0
-margin_right = 56.0
+margin_right = 64.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Roll"
 
 [node name="RollSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-margin_left = 60.0
-margin_right = 150.0
+margin_left = 68.0
+margin_right = 158.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -546,17 +545,17 @@ min_value = -360.0
 max_value = 360.0
 
 [node name="LabelPitch" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-margin_left = 154.0
+margin_left = 162.0
 margin_top = 1.0
-margin_right = 210.0
+margin_right = 226.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Pitch"
 
 [node name="PitchSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-margin_left = 214.0
-margin_right = 304.0
+margin_left = 230.0
+margin_right = 320.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -564,17 +563,17 @@ min_value = -360.0
 max_value = 360.0
 
 [node name="LabelYaw" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-margin_left = 308.0
+margin_left = 324.0
 margin_top = 1.0
-margin_right = 364.0
+margin_right = 389.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Yaw"
 
 [node name="YawSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-margin_left = 368.0
-margin_right = 458.0
+margin_left = 393.0
+margin_right = 483.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -582,29 +581,29 @@ min_value = -360.0
 max_value = 360.0
 
 [node name="ScaleSettingsGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 703.0
-margin_right = 458.0
-margin_bottom = 752.0
+margin_top = 740.0
+margin_right = 483.0
+margin_bottom = 789.0
 columns = 3
 
 [node name="ScaleSizeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
-margin_right = 150.0
+margin_right = 158.0
 margin_bottom = 21.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Scale Diameter"
 
 [node name="ScalePosLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 162.0
+margin_right = 320.0
 margin_bottom = 21.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
 text = "Scale Spacing"
 
 [node name="LinkScaleLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 324.0
+margin_right = 482.0
 margin_bottom = 21.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 6 )
@@ -613,7 +612,7 @@ align = 1
 
 [node name="SizeScaleSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
 margin_top = 25.0
-margin_right = 150.0
+margin_right = 158.0
 margin_bottom = 49.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -623,9 +622,9 @@ step = 0.05
 value = 1.0
 
 [node name="PosScaleSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
-margin_left = 154.0
+margin_left = 162.0
 margin_top = 25.0
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 49.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 6 )
@@ -635,25 +634,25 @@ step = 0.05
 value = 1.0
 
 [node name="LinkScaleCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
-margin_left = 308.0
+margin_left = 324.0
 margin_top = 25.0
-margin_right = 458.0
+margin_right = 482.0
 margin_bottom = 49.0
 size_flags_horizontal = 3
 align = 1
 
 [node name="PaintballzTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 756.0
-margin_right = 458.0
-margin_bottom = 956.0
+margin_top = 793.0
+margin_right = 483.0
+margin_bottom = 993.0
 rect_min_size = Vector2( 0, 200 )
 size_flags_vertical = 3
 hide_root = true
 
 [node name="ShowRawButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 960.0
-margin_right = 458.0
-margin_bottom = 984.0
+margin_top = 997.0
+margin_right = 483.0
+margin_bottom = 1021.0
 custom_styles/hover = SubResource( 7 )
 custom_styles/pressed = SubResource( 7 )
 custom_styles/focus = SubResource( 8 )
@@ -699,26 +698,26 @@ custom_fonts/font = ExtResource( 5 )
 text = "Copy Preset to LNZ"
 
 [node name="RecolorSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 988.0
-margin_right = 458.0
-margin_bottom = 992.0
+margin_top = 1025.0
+margin_right = 483.0
+margin_bottom = 1029.0
 
 [node name="RecolorLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 996.0
-margin_right = 458.0
-margin_bottom = 1017.0
+margin_top = 1033.0
+margin_right = 483.0
+margin_bottom = 1054.0
 custom_fonts/font = SubResource( 6 )
 text = "Paintball Recolor"
 align = 1
 
 [node name="RecolorActions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1021.0
-margin_right = 458.0
-margin_bottom = 1045.0
+margin_top = 1058.0
+margin_right = 483.0
+margin_bottom = 1082.0
 alignment = 1
 
 [node name="AutofillRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
-margin_right = 150.0
+margin_right = 158.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -730,8 +729,8 @@ custom_fonts/font = ExtResource( 5 )
 text = "Autofill"
 
 [node name="ApplyRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
-margin_left = 154.0
-margin_right = 304.0
+margin_left = 162.0
+margin_right = 320.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -743,8 +742,8 @@ custom_fonts/font = ExtResource( 5 )
 text = "Recolor"
 
 [node name="ClearRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
-margin_left = 308.0
-margin_right = 458.0
+margin_left = 324.0
+margin_right = 483.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 7 )
@@ -756,14 +755,14 @@ custom_fonts/font = ExtResource( 5 )
 text = "Clear"
 
 [node name="RecolorRulesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1049.0
-margin_right = 458.0
-margin_bottom = 1049.0
+margin_top = 1086.0
+margin_right = 483.0
+margin_bottom = 1086.0
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
-margin_top = 1096.0
-margin_right = 470.0
-margin_bottom = 1120.0
+margin_top = 1121.0
+margin_right = 495.0
+margin_bottom = 1145.0
 custom_styles/hover = SubResource( 7 )
 custom_styles/pressed = SubResource( 7 )
 custom_styles/focus = SubResource( 8 )

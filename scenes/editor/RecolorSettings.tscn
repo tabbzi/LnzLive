@@ -92,7 +92,7 @@ text = "Recolor Mode"
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
 margin_right = 470.0
-margin_bottom = 79.0
+margin_bottom = 104.0
 rect_min_size = Vector2( 0, 50 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -100,13 +100,13 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
 margin_right = 470.0
-margin_bottom = 50.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
 margin_right = 470.0
-margin_bottom = 50.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
@@ -126,25 +126,25 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 458.0
-margin_bottom = 1463.0
+margin_right = 475.0
+margin_bottom = 1492.0
 size_flags_horizontal = 3
 custom_constants/separation = 10
 
 [node name="BucketContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 458.0
-margin_bottom = 489.0
+margin_right = 475.0
+margin_bottom = 518.0
 custom_constants/separation = 10
 
 [node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 4 )
 text = "Paint Bucket"
 
 [node name="Hint" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 31.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 48.0
 custom_fonts/font = SubResource( 5 )
 text = "Click Ballz to queue visual changes"
@@ -152,20 +152,20 @@ autowrap = true
 
 [node name="GridContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 58.0
-margin_right = 458.0
-margin_bottom = 209.0
+margin_right = 475.0
+margin_bottom = 238.0
 columns = 3
 
 [node name="LabelC" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 5.0
-margin_right = 84.0
+margin_right = 147.0
 margin_bottom = 22.0
 custom_fonts/font = SubResource( 5 )
 text = "Color:"
 
 [node name="ColorEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
-margin_right = 430.0
+margin_left = 151.0
+margin_right = 447.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -173,8 +173,8 @@ max_length = 3
 placeholder_text = "e.g. 55"
 
 [node name="ColorIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 434.0
-margin_right = 458.0
+margin_left = 451.0
+margin_right = 475.0
 margin_bottom = 27.0
 rect_min_size = Vector2( 24, 24 )
 expand = true
@@ -182,15 +182,15 @@ stretch_mode = 6
 
 [node name="LabelO" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 36.0
-margin_right = 84.0
+margin_right = 147.0
 margin_bottom = 53.0
 custom_fonts/font = SubResource( 5 )
 text = "Outline Col:"
 
 [node name="OutlineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
+margin_left = 151.0
 margin_top = 31.0
-margin_right = 430.0
+margin_right = 447.0
 margin_bottom = 58.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -198,9 +198,9 @@ max_length = 3
 placeholder_text = "e.g. 245"
 
 [node name="OutlineIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 434.0
+margin_left = 451.0
 margin_top = 31.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 58.0
 rect_min_size = Vector2( 24, 24 )
 expand = true
@@ -208,85 +208,84 @@ stretch_mode = 6
 
 [node name="LabelT" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 67.0
-margin_right = 84.0
+margin_right = 147.0
 margin_bottom = 84.0
 custom_fonts/font = SubResource( 5 )
 text = "Outline Type:"
 
 [node name="TypeEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
+margin_left = 151.0
 margin_top = 62.0
-margin_right = 430.0
+margin_right = 447.0
 margin_bottom = 89.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 244"
 
 [node name="Spacer1" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 434.0
+margin_left = 451.0
 margin_top = 62.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 89.0
 
 [node name="LabelF" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 98.0
-margin_right = 84.0
+margin_right = 147.0
 margin_bottom = 115.0
 custom_fonts/font = SubResource( 5 )
 text = "Fuzz:"
 
 [node name="FuzzEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
+margin_left = 151.0
 margin_top = 93.0
-margin_right = 430.0
+margin_right = 447.0
 margin_bottom = 120.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="Spacer2" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 434.0
+margin_left = 451.0
 margin_top = 93.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 120.0
 
 [node name="LabelTex" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 129.0
-margin_right = 84.0
+margin_right = 147.0
 margin_bottom = 146.0
 custom_fonts/font = SubResource( 5 )
 text = "Texture:"
 
 [node name="TextureEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
+margin_left = 151.0
 margin_top = 124.0
-margin_right = 430.0
+margin_right = 447.0
 margin_bottom = 151.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="TextureIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 434.0
+margin_left = 451.0
 margin_top = 124.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 151.0
 rect_min_size = Vector2( 24, 24 )
 expand = true
 stretch_mode = 6
 
 [node name="NoTextureRotateCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 88.0
-margin_top = 156.0
-margin_right = 458.0
-margin_bottom = 176.0
+margin_top = 155.0
+margin_right = 147.0
+margin_bottom = 180.0
 custom_fonts/font = SubResource( 5 )
 text = "No Texture Rotate"
 
 [node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_top = 219.0
-margin_right = 458.0
-margin_bottom = 419.0
+margin_top = 248.0
+margin_right = 475.0
+margin_bottom = 448.0
 rect_min_size = Vector2( 0, 200 )
 scroll_horizontal_enabled = false
 
@@ -294,9 +293,9 @@ scroll_horizontal_enabled = false
 columns = 16
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_top = 429.0
-margin_right = 458.0
-margin_bottom = 454.0
+margin_top = 458.0
+margin_right = 475.0
+margin_bottom = 483.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -306,9 +305,9 @@ custom_fonts/font = SubResource( 4 )
 text = "Apply Bucket"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_top = 464.0
-margin_right = 458.0
-margin_bottom = 489.0
+margin_top = 493.0
+margin_right = 475.0
+margin_bottom = 518.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -318,25 +317,25 @@ custom_fonts/font = SubResource( 4 )
 text = "Clear Bucket"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 499.0
-margin_right = 458.0
-margin_bottom = 503.0
+margin_top = 528.0
+margin_right = 475.0
+margin_bottom = 532.0
 
 [node name="SwapContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 513.0
-margin_right = 458.0
-margin_bottom = 1041.0
+margin_top = 542.0
+margin_right = 475.0
+margin_bottom = 1070.0
 custom_constants/separation = 5
 
 [node name="Title" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 4 )
 text = "Color Swap"
 
 [node name="CheckContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 26.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 51.0
 
 [node name="Balls" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
@@ -372,7 +371,7 @@ text = "Linez"
 
 [node name="CheckContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 56.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 81.0
 
 [node name="Polygons" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
@@ -392,29 +391,29 @@ text = "Nose Ballz"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 86.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 336.0
 rect_min_size = Vector2( 0, 250 )
 scroll_horizontal_enabled = false
 
 [node name="RecolorLines" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer"]
-margin_right = 458.0
+margin_right = 475.0
 size_flags_horizontal = 3
 
 [node name="Header" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 341.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 438.0
 custom_constants/separation = 5
 
 [node name="TopRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 31.0
 alignment = 1
 
 [node name="AddButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
-margin_left = 79.0
-margin_right = 119.0
+margin_left = 88.0
+margin_right = 128.0
 margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -425,8 +424,8 @@ custom_fonts/font = SubResource( 4 )
 text = "Add"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
-margin_left = 123.0
-margin_right = 178.0
+margin_left = 132.0
+margin_right = 187.0
 margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -437,16 +436,16 @@ custom_fonts/font = SubResource( 4 )
 text = "Clear"
 
 [node name="FreqLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
-margin_left = 182.0
+margin_left = 191.0
 margin_top = 5.0
-margin_right = 239.0
+margin_right = 248.0
 margin_bottom = 26.0
 custom_fonts/font = SubResource( 4 )
 text = "Freq %:"
 
 [node name="FreqEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
-margin_left = 243.0
-margin_right = 301.0
+margin_left = 252.0
+margin_right = 310.0
 margin_bottom = 31.0
 hint_tooltip = "Threshold for color max frequency across sections"
 custom_fonts/font = SubResource( 4 )
@@ -454,8 +453,8 @@ text = "50"
 placeholder_text = "100"
 
 [node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
-margin_left = 305.0
-margin_right = 378.0
+margin_left = 314.0
+margin_right = 387.0
 margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -480,21 +479,21 @@ text = "Randomize"
 
 [node name="MiddleRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_top = 36.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 63.0
 alignment = 1
 
 [node name="SeedLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
-margin_left = 54.0
+margin_left = 62.0
 margin_top = 3.0
-margin_right = 146.0
+margin_right = 154.0
 margin_bottom = 24.0
 custom_fonts/font = SubResource( 4 )
 text = "Color Seed:"
 
 [node name="TheorySeedColor" type="ColorPickerButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
-margin_left = 150.0
-margin_right = 245.0
+margin_left = 158.0
+margin_right = 253.0
 margin_bottom = 27.0
 custom_styles/hover = SubResource( 7 )
 custom_styles/pressed = SubResource( 7 )
@@ -506,15 +505,15 @@ text = "Random Seed"
 color = Color( 1, 1, 1, 1 )
 
 [node name="ColorTheorySelect" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
-margin_left = 249.0
-margin_right = 304.0
+margin_left = 257.0
+margin_right = 312.0
 margin_bottom = 27.0
 custom_fonts/font = SubResource( 4 )
 text = "Off"
 
 [node name="RandomizeAfterButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
-margin_left = 308.0
-margin_right = 404.0
+margin_left = 316.0
+margin_right = 412.0
 margin_bottom = 27.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -526,34 +525,33 @@ text = "Randomize"
 
 [node name="BottomRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_top = 68.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 97.0
 alignment = 1
 
 [node name="NaturalColorsOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
-margin_left = 52.0
-margin_right = 215.0
+margin_right = 163.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Natural (10-120)"
 
 [node name="TexturableOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
-	margin_left = 219.0
-	margin_right = 406.0
-	margin_bottom = 29.0
-	custom_fonts/font = SubResource( 4 )
-	text = "Texturable (10-140)"
+margin_left = 167.0
+margin_right = 354.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "Texturable (10-140)"
 
 [node name="TexListCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
-	margin_left = 410.0
-	margin_right = 530.0
-	margin_bottom = 29.0
-	custom_fonts/font = SubResource( 4 )
-	text = "Use Tex List"
+margin_left = 358.0
+margin_right = 475.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 4 )
+text = "Use Tex List"
 
 [node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 443.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 468.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -565,7 +563,7 @@ text = "Recolor"
 
 [node name="ExportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 473.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 498.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -577,7 +575,7 @@ text = "Export JSON"
 
 [node name="ImportButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 503.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 528.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -588,39 +586,39 @@ custom_fonts/font = SubResource( 4 )
 text = "Import JSON"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1051.0
-margin_right = 458.0
-margin_bottom = 1055.0
+margin_top = 1080.0
+margin_right = 475.0
+margin_bottom = 1084.0
 
 [node name="EyeColorsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1065.0
-margin_right = 458.0
-margin_bottom = 1449.0
+margin_top = 1094.0
+margin_right = 475.0
+margin_bottom = 1478.0
 custom_constants/separation = 6
 
 [node name="EyeColorsTitle" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 4 )
 text = "Eye Colors"
 
 [node name="EyePreviewCanvas" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 27.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 107.0
 rect_min_size = Vector2( 300, 80 )
 script = ExtResource( 9 )
 
 [node name="EyeLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 113.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 130.0
 custom_fonts/font = SubResource( 5 )
 text = "Eye:"
 
 [node name="EyeOutlineRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 136.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 163.0
 
 [node name="EyeOutlineLeftLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
@@ -632,7 +630,7 @@ text = "Eye Out:"
 
 [node name="EyeOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
 margin_left = 55.0
-margin_right = 254.0
+margin_right = 263.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -640,8 +638,8 @@ max_length = 3
 placeholder_text = "eyeR outline"
 
 [node name="EyeOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
-margin_left = 258.0
-margin_right = 458.0
+margin_left = 267.0
+margin_right = 475.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -650,7 +648,7 @@ placeholder_text = "eyeL outline"
 
 [node name="EyeColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 169.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 196.0
 
 [node name="EyeColLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
@@ -662,7 +660,7 @@ text = "Eye Col:"
 
 [node name="EyeColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
 margin_left = 52.0
-margin_right = 253.0
+margin_right = 261.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -670,8 +668,8 @@ max_length = 3
 placeholder_text = "eyeR color"
 
 [node name="EyeColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
-margin_left = 257.0
-margin_right = 458.0
+margin_left = 265.0
+margin_right = 475.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -680,7 +678,7 @@ placeholder_text = "eyeL color"
 
 [node name="EyelidRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 202.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 229.0
 
 [node name="EyelidLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyelidRow"]
@@ -692,7 +690,7 @@ text = "Eyelid:"
 
 [node name="EyelidEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyelidRow"]
 margin_left = 45.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -701,14 +699,14 @@ placeholder_text = "e.g. 244"
 
 [node name="IrisLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 235.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 252.0
 custom_fonts/font = SubResource( 5 )
 text = "Iris:"
 
 [node name="IrisOutlineRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 258.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 285.0
 
 [node name="IrisOutlineLeftLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
@@ -720,7 +718,7 @@ text = "Iris Out:"
 
 [node name="IrisOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
 margin_left = 58.0
-margin_right = 256.0
+margin_right = 264.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -728,8 +726,8 @@ max_length = 3
 placeholder_text = "irisR outline"
 
 [node name="IrisOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
-margin_left = 260.0
-margin_right = 458.0
+margin_left = 268.0
+margin_right = 475.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -738,7 +736,7 @@ placeholder_text = "irisL outline"
 
 [node name="IrisColRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 291.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 318.0
 
 [node name="IrisColLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
@@ -750,7 +748,7 @@ text = "Iris Col:"
 
 [node name="IrisColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
 margin_left = 55.0
-margin_right = 254.0
+margin_right = 263.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -758,8 +756,8 @@ max_length = 3
 placeholder_text = "irisR color"
 
 [node name="IrisColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
-margin_left = 258.0
-margin_right = 458.0
+margin_left = 267.0
+margin_right = 475.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -768,47 +766,47 @@ placeholder_text = "irisL color"
 
 [node name="EyeButtonRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 324.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 353.0
 alignment = 1
 
 [node name="AllCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
-margin_left = 99.0
-margin_right = 149.0
+margin_left = 107.0
+margin_right = 157.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "All"
 
 [node name="LidCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
-margin_left = 153.0
-margin_right = 210.0
+margin_left = 161.0
+margin_right = 218.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Lids"
 
 [node name="OddCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
-margin_left = 214.0
-margin_right = 272.0
+margin_left = 222.0
+margin_right = 280.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Odd"
 
 [node name="FireflyCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow"]
-margin_left = 276.0
-margin_right = 359.0
+margin_left = 284.0
+margin_right = 367.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Firefly"
 
 [node name="EyeButtonRow2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer"]
 margin_top = 359.0
-margin_right = 458.0
+margin_right = 475.0
 margin_bottom = 384.0
 alignment = 1
 
 [node name="RandomizeEyeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2"]
-margin_left = 88.0
-margin_right = 223.0
+margin_left = 96.0
+margin_right = 231.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -819,8 +817,8 @@ custom_fonts/font = SubResource( 4 )
 text = "Randomize Eyes"
 
 [node name="ApplyEyeColorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2"]
-margin_left = 227.0
-margin_right = 370.0
+margin_left = 235.0
+margin_right = 378.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -831,6 +829,6 @@ custom_fonts/font = SubResource( 4 )
 text = "Apply Eye Colors"
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 1459.0
-margin_right = 458.0
-margin_bottom = 1463.0
+margin_top = 1488.0
+margin_right = 475.0
+margin_bottom = 1492.0
