@@ -1962,10 +1962,7 @@ func _update_pairwise_section(header: String, ball_no: int):
 	
 	# Iterate backwards so that cutting a line doesn't skip the next one
 	for i in range(bounds.end - 1, bounds.start - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with("[") or line.begins_with(";"): continue
-			
-		var parts = split_line(line)
+		var parts = _get_valid_line_parts(i)
 		if parts.size() < 2: continue
 			
 		var b1 = int(parts[0])
@@ -2070,8 +2067,7 @@ func _update_polygon_section(ball_no: int):
 	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	for i in range(bounds.start, bounds.end):
-		var raw_line = get_line(i)
-		var parts = split_line(raw_line)
+		var parts = _get_valid_line_parts(i)
 		if parts.size() < 4: continue
 		
 		var deleted_idx = -1
@@ -2511,9 +2507,7 @@ func capture_headshot():
 
 	var shot_labels = ["frame number", "rotation", "roll", "tilt"]
 	for i in range(shot_lines.size()):
-		var s = shot_lines[i]
-		while s.length() < 24:
-			s += " "
+		var s = _pad_string_right(shot_lines[i], 24)
 		shot_lines[i] = s + shot_labels[i]
 
 	var bounds = get_section_bounds("[Head Shot]")
@@ -2559,9 +2553,7 @@ func capture_headshot():
 			else:
 				break
 		num = num.strip_edges()
-		while num.length() < 24:
-			num += " "
-		tail_lines[i] = num + tail_labels[i]
+		tail_lines[i] = _pad_string_right(num, 24) + tail_labels[i]
 
 	var after_lines = []
 	for i in range(bounds.end, lines.size()):
@@ -3641,25 +3633,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, "")
-
-	# Find and exclude any addballs attached to the currently excluded base balls
-	var addball_bounds = get_section_bounds("[Add Ball]")
-	if not addball_bounds.empty():
-		var count = 0
-		for i in range(addball_bounds.start, addball_bounds.end):
-			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";") or line.begins_with("["): 
-				continue
-			
-			var parts = split_line(line)
-			if parts.size() > 0:
-				var base_ball_id = parts[0].to_int()
-				
-				# If this addball's parent is in the exclusion list, protect this addball too
-				if base_ball_id in balls_to_exclude:
-					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
-					balls_to_exclude.append(absolute_addball_id)
-			count += 1
+	balls_to_exclude = _expand_exclusion_list_with_addballs(balls_to_exclude)
 
 	_apply_color_to_section("[Ballz Info]", 0, 1, balls_to_exclude, color_index, outline_color_index)
 	_apply_color_to_section_addball("[Add Ball]", 4, 5, balls_to_exclude, color_index, outline_color_index)
@@ -3672,27 +3646,8 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	var species = KeyBallsData.species
 	var balls_to_exclude: Array = KeyBallsData.get_recolor_exclusions(species, intended_part)
 
-	var addball_bounds = get_section_bounds("[Add Ball]")
-	if not addball_bounds.empty():
-		var count = 0
-		for i in range(addball_bounds.start, addball_bounds.end):
-			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";") or line.begins_with("["): 
-				continue
-			
-			var parts = split_line(line)
-			if parts.size() > 0:
-				var base_ball_id = parts[0].to_int()
-				
-				if base_ball_id in core_ball_nos:
-					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
-					if not absolute_addball_id in core_ball_nos:
-						core_ball_nos.append(absolute_addball_id)
-				
-				if base_ball_id in balls_to_exclude:
-					var absolute_addball_id = count + KeyBallsData.max_base_ball_num
-					balls_to_exclude.append(absolute_addball_id)
-			count += 1
+	core_ball_nos = _expand_exclusion_list_with_addballs(core_ball_nos)
+	balls_to_exclude = _expand_exclusion_list_with_addballs(balls_to_exclude)
 
 	var filtered_balls: Array = []
 	for ball in core_ball_nos:
@@ -3713,6 +3668,42 @@ func _on_ToolsMenu_copy_l_to_r(selected_ball_no: int = -1):
 
 func _on_ToolsMenu_copy_r_to_l(selected_ball_no: int = -1):
 	_mirror_l_to_r_full(true)
+
+func _expand_exclusion_list_with_addballs(base_list: Array) -> Array:
+	var result = base_list.duplicate()
+	var addball_bounds = get_section_bounds("[Add Ball]")
+	if addball_bounds.empty():
+		return result
+	var count = 0
+	for i in range(addball_bounds.start, addball_bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+		var parts = split_line(line)
+		if parts.size() > 0:
+			var base_ball_id = parts[0].to_int()
+			if base_ball_id in base_list:
+				var absolute_addball_id = count + KeyBallsData.max_base_ball_num
+				if not absolute_addball_id in result:
+					result.append(absolute_addball_id)
+		count += 1
+	return result
+
+func _get_valid_line_parts(line_index: int) -> Array:
+	var line = get_line(line_index).strip_edges()
+	if line.empty() or line.begins_with(";") or line.begins_with("["):
+		return []
+	return split_line(line)
+
+func _swap_array_elements(array: Array, idx1: int, idx2: int):
+	var temp = array[idx1]
+	array[idx1] = array[idx2]
+	array[idx2] = temp
+
+func _pad_string_right(text: String, target_length: int) -> String:
+	while text.length() < target_length:
+		text += " "
+	return text
 
 func _apply_recolor_rules_to_parts(parts: Array, recolor_rules: Array, color_idx: int, outline_idx: int, texture_idx: int, info_dict) -> Dictionary:
 	var updates = {}
@@ -4209,9 +4200,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 							if mirror_parts[8] == "0": mirror_parts[8] = "-2"
 							elif mirror_parts[8] == "-2": mirror_parts[8] = "0"
 						if mirror_parts.size() > 5:
-							var temp = mirror_parts[4]
-							mirror_parts[4] = mirror_parts[5]
-							mirror_parts[5] = temp
+							_swap_array_elements(mirror_parts, 4, 5)
 						
 						var suffix = "RtoL" if reverse else "LtoR"
 						var inf_comment = " ; copyMirr%s_line(%d,%d)" % [suffix, m_s, m_e]
@@ -4420,9 +4409,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 					
 				# Swap edge colors (columns 5 and 6), same pattern as Linez
 				if mirror_parts.size() > 6:
-					var temp = mirror_parts[5]
-					mirror_parts[5] = mirror_parts[6]
-					mirror_parts[6] = temp
+					_swap_array_elements(mirror_parts, 5, 6)
 				
 				var suffix = "RtoL" if reverse else "LtoR"
 				var comment = " ; copyMirr%s_poly(%s,%s,%s,%s)" % [suffix, mirror_parts[0], mirror_parts[1], mirror_parts[2], mirror_parts[3]]
@@ -4614,9 +4601,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 				if !all_valid: continue
 				
 				if mirror_parts.size() > 6:
-					var temp = mirror_parts[5]
-					mirror_parts[5] = mirror_parts[6]
-					mirror_parts[6] = temp
+					_swap_array_elements(mirror_parts, 5, 6)
 				
 				var comment = " ; copyMirrLtoR_ball%d_ball%d_poly(%s,%s,%s,%s)" % [target_ball_no, mirrored_ball_no, mirror_parts[0], mirror_parts[1], mirror_parts[2], mirror_parts[3]]
 				var new_line = _join_array(mirror_parts, delim) + comment
@@ -4820,9 +4805,7 @@ func _process_linez_line_for_mirror(parts: Array, target_ball_no: int, mirrored_
 		mirrored_parts[1] = str(_get_mirrored_counterpart(end_ball, target_ball_no, mirrored_ball_no, temp_addball_map))
 		
 		if mirrored_parts.size() > 5:
-			var temp = mirrored_parts[4]
-			mirrored_parts[4] = mirrored_parts[5]
-			mirrored_parts[5] = temp
+			_swap_array_elements(mirrored_parts, 4, 5)
 
 		# Mirror outline type for lines
 		if mirrored_parts.size() > 8:
@@ -4924,9 +4907,7 @@ func _mirror_linez_processor(parts: Array, left_balls_list: Array, middle_balls_
 		mirrored_parts[1] = str(mirrored_end)
 		
 		if mirrored_parts.size() > 5:
-			var temp = mirrored_parts[4]
-			mirrored_parts[4] = mirrored_parts[5]
-			mirrored_parts[5] = temp
+			_swap_array_elements(mirrored_parts, 4, 5)
 
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
