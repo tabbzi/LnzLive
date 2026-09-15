@@ -808,6 +808,48 @@ func _escape_regex(pattern_str: String) -> String:
 		escaped_str += this_char
 	return escaped_str
 
+func _build_search_pattern(search_text: String, whole_words: bool, match_case: bool) -> String:
+	var pattern = _escape_regex(search_text)
+	if whole_words:
+		pattern = "\\b" + pattern + "\\b"
+	if not match_case:
+		pattern = "(?i)" + pattern
+	return pattern
+
+func _ensure_section_exists(section_name: String) -> Dictionary:
+	var bounds = get_section_bounds(section_name)
+	if not bounds.empty():
+		return bounds
+	var first_section = search("[", 0, 0, 0)
+	if not first_section.empty():
+		var first_section_line = first_section[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section_line, section_name)
+		all_lines.insert(first_section_line + 1, "")
+		text = all_lines.join("\n")
+		_set_text_preserve(text)
+	else:
+		var insert_line = get_line_count()
+		_insert_text_at_cursor_at_line(insert_line, section_name + "\n")
+	return get_section_bounds(section_name)
+
+func _modify_line_parts(line_index: int, bounds_start: int, bounds_end: int, updates: Dictionary):
+	var line = get_line(line_index)
+	var parts = split_line(line)
+	var delim = _detect_delimiter(bounds_start, bounds_end)
+	for idx in updates:
+		parts[int(idx)] = updates[idx]
+	set_line(line_index, _join_array(parts, delim))
+
+func _safe_commit_logical(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int):
+	var success = commit_logical_change(action_name, section, id, old_line, new_line, line_idx)
+	if not success:
+		var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s. Committing full snapshot." % [id, section]
+		print(msg)
+		if console_log:
+			console_log.log_message(msg)
+		commit_full_snapshot(action_name + " [FULL COMMIT]")
+
 func _wrap_angle_deg(a: int) -> int:
 	var ang = ((a % 360) + 360) % 360
 	if ang > 180:
@@ -863,12 +905,9 @@ func _find_text(forward):
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
 
-	var pattern = _escape_regex(search_text)
-	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
-		pattern = "\\b" + pattern + "\\b"
-
-	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
-		pattern = "(?i)" + pattern
+	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
+	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
+	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
 	if pattern != _last_compiled_pattern:
 		var error = _search_regex.compile(pattern)
@@ -974,12 +1013,9 @@ func _on_ReplaceButton_pressed():
 	if is_selection_active():
 		var selected_text = get_selection_text()
 
-		var pattern = _escape_regex(search_text)
-		if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
-			pattern = "\\b" + pattern + "\\b"
-
-		if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
-			pattern = "(?i)" + pattern
+		var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
+		var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
+		var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
 		# Anchor the pattern to ensure the whole selection matches
 		var anchored_pattern = "^" + pattern + "$"
@@ -1009,12 +1045,9 @@ func _on_ReplaceAllButton_pressed():
 	if search_text.empty():
 		return
 
-	var pattern = _escape_regex(search_text)
-	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
-		pattern = "\\b" + pattern + "\\b"
-
-	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
-		pattern = "(?i)" + pattern
+	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
+	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
+	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
 	var regex: RegEx = _search_regex
 	if _last_replace_pattern != pattern:
@@ -2027,7 +2060,7 @@ func _update_paintballz_section(header: String, ball_no: int):
 			bounds.end -= 1
 			continue 
 		elif b > ball_no:
-			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
+			_modify_line_parts(i, bounds.start, bounds.end, {0: str(b - 1)})
 		i += 1
 
 func _update_polygon_section(ball_no: int):
@@ -2101,15 +2134,7 @@ func update_lnz_section_two_values(section_name, val1, val2):
 
 func write_project_ball_section(projections: Array):
 	save_backup()
-	var bounds = get_section_bounds("[Project Ball]")
-	if bounds.empty():
-		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-		var all_lines = get_text().split("\n")
-		all_lines.insert(first_section, "[Project Ball]")
-		all_lines.insert(first_section + 1, "")
-		text = all_lines.join("\n")
-		_set_text_preserve(text)
-		bounds = get_section_bounds("[Project Ball]")
+	var bounds = _ensure_section_exists("[Project Ball]")
 
 	var start_line = bounds.start
 	var end_line = bounds.end
@@ -2250,19 +2275,8 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				printerr("[ERROR] LnzTextEdit: write_preset_to_ball: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
 				return
 			applied_something = true
-			var bounds = get_section_bounds("[Paint Ballz]")
-			var insert_line_num
-
-			if bounds.empty():
-				var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-				var all_lines = get_text().split("\n")
-				all_lines.insert(first_section, "[Paint Ballz]")
-				all_lines.insert(first_section + 1, "")
-				text = all_lines.join("\n")
-				_set_text_preserve(text)
-				bounds = get_section_bounds("[Paint Ballz]")
-
-			insert_line_num = bounds.start
+			var bounds = _ensure_section_exists("[Paint Ballz]")
+			var insert_line_num = bounds.start
 			var j = 0
 			while insert_line_num + j < bounds.end:
 				var line = get_line(insert_line_num + j).strip_edges()
@@ -2352,17 +2366,7 @@ func apply_paintballz():
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
-		var bounds = get_section_bounds("[Paint Ballz]")
-		
-		if bounds.empty():
-			print("[WARNING] LnzTextEdit: _on_apply_paintballz: [Paint Ballz] section missing, generating new section.")
-			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section, "[Paint Ballz]")
-			all_lines.insert(first_section + 1, "")
-			text = all_lines.join("\n")
-			_set_text_preserve(text)
-			bounds = get_section_bounds("[Paint Ballz]")
+		var bounds = _ensure_section_exists("[Paint Ballz]")
 
 		var insert_at_line = bounds.start
 		var need_fillers = false
@@ -2583,19 +2587,8 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 		if paintballz.size() > 50000:
 			printerr("[ERROR] LnzTextEdit: _apply_paintball_preset_no_save: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
 			return
-		var bounds = get_section_bounds("[Paint Ballz]")
-		var insert_line_num
-
-		if bounds.empty():
-			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section, "[Paint Ballz]")
-			all_lines.insert(first_section + 1, "")
-			text = all_lines.join("\n")
-			_set_text_preserve(text)
-			bounds = get_section_bounds("[Paint Ballz]")
-
-		insert_line_num = bounds.start
+		var bounds = _ensure_section_exists("[Paint Ballz]")
+		var insert_line_num = bounds.start
 		var j = 0
 		while insert_line_num + j < bounds.end:
 			var line = get_line(insert_line_num + j).strip_edges()
@@ -2668,19 +2661,10 @@ func apply_batch_moves(pending_moves: Dictionary):
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
 	
-	var move_sec = search(move_section_tag, 0, 0, 0)
-	if move_sec.empty():
-		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-		var all_lines = get_text().split("\n")
-		all_lines.insert(first_section_line, "[Move]")
-		#all_lines.insert(first_section_line + 1, "")
-		text = all_lines.join("\n")
-		_set_text_preserve(text)
-		move_sec = search(move_section_tag, 0, 0, 0)
+	var move_sec = _ensure_section_exists("[Move]")
 	
-	var move_start = move_sec[SEARCH_RESULT_LINE] + 1
-	var move_end = search("[", 0, move_start, 0)[SEARCH_RESULT_LINE]
-	if move_end == -1: move_end = get_line_count()
+	var move_start = move_sec["start"]
+	var move_end = move_sec["end"]
 	
 	var add_sec = search(add_ball_section_tag, 0, 0, 0)
 	var add_start = -1
@@ -2869,20 +2853,10 @@ func set_batch_moves(moves_dict: Dictionary):
 	save_backup()
 	
 	var move_section_tag = "[Move]"
-	var move_sec = search(move_section_tag, 0, 0, 0)
+	var move_sec = _ensure_section_exists("[Move]")
 	
-	if move_sec.empty():
-		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-		var all_lines = get_text().split("\n")
-		all_lines.insert(first_section_line, "[Move]")
-		#all_lines.insert(first_section_line + 1, "")
-		text = all_lines.join("\n")
-		_set_text_preserve(text)
-		move_sec = search(move_section_tag, 0, 0, 0)
-	
-	var move_start = move_sec[SEARCH_RESULT_LINE] + 1
-	var move_end = search("[", 0, move_start, 0)[SEARCH_RESULT_LINE]
-	if move_end == -1: move_end = get_line_count()
+	var move_start = move_sec["start"]
+	var move_end = move_sec["end"]
 	
 	var delim = _detect_delimiter(move_start, move_end)
 	
@@ -2929,29 +2903,7 @@ func set_batch_moves(moves_dict: Dictionary):
 
 func write_no_texture_rotate_entry(ball_no: int) -> void:
 	var section_tag = "[No Texture Rotate]"
-	var bounds = get_section_bounds(section_tag)
-	
-	if bounds.empty():
-		var first_section_result = search("[", 0, 0, 0)
-
-		if not first_section_result.empty():
-			var first_section_line = first_section_result[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section_line, section_tag)
-			text = all_lines.join("\n")
-		else:
-			var insert_line = get_line_count()
-			_insert_text_at_cursor_at_line(insert_line, section_tag + "\n")
-
-		bounds = get_section_bounds(section_tag)
-
-		if bounds.empty():
-			return
-	
-	bounds = get_section_bounds(section_tag)
-
-	if bounds.empty():
-		return
+	var bounds = _ensure_section_exists(section_tag)
 	
 	if has_no_texture_rotate_entry(ball_no, bounds):
 		return
@@ -3060,24 +3012,7 @@ func write_no_texture_rotate_batch(ball_nos: Array) -> void:
 	save_backup()
 	
 	var section_tag = "[No Texture Rotate]"
-	var bounds = get_section_bounds(section_tag)
-	
-	if bounds.empty():
-		var first_section_result = search("[", 0, 0, 0)
-
-		if not first_section_result.empty():
-			var first_section_line = first_section_result[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section_line, section_tag)
-			text = all_lines.join("\n")
-		else:
-			var insert_line = get_line_count()
-			_insert_text_at_cursor_at_line(insert_line, section_tag + "\n")
-
-		bounds = get_section_bounds(section_tag)
-
-		if bounds.empty():
-			return
+	var bounds = _ensure_section_exists(section_tag)
 	
 	var lines_to_add = []
 
@@ -3290,33 +3225,21 @@ func resize_ball(ball_no: int, size_dif: int):
 	var end_line = bounds.end
 
 	if is_addball:
-		var delim = _detect_delimiter(start_line, end_line)
 		var addball_index = ball_no - max_base_ball_no
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"): continue
 			if count == addball_index:
-				var old_line = get_line(i) 
-				var parts = split_line(raw)
-				if parts.size() > size_field_index:
-					var new_size = size_dif
-					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, delim)
-					set_line(i, new_line)
-					save_file(true)
+				var old_line = get_line(i)
+				_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
+				save_file(true)
 
-					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-					if not success:
-						msg = "[HISTORY] Fallback: Line not found for ball %d in section %s. Committing full snapshot." % [ball_no, section_tag]
-						print(msg)
-						console_log.log_message(msg)
-						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
+				_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 
-					return
+				return
 			count += 1
 	else:
-		var delim = _detect_delimiter(start_line, end_line)
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
@@ -3325,18 +3248,10 @@ func resize_ball(ball_no: int, size_dif: int):
 				var old_line = get_line(i)
 				var parts = split_line(raw)
 				if parts.size() > size_field_index:
-					var new_size = size_dif
-					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, delim)
-					set_line(i, new_line)
+					_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
 					save_file(true)
 
-					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-					if not success:
-						msg = "[HISTORY] Fallback: Line not found for ball %d in section %s. Committing full snapshot." % [ball_no, section_tag]
-						print(msg)
-						console_log.log_message(msg)
-						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
+					_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 
 					return
 				else:
@@ -3355,21 +3270,15 @@ func move_ball(ball_no: int, new_pos: Vector3):
 	var section_tag = "[Move]"
 	if is_addball:
 		section_tag = "[Add Ball]"
-	var bounds = get_section_bounds(section_tag)
+	var bounds = _ensure_section_exists(section_tag)
 	if bounds.empty():
 		if section_tag == "[Move]":
-			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section_line, "[Move]")
-			#all_lines.insert(first_section_line + 1, "")
-			_set_text_preserve(all_lines.join("\n"))
+			bounds = _ensure_section_exists("[Move]")
 		else:
 			return
 
-	var start_line = bounds.start
-	var end_line = bounds.end
-
-	var delim = _detect_delimiter(start_line, end_line)
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
 
 	if is_addball:
 		moved_ball_node = pet_node.ball_map.get(ball_no)
@@ -3389,19 +3298,10 @@ func move_ball(ball_no: int, new_pos: Vector3):
 						var old_line = get_line(i)
 						var parts = split_line(raw)
 						if parts.size() >= 4:
-							parts[1] = str(round(new_relative_pos.x))
-							parts[2] = str(round(new_relative_pos.y))
-							parts[3] = str(round(new_relative_pos.z))
-							var new_line = _join_array(parts, delim)
-							set_line(i, new_line)
+							_modify_line_parts(i, start_line, end_line, {1: str(round(new_relative_pos.x)), 2: str(round(new_relative_pos.y)), 3: str(round(new_relative_pos.z))})
 							save_file(true)
 
-							var success = commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-							if not success:
-								var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
-								print(msg)
-								console_log.log_message(msg)
-								commit_full_snapshot("Moved Addballz #%d [FULL COMMIT]" % ball_no)
+							_safe_commit_logical("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 						break
 					count += 1
 	else:
@@ -3420,26 +3320,19 @@ func move_ball(ball_no: int, new_pos: Vector3):
 				var ny = parts[2].to_int() + new_pos.y
 				var nz = parts[3].to_int() + new_pos.z
 				
-				parts[1] = str(nx)
-				parts[2] = str(ny)
-				parts[3] = str(nz)
+				var updates = {1: str(nx), 2: str(ny), 3: str(nz)}
 				
 				if KeyBallsData.get_group_balls("Head").has(ball_no):
 					if abs(ny) > max_move_head or abs(nz) > max_move_head:
-						if parts.size() < 5: 
-							parts.resize(5) 
-							parts[4] = str(head_id)
+						parts.resize(5)
+						parts[4] = str(head_id)
+						updates[4] = str(head_id)
 				
-				var new_line = _join_array(parts, delim)
-				set_line(i, new_line)
+				_modify_line_parts(i, start_line, end_line, updates)
 				updated = true
 				save_file(true)
 
-				var success = commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-				if not success:
-					var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
-					print(msg)
-					commit_full_snapshot("Moved Ballz #%d [FULL COMMIT]" % ball_no)
+				_safe_commit_logical("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 				break
 
 		if not updated:
@@ -3452,6 +3345,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 				if abs(ny) > max_move_head or abs(nz) > max_move_head:
 					parts.append(str(head_id))
 			
+			var delim = _detect_delimiter(start_line, end_line)
 			var line_txt = _join_array(parts, delim)
 			var insert_at = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
@@ -3668,12 +3562,7 @@ func omit_ball(ball_no: int):
 			if parts.size() >= 2 and (parts[0] == str(ball_no) or parts[1] == str(ball_no)):
 				lines_to_comment.append(i)
 		if not lines_to_comment.empty():
-			for line_idx in lines_to_comment:
-				var line_text = get_line(line_idx)
-				var indent_len = line_text.length() - line_text.lstrip(" \t").length()
-				var indent = line_text.substr(0, indent_len)
-				var content = line_text.lstrip(" \t")
-				set_line(line_idx, indent + "; " + content + " ; commented out by Omit Ballz action")
+			_apply_comments(lines_to_comment, "; ")
 	
 	save_file(true)
 	commit_full_snapshot("Omitted Ballz #%d" % ball_no)
@@ -3703,23 +3592,17 @@ func unomit_ball(ball_no: int):
 			
 			var bounds = get_section_bounds("[Linez]")
 			if not bounds.empty():
+				var lines_to_uncomment = []
 				for j in range(bounds.start, bounds.end):
 					var l = get_line(j).strip_edges()
 					if not l.begins_with("; "): continue
 					if not " ; commented out by Omit Ballz action" in l: continue
-					var data_part = l.substr(2)
-					data_part = data_part.left(data_part.find(" ; commented out by Omit Ballz action"))
-					data_part = data_part.strip_edges()
-					var parts = data_part.split(" ", false)
+					var parts = split_line(l)
 					if parts.size() < 2: continue
 					if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
-					var line_text = get_line(j)
-					var indent_len = line_text.length() - line_text.lstrip(" \t").length()
-					var indent = line_text.substr(0, indent_len)
-					var content = line_text.lstrip(" \t")
-					content = content.substr(2)
-					content = content.replace(" ; commented out by Omit Ballz action", "")
-					set_line(j, indent + content)
+					lines_to_uncomment.append(j)
+				if not lines_to_uncomment.empty():
+					_remove_comments(lines_to_uncomment, "; ")
 			
 			save_file(true)
 			commit_full_snapshot("Unomitted Ballz #%d" % ball_no)
@@ -5308,22 +5191,7 @@ func write_polygon_section(ball_ids: Array) -> void:
 	if apply_fuzz and props.has("fuzz"):
 		fuzz_val = int(props["fuzz"])
 
-	var poly_bounds = get_section_bounds("[Polygons]")
-	if poly_bounds.empty():
-		var first_section = search("[", 0, 0, 0)
-		if not first_section.empty():
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section[SEARCH_RESULT_LINE], "[Polygons]")
-			text = all_lines.join("\n")
-			_set_text_preserve(text)
-		else:
-			var new_text = "[Polygons]\n"
-			if not text.strip_edges().empty():
-				new_text += text
-			text = new_text
-			_set_text_preserve(text)
-
-	poly_bounds = get_section_bounds("[Polygons]")
+	var poly_bounds = _ensure_section_exists("[Polygons]")
 	var insert_line = poly_bounds.end - 1
 	if insert_line < poly_bounds.start:
 		insert_line = poly_bounds.start
