@@ -246,7 +246,15 @@ func populate_bhd_list():
 
 func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
-	init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+	var bhd_path = "res://resources/animations/" + bhd_name
+	
+	var test_bhd = BhdParser.new(bhd_path)
+	if test_bhd == null or test_bhd.animation_ranges.empty():
+		print("[ERROR] dog_generator: _on_BhdSwitcher_item_selected: BHD validation failed: " + bhd_path)
+		return
+
+	init_ball_data(0, false, bhd_path)
+
 	if lnz:
 		init_visual_balls(lnz, true)
 
@@ -256,7 +264,13 @@ func _on_BhdPrompt_confirmed():
 		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
 		_select_option_item(bhd_option_button, bhd_name)
 
-		init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+		var bhd_path = "res://resources/animations/" + bhd_name
+		var test_bhd = BhdParser.new(bhd_path)
+		if test_bhd == null or test_bhd.animation_ranges.empty():
+			print("[ERROR] dog_generator: _on_BhdPrompt_confirmed: BHD validation failed: " + bhd_path)
+			return
+
+		init_ball_data(0, false, bhd_path)
 		init_visual_balls(lnz, true)
 		emit_signal("palette_changed", lnz.palette)
 
@@ -267,8 +281,26 @@ func _on_GameSwitcher_item_selected(index):
 		var selected_idx = bhd_option_button.selected
 		if selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-			init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+			var bhd_path = "res://resources/animations/" + bhd_name
+			var test_bhd = BhdParser.new(bhd_path)
+			if test_bhd == null or test_bhd.animation_ranges.empty():
+				print("[ERROR] dog_generator: _on_GameSwitcher_item_selected: BHD validation failed: " + bhd_path)
+				return
+			init_ball_data(0, false, bhd_path)
 	else:
+		var default_bhd = ""
+		if lnz.species == KeyBallsData.Species.DOG:
+			default_bhd = "res://resources/animations/DOG.bhd"
+		elif lnz.species == KeyBallsData.Species.CAT:
+			default_bhd = "res://resources/animations/CAT.bhd"
+		elif lnz.species == KeyBallsData.Species.BABY:
+			default_bhd = "res://resources/animations/BABY.bhd"
+		else:
+			default_bhd = "res://resources/animations/CAT.bhd"
+		var test_bhd = BhdParser.new(default_bhd)
+		if test_bhd == null or test_bhd.animation_ranges.empty():
+			print("[ERROR] dog_generator: _on_GameSwitcher_item_selected: BHD validation failed for species " + str(lnz.species))
+			return
 		init_ball_data(lnz.species)
 
 	init_visual_balls(lnz, true)
@@ -440,6 +472,12 @@ func generate_pet(file_path):
 	_skip_next_rebuild = false
 
 	var lnz_info = LnzParser.new(file_path)
+	if not _validate_lnz_file(lnz_info):
+		print("[ERROR] dog_generator: generate_pet: LNZ file validation failed, aborting load of: " + file_path)
+		if console_log:
+			console_log.log_message("LNZ file validation failed: " + file_path)
+		return
+
 	lnz = lnz_info
 	lnz.get_species()
 
@@ -598,14 +636,43 @@ func generate_pet(file_path):
 	if lnz_info.species == 0:
 		var selected_idx = bhd_option_button.selected
 		if comment_model != "":
-			init_ball_data(0, !full_rebuild, "res://resources/animations/" + comment_model + ".bhd")
+			var candidate_bhd = "res://resources/animations/" + comment_model + ".bhd"
+			var test_bhd = BhdParser.new(candidate_bhd)
+			if test_bhd == null or test_bhd.animation_ranges.empty():
+				print("[ERROR] dog_generator: generate_pet: BHD validation failed, aborting load of: " + candidate_bhd)
+				if console_log:
+					console_log.log_message("BHD validation failed: " + candidate_bhd)
+				return
+			init_ball_data(0, !full_rebuild, candidate_bhd)
 		elif selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-			init_ball_data(0, !full_rebuild, "res://resources/animations/" + bhd_name)
+			var candidate_bhd_path = "res://resources/animations/" + bhd_name
+			var test_bhd = BhdParser.new(candidate_bhd_path)
+			if test_bhd == null or test_bhd.animation_ranges.empty():
+				print("[ERROR] dog_generator: generate_pet: BHD validation failed, aborting load of: " + candidate_bhd_path)
+				if console_log:
+					console_log.log_message("BHD validation failed: " + candidate_bhd_path)
+				return
+			init_ball_data(0, !full_rebuild, candidate_bhd_path)
 		else:
 			bhd_prompt_dialog.popup_centered()
 			return
 	else:
+		var default_bhd = ""
+		if lnz_info.species == KeyBallsData.Species.DOG:
+			default_bhd = "res://resources/animations/DOG.bhd"
+		elif lnz_info.species == KeyBallsData.Species.CAT:
+			default_bhd = "res://resources/animations/CAT.bhd"
+		elif lnz_info.species == KeyBallsData.Species.BABY:
+			default_bhd = "res://resources/animations/BABY.bhd"
+		else:
+			default_bhd = "res://resources/animations/CAT.bhd"
+		var test_bhd = BhdParser.new(default_bhd)
+		if test_bhd == null or test_bhd.animation_ranges.empty():
+			print("[ERROR] dog_generator: generate_pet: BHD validation failed for species " + str(lnz_info.species) + ", aborting load")
+			if console_log:
+				console_log.log_message("BHD validation failed for species " + str(lnz_info.species))
+			return
 		init_ball_data(lnz_info.species, !full_rebuild)
 
 	recompose_model()
@@ -622,8 +689,6 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 
 	if t_pose_checkbox:
 		t_pose_active = t_pose_checkbox.pressed
-
-	clear_lnz_data(keep_visuals)
 
 	var bhd_file = ""
 	var bdt_prefix = ""
@@ -644,8 +709,14 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 		bhd_file = "res://resources/animations/CAT.bhd"
 		bdt_prefix = "CAT"
 
-	current_bdt_prefix = bdt_prefix
 	bhd = BhdParser.new(bhd_file)
+	if bhd == null or bhd.animation_ranges.empty():
+		print("[ERROR] dog_generator: init_ball_data: failed to load animations for BHD: ", bhd_file)
+		return
+
+	clear_lnz_data(keep_visuals)
+
+	current_bdt_prefix = bdt_prefix
 
 	if current_animation >= bhd.animation_ranges.size():
 		current_animation = 0
@@ -659,9 +730,6 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 	_select_option_item(bhd_option_button, filename)
 
 	emit_signal("bhd_loaded", bhd.animation_ranges.size())
-	if bhd.animation_ranges.empty():
-		print("[ERROR] dog_generator: init_ball_data: failed to load animations for BHD: ", bhd_file)
-		return
 
 	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
 
@@ -671,14 +739,21 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 	var frame_to_use = 0 if t_pose_active else current_frame
 
 	var bdt_filename = bdt_prefix + str(anim_to_load) + ".bdt"
-	current_bdt = BdtParser.new(bdt_filename, first_anim_frames, bhd.num_balls)
+	var new_bdt = BdtParser.new(bdt_filename, first_anim_frames, bhd.num_balls)
+
+	if new_bdt == null or new_bdt.frames.empty():
+		print("[ERROR] dog_generator: init_ball_data: failed to load BDT frames for: ", bdt_filename)
+		return
 
 	emit_signal("animation_loaded", first_anim_frames.size())
 
+	var temp_balls = []
 	for n in bhd.num_balls:
-		var x = current_bdt.frames[frame_to_use][n]
-		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+		var x = new_bdt.frames[frame_to_use][n]
+		temp_balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
 
+	current_bdt = new_bdt
+	balls = temp_balls
 	KeyBallsData.max_base_ball_num = bhd.num_balls
 
 	if t_pose_active:
@@ -701,19 +776,25 @@ func clear_lnz_data(keep_visuals: bool = false):
 
 func recompose_model():
 	# Clear LNZ data structures
-	lnz.balls.clear()
-	lnz.paintballs.clear()
-	lnz.lines.clear()
-	lnz.addballs.clear()
-	lnz.omissions.clear()
-	lnz.project_ball.clear()
-	lnz.polygons.clear()
-	lnz.moves.clear()
-	lnz.texture_list.clear()
-	lnz.custom_eyes.clear()
-	lnz.whisker_connections.clear()
-	lnz.no_texture_rotate.clear()
-	lnz.quadrant_balls.clear()
+	# lnz.balls.clear()
+	# lnz.paintballs.clear()
+	# lnz.lines.clear()
+	# lnz.addballs.clear()
+	# lnz.omissions.clear()
+	# lnz.project_ball.clear()
+	# lnz.polygons.clear()
+	# lnz.moves.clear()
+	# lnz.texture_list.clear()
+	# lnz.custom_eyes.clear()
+	# lnz.whisker_connections.clear()
+	# lnz.no_texture_rotate.clear()
+	# lnz.quadrant_balls.clear()
+
+	# Load temporary LNZ and validate
+	var temp_lnz = LnzParser.new(lnz.file_path)
+	if temp_lnz == null:
+		print("[ERROR] dog_generator: recompose_model: failed to create temp LNZ parser for: " + lnz.file_path)
+		return
 
 	var ordered_sections = [
 		"Texture List",
@@ -775,26 +856,60 @@ func recompose_model():
 		if current_variation_config.has(section):
 			var method = section_methods[section]
 			var sec_cfg = current_variation_config[section]
-			var reader = lnz.compile_section(section, sec_cfg)
-			lnz.call(method, reader)
+			var reader = temp_lnz.compile_section(section, sec_cfg)
+			temp_lnz.call(method, reader)
 
 	if current_variation_config.has("Paint Ballz"):
 		var pb_cfg = current_variation_config["Paint Ballz"]
-		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_cfg))
+		temp_lnz.parse_paintballs(temp_lnz.compile_section("Paint Ballz", pb_cfg))
 
 	if current_variation_config.has("Move"):
 		var move_cfg = current_variation_config["Move"]
-		lnz.parse_moves(lnz.compile_section("Move", move_cfg))
+		temp_lnz.parse_moves(temp_lnz.compile_section("Move", move_cfg))
 
 	if current_variation_config.has("Project Ball"):
 		var pball_cfg = current_variation_config["Project Ball"]
-		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_cfg))
+		temp_lnz.get_project_balls(temp_lnz.compile_section("Project Ball", pball_cfg))
 
 	# Cat without [Whiskers] section: apply default whisker connections
-	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
-		var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
+	if temp_lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
+		var defaults = KeyBallsData.get_default_whisker_connections(temp_lnz.species)
 		for conn in defaults:
-			lnz.whisker_connections.append(conn)
+			temp_lnz.whisker_connections.append(conn)
+
+	if not _validate_parsed_lnz_data(temp_lnz):
+		print("[ERROR] dog_generator: recompose_model: temp LNZ validation failed, old model preserved")
+		if console_log:
+			console_log.log_message("Model recomposition failed: temp LNZ validation failed")
+		return
+
+	lnz.balls = temp_lnz.balls
+	lnz.paintballs = temp_lnz.paintballs
+	lnz.lines = temp_lnz.lines
+	lnz.addballs = temp_lnz.addballs
+	lnz.omissions = temp_lnz.omissions
+	lnz.project_ball = temp_lnz.project_ball
+	lnz.polygons = temp_lnz.polygons
+	lnz.moves = temp_lnz.moves
+	lnz.texture_list = temp_lnz.texture_list
+	lnz.custom_eyes = temp_lnz.custom_eyes
+	lnz.whisker_connections = temp_lnz.whisker_connections
+	lnz.no_texture_rotate = temp_lnz.no_texture_rotate
+	lnz.quadrant_balls = temp_lnz.quadrant_balls
+	lnz.scales = temp_lnz.scales
+	lnz.eyelid_color = temp_lnz.eyelid_color
+	lnz.leg_extensions = temp_lnz.leg_extensions
+	lnz.body_extension = temp_lnz.body_extension
+	lnz.face_extension = temp_lnz.face_extension
+	lnz.ear_extension = temp_lnz.ear_extension
+	lnz.head_enlargement = temp_lnz.head_enlargement
+	lnz.foot_enlargement = temp_lnz.foot_enlargement
+	lnz.palette = temp_lnz.palette
+	lnz.eyelash_lengths = temp_lnz.eyelash_lengths
+	lnz.eyelash_angle = temp_lnz.eyelash_angle
+	lnz.eyelash_spacing = temp_lnz.eyelash_spacing
+	lnz.eyelash_color = temp_lnz.eyelash_color
+	lnz.z_shade_slope = temp_lnz.z_shade_slope
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
@@ -1141,6 +1256,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		belly_position = ball_data[belly_id].position
 	elif ball_data.size() > 0:
 		belly_position = ball_data[ball_data.keys()[0]].position
+
+	if ball_data.empty() and addball_data.empty():
+		print("[WARNING] dog_generator: generate_balls: no ball data to render")
+		return
 
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
@@ -2098,6 +2217,46 @@ func normalize_ball_size(size: float, scale: float) -> float:
 	s -= 1 - fmod(s, 2)
 	return max(1, s)
 
+func _validate_lnz_file(lnz_data) -> bool:
+	if lnz_data == null:
+		print("[ERROR] dog_generator: _validate_lnz_file: parser is null")
+		if console_log:
+			console_log.log_message("LNZ validation failed: parser is null")
+		return false
+
+	if lnz_data.sections_map.empty():
+		print("[ERROR] dog_generator: _validate_lnz_file: no sections parsed from LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no sections parsed from file")
+		return false
+		
+	if not lnz_data.sections_map.has("Ballz Info"):
+		print("[ERROR] dog_generator: _validate_lnz_file: no [Ballz Info] section in LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no [Ballz Info] section found")
+		return false
+	return true
+
+func _validate_parsed_lnz_data(lnz_data) -> bool:
+	if lnz_data == null:
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: parser is null")
+		if console_log:
+			console_log.log_message("LNZ validation failed: parser is null")
+		return false
+
+	if lnz_data.balls.empty() and lnz_data.addballs.empty():
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: no balls or addballs in parsed LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no balls or addballs parsed")
+		return false
+		
+	if lnz_data.scales == null or lnz_data.scales.x == 0:
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: invalid scales in parsed LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: invalid scales in parsed data")
+		return false
+	return true
+
 func _clear_hidden_state_lists():
 	_hidden_balls.clear()
 	_hidden_lines.clear()
@@ -2193,7 +2352,6 @@ func set_animation(anim_index: int):
 		return
 
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
-	bhd.get_frame_offsets_for(anim_index)
 
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
 	if anim_frames.empty():
@@ -2203,11 +2361,11 @@ func set_animation(anim_index: int):
 	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
 	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 
-	if new_bdt.frames.empty():
+	if new_bdt == null or new_bdt.frames.empty():
 		print("[ERROR] dog_generator: set_animation: failed to load BDT frames for: ", bdt_filename)
 		return
 
-	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
+	current_bdt = new_bdt
 	set_frame(0)
 	emit_signal("animation_loaded", anim_frames.size())
 	
