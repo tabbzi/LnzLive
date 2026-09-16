@@ -3384,7 +3384,8 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 	# Size: addball_data, or ball_data fallback
 	var is_addball_ref = reference_ball.ball_no >= KeyBallsData.max_base_ball_num or reference_ball.is_in_group("addballs")
 	var s = 0
-	if is_addball_ref and addball_data != null:
+	if is_addball_ref and addball_data != null: 
+		# If target ball is an add ball, then copy size exactly
 		if typeof(addball_data) == TYPE_DICTIONARY:
 			if addball_data.has("ball_size"): s = int(addball_data["ball_size"])
 			elif addball_data.has("size"): s = int(addball_data["size"])
@@ -3397,6 +3398,7 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		elif reference_ball.has_method("set_ball_size"):
 			props.size = int(round(reference_ball.ball_size))
 	elif reference_ball.has_method("set_ball_size"):
+		# If target ball is a base ball, then convert visual size to LNZ size
 		var engine_size_scale = pet_node.lnz.scales[1]
 		props.size = LnzLiveUtils.visual_size_to_lnz_size(
 			reference_ball.ball_size, 
