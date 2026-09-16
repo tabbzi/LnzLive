@@ -3397,7 +3397,12 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		elif reference_ball.has_method("set_ball_size"):
 			props.size = int(round(reference_ball.ball_size))
 	elif reference_ball.has_method("set_ball_size"):
-		props.size = int(round(reference_ball.ball_size))
+		var engine_size_scale = pet_node.lnz.scales[1]
+		props.size = LnzLiveUtils.visual_size_to_lnz_size(
+			reference_ball.ball_size, 
+			true, 
+			engine_size_scale
+		)
 
 	# Fuzz and Texture: addball_data, or ball_data fallback
 	if addball_data != null:
