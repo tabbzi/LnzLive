@@ -2813,55 +2813,58 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 	
 	if lnz.species != KeyBallsData.Species.BABY:
 		var legs = KeyBallsData.get_legs(lnz.species)
-		var front_legs = legs[0]
-		var back_legs = legs[1]
-		var ext_front = lnz.leg_extensions.x
-		var ext_back = lnz.leg_extensions.y
+		if legs.size() >= 2:
+			var front_legs = legs[0]
+			var back_legs = legs[1]
+			var ext_front = lnz.leg_extensions.x
+			var ext_back = lnz.leg_extensions.y
 
-		var z_front = 0.0
-		var z_back = 0.0
-		if front_legs.size() > 0 and base_positions.has(front_legs[0]):
-			z_front = base_positions[front_legs[0]].z
-		if back_legs.size() > 0 and base_positions.has(back_legs[0]):
-			z_back = base_positions[back_legs[0]].z
-		
-		var head_ext = KeyBallsData.get_head_ext(lnz.species)
-		var head_set = {}
-		for b in head_ext:
-			head_set[b] = true
-		
-		var t = 0.5
-		if abs(z_back - z_front) > 0.001:
-			t = (addball.position.z - z_front) / (z_back - z_front)
-		if head_set.has(addball.base) or addball.position.z < z_front:
-			t = 0.0
-		else:
-			t = clamp(t, 0.0, 1.0)
-		var lift = lerp(ext_front, ext_back, t)
-		addball.position.y -= lift
+			var z_front = 0.0
+			var z_back = 0.0
+			if front_legs.size() > 0 and base_positions.has(front_legs[0]):
+				z_front = base_positions[front_legs[0]].z
+			if back_legs.size() > 0 and base_positions.has(back_legs[0]):
+				z_back = base_positions[back_legs[0]].z
+			
+			var head_ext = KeyBallsData.get_head_ext(lnz.species)
+			var head_set = {}
+			for b in head_ext:
+				head_set[b] = true
+			
+			var t = 0.5
+			if abs(z_back - z_front) > 0.001:
+				t = (addball.position.z - z_front) / (z_back - z_front)
+			if head_set.has(addball.base) or addball.position.z < z_front:
+				t = 0.0
+			else:
+				t = clamp(t, 0.0, 1.0)
+			var lift = lerp(ext_front, ext_back, t)
+			addball.position.y -= lift
 	
 	var body_ext = KeyBallsData.get_body_ext(lnz.species)
-	var special_ball = body_ext[0]
-	if addball.base == special_ball:
-		addball.position.z += lnz.body_extension
-	elif addball.base in body_ext:
-		addball.position.z += lnz.body_extension * 2
+	if body_ext.size() > 0:
+		var special_ball = body_ext[0]
+		if addball.base == special_ball:
+			addball.position.z += lnz.body_extension
+		elif addball.base in body_ext:
+			addball.position.z += lnz.body_extension * 2
 	
 	var face_ext = KeyBallsData.get_face_ext(lnz.species)
 	if addball.base in face_ext:
 		addball.position.z -= lnz.face_extension
 	
 	var head_ext = KeyBallsData.get_head_ext(lnz.species)
-	var head_ball_key = head_ext[0]
-	if base_positions.has(head_ball_key):
-		var head_pos = base_positions[head_ball_key]
-		if addball.base != head_ball_key:
-			var mod_v = addball.position - head_pos
-			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
-			mod_v += head_pos
-			addball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
-		addball.size = floor(addball.size * (lnz.head_enlargement.x / 100.0))
-		addball.size += lnz.head_enlargement.y
+	if body_ext.size() > 0 and head_ext.size() > 0:
+		var head_ball_key = head_ext[0]
+		if base_positions.has(head_ball_key):
+			var head_pos = base_positions[head_ball_key]
+			if addball.base != head_ball_key:
+				var mod_v = addball.position - head_pos
+				mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
+				mod_v += head_pos
+				addball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
+			addball.size = floor(addball.size * (lnz.head_enlargement.x / 100.0))
+			addball.size += lnz.head_enlargement.y
 	
 	var foot_ext = KeyBallsData.get_foot_ext(lnz.species)
 	for foot_group in foot_ext:
