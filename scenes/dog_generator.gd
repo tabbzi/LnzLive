@@ -2896,7 +2896,30 @@ func _on_apply_auto_paintballz():
 
 ### ADD BALLZ ###
 
+func _validate_addball_props(props: Dictionary) -> bool:
+	var required = [
+		"target_base_ball",
+		"size",
+		"position",
+		"color",
+		"outline_color",
+		"outline",
+		"fuzz",
+		"bodyarea",
+		"texture_id"
+	]
+
+	for key in required:
+		if not props.has(key):
+			printerr("[ERROR] inject_single_addball: missing prop '" + str(key) + "'")
+			return false
+
+	return true
+
 func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spatial = null) -> bool:
+	if not _validate_addball_props(props):
+		return false
+
 	var addball_data = apply_extensions_for_addball(props, ball_no)
 	
 	var base_node = ball_map.get(addball_data.base)
