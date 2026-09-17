@@ -1352,9 +1352,8 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	print("[STATUS] FileTree: Added '%s' as texture index %d to Texture List (size: %dx%d, transparency: 0)" % [tex_filename, tex_index, width, height])
 	
 	if lnz_text_edit:
-		#lnz_text_edit.save_backup()
 		lnz_text_edit.add_texture_entry(tex_line)
-		#lnz_text_edit.save_file(true)
+		lnz_text_edit.save_file(true)
 		lnz_text_edit.commit_full_snapshot("Added texture to Texture List: %s" % tex_filename)
 
 func _get_display_path(source_path: String, is_user_texture: bool = false) -> String:
