@@ -3931,7 +3931,7 @@ func _resolve_recolor(color_str: String, is_outline: bool, rules: Array, info, t
 		var texture_match = rule.before_texture.empty() or rule.before_texture == texture
 		if not texture_match: continue
 		if is_outline and not info.ball_outlines_on: continue
-		if not is_outline and not info.balls_on: continue
+		if not is_outline and not info.balls_on and not info.lines_on: continue
 		var new_color = null
 		if rule.is_ramp:
 			new_color = LnzLiveUtils.get_ramp_color(color_str, rule)
