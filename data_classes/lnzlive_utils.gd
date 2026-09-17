@@ -9,6 +9,8 @@ const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
 const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
 const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
 
+const ATLAS_MANIFEST_PATH = "res://resources/texture_atlas/atlas_manifest.json"
+
 const PATH_TEXTEDIT = "Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
 const PATH_PETROOT = "Root/PetRoot/Node"
 const PATH_PETVIEW = "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
@@ -521,6 +523,47 @@ static func get_bmp_dimensions(path: String) -> Dictionary:
 	result["width"] = w
 	result["height"] = abs(h)
 	return result
+
+static func get_texture_dimensions(path: String) -> Dictionary:
+	var result: Dictionary = {"width": 0, "height": 0}
+	
+	if path.begins_with("res://resources/textures/"):
+		var atlas_key: String = path.get_file().get_basename()
+		var manifest = _load_atlas_manifest()
+		if manifest.has(atlas_key):
+			result["width"] = manifest[atlas_key].get("w", 0)
+			result["height"] = manifest[atlas_key].get("h", 0)
+			return result
+		for key in manifest:
+			if key.to_lower() == atlas_key.to_lower():
+				result["width"] = manifest[key].get("w", 0)
+				result["height"] = manifest[key].get("h", 0)
+				return result
+	
+	if not path.begins_with("res://"):
+		return result
+	
+	var texture = ResourceLoader.load(path)
+	if texture == null:
+		return result
+	if texture is Texture:
+		result["width"] = texture.get_width()
+		result["height"] = texture.get_height()
+	return result
+
+static func _load_atlas_manifest() -> Dictionary:
+	var f := File.new()
+	if f.open(ATLAS_MANIFEST_PATH, File.READ) == OK:
+		var json_text := f.get_as_text()
+		f.close()
+		var parsed = JSON.parse(json_text)
+		if parsed.result is Dictionary:
+			return parsed.result
+	elif ResourceLoader.exists(ATLAS_MANIFEST_PATH):
+		var res = ResourceLoader.load(ATLAS_MANIFEST_PATH)
+		if res is Dictionary:
+			return res
+	return {}
 
 static func validate_8bit_bmp(path: String) -> Dictionary:
 	var f: File = File.new()

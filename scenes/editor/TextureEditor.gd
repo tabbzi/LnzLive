@@ -1337,7 +1337,10 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	if not clean_path.ends_with(".bmp"):
 		clean_path += ".bmp"
 	
-	var bmp_info: Dictionary = LnzLiveUtils.get_bmp_dimensions(clean_path)
+	var res_path: String = "res://" + clean_path
+	var bmp_info: Dictionary = LnzLiveUtils.get_texture_dimensions(res_path)
+	if bmp_info.get("width", 0) == 0:
+		bmp_info = LnzLiveUtils.get_bmp_dimensions(clean_path)
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	

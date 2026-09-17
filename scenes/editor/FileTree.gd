@@ -1336,7 +1336,9 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	var tex_filename: String = source_path.get_file()
 	var tex_index: int = lnz.texture_list.size()
 	
-	var bmp_info: Dictionary = LnzLiveUtils.get_bmp_dimensions(source_path)
+	var bmp_info: Dictionary = LnzLiveUtils.get_texture_dimensions(source_path)
+	if bmp_info.get("width", 0) == 0:
+		bmp_info = LnzLiveUtils.get_bmp_dimensions(source_path)
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	
