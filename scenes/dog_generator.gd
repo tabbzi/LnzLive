@@ -74,6 +74,7 @@ var _shader_affected_by_rotation = false
 
 var _texture_cache = {}
 var _atlas_manifest = {}
+var _atlas_manifest_normalized = {}
 var _atlas_textures = {}
 var _perf_texture_load_time = 0
 
@@ -168,6 +169,7 @@ func _ready():
 		else:
 			print("[ERROR] dog_generator: failed to parse texture atlas manifest")
 		f.close()
+		_build_atlas_manifest_lookup()
 	else:
 		print("[ERROR] dog_generator: failed to open texture atlas manifest")
 
@@ -1043,6 +1045,13 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 # generate_color_icon
 # load_palette_resource
 
+func _build_atlas_manifest_lookup():
+	_atlas_manifest_normalized.clear()
+	for key in _atlas_manifest.keys():
+		var lower_key = str(key).to_lower()
+		if not _atlas_manifest_normalized.has(lower_key):
+			_atlas_manifest_normalized[lower_key] = _atlas_manifest[key]
+
 func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Texture:
 	var t_start = OS.get_ticks_msec()
 	if _texture_cache.has(texture_filename):
@@ -1058,14 +1067,9 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 
 	# Try exact match or case-insensitive match against manifest keys
 	var manifest_entry = null
-	if _atlas_manifest.has(atlas_key):
-		manifest_entry = _atlas_manifest[atlas_key]
-	else:
-		# Search case-insensitive
-		for key in _atlas_manifest.keys():
-			if key.to_lower() == atlas_key.to_lower():
-				manifest_entry = _atlas_manifest[key]
-				break
+	var lookup_key = atlas_key.to_lower()
+	if _atlas_manifest_normalized.has(lookup_key):
+		manifest_entry = _atlas_manifest_normalized[lookup_key]
 
 	if manifest_entry:
 		var atlas_file = manifest_entry["babyz_atlas"] if is_babyz_mode else manifest_entry["petz_atlas"]
