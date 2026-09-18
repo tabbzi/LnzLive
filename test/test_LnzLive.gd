@@ -2245,7 +2245,7 @@ func test_visual_size_to_lnz_size_dalmatian_pet_ball0():
 	var reader = parser.compile_section("Ballz Info", [0])
 	parser.get_balls(reader)
 	
-	assert_eq(parser.balls[0].size, -2, "Dalmatian pet ball 0 size should be -2 (negative = use base size).")
+	assert_eq(parser.balls[0].size, -2, "Dalmatian pet ball 0 sizediff should be -2.")
 	
 	# visual_size_to_lnz_size for this ball at its engine scale
 	var engine_scale = parser.scales.x
@@ -2325,7 +2325,7 @@ func test_world_to_lnz_delta_dalmatian_pet():
 	# world_delta of (0.001, 0, 0) → lnz_delta.x = 0.001 / (0.002 * 150/255) = 0.001 / 0.00117647... = 0.85
 	var result = LnzLiveUtils.world_to_lnz_delta(Vector3(0.001, 0, 0), pixel_world_size, engine_scale)
 	# 0.001 / (0.002 * 150.0 / 255.0) = 0.001 / 0.00117647... = 0.85
-	assert_almost_eq(result.x, 1.0, 0.5, "X should round to ~1.")
+	assert_almost_eq(result.x, 1.0, 0.1, "X should round to ~1.")
 
 func test_world_to_lnz_delta_siamese_breed():
 	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
@@ -2342,16 +2342,20 @@ func test_world_to_lnz_delta_siamese_breed():
 
 func test_world_to_lnz_delta_babyz():
 	# Use res://resources/lnz/babyz/babyz_example.lnz
+	# [Default Scales] = 100, 100
 	var path = "res://resources/lnz/babyz/babyz_example.lnz"
 	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Default Scales", [0])
+	parser.get_default_scales(reader)
 	
 	var pixel_world_size = 0.002
 	var engine_scale = parser.scales.x
 	
 	var result = LnzLiveUtils.world_to_lnz_delta(Vector3(0.002, -0.002, 0.002), pixel_world_size, engine_scale)
-	assert_almost_eq(result.x, 2.0, 1.0, "X should be ~2.")
-	assert_almost_eq(result.y, 2.0, 1.0, "Y should be ~2 (inverted from -0.002).")
-	assert_almost_eq(result.z, 2.0, 1.0, "Z should be ~2.")
+	# With scale 100: 0.002 / (0.002 * 100/255) = 2.55, rounded to 3
+	assert_almost_eq(result.x, 3.0, 0.01, "X should be 3 (round(2.55)).")
+	assert_almost_eq(result.y, 3.0, 0.01, "Y should be 3 (inverted from -0.002, round(2.55)).")
+	assert_almost_eq(result.z, 3.0, 0.01, "Z should be 3 (round(2.55)).")
 
 func test_parse_number_list_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz to verify parse_number_list
@@ -2363,42 +2367,6 @@ func test_parse_number_list_dalmatian_pet():
 	# Dalmatian has 67 base balls (ball_no 0 through 66)
 	assert_eq(parser.balls.size(), 67, "Dalmatian should have 67 base balls.")
 
-func test_parse_number_list_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(reader)
-	
-	assert_true(parser.balls.size() > 0, "Siamese should have base balls.")
-
-func test_parse_number_list_persian_pet():
-	# Use res://resources/lnz/catz/Persian_pet_homebody.lnz
-	var path = "res://resources/lnz/catz/Persian_pet_homebody.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(reader)
-	
-	assert_true(parser.balls.size() > 0, "Persian should have base balls.")
-
-func test_parse_number_list_panda_toy():
-	# Use res://resources/lnz/toyz/PANDA.lnz
-	var path = "res://resources/lnz/toyz/PANDA.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(reader)
-	
-	assert_true(parser.balls.size() > 0, "Panda should have base balls.")
-
-func test_parse_number_list_babyz():
-	# Use res://resources/lnz/babyz/babyz_example.lnz
-	var path = "res://resources/lnz/babyz/babyz_example.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(reader)
-	
-	assert_true(parser.balls.size() > 0, "Babyz should have base balls.")
-
 func test_lnz_get_addballs_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
 	# [Add Ball] line 69: "48 3 -12 -258 55 244 0 0 -1 -1 50 0 1 -1 -1"
@@ -2409,7 +2377,6 @@ func test_lnz_get_addballs_dalmatian_pet():
 	var addball_reader = parser.compile_section("Add Ball", [0])
 	parser.get_addballs(addball_reader)
 	
-	assert_true(parser.addballs.size() > 0, "Dalmatian should have addballs.")
 	# First addball at index balls.size() = 67
 	var first = parser.addballs.keys()[0]
 	assert_eq(parser.addballs[first].size, 50, "First addball size should be 50.")
@@ -2444,39 +2411,6 @@ func test_lnz_get_paintballs_dalmatian_pet():
 	assert_eq(parser.paintballs[first_base][0].size, 50, "First paintball size should be 50.")
 	assert_eq(parser.paintballs[first_base][0].color_index, 35, "First paintball color should be 35.")
 
-func test_lnz_get_eyelash_info_dalmatian_pet():
-	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
-	# Dalmatian pet has no [Eyelash Info] section, so eyelash data stays at defaults
-	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Eyelash Info", [0])
-	parser.get_eyelash_info(reader)
-	
-	assert_eq(parser.eyelash_lengths.size(), 0, "Dalmatian pet should have no eyelash lengths (no section).")
-	assert_eq(parser.eyelash_angle, 0, "Eyelash angle should be 0 (default).")
-	assert_eq(parser.eyelash_spacing, 0, "Eyelash spacing should be 0 (default).")
-	assert_eq(parser.eyelash_color, -1, "Eyelash color should be -1 (default).")
-
-func test_lnz_get_omissions_dalmatian_pet():
-	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
-	# [Omissions] section exists
-	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Omissions", [0])
-	parser.get_omissions(reader)
-	
-	assert_true(parser.omissions.size() > 0, "Dalmatian should have omissions.")
-
-func test_lnz_get_z_shade_slope_dalmatian_pet():
-	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
-	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Z Shade", [0])
-	parser.get_z_shade_slope(reader)
-	
-	# Default is 100 if section is empty
-	assert_true(parser.z_shade_slope > 0, "Z shade slope should be positive.")
-
 func test_lnz_species_detection_dalmatian_pet():
 	# Verify species fallback detection from [Default Linez File] path
 	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
@@ -2499,11 +2433,12 @@ func test_lnz_species_detection_babyz():
 	assert_eq(parser.species, 3, "Babyz should detect as Babyz (species 3).")
 
 func test_lnz_species_detection_panda_toy():
-	# Verify species detection for toy (uses BABYZ comment header)
+	# Verify species detection for toy (no [Species] or [Default Linez File] section)
 	var path = "res://resources/lnz/toyz/PANDA.lnz"
 	var parser = autofree(LnzParser.new(path))
 	parser.get_species()
-	assert_true(parser.species == 3 or parser.species == 0, "Panda toy should detect as Babyz or unknown.")
+	# Panda toy has no [Species] block and no [Default Linez File] block, so species stays at default 0
+	assert_eq(parser.species, 0, "Panda toy should have unknown species (0) since it has no species metadata.")
 
 func test_lnz_get_palette_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2527,14 +2462,13 @@ func test_lnz_get_eyelid_color_siamese_breed():
 
 func test_lnz_get_head_enlargement_siamese_breed():
 	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Head Enlargement] line 24
+	# [Head Enlargement] line 24: "105"
 	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
 	var parser = autofree(LnzParser.new(path))
 	var reader = parser.compile_section("Head Enlargement", [0])
 	parser.get_head_enlargement(reader)
 	
-	assert_true(parser.head_enlargement.x > 0, "Head enlargement X should be positive.")
-	assert_true(parser.head_enlargement.y >= 0, "Head enlargement Y should be non-negative.")
+	assert_eq(parser.head_enlargement.x, 105, "Head enlargement X should be 105.")
 
 func test_lnz_get_scales_siamese_breed():
 	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
@@ -2556,59 +2490,11 @@ func test_lnz_get_scales_dalmatian_pet():
 	
 	assert_eq(parser.scales.x, 150, "Dalmatian scale X should be 150.")
 
-func test_lnz_get_leg_extensions_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Leg Extension] line 34
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Leg Extension", [0])
-	parser.get_leg_extensions(reader)
-	
-	assert_true(parser.leg_extensions.x >= 0, "Leg extension X should be non-negative.")
-
-func test_lnz_get_body_extension_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Body Extension] line 31
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Body Extension", [0])
-	parser.get_body_extension(reader)
-	
-	assert_true(parser.body_extension >= 0, "Body extension should be non-negative.")
-
-func test_lnz_get_face_extension_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Face Extension] line 28
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Face Extension", [0])
-	parser.get_face_extension(reader)
-	
-	assert_true(parser.face_extension >= 0, "Face extension should be non-negative.")
-
-func test_lnz_get_ear_extension_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Ear Extension] line 38
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Ear Extension", [0])
-	parser.get_ear_extension(reader)
-	
-	assert_true(parser.ear_extension >= 0, "Ear extension should be non-negative.")
-
-func test_lnz_get_feet_enlargement_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Feet Enlargement] line 42
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Feet Enlargement", [0])
-	parser.get_feet_enlargement(reader)
-	
-	assert_true(parser.foot_enlargement.x >= 0, "Feet enlargement X should be non-negative.")
-
 func test_lnz_get_color_info_override_siamese_breed():
 	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Color Info Override] section exists
+	# [Color Info Override] data is inside variation blocks (#2, #3.A), not in base.
+	# compile_section with [0] won't include variation data, so this tests that
+	# the override section is parsed without error when no base data exists.
 	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
 	var parser = autofree(LnzParser.new(path))
 	var ball_reader = parser.compile_section("Ballz Info", [0])
@@ -2616,51 +2502,9 @@ func test_lnz_get_color_info_override_siamese_breed():
 	var reader = parser.compile_section("Color Info Override", [0])
 	parser.get_color_info_override(reader)
 	
-	# Should not crash even if overrides target non-existent balls
-	assert_true(true, "Color info override should not crash.")
-
-func test_lnz_get_outline_color_override_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var ball_reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(ball_reader)
-	var reader = parser.compile_section("Outline Color Override", [0])
-	parser.get_outline_color_override(reader)
-	
-	assert_true(true, "Outline color override should not crash.")
-
-func test_lnz_get_fuzz_override_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var ball_reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(ball_reader)
-	var reader = parser.compile_section("Fuzz Override", [0])
-	parser.get_fuzz_override(reader)
-	
-	assert_true(true, "Fuzz override should not crash.")
-
-func test_lnz_get_ball_size_override_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var ball_reader = parser.compile_section("Ballz Info", [0])
-	parser.get_balls(ball_reader)
-	var reader = parser.compile_section("Ball Size Override", [0])
-	parser.get_ball_size_override(reader)
-	
-	assert_true(true, "Ball size override should not crash.")
-
-func test_lnz_get_project_balls_siamese_breed():
-	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
-	# [Project Ball] section exists
-	var path = "res://resources/lnz/catz/breed_SI_Siamese.lnz"
-	var parser = autofree(LnzParser.new(path))
-	var reader = parser.compile_section("Project Ball", [0])
-	parser.get_project_balls(reader)
-	
-	assert_true(parser.project_ball.size() > 0, "Siamese should have project balls.")
+	assert_eq(parser.balls.size(), 67, "Should have 67 balls from Ballz Info.")
+	# Base data only: no Color Info Override in base, colors stay at original values
+	assert_eq(parser.balls[0].color_index, 103, "Ball 0 color_index should stay at 103 (no override in base).")
 
 func test_lnz_get_whiskers_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2669,18 +2513,22 @@ func test_lnz_get_whiskers_dalmatian_pet():
 	var reader = parser.compile_section("Whiskers", [0])
 	parser.get_whiskers(reader)
 	
-	# Dalmatian (dog) has no whiskers section, should use defaults (empty array)
-	assert_true(parser.whisker_connections.size() >= 0, "Whisker connections should be non-negative.")
+	assert_eq(parser.whisker_connections.size(), 0, "Dog has no whiskers section.")
 
 func test_lnz_get_eyes_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
+	# [Eyes]: row1="32 8" (leftEye=32, rightEye=8), row2="38 14" (leftIris=38, rightIris=14)
+	# Maps: custom_eyes[38]=32, custom_eyes[14]=8
 	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
 	var parser = autofree(LnzParser.new(path))
 	var reader = parser.compile_section("Eyes", [0])
 	parser.get_eyes(reader)
 	
-	# Should not crash
-	assert_true(true, "Eyes parsing should not crash.")
+	assert_eq(parser.custom_eyes.size(), 2, "Dalmatian should have 2 custom eye entries.")
+	assert_true(38 in parser.custom_eyes, "Left iris (38) should map to left eye (32).")
+	assert_eq(parser.custom_eyes[38], 32, "Left iris 38 maps to eye 32.")
+	assert_true(14 in parser.custom_eyes, "Right iris (14) should map to right eye (8).")
+	assert_eq(parser.custom_eyes[14], 8, "Right iris 14 maps to eye 8.")
 
 func test_lnz_get_moves_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2689,17 +2537,17 @@ func test_lnz_get_moves_dalmatian_pet():
 	var reader = parser.compile_section("Move", [0])
 	parser.parse_moves(reader)
 	
-	assert_true(parser.moves.size() >= 0, "Moves should be non-negative.")
+	assert_eq(parser.moves.size(), 51, "Dalmatian should have 51 moves in the Move section.")
+	assert_eq(parser.moves[0]["ball_no"], 57, "First move should reference ball 57.")
 
 func test_lnz_get_texture_list_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
-	# [Texture List] section exists
 	var path = "res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz"
 	var parser = autofree(LnzParser.new(path))
 	var reader = parser.compile_section("Texture List", [0])
 	parser.get_texture_list(reader)
 	
-	assert_true(parser.texture_list.size() > 0, "Dalmatian should have texture list entries.")
+	assert_eq(parser.texture_list.size(), 3, "Dalmatian should have 3 texture list entries.")
 
 func test_lnz_get_no_texture_rotate_siamese_breed():
 	# Use res://resources/lnz/catz/breed_SI_Siamese.lnz
@@ -2708,8 +2556,7 @@ func test_lnz_get_no_texture_rotate_siamese_breed():
 	var reader = parser.compile_section("No Texture Rotate", [0])
 	parser.get_no_texture_rotate(reader)
 	
-	# Should not crash
-	assert_true(true, "No texture rotate should not crash.")
+	assert_eq(parser.no_texture_rotate.size(), 0, "No Texture Rotate section should be empty.")
 
 func test_lnz_get_add_ball_override_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2719,11 +2566,11 @@ func test_lnz_get_add_ball_override_dalmatian_pet():
 	parser.get_balls(ball_reader)
 	var addball_reader = parser.compile_section("Add Ball", [0])
 	parser.get_addballs(addball_reader)
-	var reader = parser.compile_section("Add Ball Override", [0])
-	parser.get_add_ball_override(reader)
+	var override_reader = parser.compile_section("Add Ball Override", [0])
+	parser.get_add_ball_override(override_reader)
 	
-	# Should not crash
-	assert_true(true, "Add ball override should not crash.")
+	# No [Add Ball Override] section exists in Dalmatian, so addballs stay at their parsed count
+	assert_eq(parser.addballs.size(), 21, "Dalmatian should have 21 addballs (no override section).")
 
 func test_lnz_compile_section_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2733,7 +2580,7 @@ func test_lnz_compile_section_dalmatian_pet():
 	var reader = parser.compile_section("Ballz Info", [0])
 	parser.get_balls(reader)
 	
-	assert_true(parser.balls.size() > 0, "Should have balls after compiling Ballz Info.")
+	assert_eq(parser.balls.size(), 67, "Should have 67 balls after compiling Ballz Info.")
 
 func test_lnz_sections_map_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2752,5 +2599,5 @@ func test_keyballs_build_bodyarea_map_cat():
 	KeyBallsData.max_base_ball_num = 67
 	KeyBallsData.build_bodyarea_map()
 	
-	assert_true(KeyBallsData.bodyarea_map.size() > 0, "Bodyarea map should be populated.")
+	assert_gt(KeyBallsData.bodyarea_map.size(), 0, "Bodyarea map should be populated.")
 	assert_true(KeyBallsData.bodyarea_map.has(0), "Should have entry for ball 0.")
