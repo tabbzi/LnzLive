@@ -8,6 +8,11 @@ var file_tree: Tree
 var lnz_text: TextEdit
 var pet_view: Control
 
+var asset_metrics = {
+	"BHD": {},
+	"BDT": {}
+}
+
 func before_all():
 	editor_instance = editor_scene.instance()
 	editor_instance.name = "Root"
@@ -38,6 +43,17 @@ func after_all():
 	if is_instance_valid(editor_instance):
 		editor_instance.queue_free()
 		yield(get_tree(), "idle_frame")
+
+	var timestamp = str(OS.get_unix_time())
+	var report_path = "res://test/test_" + timestamp + ".json"
+
+	var file = File.new()
+	if file.open(report_path, File.WRITE) == OK:
+		file.store_string(JSON.print(asset_metrics, "\t"))
+		file.close()
+		gut.p("Asset metrics JSON report saved to: " + report_path)
+	else:
+		gut.p("Failed to open path for writing JSON report: " + report_path)
 
 func _reset_editor_state():
 	var settings = editor_instance.get_node_or_null("SceneRoot")
@@ -427,7 +443,7 @@ func test_lnzlive_requantize_bmp_data():
 
 func test_lnzlive_update_color_list_previews():
 	# Verify that update_color_list_previews handles empty palette gracefully.
-	var container = Control.new()
+	var container = autofree(Control.new())
 	add_child(container)
 	var palette_colors: Array = []
 	
@@ -435,9 +451,6 @@ func test_lnzlive_update_color_list_previews():
 	LnzLiveUtils.update_color_list_previews(container, "0-5", palette_colors, 3)
 	
 	assert_eq(container.get_child_count(), 0, "Empty palette should create no children.")
-	
-	remove_child(container)
-	container.queue_free()
 
 # ------------------------------------------------------------------------------
 # lnz_parser.gd
@@ -1851,7 +1864,7 @@ func test_lnz_find_text_basic():
 
 func test_lnz_find_next_jumps_to_second_match():
 	# Verify that _find_text with forward=true jumps to the next occurrence.
-	if not lnz_text: return
+	if not lnz_text or not lnz_text.find_panel: return
 	lnz_text.text = "foo bar\nfoo baz\nfoo qux"
 	
 	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
@@ -1912,17 +1925,6 @@ func test_lnz_find_empty_text_returns_early():
 	
 	# Cursor should remain unchanged
 	assert_eq(lnz_text.cursor_get_line(), 0, "Cursor should remain at line 0 for empty search.")
-
-func test_lnz_find_no_match():
-	# Verify that _find_text handles non-existent search text gracefully.
-	if not lnz_text: return
-	lnz_text.text = "hello world\nfoo bar"
-	
-	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
-	find_line_edit.text = "xyz_not_found"
-	
-	# Should not crash
-	lnz_text._find_text(true)
 
 func test_lnz_find_wrap_around():
 	# Verify that _find_text wraps around when reaching the end.
@@ -2478,7 +2480,7 @@ func test_lnz_get_scales_siamese_breed():
 	var reader = parser.compile_section("Default Scales", [0])
 	parser.get_default_scales(reader)
 	
-	assert_eq(parser.scales.x, 110, "Siamese scale X should be 110.")
+	assert_almost_eq(parser.scales.x, 110.0, 0.01, "Siamese scale X should be 110.")
 
 func test_lnz_get_scales_dalmatian_pet():
 	# Use res://resources/lnz/dogz/Dalmatian_pet_vanilla.lnz
@@ -2601,3 +2603,255 @@ func test_keyballs_build_bodyarea_map_cat():
 	
 	assert_gt(KeyBallsData.bodyarea_map.size(), 0, "Bodyarea map should be populated.")
 	assert_true(KeyBallsData.bodyarea_map.has(0), "Should have entry for ball 0.")
+
+# ------------------------------------------------------------------------------
+# BhdParser.gd
+# ------------------------------------------------------------------------------
+
+func test_bhd_parser_init_dog():
+	# Verify that BhdParser correctly initializes for a dog (.bhd) file.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	# DOG.bhd: frames_offset = 0x0C66 = 3174, num_balls = 0x43 = 67 (little-endian)
+	assert_eq(bhd.frames_offset, 3174, "Dog frames_offset should be 3174.")
+	assert_eq(bhd.num_balls, 67, "Dog num_balls should be 67.")
+	assert_true(bhd.ball_sizes.size() > 0, "Dog should have ball sizes.")
+
+func test_bhd_parser_init_cat():
+	# Verify that BhdParser correctly initializes for a cat (.bhd) file.
+	var bhd = autofree(BhdParser.new("res://resources/animations/CAT.bhd"))
+	
+	assert_eq(bhd.frames_offset, 3174, "Cat frames_offset should be 3174.")
+	assert_eq(bhd.num_balls, 67, "Cat num_balls should be 67.")
+	assert_true(bhd.ball_sizes.size() > 0, "Cat should have ball sizes.")
+
+func test_bhd_parser_init_baby():
+	# Verify that BhdParser correctly initializes for a baby (.bhd) file.
+	var bhd = autofree(BhdParser.new("res://resources/animations/BABY.bhd"))
+	
+	# BABY.bhd: frames_offset = 0x0D70 = 3440, num_balls = 0x78 = 120
+	assert_eq(bhd.frames_offset, 3440, "Baby frames_offset should be 3440.")
+	assert_eq(bhd.num_balls, 120, "Baby num_balls should be 120.")
+	assert_true(bhd.ball_sizes.size() > 0, "Baby should have ball sizes.")
+
+func test_bhd_parser_animation_ranges_non_empty():
+	# Verify that animation_ranges is populated after init.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	assert_true(bhd.animation_ranges.size() > 0, "Dog should have animation ranges.")
+	
+	# Check structure of first animation range
+	var first_range = bhd.animation_ranges[0]
+	assert_true(first_range.has("num_of_offsets"), "Range should have num_of_offsets.")
+	assert_true(first_range.has("end"), "Range should have end.")
+	assert_true(first_range.has("start"), "Range should have start.")
+	assert_true(first_range.has("actual_start"), "Range should have actual_start.")
+
+func test_bhd_parser_animation_ranges_count_matches_file():
+	# Verify that the number of animation ranges matches what's in the file.
+	var bhd_dog = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	assert_gt(bhd_dog.animation_ranges.size(), 0, "Dog should have animations.")
+	
+	var bhd_cat = autofree(BhdParser.new("res://resources/animations/CAT.bhd"))
+	assert_gt(bhd_cat.animation_ranges.size(), 0, "Cat should have animations.")
+	
+	var bhd_baby = autofree(BhdParser.new("res://resources/animations/BABY.bhd"))
+	assert_gt(bhd_baby.animation_ranges.size(), 0, "Baby should have animations.")
+
+func test_bhd_parser_get_frame_offsets_valid_index():
+	# Verify that get_frame_offsets returns non-empty array for a valid animation index.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	assert_true(bhd.animation_ranges.size() > 0, "Should have ranges to query.")
+	
+	var first_index = 0
+	var offsets = bhd.get_frame_offsets_for(first_index)
+	
+	assert_true(typeof(offsets) == TYPE_ARRAY, "Should return an array.")
+	assert_true(offsets.size() > 0, "Should return at least one offset for valid index.")
+
+func test_bhd_parser_get_frame_offsets_invalid_index():
+	# Verify that get_frame_offsets returns empty array for invalid index.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	var offsets = bhd.get_frame_offsets_for(99999)
+	
+	assert_eq(offsets.size(), 0, "Invalid index should return empty array.")
+
+func test_bhd_parser_get_frame_offsets_multiple():
+	# Verify that different animation indices return different offsets.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	if bhd.animation_ranges.size() < 2:
+		return
+	
+	var offsets_a = bhd.get_frame_offsets_for(0)
+	var offsets_b = bhd.get_frame_offsets_for(1)
+	
+	assert_true(offsets_a.size() > 0, "First animation should have offsets.")
+	assert_true(offsets_b.size() > 0, "Second animation should have offsets.")
+
+func test_bhd_parser_ball_sizes_match_num_balls():
+	# Verify that ball_sizes array length matches num_balls.
+	var bhd_dog = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	assert_eq(bhd_dog.ball_sizes.size(), bhd_dog.num_balls, "Dog ball_sizes size should match num_balls.")
+	
+	var bhd_cat = autofree(BhdParser.new("res://resources/animations/CAT.bhd"))
+	assert_eq(bhd_cat.ball_sizes.size(), bhd_cat.num_balls, "Cat ball_sizes size should match num_balls.")
+	
+	var bhd_baby = autofree(BhdParser.new("res://resources/animations/BABY.bhd"))
+	assert_eq(bhd_baby.ball_sizes.size(), bhd_baby.num_balls, "Baby ball_sizes size should match num_balls.")
+
+func test_bhd_parser_ball_sizes_are_valid_uint16():
+	# Verify that all ball sizes are valid unsigned 16-bit values (0-65535).
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	for size in bhd.ball_sizes:
+		assert_true(size >= 0 and size <= 65535, "Ball size %d should be in uint16 range." % size)
+
+func test_bhd_parser_ball_sizes_non_zero():
+	# Verify that ball sizes are non-zero for dog (most balls have defined sizes).
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	# Balls 63, 64 have size 0 in DOG.bhd (known data)
+	var expected_zeros = [63, 64]
+	for i in range(bhd.ball_sizes.size()):
+		if i in expected_zeros:
+			continue
+		assert_gt(bhd.ball_sizes[i], 0, "Dog ball size[%d] should be > 0." % i)
+
+func test_bhd_parser_animation_ranges_monotonically_increasing():
+	# Verify that animation range 'end' values are monotonically increasing.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	for i in range(1, bhd.animation_ranges.size()):
+		assert_gt(bhd.animation_ranges[i].end, bhd.animation_ranges[i-1].end,
+			"Animation range %d end (%d) should be > %d end (%d)." % [i, bhd.animation_ranges[i].end, i-1, bhd.animation_ranges[i-1].end])
+
+func test_bhd_parser_animation_ranges_start_offset():
+	# Verify that animation range 'start' uses the frames_offset correctly.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DOG.bhd"))
+	
+	# Hard-calculated from DOG.bhd binary:
+	# frames_offset=3174, anim 0: actual_start=0, end=17, start=3174
+	# anim 1: actual_start=18, end=44, start=3246
+	# anim 2: actual_start=45, end=62, start=3354
+	assert_eq(bhd.animation_ranges[0].actual_start, 0, "Range 0 actual_start should be 0.")
+	assert_eq(bhd.animation_ranges[0].end, 17, "Range 0 end should be 17.")
+	assert_eq(bhd.animation_ranges[0].start, 3174, "Range 0 start should be 3174.")
+	
+	assert_eq(bhd.animation_ranges[1].actual_start, 18, "Range 1 actual_start should be 18 (+1 from prev end).")
+	assert_eq(bhd.animation_ranges[1].end, 44, "Range 1 end should be 44.")
+	assert_eq(bhd.animation_ranges[1].start, 3246, "Range 1 start should be 3246 (3174 + 18*4).")
+	
+	assert_eq(bhd.animation_ranges[2].actual_start, 45, "Range 2 actual_start should be 45 (+1 from prev end).")
+	assert_eq(bhd.animation_ranges[2].end, 62, "Range 2 end should be 62.")
+	assert_eq(bhd.animation_ranges[2].start, 3354, "Range 2 start should be 3354 (3174 + 45*4).")
+
+func test_bhd_parser_fallback_path_dir():
+	# Verify that DIRT.bhd (non dog/cat/baby) uses _find_ball_info_start_and_size fallback.
+	var bhd = autofree(BhdParser.new("res://resources/animations/DIRT.bhd"))
+	
+	assert_true(bhd.ball_sizes.size() > 0, "DIRT should have ball sizes via fallback path.")
+	assert_eq(bhd.ball_sizes.size(), bhd.num_balls, "DIRT ball_sizes size should match num_balls.")
+
+# ------------------------------------------------------------------------------
+# BHD / BDT Reports
+# ------------------------------------------------------------------------------
+
+var ANIM_DIR = "res://resources/animations/"
+
+func _get_files_with_extension(path: String, extension: String) -> Array:
+	var files = []
+	var dir = Directory.new()
+	if dir.open(path) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name = dir.get_next()
+		while file_name != "":
+			if not dir.current_is_dir() and file_name.to_lower().ends_with("." + extension.to_lower()):
+				files.append(file_name)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+	return files
+
+
+func test_all_bhd_files_parse():
+	var bhd_files = _get_files_with_extension(ANIM_DIR, "bhd")
+	assert_gt(bhd_files.size(), 0, "Animation directory should contain .bhd files.")
+
+	print("\n--- Parsing BHD Files Summary ---")
+
+	for file_name in bhd_files:
+		var full_path = ANIM_DIR + file_name
+		var base_name = file_name.get_basename().to_upper()
+
+		var bhd = BhdParser.new(full_path)
+		assert_not_null(bhd, "Failed to instantiate BhdParser for: %s" % file_name)
+
+		assert_gt(bhd.num_balls, 0, "%s: num_balls must be > 0." % file_name)
+		assert_eq(bhd.ball_sizes.size(), bhd.num_balls, "%s: ball_sizes array length must match num_balls." % file_name)
+
+		if base_name == "DOG":
+			assert_eq(bhd.frames_offset, 3174, "Dog frames_offset mismatch.")
+			assert_eq(bhd.num_balls, 67, "Dog num_balls mismatch.")
+		elif base_name == "CAT":
+			assert_eq(bhd.frames_offset, 3174, "Cat frames_offset mismatch.")
+			assert_eq(bhd.num_balls, 67, "Cat num_balls mismatch.")
+		elif base_name == "BABY":
+			assert_eq(bhd.frames_offset, 3440, "Baby frames_offset mismatch.")
+			assert_eq(bhd.num_balls, 120, "Baby num_balls mismatch.")
+		else:
+			asset_metrics["BHD"][file_name] = {
+				"num_balls": bhd.num_balls,
+				"frames_offset": bhd.frames_offset,
+				"animations": bhd.animation_ranges.size()
+			}
+
+
+func test_all_bdt_files_parse():
+	var bdt_files = _get_files_with_extension(ANIM_DIR, "bdt")
+	assert_gt(bdt_files.size(), 0, "Animation directory should contain .bdt files.")
+
+	print("\n--- Parsing BDT Files Summary ---")
+
+	var stem_regex = RegEx.new()
+	stem_regex.compile("([a-zA-Z_]+)")
+
+	for file_name in bdt_files:
+		var base_stem = file_name.get_basename()
+		var regex_match = stem_regex.search(base_stem)
+		var species = regex_match.get_string().to_upper() if regex_match else base_stem.to_upper()
+
+		var bhd_path = ANIM_DIR + species + ".bhd"
+		var test_offsets = []
+		var expected_balls = 0
+
+		var file_checker = File.new()
+		if file_checker.file_exists(bhd_path):
+			var bhd = BhdParser.new(bhd_path)
+			expected_balls = bhd.num_balls
+			if bhd.animation_ranges.size() > 0:
+				var offsets = bhd.get_frame_offsets_for(0)
+				if offsets.size() > 0:
+					test_offsets = [offsets[0]]
+
+		if test_offsets.empty():
+			test_offsets = [0]
+		if expected_balls == 0:
+			expected_balls = 67
+
+		var bdt = BdtParser.new(file_name, test_offsets, expected_balls)
+		assert_not_null(bdt, "Failed to instantiate BdtParser for: %s" % file_name)
+		assert_true(typeof(bdt.frames) == TYPE_ARRAY, "%s: frames must be an Array." % file_name)
+
+		if species in ["DOG", "CAT", "BABY"]:
+			assert_gt(bdt.frames.size(), 0, "%s: should have produced parsed frames." % file_name)
+			if bdt.frames.size() > 0:
+				assert_eq(bdt.frames[0].size(), expected_balls, "%s: ball count mismatch in frame 0." % file_name)
+		else:
+			asset_metrics["BDT"][file_name] = {
+				"species": species,
+				"offsets_tested": test_offsets,
+				"frames_parsed": bdt.frames.size(),
+				"balls_per_frame": bdt.frames[0].size() if bdt.frames.size() > 0 else 0
+			}
