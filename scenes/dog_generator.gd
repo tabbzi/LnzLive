@@ -798,6 +798,8 @@ func recompose_model():
 		print("[ERROR] dog_generator: recompose_model: failed to create temp LNZ parser for: " + lnz.file_path)
 		return
 
+	temp_lnz.get_species()
+
 	var ordered_sections = [
 		"Texture List",
 		"Palette",
@@ -1025,7 +1027,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	else:
 		for key in ball_map:
 			var node = ball_map[key]
-			if is_instance_valid(node) and node is Spatial:
+			if is_instance_valid(node) and node is Spatial and node.is_inside_tree():
 				node.force_update_transform()
 				
 		apply_projections()
@@ -1390,7 +1392,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	for key in ball_map:
 		var node = ball_map[key]
-		if is_instance_valid(node) and node is Spatial:
+		if is_instance_valid(node) and node is Spatial and node.is_inside_tree():
 			node.force_update_transform()
 
 	# --- EYES ---
