@@ -1021,12 +1021,10 @@ func _on_ReplaceButton_pressed():
 		# Anchor the pattern to ensure the whole selection matches
 		var anchored_pattern = "^" + pattern + "$"
 
-		var regex = _search_regex
-		if _last_replace_pattern != anchored_pattern:
-			var err = regex.compile(anchored_pattern)
-			if err != OK:
-				return
-			_last_replace_pattern = anchored_pattern 
+		var regex = RegEx.new()
+		var err = regex.compile(anchored_pattern)
+		if err != OK:
+			return
 
 		var this_match = regex.search(selected_text, 0) 
 		if this_match != null:
@@ -1102,7 +1100,7 @@ func _on_ReplaceAllButton_pressed():
 			return
 
 		# Use RegEx.sub() for efficient bulk replacement instead of manual string concat
-		var new_text = regex.sub(original_text, replace_text)
+		var new_text = regex.sub(original_text, replace_text, true)
 
 		if original_text != new_text:
 			_set_text_preserve(new_text)
