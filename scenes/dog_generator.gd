@@ -1015,8 +1015,13 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		lnz_info.no_texture_rotate
 	)
 
+	for key in ball_map:
+		var node = ball_map[key]
+		if is_instance_valid(node) and node is Spatial:
+			node.force_update_transform()
+
 	if new_create:
-		call_deferred("_finish_dependent_geometry", new_create)
+		_finish_dependent_geometry(new_create)
 	else:
 		for key in ball_map:
 			var node = ball_map[key]
@@ -1383,6 +1388,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if node.is_in_group("special_balls"):
 				node.call_deferred("set_visible", draw_special_balls)
 
+	for key in ball_map:
+		var node = ball_map[key]
+		if is_instance_valid(node) and node is Spatial:
+			node.force_update_transform()
+
 	# --- EYES ---
 	for key in eyes:
 		var base_key = eyes[key]
@@ -1518,6 +1528,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	for key in ball_map.keys():
 		var base_node = ball_map[key]
 		if is_instance_valid(base_node) and base_node.is_inside_tree():
+			base_node.force_update_transform()
 			var global_pos = base_node.global_transform.origin
 			_orig_world_pos[key] = global_pos
 			
