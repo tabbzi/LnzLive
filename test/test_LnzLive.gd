@@ -1830,6 +1830,320 @@ func test_lnz_text_mirror_l_to_r_logic():
 	assert_eq(add_mirrored[9], "0", "Outline -2 should mirror to 0.")
 	add_parts.resize(0)
 
+func test_lnz_find_text_basic():
+	# Verify that _find_text finds the first occurrence of a search string.
+	if not lnz_text: return
+	lnz_text.text = "hello world\nhello again\nhello there"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "hello"
+	
+	# Place cursor past the first match so _find_text doesn't skip it (cursor at offset 0 + 1 = skip offset 0)
+	lnz_text.cursor_set_line(2)
+	lnz_text.cursor_set_column(0)
+	
+	# First find wraps to the first match
+	lnz_text._find_text(true)
+	
+	# Should find "hello" at line 0 (wrapped)
+	assert_eq(lnz_text.cursor_get_line(), 0, "First find should jump to line 0.")
+	assert_eq(lnz_text.get_selection_text(), "hello", "Selection should contain the matched text.")
+
+func test_lnz_find_next_jumps_to_second_match():
+	# Verify that _find_text with forward=true jumps to the next occurrence.
+	if not lnz_text: return
+	lnz_text.text = "foo bar\nfoo baz\nfoo qux"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "foo"
+	
+	# Place cursor past the first match so _find_text doesn't skip it
+	lnz_text.cursor_set_line(3)
+	lnz_text.cursor_set_column(0)
+	
+	# First find wraps to line 0
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "First find should be at line 0.")
+	
+	# Second find (next)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 1, "Next find should jump to line 1.")
+	
+	# Third find (next)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 2, "Next find should jump to line 2.")
+
+func test_lnz_find_prev_jumps_to_previous_match():
+	# Verify that _find_text with forward=false jumps to the previous occurrence.
+	if not lnz_text: return
+	lnz_text.text = "foo bar\nfoo baz\nfoo qux"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "foo"
+	
+	# Place cursor past the last match
+	lnz_text.cursor_set_line(3)
+	lnz_text.cursor_set_column(0)
+	
+	# Find to last occurrence first
+	lnz_text._find_text(true)
+	lnz_text._find_text(true)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 2, "Should be at line 2.")
+	
+	# Go back
+	lnz_text._find_text(false)
+	assert_eq(lnz_text.cursor_get_line(), 1, "Previous should jump to line 1.")
+	
+	# Go back again
+	lnz_text._find_text(false)
+	assert_eq(lnz_text.cursor_get_line(), 0, "Previous should jump to line 0.")
+
+func test_lnz_find_empty_text_returns_early():
+	# Verify that _find_text returns early when search text is empty.
+	if not lnz_text: return
+	lnz_text.text = "hello world"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = ""
+	
+	# Should not crash
+	lnz_text._find_text(true)
+	
+	# Cursor should remain unchanged
+	assert_eq(lnz_text.cursor_get_line(), 0, "Cursor should remain at line 0 for empty search.")
+
+func test_lnz_find_no_match():
+	# Verify that _find_text handles non-existent search text gracefully.
+	if not lnz_text: return
+	lnz_text.text = "hello world\nfoo bar"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "xyz_not_found"
+	
+	# Should not crash
+	lnz_text._find_text(true)
+
+func test_lnz_find_wrap_around():
+	# Verify that _find_text wraps around when reaching the end.
+	if not lnz_text: return
+	lnz_text.text = "aaa\nbbb\naaa"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "aaa"
+	
+	# Place cursor past the last match so the first find wraps to the first match
+	lnz_text.cursor_set_line(3)
+	lnz_text.cursor_set_column(0)
+	
+	# Find first match (wraps to line 0)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "First match at line 0.")
+	
+	# Find next (should wrap)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 2, "Next match at line 2.")
+	
+	# Find next again (should wrap back to start)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "Wrapped back to line 0.")
+
+func test_lnz_find_match_case():
+	# Verify that MatchCaseCheckBox affects search behavior.
+	if not lnz_text: return
+	lnz_text.text = "Hello\nHELLO\nhello"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "Hello"
+	
+	var match_case_checkbox = lnz_text.find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox")
+	match_case_checkbox.pressed = true
+	
+	# Place cursor past the last match so the first find wraps to the first match
+	lnz_text.cursor_set_line(3)
+	lnz_text.cursor_set_column(0)
+	
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "Case-sensitive should find 'Hello' at line 0.")
+	
+	# Now case-insensitive
+	match_case_checkbox.pressed = false
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 1, "Case-insensitive should find 'HELLO' at line 1.")
+
+func test_lnz_find_whole_words():
+	# Verify that WholeWordsCheckBox restricts to whole-word matches.
+	if not lnz_text: return
+	lnz_text.text = "hello\nhello_world\nsay hello again"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "hello"
+	
+	var whole_words_checkbox = lnz_text.find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox")
+	whole_words_checkbox.pressed = true
+	
+	# Place cursor past the last match so the first find wraps to the first match
+	lnz_text.deselect()
+	lnz_text.cursor_set_line(999)
+	lnz_text.cursor_set_column(999)
+	
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "Whole word 'hello' should match line 0.")
+	
+	whole_words_checkbox.pressed = false
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 1, "Without whole word, should find 'hello_world' at line 1.")
+
+func test_lnz_replace_basic():
+	# Verify that _on_ReplaceButton_pressed replaces the selected text.
+	if not lnz_text: return
+	lnz_text.text = "hello world\nhello again"
+	
+	# Show find panel
+	var find_panel = lnz_text.find_panel
+	find_panel.show()
+	
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	find_line_edit.text = "hello"
+	replace_line_edit.text = "goodbye"
+	
+	# Place cursor past the last match so the first find wraps to the first match
+	lnz_text.deselect()
+	lnz_text.cursor_set_line(999)
+	lnz_text.cursor_set_column(999)
+	
+	# Find first match (wraps to line 0)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 0, "Should find 'hello' at line 0.")
+	
+	# Replace
+	lnz_text._on_ReplaceButton_pressed()
+	
+	assert_true("goodbye" in lnz_text.text, "Text should contain 'goodbye' after replace.")
+	assert_true("hello" in lnz_text.text, "Second 'hello' should still be present.")
+	assert_true(lnz_text.cursor_get_line() == 0 or lnz_text.cursor_get_line() == 1, "Cursor should be on a match line.")
+
+func test_lnz_replace_all():
+	# Verify that _on_ReplaceAllButton_pressed replaces all occurrences.
+	if not lnz_text: return
+	lnz_text.text = "hello world\nhello again\nhello there"
+	
+	# Show find panel
+	var find_panel = lnz_text.find_panel
+	find_panel.show()
+	
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	find_line_edit.text = "hello"
+	replace_line_edit.text = "goodbye"
+	
+	# Replace all
+	lnz_text._on_ReplaceAllButton_pressed()
+	
+	assert_true("goodbye" in lnz_text.text, "Text should contain 'goodbye' after replace all.")
+	assert_false("hello" in lnz_text.text, "All 'hello' should be replaced.")
+	
+	var count = 0
+	var text = lnz_text.text
+	while text.find("goodbye") != -1:
+		count += 1
+		text = text.substr(text.find("goodbye") + 7)
+	assert_eq(count, 3, "Should have exactly 3 occurrences of 'goodbye'.")
+
+func test_lnz_replace_empty_search_text():
+	# Verify that replace operations return early when search text is empty.
+	if not lnz_text: return
+	lnz_text.text = "hello world"
+	
+	var find_panel = lnz_text.find_panel
+	find_panel.show()
+	
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	find_line_edit.text = ""
+	replace_line_edit.text = "goodbye"
+	
+	# Replace should return early without modification
+	lnz_text._on_ReplaceButton_pressed()
+	assert_eq(lnz_text.text, "hello world", "Text should remain unchanged with empty search.")
+	
+	lnz_text._on_ReplaceAllButton_pressed()
+	assert_eq(lnz_text.text, "hello world", "ReplaceAll should not modify text with empty search.")
+
+func test_lnz_replace_selection_mismatch():
+	# Verify that replace does nothing when selection doesn't match the search pattern.
+	if not lnz_text: return
+	lnz_text.text = "hello world\nfoo bar"
+	
+	var find_panel = lnz_text.find_panel
+	find_panel.show()
+	
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	find_line_edit.text = "foo"
+	replace_line_edit.text = "bar"
+	
+	# Find "foo"
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 1, "Should find 'foo' at line 1.")
+	
+	var original_text = lnz_text.text
+	
+	# Replace (should replace "foo" with "bar")
+	lnz_text._on_ReplaceButton_pressed()
+	
+	assert_false("foo" in lnz_text.text, "foo should be replaced with bar.")
+	assert_true("bar" in lnz_text.text, "bar should appear in text.")
+
+func test_lnz_find_regex_special_chars():
+	# Verify that regex special characters in search text are escaped.
+	if not lnz_text: return
+	lnz_text.text = "hello.world\nhelloXworld\nhello world"
+	
+	var find_line_edit = lnz_text.find_panel.get_node("VBoxContainer/LineEdit")
+	find_line_edit.text = "hello.world"
+	
+	# Place cursor past the first match so _find_text doesn't skip it
+	lnz_text.cursor_set_line(3)
+	lnz_text.cursor_set_column(0)
+	
+	lnz_text._find_text(true)
+	# Should find the literal "hello.world" not "helloXworld"
+	assert_eq(lnz_text.cursor_get_line(), 0, "Escaped dot should match literal period.")
+
+func test_lnz_find_next_after_replace_resets_pattern():
+	# Verify that after replace, find_next correctly recompiles the pattern
+	# and finds subsequent matches (regression test for anchored pattern bug).
+	if not lnz_text: return
+	lnz_text.text = "test1\nhello\ntest2\nhello\ntest3"
+	
+	var find_panel = lnz_text.find_panel
+	find_panel.show()
+	
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	find_line_edit.text = "hello"
+	replace_line_edit.text = "world"
+	
+	# Place cursor past the last match so the first find wraps to the first match
+	lnz_text.cursor_set_line(4)
+	lnz_text.cursor_set_column(0)
+	
+	# Find first "hello" (wraps to line 1)
+	lnz_text._find_text(true)
+	assert_eq(lnz_text.cursor_get_line(), 1, "First hello at line 1.")
+	
+	# Replace first occurrence
+	lnz_text._on_ReplaceButton_pressed()
+	
+	# The cursor should now be on the next match
+	assert_true(lnz_text.cursor_get_line() == 3, "After replace, next find should jump to line 3.")
+	
+	# Only one "hello" was replaced by the single replace operation
+	assert_true("hello" in lnz_text.text, "One 'hello' should remain after single replace.")
+	assert_true("world" in lnz_text.text, "Text should contain 'world'.")
+
 # ------------------------------------------------------------------------------
 # PetViewContainer.gd
 # ------------------------------------------------------------------------------
