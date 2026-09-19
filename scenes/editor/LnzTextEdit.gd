@@ -5246,36 +5246,36 @@ func apply_struct_strings(addballz_str: String, linez_str: String) -> void:
 		return
 	save_backup()
 	if not addballz_str.empty():
-		var bounds := get_section_bounds("[Add Ball]")
+		var bounds = get_section_bounds("[Add Ball]")
 		if bounds.empty():
 			bounds = get_section_bounds("[Add Ballz]")
 		if bounds.empty():
-			var first_section_line := search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			if first_section_line == -1:
 				first_section_line = get_line_count()
-			var all_lines := get_text().split("\n")
+			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section_line, "[Add Ball]")
 			all_lines.insert(first_section_line + 1, "")
 			text = all_lines.join("\n")
 			_set_text_preserve(text)
 			bounds = get_section_bounds("[Add Ball]")
 		if not bounds.empty():
-			var delim := _detect_delimiter(bounds["start"], bounds["end"])
-			var formatted_str := addballz_str
+			var delim = _detect_delimiter(bounds["start"], bounds["end"])
+			var formatted_str = addballz_str
 			if delim != ", ":
 				formatted_str = addballz_str.replace(", ", delim)
-			var insert_at_line := _find_insertion_line(bounds["start"], bounds["end"])
+			var insert_at_line = _find_insertion_line(bounds["start"], bounds["end"])
 			_insert_text_at_cursor_at_line(insert_at_line, formatted_str)
 	if not linez_str.empty():
-		var bounds := get_section_bounds("[Linez]")
+		var bounds = get_section_bounds("[Linez]")
 		if bounds.empty():
 			bounds = get_section_bounds("[Linez]")
 		if not bounds.empty():
-			var delim := _detect_delimiter(bounds["start"], bounds["end"])
-			var formatted_str := linez_str
+			var delim = _detect_delimiter(bounds["start"], bounds["end"])
+			var formatted_str = linez_str
 			if delim != ", ":
 				formatted_str = linez_str.replace(", ", delim)
-			var insert_at_line := _find_insertion_line(bounds["start"], bounds["end"])
+			var insert_at_line = _find_insertion_line(bounds["start"], bounds["end"])
 			_insert_text_at_cursor_at_line(insert_at_line, formatted_str)
 	save_file(true)
 	commit_full_snapshot("Applied Struct Mode Nodes")

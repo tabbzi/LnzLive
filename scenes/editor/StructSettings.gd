@@ -265,7 +265,7 @@ func _on_bake_button_pressed() -> void:
 			pet_view.pixel_world_size,
 			pet_view.lnz.scales.x
 		)
-		var body_area: int = 1
+		var body_area = 1
 		if KeyBallsData.bodyarea_map.has(base_id):
 			body_area = KeyBallsData.bodyarea_map[base_id]
 		var p = presets[v.get("preset_id", 0)]
@@ -294,14 +294,14 @@ func _on_bake_button_pressed() -> void:
 			continue
 		var id1 = vertex_to_addball_id[from_idx]
 		var id2 = vertex_to_addball_id[to_idx]
-		var l_fuzz: int = 0
-		var l_color: int = 10
-		var l_outline_color_left: int = -1
-		var l_outline_color_right: int = -1
-		var l_start_thickness: int = 10
-		var l_end_thickness: int = 10
-		var l_outline: int = -1
-		var l_draw_order: int = -1
+		var l_fuzz = 0
+		var l_color = 10
+		var l_outline_color_left = -1
+		var l_outline_color_right = -1
+		var l_start_thickness = 10
+		var l_end_thickness = 10
+		var l_outline = -1
+		var l_draw_order = -1
 		if is_instance_valid(line_mode_settings):
 			var props = line_mode_settings.get_properties()
 			if props.get("apply_fuzz", false):
@@ -350,7 +350,10 @@ func add_affected_ball_ids(ids: Array) -> void:
 	for id in ids:
 		if not (id in existing_ids):
 			existing_ids.append(id)
-	base_ball_range_edit.text = Array(existing_ids).join(", ")
+	var str_ids = PoolStringArray()
+	for id in existing_ids:
+		str_ids.append(str(id))
+	base_ball_range_edit.text = str_ids.join(", ")
 	if is_instance_valid(base_ball_range_edit):
-		base_ball_range_edit.caret_column = base_ball_range_edit.text.length()
+		base_ball_range_edit.caret_position = base_ball_range_edit.text.length()
 	emit_signal("affected_list_changed", existing_ids)
