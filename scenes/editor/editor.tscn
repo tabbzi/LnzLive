@@ -592,6 +592,9 @@ margin_bottom = 224.0
 
 [node name="TextureEditorModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/ModeOptionContainer"]
 
+[node name="StructModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/ModeOptionContainer"]
+text = "Struct"
+
 [node name="RenderOptionButton" type="MenuButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 229.0
 margin_right = 299.0

@@ -28,7 +28,8 @@ enum ModeMenu {
 	LINE,
 	MOVE,
 	RECOLOR,
-	TEXTURE_EDITOR
+	TEXTURE_EDITOR,
+	STRUCT
 }
 
 enum HelpMenu {
@@ -87,6 +88,7 @@ onready var _mode_checkboxes: Array = [
 	$ModeOptionButton/PopupPanel/ModeOptionContainer/MoveModeCheckBox,
 	$ModeOptionButton/PopupPanel/ModeOptionContainer/RecolorModeCheckBox,
 	$ModeOptionButton/PopupPanel/ModeOptionContainer/TextureEditorModeCheckBox,
+	$ModeOptionButton/PopupPanel/ModeOptionContainer/StructModeCheckBox,
 ]
 
 onready var _mode_menu_ids: Array = [
@@ -98,6 +100,7 @@ onready var _mode_menu_ids: Array = [
 	ModeMenu.MOVE,
 	ModeMenu.RECOLOR,
 	ModeMenu.TEXTURE_EDITOR,
+	ModeMenu.STRUCT,
 ]
 
 onready var _render_checkboxes: Array = [

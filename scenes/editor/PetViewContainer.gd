@@ -68,6 +68,7 @@ onready var move_mode_check_box: CheckBox = find_node("MoveModeCheckBox")
 onready var line_mode_check_box: CheckBox = find_node("LineModeCheckBox")
 onready var project_mode_check_box: CheckBox = find_node("ProjectModeCheckBox")
 onready var preset_mode_check_box: CheckBox = find_node("PresetModeCheckBox")
+onready var struct_mode_check_box: CheckBox = find_node("StructModeCheckBox")
 
 onready var tools_menu: Node = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 onready var hidden_balls_label: Label = find_node("HiddenBallsLabel")
@@ -85,7 +86,7 @@ const MAX_NEARBY_BALLS: int = 6
 const NEARBY_SCREEN_RADIUS: float = 60.0
 const TAB_RESET_THRESHOLD_PIXELS: float = 15.0
 
-enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR }
+enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR, STRUCT }
 var current_mode: int = Mode.NONE
 
 var input_is_paused: bool = false
@@ -95,6 +96,11 @@ var selecting_on: bool = false
 var active_selected_ball = null
 
 var is_dragging: bool = false
+var struct_mode: bool = false
+var struct_geo: ImmediateGeometry = null
+var struct_selected_vertex: int = -1
+var struct_settings_instance: Control = null
+var struct_is_dragging: bool = false
 var drag_ball = null
 var drag_offset: Vector3 = Vector3()
 var pixel_world_size: float = 0.002
@@ -272,6 +278,7 @@ func _ready() -> void:
 	recolor_settings_instance = load("res://scenes/editor/RecolorSettings.tscn").instance()
 	texture_editor_settings_instance = load("res://scenes/editor/TextureEditor.tscn").instance()
 	shader_settings_instance = load("res://scenes/editor/ShaderSettings.tscn").instance()
+	struct_settings_instance = load("res://scenes/editor/StructSettings.tscn").instance()
 
 	var sidebar_node: Node = get_tree().root.find_node("VBoxContainer", true, false)
 	var sidebars: Array = get_tree().get_nodes_in_group("SidebarController")
@@ -290,6 +297,7 @@ func _ready() -> void:
 		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
 		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
 		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Shape")
+		sidebar_controller.call_deferred("add_tool_tab", struct_settings_instance, "Struct")
 
 	else:
 		print("[WARNING] PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback")
@@ -322,6 +330,7 @@ func _ready() -> void:
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
 	texture_editor_mode_check_box.connect("toggled", self, "_on_texture_editor_mode_toggled")
+	struct_mode_check_box.connect("toggled", self, "_on_struct_mode_toggled")
 
 	tools_menu.connect(
 		"paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled"
@@ -402,6 +411,15 @@ func _ready() -> void:
 #		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 #		shader_settings_instance.connect("texture_affected_by_rotation_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 #		shader_settings_instance.connect("texture_flat_colors_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+
+	if is_instance_valid(lnz_text_edit):
+		struct_settings_instance.connect("apply_struct_strings", lnz_text_edit, "apply_struct_strings")
+		struct_settings_instance.connect("affected_list_changed", self, "_on_struct_affected_list_changed")
+
+	if is_instance_valid(struct_settings_instance):
+		struct_settings_instance.pet_view = self
+
+	_struct_create_wireframe()
 
 	diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 	diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
@@ -615,6 +633,10 @@ func _process(_delta: float) -> void:
 	if preset_mode and is_instance_valid(preset_settings_instance):
 		preset_settings_instance.sync_camera(camera.global_transform)
 
+	# Always update struct visuals when struct_mode is active
+	if struct_mode and is_instance_valid(struct_geo) and is_instance_valid(struct_settings_instance):
+		_update_struct_visuals()
+	
 	# Skip helper text update, if UI is not dirty
 	if not ui_is_dirty:
 		return
@@ -726,6 +748,9 @@ func _process(_delta: float) -> void:
 	elif recolor_mode:
 		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes.\n(key N to cycle nearby ballz)"
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+
+	elif struct_mode:
+		body = "Struct Mode: Hold SHIFT + Left-Click to add vertices. SHIFT + Drag to move.\nSelect a vertex and press SHIFT + E to extrude an edge."
 
 	elif selecting_on:
 		body = "Select Mode: when hovering, cycle ballz using N key..."
@@ -1551,6 +1576,96 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 	return false
 
+func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
+	if not struct_mode:
+		return false
+	if not is_instance_valid(struct_settings_instance):
+		return false
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		if event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var space_state = camera.get_world().direct_space_state
+			var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
+			if result and result.collider:
+				var parent = result.collider.get_parent()
+				if parent and (parent.is_in_group("balls") or parent.is_in_group("addballs")):
+					var ball_no = parent.ball_no
+					if is_instance_valid(struct_settings_instance):
+						struct_settings_instance.add_affected_ball_ids([ball_no])
+					return true
+		if event.pressed and Input.is_key_pressed(KEY_SHIFT):
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var verts = struct_settings_instance.vertices
+			var selected_idx = -1
+			var min_dist = 100000.0
+			for i in range(verts.size()):
+				var v = verts[i]
+				var proj_2d = camera.unproject_position(v.pos)
+				var dist = proj_2d.distance_to(screen_pos)
+				if dist < 20 and dist < min_dist:
+					min_dist = dist
+					selected_idx = i
+			if selected_idx != -1:
+				struct_selected_vertex = selected_idx
+				struct_is_dragging = true
+				mark_ui_dirty()
+			else:
+				var space_state = camera.get_world().direct_space_state
+				var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
+				var drop_pos = null
+				if result and result.collider:
+					var parent = result.collider.get_parent()
+					if parent and (parent.is_in_group("balls") or parent.is_in_group("addballs")):
+						drop_pos = result.position
+				if not drop_pos:
+					var best_depth_pos = Vector3.ZERO
+					if struct_selected_vertex != -1 and struct_selected_vertex < verts.size():
+						best_depth_pos = verts[struct_selected_vertex].pos
+					else:
+						var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+						var min_dist_2d = 100000.0
+						for b in all_balls:
+							var pos_2d = camera.unproject_position(b.global_transform.origin)
+							var dist_to_cursor = pos_2d.distance_to(screen_pos)
+							if dist_to_cursor < min_dist_2d:
+								min_dist_2d = dist_to_cursor
+								best_depth_pos = b.global_transform.origin
+					var plane_n = camera.global_transform.basis.z.normalized()
+					var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, best_depth_pos)
+					if intersect:
+						drop_pos = intersect
+				if drop_pos != null:
+					verts.append({"pos": drop_pos, "preset_id": struct_settings_instance.active_preset_idx})
+					struct_selected_vertex = verts.size() - 1
+					struct_is_dragging = true
+					mark_ui_dirty()
+					if is_instance_valid(struct_settings_instance):
+						struct_settings_instance._update_vertex_count()
+			return true
+		elif not event.pressed:
+			struct_is_dragging = false
+
+	if event is InputEventMouseMotion and struct_is_dragging and struct_selected_vertex != -1:
+		var verts = struct_settings_instance.vertices
+		if struct_selected_vertex < verts.size():
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var plane_n = camera.global_transform.basis.z.normalized()
+			var plane_p = verts[struct_selected_vertex].pos
+			var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+			if intersect:
+				verts[struct_selected_vertex].pos = intersect
+				mark_ui_dirty()
+			return true
+
+	return false
+
 func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
 		return
@@ -1583,6 +1698,9 @@ func _gui_input(event: InputEvent) -> void:
 		return
 
 	if _handle_paint_mode_gui_input(event):
+		return
+
+	if _handle_struct_mode_gui_input(event):
 		return
 
 	# Open Tools Menu via right-click on hovered ball:
@@ -2123,6 +2241,8 @@ func _get_mode_settings_instance(mode: int) -> Control:
 			return auto_paintballer_settings_instance
 		Mode.TEXTURE_EDITOR:
 			return texture_editor_settings_instance
+		Mode.STRUCT:
+			return struct_settings_instance
 	return null
 
 func _exit_mode(mode: int) -> void:
@@ -2176,6 +2296,8 @@ func _exit_mode(mode: int) -> void:
 					b.apply_outline_state(b.OutlineState.NONE)
 		Mode.TEXTURE_EDITOR:
 			pass
+		Mode.STRUCT:
+			pass
 
 func _enter_mode(mode: int) -> void:
 	match mode:
@@ -2225,6 +2347,8 @@ func _sync_mode_checkboxes() -> void:
 		auto_paintballer_check_box.pressed = (current_mode == Mode.AUTO_PAINTBALLER)
 	if texture_editor_mode_check_box.pressed != (current_mode == Mode.TEXTURE_EDITOR):
 		texture_editor_mode_check_box.pressed = (current_mode == Mode.TEXTURE_EDITOR)
+	if struct_mode_check_box.pressed != (current_mode == Mode.STRUCT):
+		struct_mode_check_box.pressed = (current_mode == Mode.STRUCT)
 
 func _sync_mode_cursor() -> void:
 	match current_mode:
@@ -2249,6 +2373,57 @@ func _sync_mode_cursor() -> void:
 		Mode.PROJECT, Mode.AUTO_PAINTBALLER, Mode.TEXTURE_EDITOR:
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 			mouse_default_cursor_shape = CURSOR_ARROW
+		Mode.STRUCT:
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mouse_default_cursor_shape = CURSOR_ARROW
+
+
+func _struct_create_wireframe() -> void:
+	if not is_instance_valid(pet_node):
+		return
+	struct_geo = ImmediateGeometry.new()
+	var mat = SpatialMaterial.new()
+	mat.flags_unshaded = true
+	mat.vertex_color_use_as_albedo = true
+	mat.flags_no_depth_test = false
+	mat.render_priority = 1
+	struct_geo.material_override = mat
+	pet_node.add_child(struct_geo)
+
+
+func _update_struct_visuals() -> void:
+	if not is_instance_valid(struct_geo):
+		return
+	if not is_instance_valid(struct_settings_instance):
+		return
+	struct_geo.clear()
+	if not struct_mode:
+		return
+	var verts = struct_settings_instance.vertices
+	var edges = struct_settings_instance.edges
+	struct_geo.begin(Mesh.PRIMITIVE_LINES)
+	for edge in edges:
+		struct_geo.set_color(Color.white)
+		struct_geo.add_vertex(verts[edge.x].pos)
+		struct_geo.add_vertex(verts[edge.y].pos)
+	struct_geo.end()
+	for i in range(verts.size()):
+		var v = verts[i]
+		var col = struct_settings_instance.get_preset_color(v.get("preset_id", 0))
+		if i == struct_selected_vertex:
+			struct_geo.set_color(Color.green)
+			struct_geo.begin(Mesh.PRIMITIVE_LINES)
+			struct_geo.add_vertex(v.pos + Vector3(0.01, 0, 0))
+			struct_geo.add_vertex(v.pos - Vector3(0.01, 0, 0))
+			struct_geo.add_vertex(v.pos + Vector3(0, 0.01, 0))
+			struct_geo.add_vertex(v.pos - Vector3(0, 0.01, 0))
+			struct_geo.end()
+		else:
+			struct_geo.set_color(col)
+			struct_geo.begin(Mesh.PRIMITIVE_POINTS)
+			struct_geo.add_vertex(v.pos)
+			struct_geo.end()
+
 
 func _unhandled_key_input(event: InputEventKey) -> void:
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:
@@ -2342,6 +2517,27 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	if _handle_camera_view_key_input(event):
 		return
+
+	if event is InputEventKey and event.pressed and event.scancode == KEY_E and event.shift and struct_mode:
+		if struct_selected_vertex != -1 and is_instance_valid(struct_settings_instance):
+			var verts = struct_settings_instance.vertices
+			if struct_selected_vertex < verts.size():
+				var screen_pos = _get_viewport_pos_from_screen_pos(get_local_mouse_position())
+				var ray_o = camera.project_ray_origin(screen_pos)
+				var ray_d = camera.project_ray_normal(screen_pos)
+				var plane_n = camera.global_transform.basis.z.normalized()
+				var plane_p = verts[struct_selected_vertex].pos
+				var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+				if intersect:
+					var new_idx = verts.size()
+					verts.append({"pos": intersect, "preset_id": struct_settings_instance.active_preset_idx})
+					struct_settings_instance.edges.append(Vector2(struct_selected_vertex, new_idx))
+					struct_selected_vertex = new_idx
+					mark_ui_dirty()
+					if is_instance_valid(struct_settings_instance):
+						struct_settings_instance._update_vertex_count()
+					get_tree().set_input_as_handled()
+					return
 
 	if event.pressed and selecting_on and last_selected_is_valid():
 		last_selected._input(event)
@@ -3353,6 +3549,15 @@ func _on_preset_mode_toggled(is_on: bool) -> void:
 		set_mode(Mode.PRESET)
 	elif current_mode == Mode.PRESET:
 		set_mode(Mode.NONE)
+
+func _on_struct_mode_toggled(is_on: bool) -> void:
+	if is_on:
+		set_mode(Mode.STRUCT)
+	elif current_mode == Mode.STRUCT:
+		set_mode(Mode.NONE)
+
+func _on_struct_affected_list_changed(ball_ids: Array) -> void:
+	_on_affected_list_changed(ball_ids)
 
 func _on_auto_paintballer_mode_toggled(is_on: bool) -> void:
 	if is_on:

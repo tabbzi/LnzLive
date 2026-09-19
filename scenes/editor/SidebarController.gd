@@ -25,7 +25,8 @@ const TAB_ICONS: Dictionary = {
 	"Preset": "res://resources/icons/ico_tab_preset.png",
 	"Move": "res://resources/icons/ico_tab_move.png",
 	"Line": "res://resources/icons/ico_tab_line.png",
-	"Shape": "res://resources/icons/ico_tab_shape.png"
+	"Shape": "res://resources/icons/ico_tab_shape.png",
+	"Struct": "res://resources/icons/ico_tab_struct.png"
 }
 
 const TAB_TOOLTIPS: Dictionary = {
@@ -39,7 +40,8 @@ const TAB_TOOLTIPS: Dictionary = {
 	"Preset": "Preset Mode",
 	"Move": "Move Mode",
 	"Line": "Line Mode",
-	"Shape": "Shape Mode"
+	"Shape": "Shape Mode",
+	"Struct": "Struct Mode"
 }
 
 func _ready() -> void:
@@ -278,6 +280,7 @@ func _on_tab_changed(tab_index: int) -> void:
 		"Preset": pet_view.preset_mode_check_box.pressed = true
 		"AutoPaint": pet_view.auto_paintballer_check_box.pressed = true
 		"Shape": pet_view.project_mode_check_box.pressed = true
+		"Struct": pet_view.struct_mode_check_box.pressed = true
 		"FileTree":
 			pass
 
