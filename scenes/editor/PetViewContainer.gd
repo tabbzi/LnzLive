@@ -2289,7 +2289,7 @@ func _exit_mode(mode: int) -> void:
 		Mode.TEXTURE_EDITOR:
 			pass
 		Mode.STRUCT:
-			pass
+			_struct_clear_visuals()
 
 func _enter_mode(mode: int) -> void:
 	match mode:
@@ -2369,6 +2369,18 @@ func _sync_mode_cursor() -> void:
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 			mouse_default_cursor_shape = CURSOR_ARROW
 
+
+func _struct_clear_visuals() -> void:
+	if is_instance_valid(struct_geo):
+		struct_geo.clear()
+		struct_geo.get_material_override().vertex_color_use_as_albedo = false
+	struct_selected_vertex = -1
+	struct_is_dragging = false
+	if is_instance_valid(struct_settings_instance):
+		struct_settings_instance.vertices.clear()
+		struct_settings_instance.edges.clear()
+		struct_settings_instance._update_vertex_count()
+		struct_settings_instance._update_struct_visuals()
 
 func _struct_create_wireframe() -> void:
 	if not is_instance_valid(pet_node):
