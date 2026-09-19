@@ -2186,6 +2186,10 @@ func _is_text_input_focused(event: InputEventKey) -> bool:
 	return false
 
 func _exit_all_modes() -> void:
+	if current_mode != Mode.NONE:
+		_exit_mode(current_mode)
+		current_mode = Mode.NONE
+	
 	paintball_check_box.pressed = false
 	line_mode_check_box.pressed = false
 	move_mode_check_box.pressed = false
@@ -2194,8 +2198,13 @@ func _exit_all_modes() -> void:
 	texture_editor_mode_check_box.pressed = false
 	project_mode_check_box.pressed = false
 	auto_paintballer_check_box.pressed = false
+	struct_mode_check_box.pressed = false
+	struct_mode = false
 	view_palette_check_box.pressed = false
 	view_variations_check_box.pressed = false
+	
+	if is_instance_valid(struct_settings_instance):
+		_update_mode_panel_visibility(struct_settings_instance, false)
 
 	# Return to FileTree tab when explicitly exiting all modes (ESC)
 	if sidebar_controller:
