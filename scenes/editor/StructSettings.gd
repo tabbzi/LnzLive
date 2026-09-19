@@ -304,8 +304,8 @@ func _on_bake_button_pressed() -> void:
 		var l_color = 10
 		var l_outline_color_left = -1
 		var l_outline_color_right = -1
-		var l_start_thickness = 10
-		var l_end_thickness = 10
+		var l_start_thickness = 100
+		var l_end_thickness = 100
 		var l_outline = -1
 		var l_draw_order = -1
 		if is_instance_valid(line_mode_settings):
