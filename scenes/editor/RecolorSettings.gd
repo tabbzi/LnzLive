@@ -209,7 +209,7 @@ func _on_bucket_property_changed(new_text: String) -> void:
 	if pet_node and bucket_texture_edit.text != "":
 		var tex_idx: int = int(bucket_texture_edit.text)
 		if pet_node.lnz and pet_node.lnz.texture_list:
-			var tex: Texture = pet_node.load_texture_from_list(tex_idx, pet_node.lnz.texture_list)
+			var tex: Texture = pet_node.load_texture_from_list(tex_idx, pet_node.lnz.texture_list, LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode))
 			bucket_texture_icon.texture = tex
 	else:
 		bucket_texture_icon.texture = null
@@ -334,7 +334,7 @@ func queue_bucket_change(ball_node: Node) -> void:
 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
 			var tex_id = props.texture_id
 			if tex_id >= 0 and tex_id < pet_node.lnz.texture_list.size():
-				var tex: Texture = pet_node.load_texture_from_list(tex_id, pet_node.lnz.texture_list)
+				var tex: Texture = pet_node.load_texture_from_list(tex_id, pet_node.lnz.texture_list, LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode))
 				if tex: 
 					ball_node.texture = tex
 					var tex_info = pet_node.lnz.texture_list[tex_id]

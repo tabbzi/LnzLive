@@ -1059,7 +1059,7 @@ func _build_atlas_manifest_lookup():
 		if not _atlas_manifest_normalized.has(lower_key):
 			_atlas_manifest_normalized[lower_key] = _atlas_manifest[key]
 
-func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Texture:
+func load_texture(texture_filename: String, preloader: ResourcePreloader, custom_lnz_palette: Array = []) -> Texture:
 	var t_start = OS.get_ticks_msec()
 	if _texture_cache.has(texture_filename):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
@@ -1135,7 +1135,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 				break
 
 		if loaded_path != "":
-			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode)
+			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode, false, custom_lnz_palette)
 			if raw_bmp_data.has("data"):
 				var w = raw_bmp_data["w"]
 				var h = raw_bmp_data["h"]
@@ -1169,14 +1169,14 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 	
 	return texture
 
-func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
+func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = []) -> Texture:
 	if texture_id < 0 or texture_id >= texture_list.size():
 		return null
 
 	var tex_info = texture_list[texture_id]
 	if tex_info.has("filename"):
 		var texture_filename = tex_info.filename
-		return load_texture(texture_filename, preloader)
+		return load_texture(texture_filename, preloader, custom_lnz_palette)
 	return null
 
 func clear_texture_cache_for(filename: String):
@@ -1235,6 +1235,16 @@ func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
 
 	return pal_texture
 
+func _resolve_custom_palette_for_lnz() -> Array:
+	if lnz == null or lnz.palette == null or lnz.palette == "":
+		return []
+
+	var pal_texture = LnzLiveUtils.resolve_palette_resource(lnz.palette, is_babyz_mode, preloader)
+	if pal_texture == null:
+		return []
+
+	return LnzLiveUtils.extract_palette_from_rampimg(pal_texture)
+
 
 ### RENDERING & GEOMETRY ###
 # generate_balls
@@ -1249,6 +1259,7 @@ func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var t_start = OS.get_ticks_msec()
+	var active_custom_palette = _resolve_custom_palette_for_lnz()
 
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
@@ -1335,7 +1346,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		node.rotation_degrees = data.rotation
 
 		if new_create:
-			apply_visual_properties(node, data, texture_list, palette)
+			apply_visual_properties(node, data, texture_list, palette, null, active_custom_palette)
 
 		if is_omitted:
 			node.omitted = true
@@ -1373,7 +1384,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if is_special_ball(species, data.ball_no):
 				node.add_to_group("special_balls")
 
-			apply_visual_properties(node, data, texture_list, palette)
+			apply_visual_properties(node, data, texture_list, palette, null, active_custom_palette)
 
 		var add_pos = data.position
 		add_pos.y *= -1.0
@@ -1460,7 +1471,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 		# Apply Visuals
 		if new_create:
-			apply_visual_properties(node, data, texture_list, palette)
+			apply_visual_properties(node, data, texture_list, palette, null, active_custom_palette)
 
 		if is_omitted:
 			node.omitted = true
@@ -1505,7 +1516,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_normal.y *= -1.0
 				node.set_surface_normal(pb_normal)
 
-				apply_visual_properties(node, pb_data, texture_list, palette)
+				apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
 
 			#node.base_ball_position = base_node.transform.origin
 			node.base_ball_position = base_node.global_transform.origin
@@ -1548,6 +1559,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	var t_start = OS.get_ticks_msec()
+	var active_custom_palette = _resolve_custom_palette_for_lnz()
 
 	#print("[INFO] dog_generator: generate_polygons: generating polygons")
 	#print("[INFO] dog_generator: generate_polygons: polygon data size:", polygon_data.size())
@@ -1610,7 +1622,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 				and polygon.texture_id != null
 				and not str(polygon.texture_id).empty()
 			):
-				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list)
+				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list, active_custom_palette)
 			else:
 				# If no texture is defined, default to first ball
 				visual_polygon.texture = point1.texture
@@ -1933,6 +1945,8 @@ func restore_ball_visual_states(ball_nos: Array):
 	if lnz == null:
 		return
 
+	var active_custom_palette = _resolve_custom_palette_for_lnz()
+
 	for b_no in ball_nos:
 		var visual_node = ball_map.get(b_no)
 		if not is_instance_valid(visual_node):
@@ -1950,7 +1964,7 @@ func restore_ball_visual_states(ball_nos: Array):
 		visual_node.fuzz_amount = fuzz_to_amount(data.fuzz)
 
 		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
-			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
+			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list, active_custom_palette)
 			var tex_info = lnz.texture_list[data.texture_id]
 			visual_node.transparent_color = tex_info.transparent_color
 			if tex_info.has("texture_size") and tex_info.texture_size != null:
@@ -2329,7 +2343,7 @@ func apply_shader_settings(node):
 			mat.set_shader_param("texture_affected_by_rotation", _shader_affected_by_rotation)
 			mat.set_shader_param("render_flat_colors", render_flat_colors_global)
 
-func apply_visual_properties(node, data, texture_list, palette, fallback_texture = null):
+func apply_visual_properties(node, data, texture_list, palette, fallback_texture = null, custom_lnz_palette: Array = []):
 	apply_shader_settings(node)
 	node.color_index = data.color_index
 	node.outline_color_index = data.outline_color_index
@@ -2338,7 +2352,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 	node.fuzz_amount = fuzz_to_amount(data.fuzz)
 	node.palette = palette
 	if data.texture_id >= 0 and data.texture_id < texture_list.size():
-		var tex = load_texture_from_list(data.texture_id, texture_list)
+		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette)
 		if tex:
 			node.texture = tex
 			var tex_info = texture_list[data.texture_id]
@@ -2727,6 +2741,7 @@ func _create_paintball_instance(base_ball_node):
 	return pb
 
 func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size):
+	var active_custom_palette = _resolve_custom_palette_for_lnz()
 	var target_layer = 1
 	var base_mesh = base_ball_node.get_node_or_null("MeshInstance")
 	if base_mesh and base_mesh is VisualInstance:
@@ -2754,7 +2769,7 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 	pb_visual_ball.palette = base_ball_node.palette
 
 	if pb_data.texture > -1:
-		var tex_pb = load_texture_from_list(pb_data.texture, lnz.texture_list)
+		var tex_pb = load_texture_from_list(pb_data.texture, lnz.texture_list, active_custom_palette)
 		if tex_pb:
 			pb_visual_ball.texture = tex_pb
 			if pb_data.texture < lnz.texture_list.size():
@@ -2937,6 +2952,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	if not _validate_addball_props(props):
 		return false
 
+	var active_custom_palette = _resolve_custom_palette_for_lnz()
 	var addball_data = apply_extensions_for_addball(props, ball_no)
 	
 	var base_node = ball_map.get(addball_data.base)
@@ -2959,7 +2975,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	node.palette = current_palette_texture
 	
 	if addball_data.texture_id >= 0:
-		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list)
+		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list, active_custom_palette)
 		if tex:
 			node.texture = tex
 	else:

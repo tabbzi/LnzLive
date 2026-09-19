@@ -592,7 +592,7 @@ static func validate_8bit_bmp(path: String) -> Dictionary:
 		
 	return {"valid": true}
 
-static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: bool = false) -> Dictionary:
+static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: bool = false, custom_lnz_palette: Array = []) -> Dictionary:
 	var f: File = File.new()
 	if f.open(path, File.READ) != OK:
 		return {}
@@ -677,15 +677,15 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	var target_tex: Texture = BABYZ_PALETTE if is_babyz_mode else DEFAULT_PALETTE
 	var target_palette: Array = extract_palette_from_rampimg(target_tex)
 
-	var diff: float = verify_palette_compatibility(bmp_palette, target_palette)
-	
+	var decision: Dictionary = get_texture_load_action(bmp_palette, target_palette, custom_lnz_palette)
+
 	if debug:
-		print("[DEBUG] Palette difference score: ", diff)
-	
-	if diff > 0.05:
+		print("[DEBUG] Palette difference score: ", decision)
+
+	if decision["action"] == "quantize":
 		if debug:
 			print("[INFO] Palette mismatch detected. Requantizing: ", path)
-		var new_index_data: PoolByteArray = requantize_bmp_data(index_data, bmp_palette, target_palette)
+		var new_index_data: PoolByteArray = requantize_bmp_data(index_data, bmp_palette, decision["target_palette"])
 		index_data.resize(0)
 		index_data = new_index_data
 
@@ -712,6 +712,63 @@ static func extract_palette_from_rampimg(tex: Texture) -> Array:
 		pal.append(img.get_pixel(i, 0))
 	img.unlock()
 	return pal
+
+static func get_texture_load_action(bmp_palette: Array, default_palette: Array, custom_lnz_palette: Array = []) -> Dictionary:
+	var default_diff: float = verify_palette_compatibility(bmp_palette, default_palette)
+
+	if default_diff < 1.0:
+		return { "action": "use_as_is", "target_palette": default_palette }
+
+	if custom_lnz_palette.size() > 0:
+		var custom_diff: float = verify_palette_compatibility(bmp_palette, custom_lnz_palette)
+
+		if custom_diff < 1.0:
+			return { "action": "use_as_is", "target_palette": custom_lnz_palette }
+
+	var target: Array = custom_lnz_palette if custom_lnz_palette.size() > 0 else default_palette
+	return { "action": "quantize", "target_palette": target }
+
+static func resolve_palette_resource(palette_name, is_babyz_mode: bool, preloader: ResourcePreloader = null) -> Texture:
+	var pal_texture: Texture = null
+	var default_palette: Texture = DEFAULT_PALETTE
+	if is_babyz_mode:
+		default_palette = BABYZ_PALETTE
+
+	if palette_name != null and palette_name != "":
+		var user_res_path = "user://resources/palettes".plus_file(palette_name)
+		var res_res_path = "res://resources/palettes".plus_file(palette_name)
+
+		if ResourceLoader.exists(user_res_path):
+			pal_texture = ResourceLoader.load(user_res_path)
+		elif ResourceLoader.exists(res_res_path):
+			pal_texture = ResourceLoader.load(res_res_path)
+		else:
+			if not preloader:
+				var tree = Engine.get_main_loop()
+				if tree:
+					var root_node = tree.get_root()
+					if root_node:
+						preloader = root_node.get_node_or_null("Root/ResourcePreloader")
+			var lookup_key = "palette_" + palette_name.to_lower()
+			if preloader and preloader.has_resource(lookup_key):
+				pal_texture = preloader.get_resource(lookup_key)
+
+	if pal_texture == null:
+		pal_texture = default_palette
+
+	return pal_texture
+
+static func get_custom_palette_array(pet_node: Node, is_babyz_mode: bool = false) -> Array:
+	var custom_palette: Array = []
+	if not pet_node or not pet_node.lnz or not pet_node.lnz.palette:
+		return custom_palette
+
+	var pal_name: String = pet_node.lnz.palette
+	var pal_texture: Texture = resolve_palette_resource(pal_name, is_babyz_mode)
+	if pal_texture:
+		custom_palette = extract_palette_from_rampimg(pal_texture)
+
+	return custom_palette
 
 static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, target_palette: Array) -> PoolByteArray:
 	var lut: PoolByteArray = PoolByteArray()
