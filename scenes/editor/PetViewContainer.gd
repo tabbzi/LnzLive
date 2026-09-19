@@ -4786,7 +4786,8 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 		return false
 
 	# Group pan: SHIFT + left-click drag on any area (background or selected area)
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+	# Exclude ALT to let SHIFT+ALT+drag go through to the resize handler
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_ALT):
 		_group_panning = true
 		_group_pan_start_pos = event.position
 		# Capture the current world position of the first selected ball as reference
