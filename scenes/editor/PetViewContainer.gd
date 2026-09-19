@@ -1639,6 +1639,32 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 		elif not event.pressed:
 			if Input.is_key_pressed(KEY_SHIFT):
 				struct_is_dragging = false
+				
+		# Ball selection on normal left-click
+		elif event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+			var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			if target_ball:
+				var current_ids: Array = []
+				if struct_settings_instance.base_ball_range.strip_edges() != "":
+					current_ids = LnzLiveUtils.parse_number_list(struct_settings_instance.base_ball_range)
+				if Input.is_key_pressed(KEY_CONTROL):
+					if target_ball.ball_no in current_ids:
+						current_ids.erase(target_ball.ball_no)
+					else:
+						current_ids.append(target_ball.ball_no)
+				else:
+					current_ids = [target_ball.ball_no]
+				var str_ids = PoolStringArray()
+				for id in current_ids:
+					str_ids.append(str(id))
+				struct_settings_instance.base_ball_range_edit.text = str_ids.join(", ")
+				struct_settings_instance._on_base_ball_range_changed(struct_settings_instance.base_ball_range_edit.text)
+				return true
+			else:
+				if not Input.is_key_pressed(KEY_CONTROL):
+					struct_settings_instance.base_ball_range_edit.text = ""
+					struct_settings_instance._on_base_ball_range_changed("")
+				return true
 
 	if event is InputEventMouseMotion and struct_is_dragging and struct_selected_vertex != -1:
 		if Input.is_key_pressed(KEY_SHIFT):
@@ -2290,6 +2316,7 @@ func _exit_mode(mode: int) -> void:
 			pass
 		Mode.STRUCT:
 			_struct_clear_visuals()
+			_on_unselect_all()
 
 func _enter_mode(mode: int) -> void:
 	match mode:
@@ -2319,6 +2346,13 @@ func _enter_mode(mode: int) -> void:
 		Mode.AUTO_PAINTBALLER:
 			if is_instance_valid(pet_node):
 				_on_affected_list_changed(auto_paintballer_settings_instance.get_affected_ball_ids())
+		Mode.STRUCT:
+			if is_instance_valid(struct_settings_instance):
+				var text = struct_settings_instance.base_ball_range_edit.text
+				var ids: Array = []
+				if text.strip_edges() != "":
+					ids = LnzLiveUtils.parse_number_list(text)
+				_on_struct_affected_list_changed(ids)
 
 func _sync_mode_checkboxes() -> void:
 	if select_check_box.pressed != selecting_on:

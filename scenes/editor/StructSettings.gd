@@ -51,6 +51,15 @@ func _ready() -> void:
 	
 	presets_tree = find_node("PresetsTree")
 	presets_tree.columns = 2
+	presets_tree.hide_root = true
+	presets_tree.set_column_titles_visible(true)
+	presets_tree.set_column_title(0, "Property")
+	presets_tree.set_column_title(1, "Value")
+	
+	var lbl = find_node("PresetsLabel")
+	if is_instance_valid(lbl) and lbl.has_font("font"):
+		presets_tree.add_font_override("font", lbl.get_font("font"))
+		presets_tree.add_font_override("title_button_font", lbl.get_font("font"))
 	
 	add_preset_button = find_node("AddPresetButton")
 	remove_preset_button = find_node("RemovePresetButton")
@@ -61,9 +70,8 @@ func _ready() -> void:
 	bake_button = find_node("BakeButton")
 	vertex_count_label = find_node("VertexCountLabel")
 	
-	print("[StructSettings] ready: tree=", is_instance_valid(presets_tree), " add=", is_instance_valid(add_preset_button), " rem=", is_instance_valid(remove_preset_button))
-	
 	presets_tree.connect("item_edited", self, "_on_tree_item_edited")
+	presets_tree.connect("item_selected", self, "_on_tree_item_selected")
 	add_preset_button.connect("pressed", self, "_on_add_preset_pressed")
 	remove_preset_button.connect("pressed", self, "_on_remove_preset_pressed")
 	base_mode_option.connect("item_selected", self, "_on_base_mode_selected")
@@ -98,15 +106,22 @@ func _update_tree() -> void:
 	for i in range(presets.size()):
 		var p = presets[i]
 		var name_item = presets_tree.create_item(root)
-		name_item.set_editable(0, true)
-		name_item.set_text(0, "name")
+		
+		name_item.set_editable(0, false)
+		name_item.set_editable(1, true)
+		name_item.set_text(0, "Preset Name")
 		name_item.set_text(1, p.get("name", "Preset"))
 		name_item.set_metadata(0, {"preset_idx": i, "field": "name"})
+		
+		name_item.set_custom_bg_color(0, Color(0.2, 0.2, 0.2, 1))
+		name_item.set_custom_bg_color(1, Color(0.2, 0.2, 0.2, 1))
+		
 		for field in PRESET_FIELDS:
 			if field == "name":
 				continue
-			var item = presets_tree.create_item(root)
-			item.set_editable(0, true)
+			var item = presets_tree.create_item(name_item)
+			item.set_editable(0, false)
+			item.set_editable(1, true)
 			item.set_text(0, field)
 			item.set_text(1, str(p.get(field, 0)))
 			item.set_metadata(0, {"preset_idx": i, "field": field})
@@ -117,13 +132,32 @@ func _update_tree_selection_visual() -> void:
 	var root = presets_tree.get_root()
 	if not is_instance_valid(root):
 		return
-	var child = root.get_children()
-	while is_instance_valid(child):
-		if child.get_metadata(0).get("preset_idx", -1) == active_preset_idx:
-			child.set_custom_color(0, Color(0, 0.8, 0, 1))
-		else:
-			child.set_custom_color(0, Color(1, 1, 1, 1))
-		child = child.get_next()
+	var preset_item = root.get_children()
+	while is_instance_valid(preset_item):
+		var meta = preset_item.get_metadata(0)
+		var is_active = false
+		if meta:
+			is_active = (meta.get("preset_idx", -1) == active_preset_idx)
+		var color = Color(0, 0.8, 0, 1) if is_active else Color(1, 1, 1, 1)
+		preset_item.set_custom_color(0, color)
+		preset_item.set_custom_color(1, color)
+		var field_item = preset_item.get_children()
+		while is_instance_valid(field_item):
+			field_item.set_custom_color(0, color)
+			field_item.set_custom_color(1, color)
+			field_item = field_item.get_next()
+		preset_item = preset_item.get_next()
+
+func _on_tree_item_selected() -> void:
+	var item = presets_tree.get_selected()
+	if not is_instance_valid(item):
+		return
+	var meta = item.get_metadata(0)
+	if meta:
+		var idx = meta.get("preset_idx", -1)
+		if idx != -1 and idx != active_preset_idx:
+			active_preset_idx = idx
+			_update_tree_selection_visual()
 
 
 func _on_tree_item_edited() -> void:
@@ -142,7 +176,10 @@ func _on_tree_item_edited() -> void:
 		presets[preset_idx][field] = val_text
 	else:
 		presets[preset_idx][field] = val_text.to_int()
+	active_preset_idx = preset_idx
 	_update_tree_selection_visual()
+	if is_instance_valid(pet_view) and pet_view.has_method("_update_struct_visuals"):
+		pet_view._update_struct_visuals()
 
 
 func _on_add_preset_pressed() -> void:
@@ -190,6 +227,10 @@ func _on_proximity_range_changed(value: float) -> void:
 
 func _on_base_ball_range_changed(text: String) -> void:
 	base_ball_range = text
+	var ids: Array = []
+	if text.strip_edges() != "":
+		ids = LnzLiveUtils.parse_number_list(text)
+	emit_signal("affected_list_changed", ids)
 
 
 func _update_base_mode_ui() -> void:

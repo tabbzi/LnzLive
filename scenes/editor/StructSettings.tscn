@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://scenes/editor/StructSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
@@ -25,36 +25,12 @@ size = 30
 font_data = ExtResource( 3 )
 
 [sub_resource type="DynamicFont" id=4]
-size = 30
-font_data = ExtResource( 3 )
-
-[sub_resource type="DynamicFont" id=5]
 size = 24
 font_data = ExtResource( 3 )
 
-[sub_resource type="StyleBoxFlat" id=6]
-content_margin_left = 5.0
-content_margin_right = 5.0
-content_margin_top = 2.0
-content_margin_bottom = 2.0
-bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-anti_aliasing = false
-
-[sub_resource type="StyleBoxFlat" id=7]
-content_margin_left = 5.0
-content_margin_right = 5.0
-content_margin_top = 2.0
-content_margin_bottom = 2.0
-bg_color = Color( 0.294118, 0.403922, 0.403922, 1 )
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-anti_aliasing = false
+[sub_resource type="DynamicFont" id=5]
+size = 30
+font_data = ExtResource( 3 )
 
 [node name="StructSettings" type="Panel"]
 margin_right = 500.0
@@ -91,7 +67,7 @@ text = "Struct Mode"
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
 margin_right = 470.0
-margin_bottom = 104.0
+margin_bottom = 79.0
 rect_min_size = Vector2( 0, 50 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -99,23 +75,26 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
 margin_right = 470.0
-margin_bottom = 75.0
+margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
 margin_right = 470.0
-margin_bottom = 75.0
+margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "SHIFT + Click to place a vertex.\nSHIFT + Drag a vertex to reposition it.\nSHIFT + E to extrude an edge from selected vertex.\nClick 'Bake to LNZ' to commit to the file."
+text = "SHIFT + Click to place a vertex.
+SHIFT + Drag a vertex to reposition it.
+SHIFT + E to extrude an edge from selected vertex.
+Click 'Bake to LNZ' to commit to the file."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0
 margin_right = 470.0
-margin_bottom = 1101.0
+margin_bottom = 1049.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -123,140 +102,135 @@ __meta__ = {
 }
 
 [node name="PresetsVBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 475.0
-margin_bottom = 1050.0
+margin_right = 355.0
+margin_bottom = 559.0
 custom_constants/separation = 4
 
 [node name="PresetsLabel" type="Label" parent="VBoxContainer/ScrollContainer/PresetsVBox"]
-margin_right = 465.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
+margin_right = 355.0
+margin_bottom = 17.0
+custom_fonts/font = SubResource( 4 )
 text = "Presets"
 
 [node name="PresetsTree" type="Tree" parent="VBoxContainer/ScrollContainer/PresetsVBox"]
-margin_top = 29.0
-margin_right = 465.0
-margin_bottom = 300.0
-custom_minimum_size = Vector2( 0, 200 )
+margin_top = 21.0
+margin_right = 455.0
+margin_bottom = 376.0
+rect_min_size = Vector2( 355, 355 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
-column_titles = true
-column_min_width = 150
 
 [node name="PresetButtonsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/PresetsVBox"]
-margin_top = 304.0
-margin_right = 465.0
-margin_bottom = 329.0
+margin_top = 380.0
+margin_right = 355.0
+margin_bottom = 403.0
 alignment = 1
 
 [node name="AddPresetButton" type="Button" parent="VBoxContainer/ScrollContainer/PresetsVBox/PresetButtonsHBox"]
-margin_left = 105.0
-margin_top = 5.0
-margin_right = 195.0
-margin_bottom = 30.0
-custom_minimum_size = Vector2( 0, 36 )
-custom_fonts/font = SubResource( 5 )
+margin_left = 80.0
+margin_right = 164.0
+margin_bottom = 23.0
+custom_fonts/font = SubResource( 4 )
 text = "Add Preset"
 
 [node name="RemovePresetButton" type="Button" parent="VBoxContainer/ScrollContainer/PresetsVBox/PresetButtonsHBox"]
-margin_left = 199.0
-margin_top = 5.0
-margin_right = 293.0
-margin_bottom = 30.0
-custom_minimum_size = Vector2( 0, 36 )
-custom_fonts/font = SubResource( 5 )
+margin_left = 168.0
+margin_right = 275.0
+margin_bottom = 23.0
+custom_fonts/font = SubResource( 4 )
 text = "Remove Preset"
 
 [node name="BaseModeSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/PresetsVBox"]
-margin_top = 333.0
-margin_right = 465.0
-margin_bottom = 410.0
+margin_top = 407.0
+margin_right = 355.0
+margin_bottom = 507.0
 custom_constants/separation = 4
 
 [node name="BaseModeLabel" type="Label" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection"]
-margin_right = 455.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
+margin_right = 355.0
+margin_bottom = 17.0
+custom_fonts/font = SubResource( 4 )
 text = "Base Assignment"
 
 [node name="BaseModeOption" type="OptionButton" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection"]
-margin_top = 29.0
-margin_right = 455.0
-margin_bottom = 50.0
-custom_minimum_size = Vector2( 0, 36 )
-custom_fonts/font = SubResource( 5 )
+margin_top = 21.0
+margin_right = 355.0
+margin_bottom = 44.0
+custom_fonts/font = SubResource( 4 )
 
 [node name="SingleBaseHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection"]
-margin_top = 54.0
-margin_right = 455.0
-margin_bottom = 79.0
+margin_top = 48.0
+margin_right = 355.0
+margin_bottom = 72.0
 alignment = 1
 
 [node name="SingleBaseLabel" type="Label" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection/SingleBaseHBox"]
-custom_minimum_size = Vector2( 0, 25 )
-custom_fonts/font = SubResource( 4 )
+margin_left = 98.0
+margin_top = 1.0
+margin_right = 178.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
 text = "Base Ball:"
 
 [node name="SingleBaseSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection/SingleBaseHBox"]
-value = 1
-step = 1
-custom_minimum_size = Vector2( 80, 25 )
-custom_fonts/font = SubResource( 5 )
+margin_left = 182.0
+margin_right = 256.0
+margin_bottom = 24.0
+value = 1.0
 
 [node name="ProximityHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection"]
-margin_top = 83.0
-margin_right = 455.0
-margin_bottom = 108.0
+margin_top = 76.0
+margin_right = 355.0
+margin_bottom = 100.0
 alignment = 1
 
 [node name="ProximityLabel" type="Label" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection/ProximityHBox"]
-custom_minimum_size = Vector2( 0, 25 )
-custom_fonts/font = SubResource( 4 )
+margin_left = 111.0
+margin_top = 1.0
+margin_right = 166.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 5 )
 text = "Range:"
 
 [node name="ProximityRangeSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseModeSection/ProximityHBox"]
+margin_left = 170.0
+margin_right = 244.0
+margin_bottom = 24.0
 value = 50.0
-step = 1.0
-custom_minimum_size = Vector2( 80, 25 )
-custom_fonts/font = SubResource( 5 )
 
 [node name="BaseBallRangeSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/PresetsVBox"]
-margin_top = 414.0
-margin_right = 475.0
-margin_bottom = 460.0
+margin_top = 511.0
+margin_right = 355.0
+margin_bottom = 559.0
 custom_constants/separation = 4
 
 [node name="BaseBallRangeLabel" type="Label" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseBallRangeSection"]
-margin_right = 465.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
+margin_right = 355.0
+margin_bottom = 17.0
+custom_fonts/font = SubResource( 4 )
 text = "Affected Base Ballz:"
 
 [node name="AffectedBallzEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/PresetsVBox/BaseBallRangeSection"]
-margin_top = 29.0
-margin_right = 465.0
-margin_bottom = 56.0
-custom_minimum_size = Vector2( 0, 36 )
-custom_fonts/font = SubResource( 5 )
+margin_top = 21.0
+margin_right = 355.0
+margin_bottom = 48.0
+custom_fonts/font = SubResource( 4 )
 placeholder_text = "e.g. 1,2,5-10"
 
 [node name="BakeButton" type="Button" parent="VBoxContainer"]
-margin_top = 1105.0
-margin_left = 100.0
-margin_right = 400.0
-margin_bottom = 1131.0
-custom_minimum_size = Vector2( 0, 44 )
+margin_top = 1053.0
+margin_right = 470.0
+margin_bottom = 1076.0
+custom_fonts/font = SubResource( 4 )
 disabled = true
-custom_fonts/font = SubResource( 5 )
 text = "Bake to LNZ"
 
 [node name="VertexCountLabel" type="Label" parent="VBoxContainer"]
 margin_top = 1080.0
-margin_left = 100.0
-margin_right = 400.0
+margin_right = 470.0
 margin_bottom = 1101.0
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 5 )
 text = "Vertices: 0 | Edges: 0"
 
 [connection signal="item_edited" from="VBoxContainer/ScrollContainer/PresetsVBox/PresetsTree" to="." method="_on_tree_item_edited"]
