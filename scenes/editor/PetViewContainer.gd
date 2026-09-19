@@ -1028,13 +1028,14 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 				_scale_group_initial_data[b.ball_no] = {
 					"pos": b.global_transform.origin, "size": b.ball_size
 				}
-				var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
-				if partner_id != -1 and partner_id != b.ball_no:
-					var mb: Spatial = find_visual_ball_by_no(partner_id)
-					if mb:
-						_scale_group_initial_data[partner_id] = {
-							"pos": mb.global_transform.origin, "size": mb.ball_size
-						}
+				if move_mode_settings_instance.is_mirror_x_active():
+					var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
+					if partner_id != -1 and partner_id != b.ball_no:
+						var mb: Spatial = find_visual_ball_by_no(partner_id)
+						if mb:
+							_scale_group_initial_data[partner_id] = {
+								"pos": mb.global_transform.origin, "size": mb.ball_size
+							}
 		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 	else:
 		_record_move_start_state()
