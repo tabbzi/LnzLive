@@ -206,9 +206,11 @@ void fragment() {
     bool is_any_edge = is_right_edge || is_left_edge;
 
     if (is_right_edge && r_color_index != -1) {
-        texture_color = texture(palette, vec2(float(r_color_index) / 255.0, 0.5)).rgb;
+        int ri = r_color_index == 0 ? 244 : r_color_index;
+        texture_color = texture(palette, vec2(float(ri) / 255.0, 0.5)).rgb;
     } else if (is_left_edge && l_color_index != -1) {
-        texture_color = texture(palette, vec2(float(l_color_index) / 255.0, 0.5)).rgb;
+        int li = l_color_index == 0 ? 244 : l_color_index;
+        texture_color = texture(palette, vec2(float(li) / 255.0, 0.5)).rgb;
     } else {
         if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
             float raw_val = texture(line_texture, tex_coords).r;
@@ -223,7 +225,8 @@ void fragment() {
             }
         } else {
             // untextured, if range check failed or has_texture is false
-            texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.5)).rgb;
+            int fill_idx = color_index == 0 ? 244 : color_index;
+            texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.5)).rgb;
             is_transparent = false;
         }
     }

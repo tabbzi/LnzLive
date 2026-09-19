@@ -338,11 +338,13 @@ void fragment() {
         }
     } else {
         // untextured, if range check failed or has_texture is false
-        texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
+        int fill_idx = color_index == 0 ? 244 : color_index;
+        texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.0)).rgb;
         is_transparent = false;
     }
     
-    vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+    int outline_idx = outline_color_index == 0 ? 244 : outline_color_index;
+    vec3 outline_color = texture(palette, vec2(float(outline_idx) / 255.0, 0.0)).rgb;
     ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
 
     // Adjust ALPHA based on conditions

@@ -189,15 +189,18 @@ void fragment() {
         }
     } else {
         // untextured, if range check failed or has_texture is false
-        texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.5)).rgb;
+        int fill_idx = color_index == 0 ? 244 : color_index;
+        texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.5)).rgb;
         is_transparent = false;
     }
 
     // Add left and right edge coloring
     if (uv.x < 0.05 && l_edge_color != -1) {
-        texture_color = get_shifted_color(l_edge_color);
+        int edge_idx = l_edge_color == 0 ? 244 : l_edge_color;
+        texture_color = get_shifted_color(edge_idx);
     } else if (uv.x > 0.95 && r_edge_color != -1) {
-        texture_color = get_shifted_color(r_edge_color);
+        int edge_idx = r_edge_color == 0 ? 244 : r_edge_color;
+        texture_color = get_shifted_color(edge_idx);
     }
 
     ALBEDO = texture_color * (1.0 - fuzz_factor);

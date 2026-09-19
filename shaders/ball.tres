@@ -417,7 +417,8 @@ void fragment() {
         }
     } else {
         // Untextured, if range check failed or has_texture is false
-        texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
+        int fill_idx = color_index == 0 ? 244 : color_index;
+        texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.0)).rgb;
         is_transparent = false;
     }
 
@@ -425,7 +426,7 @@ void fragment() {
     if (outline == -3) {
         ALBEDO = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
     } else {
-        vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+        vec3 outline_color = texture(palette, vec2(float(outline_color_index == 0 ? 244 : outline_color_index) / 255.0, 0.0)).rgb;
         ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
@@ -434,7 +435,7 @@ void fragment() {
     if (outline == -3) {
         final_color = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
     } else {
-        vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+        vec3 outline_color = texture(palette, vec2(float(outline_color_index == 0 ? 244 : outline_color_index) / 255.0, 0.0)).rgb;
         final_color = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
@@ -462,9 +463,10 @@ void fragment() {
                 vc.x * rot_s + vc.y * rot_c
             );
             if (vcr.y > 0.5) {
+                int lid_idx = eyelid_color == 0 ? 244 : eyelid_color;
                 vec3 lid_col = texture(
                     palette,
-                    vec2(float(eyelid_color)/255.0, 0.0)
+                    vec2(float(lid_idx)/255.0, 0.0)
                 ).rgb;
                 ALBEDO = lid_col;
             }
