@@ -774,10 +774,10 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 	var lut: PoolByteArray = PoolByteArray()
 	lut.resize(256)
 	for i in range(bmp_palette.size()):
-		var best_idx: int = 0
+		var best_idx: int = 10
 		var min_dist: float = 1000000.0
 		var col1: Color = bmp_palette[i]
-		for j in range(target_palette.size()):
+		for j in range(10, target_palette.size()):
 			var col2: Color = target_palette[j]
 			var d: float = pow(col1.r - col2.r, 2) + pow(col1.g - col2.g, 2) + pow(col1.b - col2.b, 2)
 			if d < min_dist:
