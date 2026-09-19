@@ -110,7 +110,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
-text = "Left-click on a vertex to select it.\nLeft-click on a ball to add it to Affected Ballz.\nSHIFT + Drag a vertex to reposition it.\nPress SHIFT + E to extrude an edge from selected vertex.\nClick 'Bake to LNZ' to commit to the file."
+text = "SHIFT + Q to place a vertex.\nSHIFT + Drag a vertex to reposition it.\nSHIFT + E to extrude an edge from selected vertex.\nClick 'Bake to LNZ' to commit to the file."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0

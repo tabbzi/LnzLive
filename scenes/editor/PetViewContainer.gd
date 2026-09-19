@@ -750,7 +750,7 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif struct_mode:
-		body = "Struct Mode: Left-click a vertex to select. Left-click a ball to add to Affected Ballz.\nSHIFT + Drag to move. SHIFT + E to extrude."
+		body = "Struct Mode: SHIFT + Q to place vertex. SHIFT + Drag to move. SHIFT + E to extrude."
 
 	elif selecting_on:
 		body = "Select Mode: when hovering, cycle ballz using N key..."
@@ -1583,28 +1583,27 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 		return false
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		if event.pressed and not Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_CONTROL):
-			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
-			var ray_o = camera.project_ray_origin(screen_pos)
-			var ray_d = camera.project_ray_normal(screen_pos)
-			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
-			if result and result.collider:
-				var parent = result.collider.get_parent()
-				if parent and (parent.is_in_group("balls") or parent.is_in_group("addballs")):
-					var ball_no = parent.ball_no
-					if is_instance_valid(struct_settings_instance):
-						struct_settings_instance.add_affected_ball_ids([ball_no])
-					return true
-		# Left-click without SHIFT: place new vertex (same as vertex select but no hit)
-		if event.pressed and not Input.is_key_pressed(KEY_SHIFT):
-			# Already handled vertex select above; if we get here, no vertex was hit
-			# Check if clicking on a ball (for affected ballz) — already handled above
-			# If neither, place new vertex
+		if event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_CONTROL):
 			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
 			var ray_o = camera.project_ray_origin(screen_pos)
 			var ray_d = camera.project_ray_normal(screen_pos)
 			var verts = struct_settings_instance.vertices
+			# First check if clicking on an existing vertex
+			var selected_idx = -1
+			var min_dist = 100000.0
+			for i in range(verts.size()):
+				var v = verts[i]
+				var proj_2d = camera.unproject_position(v.pos)
+				var dist = proj_2d.distance_to(screen_pos)
+				if dist < 20 and dist < min_dist:
+					min_dist = dist
+					selected_idx = i
+			if selected_idx != -1:
+				struct_selected_vertex = selected_idx
+				struct_is_dragging = true
+				mark_ui_dirty()
+				return true
+			# No vertex hit — place new vertex (SHIFT+Q)
 			var space_state = camera.get_world().direct_space_state
 			var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
 			var drop_pos = null
@@ -1637,37 +1636,6 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 				if is_instance_valid(struct_settings_instance):
 					struct_settings_instance._update_vertex_count()
 				return true
-		# Left-click: select vertex if on one, otherwise add affected ball
-		if event.pressed:
-			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
-			var verts = struct_settings_instance.vertices
-			var selected_idx = -1
-			var min_dist = 100000.0
-			for i in range(verts.size()):
-				var v = verts[i]
-				var proj_2d = camera.unproject_position(v.pos)
-				var dist = proj_2d.distance_to(screen_pos)
-				if dist < 20 and dist < min_dist:
-					min_dist = dist
-					selected_idx = i
-			if selected_idx != -1:
-				struct_selected_vertex = selected_idx
-				struct_is_dragging = true
-				mark_ui_dirty()
-				return true
-			# No vertex hit — raycast to ball and add to AffectedBallz
-			var ray_o = camera.project_ray_origin(screen_pos)
-			var ray_d = camera.project_ray_normal(screen_pos)
-			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
-			if result and result.collider:
-				var parent = result.collider.get_parent()
-				if parent and (parent.is_in_group("balls") or parent.is_in_group("addballs")):
-					var ball_no = parent.ball_no
-					if is_instance_valid(struct_settings_instance):
-						struct_settings_instance.add_affected_ball_ids([ball_no])
-					return true
-			return true
 		elif not event.pressed:
 			if Input.is_key_pressed(KEY_SHIFT):
 				struct_is_dragging = false
