@@ -134,6 +134,13 @@ vec3 apply_palette_shift(int palette_index) {
     if (transparent_index > 0) {
         if (transparent_index == 1 || (effective_index >= transparent_index && effective_index < transparent_index + 10)) {
             return get_shifted_color(effective_index);
+        } else {
+            int target_decade = transparent_index - int(mod(float(transparent_index), 10.0));
+            int current_decade = effective_index - int(mod(float(effective_index), 10.0));
+            
+            if (current_decade == target_decade) {
+                return get_shifted_color(effective_index);
+            }
         }
     }
 
