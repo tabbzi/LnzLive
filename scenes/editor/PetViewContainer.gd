@@ -750,7 +750,7 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif struct_mode:
-		body = "Struct Mode: SHIFT + Q to place vertex. SHIFT + Drag to move. SHIFT + E to extrude."
+		body = "Struct Mode: SHIFT + Click to place vertex. SHIFT + Drag to move. SHIFT + E to extrude."
 
 	elif selecting_on:
 		body = "Select Mode: when hovering, cycle ballz using N key..."
@@ -2371,16 +2371,14 @@ func _sync_mode_cursor() -> void:
 
 
 func _struct_clear_visuals() -> void:
-	if is_instance_valid(struct_geo):
+	if is_instance_valid(struct_geo) and struct_geo.is_inside_tree():
 		struct_geo.clear()
-		struct_geo.get_material_override().vertex_color_use_as_albedo = false
 	struct_selected_vertex = -1
 	struct_is_dragging = false
 	if is_instance_valid(struct_settings_instance):
 		struct_settings_instance.vertices.clear()
 		struct_settings_instance.edges.clear()
 		struct_settings_instance._update_vertex_count()
-		struct_settings_instance._update_struct_visuals()
 
 func _struct_create_wireframe() -> void:
 	if not is_instance_valid(pet_node):
@@ -2396,12 +2394,10 @@ func _struct_create_wireframe() -> void:
 
 
 func _update_struct_visuals() -> void:
-	if not is_instance_valid(struct_geo):
-		return
-	if not is_instance_valid(struct_settings_instance):
+	if not is_instance_valid(struct_geo) or not is_instance_valid(struct_settings_instance):
 		return
 	struct_geo.clear()
-	if not struct_mode:
+	if struct_settings_instance.vertices.size() == 0 and struct_settings_instance.edges.size() == 0:
 		return
 	var verts = struct_settings_instance.vertices
 	var edges = struct_settings_instance.edges
@@ -2415,16 +2411,16 @@ func _update_struct_visuals() -> void:
 		var v = verts[i]
 		var col = struct_settings_instance.get_preset_color(v.get("preset_id", 0))
 		if i == struct_selected_vertex:
-			struct_geo.set_color(Color.green)
 			struct_geo.begin(Mesh.PRIMITIVE_LINES)
+			struct_geo.set_color(Color.green)
 			struct_geo.add_vertex(v.pos + Vector3(0.01, 0, 0))
 			struct_geo.add_vertex(v.pos - Vector3(0.01, 0, 0))
 			struct_geo.add_vertex(v.pos + Vector3(0, 0.01, 0))
 			struct_geo.add_vertex(v.pos - Vector3(0, 0.01, 0))
 			struct_geo.end()
 		else:
-			struct_geo.set_color(col)
 			struct_geo.begin(Mesh.PRIMITIVE_POINTS)
+			struct_geo.set_color(col)
 			struct_geo.add_vertex(v.pos)
 			struct_geo.end()
 

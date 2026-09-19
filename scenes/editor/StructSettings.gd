@@ -50,6 +50,8 @@ func _ready() -> void:
 	restore_position(_default_position())
 	
 	presets_tree = find_node("PresetsTree")
+	presets_tree.columns = 2
+	
 	add_preset_button = find_node("AddPresetButton")
 	remove_preset_button = find_node("RemovePresetButton")
 	base_mode_option = find_node("BaseModeOption")
@@ -58,6 +60,8 @@ func _ready() -> void:
 	base_ball_range_edit = find_node("AffectedBallzEdit")
 	bake_button = find_node("BakeButton")
 	vertex_count_label = find_node("VertexCountLabel")
+	
+	print("[StructSettings] ready: tree=", is_instance_valid(presets_tree), " add=", is_instance_valid(add_preset_button), " rem=", is_instance_valid(remove_preset_button))
 	
 	presets_tree.connect("item_edited", self, "_on_tree_item_edited")
 	add_preset_button.connect("pressed", self, "_on_add_preset_pressed")
@@ -196,7 +200,7 @@ func _update_base_mode_ui() -> void:
 		proximity_range_spin_box.visible = (base_mode == 1)
 
 
-func get_base_for_vertex(vertex: Dictionary, pet_node: Node) -> int:
+func get_base_for_vertex(vertex: Dictionary) -> int:
 	match base_mode:
 		0:
 			return single_base_spin
@@ -225,6 +229,8 @@ func get_base_for_vertex(vertex: Dictionary, pet_node: Node) -> int:
 
 
 func get_preset_color(preset_id: int) -> Color:
+	if preset_id < 0 or preset_id >= presets.size():
+		preset_id = 0
 	var color_idx: int = presets[preset_id].get("color", 10)
 	var h = fmod((color_idx / 10) * 0.137, 1.0)
 	return Color.from_hsv(h, 0.8, 0.9)
@@ -242,15 +248,15 @@ func _on_bake_button_pressed() -> void:
 	if vertices.size() == 0:
 		return
 	var start_id = KeyBallsData.max_base_ball_num
-	if pet_view and pet_view.lnz and pet_view.lnz.addballs.size() > 0:
-		var keys = pet_view.lnz.addballs.keys()
+	if pet_view and pet_view.pet_node and pet_view.pet_node.lnz and pet_view.pet_node.lnz.addballs.size() > 0:
+		var keys = pet_view.pet_node.lnz.addballs.keys()
 		start_id = keys.max() + 1
 	var vertex_to_addball_id = {}
 	var addball_lines = PoolStringArray()
 	var line_lines = PoolStringArray()
 	for i in range(vertices.size()):
 		var v = vertices[i]
-		var base_id = get_base_for_vertex(v, pet_view)
+		var base_id = get_base_for_vertex(v)
 		if base_id == 0:
 			print("[WARNING] StructMode: Vertex " + str(i) + " has no valid base. Skipping.")
 			continue
@@ -263,7 +269,7 @@ func _on_bake_button_pressed() -> void:
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(
 			local_rel_pos,
 			pet_view.pixel_world_size,
-			pet_view.lnz.scales.x
+			pet_view.pet_node.lnz.scales.x
 		)
 		var body_area = 1
 		if KeyBallsData.bodyarea_map.has(base_id):
