@@ -479,7 +479,9 @@ static func compute_distance_transform(mask: Array, size: int) -> Array:
 static func verify_palette_compatibility(bmp_palette: Array, palette: Array) -> float:
 	var total_diff: float = 0.0
 	var samples: int = 0
-	for i in range(0, 256, 10): 
+	for i in range(0, 256, 10):
+		if i == 0:
+			continue
 		if i < bmp_palette.size() and i < palette.size():
 			var bmp_col: Color = bmp_palette[i]
 			var petz_col: Color = palette[i]
