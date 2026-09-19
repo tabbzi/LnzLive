@@ -9,6 +9,7 @@ signal stretch_mode_changed(new_mode)
 signal stretch_aspect_changed(new_aspect)
 signal max_history_changed(new_val)
 signal texture_path_changed(new_path)
+signal append_dimensions_changed(enabled)
 
 onready var delimiter_option: OptionButton = $VBoxContainer/DelimiterHBox/OptionButton
 onready var bg_color_picker: ColorPickerButton = $VBoxContainer/BgColorHBox/ColorPickerButton
@@ -16,6 +17,7 @@ onready var shrink_spinbox: SpinBox = $VBoxContainer/ShrinkHBox/SpinBox
 onready var max_history_spinbox: SpinBox = $VBoxContainer/MaxHistoryHBox/SpinBox
 onready var stretch_mode_option: OptionButton = $VBoxContainer/StretchModeHBox/OptionButton
 onready var stretch_aspect_option: OptionButton = $VBoxContainer/StretchAspectHBox/OptionButton
+onready var append_dims_check: CheckBox = $VBoxContainer/AppendDimsHBox/AppendDimsCheckBox
 onready var texture_path_edit: LineEdit = $VBoxContainer/TexturePathHBox/TexturePathEdit
 
 var delimiter_map: Dictionary = {
@@ -45,6 +47,7 @@ func _ready() -> void:
 	max_history_spinbox.connect("value_changed", self, "_on_max_history_changed")
 	stretch_mode_option.connect("item_selected", self, "_on_stretch_mode_selected")
 	stretch_aspect_option.connect("item_selected", self, "_on_stretch_aspect_selected")
+	append_dims_check.connect("toggled", self, "_on_append_dims_toggled")
 	texture_path_edit.connect("text_changed", self, "_on_texture_path_changed")
 
 func _setup_options() -> void:
@@ -78,7 +81,7 @@ func _setup_options() -> void:
 	stretch_aspect_option.add_item("Keep Height", SceneTree.STRETCH_ASPECT_KEEP_HEIGHT)
 	stretch_aspect_option.add_item("Expand", SceneTree.STRETCH_ASPECT_EXPAND)
 
-func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_texture_path: String = "\\resource\\textures\\") -> void:
+func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_append_dims: bool, current_texture_path: String = "\\resource\\textures\\") -> void:
 	var delim_idx: int = reverse_delimiter_map.get(current_delim_name, 5)
 
 	if delimiter_option.is_item_disabled(delim_idx):
@@ -93,6 +96,8 @@ func init_settings(current_delim_name: String, current_bg_color: Color, current_
 
 	_select_option_by_id(stretch_mode_option, current_stretch_mode)
 	_select_option_by_id(stretch_aspect_option, current_stretch_aspect)
+
+	append_dims_check.pressed = current_append_dims
 
 	texture_path_edit.text = current_texture_path
 
@@ -124,3 +129,6 @@ func _on_stretch_aspect_selected(index: int) -> void:
 
 func _on_texture_path_changed(new_text: String) -> void:
 	emit_signal("texture_path_changed", new_text)
+
+func _on_append_dims_toggled(enabled: float) -> void:
+	emit_signal("append_dimensions_changed", enabled > 0)

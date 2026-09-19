@@ -1349,7 +1349,16 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	})
 	
 	var display_path: String = _get_display_path(source_path, is_user_texture)
-	var tex_line: String = display_path + " 0 " + str(width) + " " + str(height)
+	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
+	var append_dims: bool = false
+	if is_instance_valid(user_settings):
+		append_dims = user_settings.get("append_dimensions")
+	
+	var tex_line: String
+	if append_dims:
+		tex_line = display_path + " 0 " + str(width) + " " + str(height)
+	else:
+		tex_line = display_path + " 0"
 	
 	print("[STATUS] FileTree: Added '%s' as texture index %d to Texture List (size: %dx%d, transparency: 0)" % [tex_filename, tex_index, width, height])
 	

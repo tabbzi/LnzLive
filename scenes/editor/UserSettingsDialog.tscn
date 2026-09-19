@@ -167,17 +167,37 @@ margin_top = 250.0
 margin_right = 430.0
 margin_bottom = 254.0
 
-[node name="TexturePathLabel" type="Label" parent="VBoxContainer"]
-margin_top = 264.0
+[node name="AppendDimsHBox" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 258.0
 margin_right = 430.0
 margin_bottom = 278.0
+
+[node name="Label" type="Label" parent="VBoxContainer/AppendDimsHBox"]
+margin_top = 5.0
+margin_right = 213.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+text = "Append Dimensions:"
+
+[node name="AppendDimsCheckBox" type="CheckBox" parent="VBoxContainer/AppendDimsHBox"]
+margin_left = 217.0
+margin_top = 5.0
+margin_right = 430.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+label = "Include width and height in inserted line"
+
+[node name="TexturePathLabel" type="Label" parent="VBoxContainer"]
+margin_top = 290.0
+margin_right = 430.0
+margin_bottom = 304.0
 text = "Default Texture Path"
 align = 1
 
 [node name="TexturePathHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 288.0
+margin_top = 314.0
 margin_right = 430.0
-margin_bottom = 312.0
+margin_bottom = 338.0
 
 [node name="TexturePathEdit" type="LineEdit" parent="VBoxContainer/TexturePathHBox"]
 margin_right = 430.0

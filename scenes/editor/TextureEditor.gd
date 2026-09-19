@@ -1329,6 +1329,12 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	if not is_instance_valid(dog_generator) or not dog_generator.lnz:
 		return
 	
+	var fname: String = texture_filename.strip_edges()
+	if not fname.to_lower().ends_with(".bmp"):
+		fname += ".bmp"
+	var save_path: String = "user://resources/textures".plus_file(fname)
+	save_indexed_bmp(save_path)
+	
 	var lnz = dog_generator.lnz
 	if not lnz.texture_list:
 		lnz.texture_list = []
@@ -1340,11 +1346,27 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	var res_path: String = "res://" + clean_path
 	var bmp_info: Dictionary = LnzLiveUtils.get_texture_dimensions(res_path)
 	if bmp_info.get("width", 0) == 0:
-		bmp_info = LnzLiveUtils.get_bmp_dimensions(clean_path)
+		bmp_info = LnzLiveUtils.get_bmp_dimensions(texture_filename)
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	
+	# If file doesn't exist yet (texture hasn't been saved), use canvas size
+	if width == 0 or height == 0:
+		width = int(canvas_size.x)
+		height = int(canvas_size.y)
+	
 	var display_path: String = "\\resource\\textures\\" + clean_path.get_file()
+	
+	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
+	var append_dims: bool = false
+	if is_instance_valid(user_settings):
+		append_dims = user_settings.get("append_dimensions")
+	
+	var tex_entry: String
+	if append_dims:
+		tex_entry = display_path + " 0 " + str(width) + " " + str(height)
+	else:
+		tex_entry = display_path + " 0"
 	
 	lnz.texture_list.append({
 		"filename": clean_path.get_file(),
@@ -1354,7 +1376,7 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	
 	if is_instance_valid(LnzLiveUtils.get_lnz_text_edit(get_tree().root)):
 		var lte = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
-		lte.add_texture_entry(display_path + " 0 " + str(width) + " " + str(height))
+		lte.add_texture_entry(tex_entry)
 		lte.commit_full_snapshot("Added texture to Texture List: " + clean_path)
 
 func _on_filename_line_edit_text_changed(new_text: String) -> void:
