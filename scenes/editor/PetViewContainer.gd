@@ -2317,6 +2317,8 @@ func _exit_mode(mode: int) -> void:
 		Mode.STRUCT:
 			_struct_clear_visuals()
 			_on_unselect_all()
+			if is_instance_valid(struct_settings_instance):
+				_update_mode_panel_visibility(struct_settings_instance, false)
 
 func _enter_mode(mode: int) -> void:
 	match mode:
@@ -3502,6 +3504,8 @@ func _deactivate_other_modes(active_mode_name: String) -> void:
 		recolor_mode_check_box.pressed = false
 	if active_mode_name != "Texture Editor":
 		texture_editor_mode_check_box.pressed = false
+	if active_mode_name != "Struct Mode":
+		struct_mode_check_box.pressed = false
 		texture_editor_mode_check_box.pressed = false
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool, switch_to_filetree_on_hide: bool = false) -> void:
