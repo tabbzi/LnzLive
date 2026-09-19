@@ -2271,15 +2271,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				return
 			applied_something = true
 			var bounds = _ensure_section_exists("[Paint Ballz]")
-			var insert_line_num = bounds.start
-			var j = 0
-			while insert_line_num + j < bounds.end:
-				var line = get_line(insert_line_num + j).strip_edges()
-				if line.begins_with(";"):
-					j += 1
-					continue
-				break
-			insert_line_num += j
+			var insert_line_num = _find_insertion_line(bounds.start, bounds.end)
 
 			var delim = _detect_delimiter(bounds.start, bounds.end)
 			var new_paintball_lines = ""
@@ -2402,8 +2394,7 @@ func apply_paintballz():
 				if line.begins_with("["):
 					break
 
-				#if line.empty() or line.begins_with(";"):
-				if line.begins_with(";"):
+				if line.empty() or line.begins_with(";"):
 					runner += 1
 				else:
 					break
@@ -2579,15 +2570,7 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			printerr("[ERROR] LnzTextEdit: _apply_paintball_preset_no_save: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
 			return
 		var bounds = _ensure_section_exists("[Paint Ballz]")
-		var insert_line_num = bounds.start
-		var j = 0
-		while insert_line_num + j < bounds.end:
-			var line = get_line(insert_line_num + j).strip_edges()
-			if line.begins_with(";"):
-				j += 1
-				continue
-			break
-		insert_line_num += j
+		var insert_line_num = _find_insertion_line(bounds.start, bounds.end)
 
 		var delim = _detect_delimiter(bounds.start, bounds.end)
 		var new_paintball_lines = ""
@@ -3113,9 +3096,7 @@ func create_line(start_ball, end_ball, silent: bool = false):
 			break
 
 	if not line_updated:
-		var insert_line = end_line
-		while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
-			insert_line -= 1
+		var insert_line = _find_insertion_line(start_line, end_line)
 
 		var new_line_parts = [
 			str(start_ball),
@@ -5214,9 +5195,7 @@ func write_polygon_section(ball_ids: Array) -> void:
 		fuzz_val = int(props["fuzz"])
 
 	var poly_bounds = _ensure_section_exists("[Polygons]")
-	var insert_line = poly_bounds.end - 1
-	if insert_line < poly_bounds.start:
-		insert_line = poly_bounds.start
+	var insert_line = _find_insertion_line(poly_bounds.start, poly_bounds.end)
 
 	var poly_line = _join_array([
 		str(ball_ids[0]),
