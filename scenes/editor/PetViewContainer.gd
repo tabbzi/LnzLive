@@ -1056,10 +1056,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	# Check for Nudge hotkey via Scroll
-	if (
-		event is InputEventMouseButton
-		and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN)
-	):
+	if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		var nudge_axis: String = ""
 		if Input.is_key_pressed(KEY_X):
 			nudge_axis = "x"
@@ -1397,11 +1394,8 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		print("[ERROR] PetViewContainer: get_properties() returned null. Aborting input handling.")
 		return false
 		
-	if (
-		event is InputEventMouseButton
-		and event.shift
-		and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN)
-	):
+	# Check for paintball size adjustment via SHIFT + scroll or arrow keys
+	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		#var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 		#var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 		print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll")
@@ -1599,7 +1593,7 @@ func _gui_input(event: InputEvent) -> void:
 		tools_menu.popup()
 		return
 
-	# Zoom view using mouse wheel:
+	# Zoom view using mouse wheel or SPACE + arrow keys:
 	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale /= ZOOM_STEP
@@ -1608,7 +1602,6 @@ func _gui_input(event: InputEvent) -> void:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale *= ZOOM_STEP
 		return
-
 	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if (
 		event is InputEventMouseButton
@@ -2039,7 +2032,20 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
-				mark_ui_dirty()
+				return true
+			elif event.scancode == KEY_UP:
+				_record_move_start_state()
+				var delta: float = 1.0
+				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+				_record_move_end_state("Nudge up")
+				get_tree().set_input_as_handled()
+				return true
+			elif event.scancode == KEY_DOWN:
+				_record_move_start_state()
+				var delta: float = -1.0
+				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+				_record_move_end_state("Nudge down")
+				get_tree().set_input_as_handled()
 				return true
 	return false
 
@@ -2269,6 +2275,19 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
 		return
 
+	# Zoom view using SHIFT + + / -
+	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if event.scancode == KEY_EQUAL or event.scancode == KEY_PLUS or event.scancode == KEY_KP_ADD:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+		elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+
 	if _is_text_input_focused(event):
 		return
 
@@ -2343,6 +2362,19 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	if _handle_camera_view_key_input(event):
 		return
+
+	# Paintball Mode: SHIFT + arrow up/down to adjust brush size
+	if paintball_mode and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if event.scancode == KEY_UP:
+			diameter_min_spinbox.value += 1
+			diameter_max_spinbox.value += 1
+			get_tree().set_input_as_handled()
+			return
+		elif event.scancode == KEY_DOWN:
+			diameter_min_spinbox.value -= 1
+			diameter_max_spinbox.value -= 1
+			get_tree().set_input_as_handled()
+			return
 
 	if event.pressed and selecting_on and last_selected_is_valid():
 		last_selected._input(event)

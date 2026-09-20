@@ -33,6 +33,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | Context | Input / Hotkey | Action |
 | :--- | :--- | :--- |
 | **Viewport** | `wheel up` / `wheel down` | Zoom View In / Out |
+| **Viewport** | `SHIFT` + `+` / `-` | Zoom View In / Out |
 | **Viewport** | `SPACE` + `left-click drag` or `middle/wheel drag` | Pan Camera View |
 | **Viewport** | `left-click drag` | Rotate Camera View |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
@@ -72,6 +73,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `L` or `ALT` (hold while freeline active) | **Straight Line**: Constrain freeline to a straight line. Hold `X` or `Y` to lock axis |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `wheel down` | **Scale/Resize**: Resize diameter of paintballz |
+| **Paintball Mode** | `SHIFT` + `arrow up` / `arrow down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
@@ -88,6 +90,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
 | **Move Mode** | `X`, `Y`, and/or `Z` (hold during drag) | Lock movement to specific axis or plane |
 | **Move Mode** | `X`, `Y`, and/or `Z` + `wheel up` / `wheel down` | Change nudge amount for specific axis |
+| **Move Mode** | `X`, `Y`, and/or `Z` + `arrow up` / `arrow down` | Change nudge amount for specific axis |
 | **Move Mode** | `X`, `Y`, and/or `Z` + `+` / `-` | Nudge specific axis by nudge amount |
 | **Move Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued move/scale action |
 
