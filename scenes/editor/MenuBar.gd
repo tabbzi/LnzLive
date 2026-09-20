@@ -8,6 +8,7 @@ enum FileMenu {
 	IMPORT_PALETTE,
 	OPEN_USER_FOLDER,
 	USER_SETTINGS,
+	HOTKEY_SETTINGS,
 	REFERENCE_IMAGE,
 	SHADER_SETTINGS
 }
@@ -164,6 +165,7 @@ func _setup_file_menu() -> void:
 	popup.add_item("Open User Folder", FileMenu.OPEN_USER_FOLDER)
 	popup.add_separator()
 	popup.add_item("User Settings", FileMenu.USER_SETTINGS)
+	popup.add_item("Hotkey Settings", FileMenu.HOTKEY_SETTINGS)
 	popup.add_item("Reference Image", FileMenu.REFERENCE_IMAGE)
 	popup.add_item("Shader Settings", FileMenu.SHADER_SETTINGS)
 	popup.connect("id_pressed", self, "_on_file_menu_id_pressed")
@@ -294,6 +296,9 @@ func _on_file_menu_id_pressed(id: int) -> void:
 			$FileOptionButton/PopupPanel/FileOptionContainer/MenuOpenUserFolder.emit_signal("pressed")
 		FileMenu.USER_SETTINGS:
 			$FileOptionButton/PopupPanel/FileOptionContainer/UserSettingsButton.emit_signal("pressed")
+		FileMenu.HOTKEY_SETTINGS:
+			if scene_root.has_node("HotkeySettingsDialog"):
+				scene_root.get_node("HotkeySettingsDialog").show_dialog()
 		FileMenu.REFERENCE_IMAGE:
 			scene_root.get_node("ReferenceImageSettings").popup_centered()
 		FileMenu.SHADER_SETTINGS:

@@ -118,6 +118,7 @@ config/icon="res://LnzLiveIcon.png"
 
 KeyBallsData="*res://data_classes/key_balls_data.gd"
 PaletteCache="*res://data_classes/palette_cache.gd"
+HotkeyManager="*res://data_classes/hotkey_manager.gd"
 
 [debug]
 

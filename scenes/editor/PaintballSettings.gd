@@ -183,14 +183,24 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.control:
 		var mode: int = -1
-		if event.scancode == KEY_B:
-			mode = 0
-		elif event.scancode == KEY_L:
-			mode = 1
-		elif event.scancode == KEY_H:
-			mode = 2
-		elif event.scancode == KEY_V:
-			mode = 3
+		if HotkeyManager:
+			if HotkeyManager.is_action_pressed("design_sync_brush"):
+				mode = 0
+			elif HotkeyManager.is_action_pressed("design_sync_line"):
+				mode = 1
+			elif HotkeyManager.is_action_pressed("design_sync_horizontal"):
+				mode = 2
+			elif HotkeyManager.is_action_pressed("design_sync_vertical"):
+				mode = 3
+		if mode < 0:
+			if event.scancode == KEY_B:
+				mode = 0
+			elif event.scancode == KEY_L:
+				mode = 1
+			elif event.scancode == KEY_H:
+				mode = 2
+			elif event.scancode == KEY_V:
+				mode = 3
 		
 		if mode >= 0:
 			_sync_design_line_mode(mode)

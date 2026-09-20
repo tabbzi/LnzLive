@@ -27,5 +27,8 @@ func _ready():
 #Toggle Overlay: F1"""
 
 func _input(event):
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_toggle_hotkey_overlay"):
+		visible = not visible
+		return
 	if event is InputEventKey and event.pressed and event.scancode == KEY_F1:
 		visible = not visible

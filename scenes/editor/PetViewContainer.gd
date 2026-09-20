@@ -1893,6 +1893,39 @@ func _handle_camera_view_key_input(event: InputEventKey) -> bool:
 	if not event.pressed:
 		return false
 
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("viewport_view_front"):
+			_set_camera_view("front")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_bottom"):
+			_set_camera_view("bottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_top"):
+			_set_camera_view("top")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_right"):
+			_set_camera_view("right")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_left"):
+			_set_camera_view("left")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_back"):
+			_set_camera_view("back")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_rb"):
+			_set_camera_view("isorightbottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_rt"):
+			_set_camera_view("isorighttop")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_lb"):
+			_set_camera_view("isoleftbottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_lt"):
+			_set_camera_view("isolefttop")
+			return true
+
+	# Fallback: raw scancode
 	match event.scancode:
 		KEY_1:
 			_set_camera_view("front")
@@ -1960,6 +1993,69 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 	if not event.control and not event.alt and not event.shift:
 		if _is_text_input_focused(event):
 			return false
+
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_select"):
+			select_check_box.pressed = not select_check_box.pressed
+			_on_SelectCheckBox_pressed()
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_paintball"):
+			paintball_check_box.pressed = not paintball_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_paintball_alt"):
+			paintball_check_box.pressed = not paintball_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_line"):
+			line_mode_check_box.pressed = not line_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_line_alt"):
+			line_mode_check_box.pressed = not line_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_preset"):
+			preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_preset_alt"):
+			preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_move"):
+			move_mode_check_box.pressed = not move_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_move_alt"):
+			move_mode_check_box.pressed = not move_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_recolor"):
+			recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_recolor_alt"):
+			recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_auto_paintballer"):
+			auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_palette_viewer"):
+			view_palette_check_box.pressed = not view_palette_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_variation_viewer"):
+			view_variations_check_box.pressed = not view_variations_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_capture_headshot"):
+			lnz_text_edit.capture_headshot()
+			get_tree().set_input_as_handled()
+			return true
+
 		match event.scancode:
 			KEY_S:
 				select_check_box.pressed = not select_check_box.pressed
@@ -2011,14 +2107,64 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 	if move_mode and event.pressed:
 		var nudge_axis: String = ""
-		if Input.is_key_pressed(KEY_X):
+		if HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_x"):
 			nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_X):
+			nudge_axis = "x"
+		elif HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_y"):
+			nudge_axis = "y"
 		elif Input.is_key_pressed(KEY_Y):
 			nudge_axis = "y"
+		elif HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_z"):
+			nudge_axis = "z"
 		elif Input.is_key_pressed(KEY_Z):
 			nudge_axis = "z"
 
 		if nudge_axis != "":
+			if HotkeyManager:
+				if HotkeyManager.is_action_pressed("move_nudge_positive"):
+					_record_move_start_state()
+					var dirsign: float = 1.0
+					move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+					_record_move_end_state("Nudge +")
+					get_tree().set_input_as_handled()
+					return true
+				if HotkeyManager.is_action_pressed("move_nudge_positive_alt"):
+					_record_move_start_state()
+					var dirsign: float = 1.0
+					move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+					_record_move_end_state("Nudge +")
+					get_tree().set_input_as_handled()
+					return true
+				if HotkeyManager.is_action_pressed("move_nudge_negative"):
+					_record_move_start_state()
+					var dirsign: float = -1.0
+					move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+					_record_move_end_state("Nudge -")
+					get_tree().set_input_as_handled()
+					return true
+				if HotkeyManager.is_action_pressed("move_nudge_negative_alt"):
+					_record_move_start_state()
+					var dirsign: float = -1.0
+					move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+					_record_move_end_state("Nudge -")
+					get_tree().set_input_as_handled()
+					return true
+				if HotkeyManager.is_action_pressed("move_nudge_value_up"):
+					_record_move_start_state()
+					var delta: float = 1.0
+					move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+					_record_move_end_state("Nudge up")
+					get_tree().set_input_as_handled()
+					return true
+				if HotkeyManager.is_action_pressed("move_nudge_value_down"):
+					_record_move_start_state()
+					var delta: float = -1.0
+					move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+					_record_move_end_state("Nudge down")
+					get_tree().set_input_as_handled()
+					return true
+
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD:  # + key
 				_record_move_start_state()
 				var dirsign: float = 1.0
@@ -2258,17 +2404,26 @@ func _sync_mode_cursor() -> void:
 			mouse_default_cursor_shape = CURSOR_ARROW
 
 func _unhandled_key_input(event: InputEventKey) -> void:
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_exit_mode"):
+		_exit_all_modes()
+		var focus_owner = get_focus_owner()
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+			focus_owner.release_focus()
+		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
+			var floating_panels = sidebar_controller.floating_layer.get_children()
+			for panel in floating_panels:
+				sidebar_controller.dock_panel(panel)
+		get_tree().set_input_as_handled()
+		return
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:
 		_exit_all_modes()
 		var focus_owner = get_focus_owner()
 		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
 			focus_owner.release_focus()
-
 		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
 			var floating_panels = sidebar_controller.floating_layer.get_children()
 			for panel in floating_panels:
 				sidebar_controller.dock_panel(panel)
-
 		get_tree().set_input_as_handled()
 		return
 
@@ -2277,6 +2432,16 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Zoom view using SHIFT + + / -
 	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_in_alt") or HotkeyManager.is_action_pressed("viewport_zoom_in_alt2")):
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_out_alt") or HotkeyManager.is_action_pressed("viewport_zoom_out_alt2")):
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
 		if event.scancode == KEY_EQUAL or event.scancode == KEY_PLUS or event.scancode == KEY_KP_ADD:
 			tex.rect_pivot_offset = tex.rect_size / 2.0
 			tex.rect_scale *= ZOOM_STEP
@@ -2295,6 +2460,11 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
 			mark_ui_dirty()
 
+	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):
+		if selecting_on or recolor_mode:
+			get_tree().set_input_as_handled()
+			_cycle_nearby_ballz()
+			return
 	if event is InputEventKey and event.pressed and event.scancode == KEY_N:
 		if selecting_on or recolor_mode:
 			get_tree().set_input_as_handled()
@@ -2302,6 +2472,28 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			return
 
 	# Mini-history for Paintball and Move modes
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("paint_mini_undo"):
+			if paintball_mode:
+				_undo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("move_mini_undo"):
+			if move_mode:
+				_undo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("paint_mini_redo"):
+			if paintball_mode:
+				_redo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("move_mini_redo"):
+			if move_mode:
+				_redo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+
 	if event is InputEventKey and event.pressed and event.control and event.shift:
 		if event.scancode == KEY_Z:  # Undo
 			if paintball_mode:
@@ -2325,6 +2517,11 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_move_nudge_key_input(event):
 		return
 
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_unhide_all"):
+		get_tree().set_input_as_handled()
+		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
+			pet_node.unhide_all_balls()
+		return
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_H:
 		get_tree().set_input_as_handled()
 		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
@@ -2332,6 +2529,15 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
+	if HotkeyManager and HotkeyManager.is_action_pressed("select_tools_menu"):
+		get_tree().set_input_as_handled()
+		if last_selected_is_valid():
+			tools_menu.selected_visual_ball = last_selected
+		else:
+			tools_menu.selected_visual_ball = null
+		tools_menu.rect_global_position = get_viewport().get_mouse_position()
+		tools_menu.popup()
+		return
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
 		if last_selected_is_valid():
@@ -2347,24 +2553,43 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Move Mode ball lock: Q to toggle lock on hovered ball, CTRL+Q to unlock all
 	if move_mode and event.pressed and not event.alt:
-		if event.control:
-			if event.scancode == KEY_Q:
-				_unlock_all_balls()
+		if HotkeyManager and HotkeyManager.is_action_pressed("move_unlock_all"):
+			_unlock_all_balls()
+			get_tree().set_input_as_handled()
+			return
+		if event.control and event.scancode == KEY_Q:
+			_unlock_all_balls()
+			get_tree().set_input_as_handled()
+			return
+		if HotkeyManager and HotkeyManager.is_action_pressed("move_lock_ball"):
+			var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+			if hover and is_instance_valid(hover) and "ball_no" in hover:
+				_toggle_lock_ball(hover)
 				get_tree().set_input_as_handled()
 				return
-		else:
-			if event.scancode == KEY_Q:
-				var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
-				if hover and is_instance_valid(hover) and "ball_no" in hover:
-					_toggle_lock_ball(hover)
-					get_tree().set_input_as_handled()
-					return
+		if event.scancode == KEY_Q:
+			var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+			if hover and is_instance_valid(hover) and "ball_no" in hover:
+				_toggle_lock_ball(hover)
+				get_tree().set_input_as_handled()
+				return
 
 	if _handle_camera_view_key_input(event):
 		return
 
 	# Paintball Mode: SHIFT + arrow up/down to adjust brush size
 	if paintball_mode and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("paint_scale_brush_alt") or HotkeyManager.is_action_pressed("paint_scale_brush_alt_down")):
+			if event.scancode == KEY_UP:
+				diameter_min_spinbox.value += 1
+				diameter_max_spinbox.value += 1
+				get_tree().set_input_as_handled()
+				return
+			elif event.scancode == KEY_DOWN:
+				diameter_min_spinbox.value -= 1
+				diameter_max_spinbox.value -= 1
+				get_tree().set_input_as_handled()
+				return
 		if event.scancode == KEY_UP:
 			diameter_min_spinbox.value += 1
 			diameter_max_spinbox.value += 1
