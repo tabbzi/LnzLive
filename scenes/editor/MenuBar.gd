@@ -33,6 +33,7 @@ enum ModeMenu {
 
 enum HelpMenu {
 	BASIC_CONTROLS,
+	LNZLIVE_SITE,
 	USER_GUIDE,
 	CAROLYNS_BIBLE,
 	PALETTEIARE
@@ -255,6 +256,7 @@ func _setup_help_menu() -> void:
 	_style_popup(popup)
 	popup.add_item("Basic Controls", HelpMenu.BASIC_CONTROLS)
 	popup.add_separator()
+	popup.add_item("LnzLive Guides", HelpMenu.LNZLIVE_SITE)
 	popup.add_item("User Guide", HelpMenu.USER_GUIDE)
 	popup.add_item("Carolyn's Bible", HelpMenu.CAROLYNS_BIBLE)
 	popup.add_item("Petz Paletteiare", HelpMenu.PALETTEIARE)
@@ -370,6 +372,8 @@ func _on_help_menu_id_pressed(id: int) -> void:
 	match id:
 		HelpMenu.BASIC_CONTROLS:
 			scene_root.get_node("HelpPopupDialog").popup_centered()
+		HelpMenu.LNZLIVE_SITE:
+			OS.shell_open("https://tabbloza.com/lnzlive/")
 		HelpMenu.USER_GUIDE:
 			OS.shell_open("https://github.com/tabbzi/LnzLive/blob/master/docs/GUIDE.md")
 		HelpMenu.CAROLYNS_BIBLE:
