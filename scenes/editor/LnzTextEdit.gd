@@ -677,16 +677,28 @@ func _unhandled_key_input(event):
 					search_input.grab_focus()
 			return
 
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
+	if HotkeyManager and HotkeyManager.is_action_pressed("text_save") and Input.is_key_pressed(KEY_CONTROL):
+		save_file(false)
+	elif Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file(false)
 
-	if Input.is_key_pressed(KEY_CONTROL) and not event.shift and event.pressed:
-		if event.scancode == KEY_Z:
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("text_undo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
 			undo_visual_edit() # Ctrl+Z
-		elif event.scancode == KEY_Y:
+		elif HotkeyManager.is_action_pressed("text_redo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
 			redo_visual_edit() # Ctrl+Y
 
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
+	if HotkeyManager and HotkeyManager.is_action_pressed("text_find") and Input.is_key_pressed(KEY_CONTROL):
+		find_panel.visible = not find_panel.visible
+		self.readonly = find_panel.visible
+
+		if find_panel.visible:
+			var search_input = find_panel.get_node("VBoxContainer/LineEdit")
+			if search_input:
+				search_input.grab_focus()
+
+		_setup_context_menu()
+	elif Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
 		find_panel.visible = not find_panel.visible
 		self.readonly = find_panel.visible
 

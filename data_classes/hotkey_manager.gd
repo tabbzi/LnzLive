@@ -14,12 +14,25 @@ signal hotkeys_reloaded
 
 var current_context: String = "global"
 
+var context_specific_actions: Array = [
+	"texture_tool_line", "texture_tool_hline", "texture_tool_vline",
+	"texture_tool_brush", "texture_tool_eraser", "texture_tool_eyedropper",
+	"texture_tool_fill", "texture_tool_bucket_toggle",
+	"design_stamp_scale", "design_stamp_scale_down", "design_stamp_rotate", "design_stamp_rotate_down",
+	"design_sync_brush", "design_sync_line", "design_sync_horizontal", "design_sync_vertical",
+	"text_save", "text_undo", "text_redo", "text_find",
+	"text_next_section", "text_prev_section", "text_jump_ball_index",
+]
+
+func is_context_specific(action: String) -> bool:
+	return action in context_specific_actions
+
 var default_bindings: Dictionary = {
 	# === Viewport / Camera ===
 	"viewport_zoom_in": { "scancode": BUTTON_WHEEL_UP, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"viewport_zoom_out": { "scancode": BUTTON_WHEEL_DOWN, "ctrl": false, "shift": false, "alt": false, "meta": false },
-	"viewport_zoom_in_alt": { "scancode": KEY_PLUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
-	"viewport_zoom_out_alt": { "scancode": KEY_MINUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
+	"viewport_zoom_in_incremental": { "scancode": KEY_PLUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
+	"viewport_zoom_out_incremental": { "scancode": KEY_MINUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_zoom_in_alt2": { "scancode": KEY_KP_ADD, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_zoom_out_alt2": { "scancode": KEY_KP_SUBTRACT, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_pan": { "scancode": BUTTON_MIDDLE, "ctrl": false, "shift": false, "alt": false, "meta": false },
@@ -159,7 +172,7 @@ var default_bindings: Dictionary = {
 
 var action_groups: Dictionary = {
 	"Viewport / Camera": [
-		"viewport_zoom_in", "viewport_zoom_out", "viewport_zoom_in_alt", "viewport_zoom_out_alt",
+		"viewport_zoom_in", "viewport_zoom_out", "viewport_zoom_in_incremental", "viewport_zoom_out_incremental",
 		"viewport_pan", "viewport_rotate",
 		"viewport_view_front", "viewport_view_bottom", "viewport_view_top", "viewport_view_right",
 		"viewport_view_left", "viewport_view_back", "viewport_view_iso_rb", "viewport_view_iso_rt",
@@ -232,10 +245,10 @@ var user_bindings: Dictionary = {}
 var profiles: Dictionary = {}
 
 var action_display_names: Dictionary = {
-	"viewport_zoom_in": "Zoom In",
-	"viewport_zoom_out": "Zoom Out",
-	"viewport_zoom_in_alt": "Zoom In (alt)",
-	"viewport_zoom_out_alt": "Zoom Out (alt)",
+	"viewport_zoom_in": "Zoom In (continuous)",
+	"viewport_zoom_out": "Zoom Out (continuous)",
+	"viewport_zoom_in_incremental": "Zoom In (incremental)",
+	"viewport_zoom_out_incremental": "Zoom Out (incremental)",
 	"viewport_pan": "Pan Camera",
 	"viewport_rotate": "Rotate Camera",
 	"viewport_view_front": "View: Front",
@@ -560,6 +573,10 @@ func check_conflict(proposed_binding: Dictionary, exclude_action: String = "") -
 	for action in default_bindings:
 		if action == exclude_action:
 			continue
+		if is_context_specific(action) and not is_context_specific(exclude_action):
+			continue
+		if is_context_specific(exclude_action) and not is_context_specific(action):
+			continue
 		var existing = default_bindings[action]
 		if _bindings_match(proposed_binding, existing):
 			return action
@@ -567,39 +584,10 @@ func check_conflict(proposed_binding: Dictionary, exclude_action: String = "") -
 	for action in user_bindings:
 		if action == exclude_action:
 			continue
+		if is_context_specific(action) and not is_context_specific(exclude_action):
+			continue
 		var user_val = user_bindings[action]
 		if _bindings_match(proposed_binding, user_val):
-			return action
-
-	var proposed_scancode: int = proposed_binding.get("scancode", 0)
-	var proposed_ctrl: bool = proposed_binding.get("ctrl", false)
-	var proposed_shift: bool = proposed_binding.get("shift", false)
-	var proposed_alt: bool = proposed_binding.get("alt", false)
-
-	for action in default_bindings:
-		if action == exclude_action:
-			continue
-
-		var existing = default_bindings[action]
-		if existing.get("scancode", 0) != proposed_scancode:
-			continue
-
-		var existing_ctrl: bool = existing.get("ctrl", false)
-		var existing_shift: bool = existing.get("shift", false)
-		var existing_alt: bool = existing.get("alt", false)
-		if existing_ctrl != proposed_ctrl or existing_shift != proposed_shift or existing_alt != proposed_alt:
-			return action
-
-	for action in user_bindings:
-		if action == exclude_action:
-			continue
-		var user_val = user_bindings[action]
-		if user_val.get("scancode", 0) != proposed_scancode:
-			continue
-		var user_ctrl: bool = user_val.get("ctrl", false)
-		var user_shift: bool = user_val.get("shift", false)
-		var user_alt: bool = user_val.get("alt", false)
-		if user_ctrl != proposed_ctrl or user_shift != proposed_shift or user_alt != proposed_alt:
 			return action
 
 	return ""
@@ -847,8 +835,7 @@ func _scancode_to_string(scancode: int) -> String:
 func _apply_bindings() -> void:
 	var actions: Array = InputMap.get_actions()
 	for action in actions:
-		# Only remove actions that start with "lnz_" to avoid clearing Godot built-ins
-		if action.begins_with("lnz_"):
+		if action in default_bindings:
 			InputMap.erase_action(action)
 
 	for action_name in default_bindings:
@@ -880,21 +867,26 @@ func _create_input_event(binding: Dictionary) -> InputEvent:
 		return null
 
 	var scancode: int = binding.get("scancode", 0)
-	var key_code: int = binding.get("key_code", -1)
 
 	if scancode == BUTTON_WHEEL_UP or scancode == BUTTON_WHEEL_DOWN or \
 	   scancode == BUTTON_LEFT or scancode == BUTTON_RIGHT or \
 	   scancode == BUTTON_MIDDLE or (scancode >= BUTTON_LEFT and scancode <= BUTTON_XBUTTON2):
 		var event: InputEventMouseButton = InputEventMouseButton.new()
 		event.button_index = scancode
+		event.control = binding.get("ctrl", false)
+		event.shift = binding.get("shift", false)
+		event.alt = binding.get("alt", false)
+		event.meta = binding.get("meta", false)
 		return event
 
 	if scancode >= KEY_SPACE and scancode <= KEY_Z:
 		var event: InputEventKey = InputEventKey.new()
 		event.scancode = scancode
-		if key_code != -1:
-			event.keycode = key_code
-			event.physical_keycode = key_code
+		event.pressed = true
+		event.control = binding.get("ctrl", false)
+		event.shift = binding.get("shift", false)
+		event.alt = binding.get("alt", false)
+		event.meta = binding.get("meta", false)
 		return event
 
 	return null

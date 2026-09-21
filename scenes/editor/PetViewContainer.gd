@@ -1394,10 +1394,20 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		print("[ERROR] PetViewContainer: get_properties() returned null. Aborting input handling.")
 		return false
 		
-	# Check for paintball size adjustment via SHIFT + scroll or arrow keys
+	# Check for paintball size adjustment via SHIFT + scroll, arrow keys, or remapped hotkeys
 	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-		#var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
-		#var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
+		if HotkeyManager and HotkeyManager.is_action_pressed("paint_scale_brush"):
+			print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll (hotkey)")
+			diameter_min_spinbox.value += 1
+			diameter_max_spinbox.value += 1
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("paint_scale_brush_down"):
+			print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll (hotkey)")
+			diameter_min_spinbox.value -= 1
+			diameter_max_spinbox.value -= 1
+			get_tree().set_input_as_handled()
+			return true
 		print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll")
 		if event.button_index == BUTTON_WHEEL_UP:
 			diameter_min_spinbox.value += 1
@@ -1411,6 +1421,10 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		if event is InputEventMouseButton and event.pressed:
 			if event.button_index == BUTTON_WHEEL_UP:
 				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (UP)")
+				if HotkeyManager and HotkeyManager.is_action_pressed("design_stamp_scale"):
+					design_scale_multiplier += 0.1
+					get_tree().set_input_as_handled()
+					return true
 				if event.control:
 					design_scale_multiplier += 0.1
 				else:
@@ -1419,6 +1433,10 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				return true
 			elif event.button_index == BUTTON_WHEEL_DOWN:
 				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (DOWN)")
+				if HotkeyManager and HotkeyManager.is_action_pressed("design_stamp_scale_down"):
+					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
+					get_tree().set_input_as_handled()
+					return true
 				if event.control:
 					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
 				else:
@@ -1593,14 +1611,16 @@ func _gui_input(event: InputEvent) -> void:
 		tools_menu.popup()
 		return
 
-	# Zoom view using mouse wheel or SPACE + arrow keys:
-	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
-		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale /= ZOOM_STEP
-		return
-	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
+	# Zoom view using mouse wheel or remapped hotkeys:
+	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_in"):
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale *= ZOOM_STEP
+		get_tree().set_input_as_handled()
+		return
+	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_out"):
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale /= ZOOM_STEP
+		get_tree().set_input_as_handled()
 		return
 	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if (
@@ -2058,48 +2078,59 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 
 		match event.scancode:
 			KEY_S:
-				select_check_box.pressed = not select_check_box.pressed
-				_on_SelectCheckBox_pressed()
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_select").size() == 0:
+					select_check_box.pressed = not select_check_box.pressed
+					_on_SelectCheckBox_pressed()
+					get_tree().set_input_as_handled()
+					return true
 			KEY_W:
-				paintball_check_box.pressed = not paintball_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_paintball").size() == 0:
+					paintball_check_box.pressed = not paintball_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_E:
-				line_mode_check_box.pressed = not line_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_line").size() == 0:
+					line_mode_check_box.pressed = not line_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_R:
-				preset_mode_check_box.pressed = not preset_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_preset").size() == 0:
+					preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_U:
-				move_mode_check_box.pressed = not move_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_move").size() == 0:
+					move_mode_check_box.pressed = not move_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_D:
-				project_mode_check_box.pressed = not project_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_preset_alt").size() == 0:
+					project_mode_check_box.pressed = not project_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_A:
-				auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_auto_paintballer").size() == 0:
+					auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_T:
-				view_palette_check_box.pressed = not view_palette_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_palette_viewer").size() == 0:
+					view_palette_check_box.pressed = not view_palette_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_G:
-				recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_recolor").size() == 0:
+					recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_K:
-				lnz_text_edit.capture_headshot()
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_capture_headshot").size() == 0:
+					lnz_text_edit.capture_headshot()
+					get_tree().set_input_as_handled()
+					return true
 			KEY_V:
-				view_variations_check_box.pressed = not view_variations_check_box.pressed
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_variation_viewer").size() == 0:
+					view_variations_check_box.pressed = not view_variations_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 	return false
@@ -2165,6 +2196,20 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 					get_tree().set_input_as_handled()
 					return true
 
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_positive"):
+				_record_move_start_state()
+				var dirsign: float = 1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+				_record_move_end_state("Nudge +")
+				get_tree().set_input_as_handled()
+				return true
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_positive_alt"):
+				_record_move_start_state()
+				var dirsign: float = 1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+				_record_move_end_state("Nudge +")
+				get_tree().set_input_as_handled()
+				return true
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD:  # + key
 				_record_move_start_state()
 				var dirsign: float = 1.0
@@ -2172,21 +2217,49 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				_record_move_end_state("Nudge +")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_negative"):
 				_record_move_start_state()
 				var dirsign: float = -1.0
 				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_UP:
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_negative_alt"):
+				_record_move_start_state()
+				var dirsign: float = -1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+				_record_move_end_state("Nudge -")
+				get_tree().set_input_as_handled()
+				return true
+			if event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
+				_record_move_start_state()
+				var dirsign: float = -1.0
+				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
+				_record_move_end_state("Nudge -")
+				get_tree().set_input_as_handled()
+				return true
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_value_up"):
 				_record_move_start_state()
 				var delta: float = 1.0
 				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
 				_record_move_end_state("Nudge up")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_DOWN:
+			if event.scancode == KEY_UP:
+				_record_move_start_state()
+				var delta: float = 1.0
+				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+				_record_move_end_state("Nudge up")
+				get_tree().set_input_as_handled()
+				return true
+			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_value_down"):
+				_record_move_start_state()
+				var delta: float = -1.0
+				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+				_record_move_end_state("Nudge down")
+				get_tree().set_input_as_handled()
+				return true
+			if event.scancode == KEY_DOWN:
 				_record_move_start_state()
 				var delta: float = -1.0
 				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
@@ -2415,6 +2488,17 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 				sidebar_controller.dock_panel(panel)
 		get_tree().set_input_as_handled()
 		return
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_exit_mode"):
+		_exit_all_modes()
+		var focus_owner = get_focus_owner()
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+			focus_owner.release_focus()
+		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
+			var floating_panels = sidebar_controller.floating_layer.get_children()
+			for panel in floating_panels:
+				sidebar_controller.dock_panel(panel)
+		get_tree().set_input_as_handled()
+		return
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:
 		_exit_all_modes()
 		var focus_owner = get_focus_owner()
@@ -2432,12 +2516,12 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Zoom view using SHIFT + + / -
 	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
-		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_in_alt") or HotkeyManager.is_action_pressed("viewport_zoom_in_alt2")):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_in_incremental") or HotkeyManager.is_action_pressed("viewport_zoom_in_alt2")):
 			tex.rect_pivot_offset = tex.rect_size / 2.0
 			tex.rect_scale *= ZOOM_STEP
 			get_tree().set_input_as_handled()
 			return
-		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_out_alt") or HotkeyManager.is_action_pressed("viewport_zoom_out_alt2")):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_out_incremental") or HotkeyManager.is_action_pressed("viewport_zoom_out_alt2")):
 			tex.rect_pivot_offset = tex.rect_size / 2.0
 			tex.rect_scale /= ZOOM_STEP
 			get_tree().set_input_as_handled()
