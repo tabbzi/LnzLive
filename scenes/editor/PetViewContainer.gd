@@ -682,7 +682,7 @@ func _process(_delta: float) -> void:
 				freeline_on
 				and (
 					straight_line_check_box.pressed
-					or (HotkeyManager and HotkeyManager.is_action_pressed("paint_freeline_straight"))
+					or (HotkeyManager and HotkeyManager.is_action_pressed("paint_straight_line"))
 					or Input.is_key_pressed(KEY_ALT)
 					or Input.is_key_pressed(KEY_L)
 				)
@@ -1450,7 +1450,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			freeline_mode
 			and (
 				props.get("straight_line", false)
-				or (HotkeyManager and HotkeyManager.is_action_pressed("paint_freeline_straight"))
+				or (HotkeyManager and HotkeyManager.is_action_pressed("paint_straight_line"))
 				or Input.is_key_pressed(KEY_ALT)
 				or Input.is_key_pressed(KEY_L)
 			)
@@ -1620,26 +1620,20 @@ func _gui_input(event: InputEvent) -> void:
 		and event.button_index == BUTTON_LEFT
 		and event.pressed
 		and Input.is_key_pressed(KEY_SHIFT)
-		and not (HotkeyManager and HotkeyManager.is_action_pressed("visual_move"))
 	):
-		var alt_key: bool = (
-			(HotkeyManager and HotkeyManager.is_action_pressed("visual_scale"))
-			or Input.is_key_pressed(KEY_ALT)
-		)
-
-		#var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var is_resize: bool = Input.is_key_pressed(KEY_ALT)
 
 		var hover = null
 		if is_instance_valid(_last_selected_by_tab):
 			hover = _last_selected_by_tab
 		else:
 			hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-			
+
 		if hover:
 			drag_ball = hover
 			is_dragging = true
 
-			if alt_key:
+			if is_resize:
 				is_resizing = true
 				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 				original_scale = drag_ball.ball_size
@@ -1647,7 +1641,6 @@ func _gui_input(event: InputEvent) -> void:
 				print("[STATUS] PetViewContainer: started scale drag on ball:", drag_ball.name)
 			else:
 				print("[STATUS] PetViewContainer: started drag on ball:", drag_ball.name)
-				# is_dragging = true
 				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
 		return
