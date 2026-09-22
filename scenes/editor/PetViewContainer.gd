@@ -656,7 +656,10 @@ func _process(_delta: float) -> void:
 	elif paintball_mode:
 		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode: bool = eraser_check_box.pressed
-		var temp_eraser_active: bool = Input.is_key_pressed(KEY_CONTROL)
+		var temp_eraser_active: bool = (
+			eraser_check_box.pressed
+			or (HotkeyManager and HotkeyManager.is_action_pressed("paint_eraser"))
+		)
 		var is_design_mode: bool = paintball_settings_instance.is_design_mode_active()
 
 		if delete_mode:
@@ -673,12 +676,13 @@ func _process(_delta: float) -> void:
 		else:
 			var freeline_on: bool = (
 				freeline_check_box.pressed
-				or Input.is_key_pressed(KEY_SHIFT)
+				or (HotkeyManager and HotkeyManager.is_action_pressed("paint_freeline"))
 			)
 			var straight_line_on: bool = (
 				freeline_on
 				and (
 					straight_line_check_box.pressed
+					or (HotkeyManager and HotkeyManager.is_action_pressed("paint_freeline_straight"))
 					or Input.is_key_pressed(KEY_ALT)
 					or Input.is_key_pressed(KEY_L)
 				)
@@ -702,9 +706,9 @@ func _process(_delta: float) -> void:
 
 	elif move_mode:
 		var queued_count: int = pending_moves.size()
-		var hint: String = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group. Q = lock hovered ball."
+		var hint: String = "Move Mode: Click to select, " + _get_hotkey_display("global_box_select") + " to toggle multiple.\nDrag selected balls to move group. " + _get_hotkey_display("move_lock_ball") + " = lock hovered ball."
 		if not selected_balls.empty():
-			hint += "\nSHIFT + drag = pan selected group"
+			hint += "\n" + _get_hotkey_display("move_group_pan") + " = pan selected group"
 		body = hint
 		if queued_count > 0:
 			body += "\nQueued Moves: " + str(queued_count)
@@ -712,14 +716,15 @@ func _process(_delta: float) -> void:
 	elif preset_mode:
 		preset_settings_instance.sync_camera(camera.global_transform)
 		var is_eyedropper: bool = (
-			Input.is_key_pressed(KEY_ALT)
+			(HotkeyManager and HotkeyManager.is_action_pressed("preset_eyedropper"))
+			or Input.is_key_pressed(KEY_ALT)
 			or preset_settings_instance.is_eyedropper_active()
 		)
 		if is_eyedropper:
 			body = "Eyedropper Mode: Left-click a ball to sample its properties."
 			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 		else:
-			body = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
+			body = "Preset Mode: Left-click to apply preset.\nHold " + _get_hotkey_display("preset_eyedropper") + " for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 
@@ -728,7 +733,7 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif selecting_on:
-		body = "Select Mode: when hovering, cycle ballz using N key..."
+		body = "Select Mode: when hovering, cycle ballz using " + _get_hotkey_display("select_cycle_nearby") + " key..."
 
 	elif is_dragging:
 		pass
@@ -736,17 +741,19 @@ func _process(_delta: float) -> void:
 
 	else:
 		if Input.is_key_pressed(KEY_CONTROL):
-			body = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
+			body = "Open Tools Menu (" + _get_hotkey_display("select_tools_menu") + ")\nApply and Save Changes (" + _get_hotkey_display("text_save") + ")\nFlash Ballz (" + _get_hotkey_display("global_flash_ballz") + ")"
 		elif Input.is_key_pressed(KEY_SHIFT):
-			body = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
+			body = "Move Ball (" + _get_hotkey_display("visual_move") + ")\nScale Ball (" + _get_hotkey_display("visual_scale") + ")"
 		elif Input.is_key_pressed(KEY_SPACE):
-			body = "Pan View (SPACE + left-click drag)"
+			body = "Pan View (<pan key> + left-click drag)"
 		else:
 			body = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
 	# HOTKEYS
-	if highlighted_ball:
-		footer = "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+	if is_instance_valid(ball_label) and ball_label.visible:
+		var hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+		var hotkey_hint: String = _get_hotkey_hint_for_ball(hovered_ball)
+		footer = hotkey_hint
 
 	var locks: Array = []
 	if Input.is_key_pressed(KEY_X):
@@ -976,7 +983,8 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 func _handle_box_selection(event: InputEvent) -> bool:
 	if (
 		not (move_mode or preset_mode or auto_paintballer_mode)
-		or not Input.is_key_pressed(KEY_CONTROL)
+		or not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
+			or Input.is_key_pressed(KEY_CONTROL))
 	):
 		return false
 
@@ -1074,7 +1082,8 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
-				if Input.is_key_pressed(KEY_ALT):
+				if (HotkeyManager and HotkeyManager.is_action_pressed("move_set_pivot"))
+					or Input.is_key_pressed(KEY_ALT):
 					if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
 						_initialize_move_drag(selected_balls[0], event.position, true)
 						return true
@@ -1096,10 +1105,12 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 				if hover:
 					# Locked balls cannot be selected or moved
-					if _is_ball_locked(hover) and not Input.is_key_pressed(KEY_CONTROL):
+					if _is_ball_locked(hover) and not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
+						or Input.is_key_pressed(KEY_CONTROL)):
 						return true
 
-					if Input.is_key_pressed(KEY_CONTROL):
+					if (HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
+						or Input.is_key_pressed(KEY_CONTROL):
 						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
@@ -1286,6 +1297,7 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 			
 			var is_eyedropper_active: bool = (
 				preset_settings_instance.find_node("EyedropperToggle").pressed
+				or (HotkeyManager and HotkeyManager.is_action_pressed("preset_eyedropper"))
 				or Input.is_key_pressed(KEY_ALT)
 			)
 			if is_eyedropper_active:
@@ -1459,6 +1471,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			freeline_mode
 			and (
 				props.get("straight_line", false)
+				or (HotkeyManager and HotkeyManager.is_action_pressed("paint_freeline_straight"))
 				or Input.is_key_pressed(KEY_ALT)
 				or Input.is_key_pressed(KEY_L)
 			)
@@ -1505,7 +1518,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		#var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
-		var delete_mode: bool = eraser_check_box.pressed or Input.is_key_pressed(KEY_CONTROL)
+		var delete_mode: bool = eraser_check_box.pressed or (HotkeyManager and HotkeyManager.is_action_pressed("paint_eraser"))
 
 		if delete_mode:
 			print("[STATUS] PetViewContainer: attempted eraser click")
@@ -1628,8 +1641,12 @@ func _gui_input(event: InputEvent) -> void:
 		and event.button_index == BUTTON_LEFT
 		and event.pressed
 		and Input.is_key_pressed(KEY_SHIFT)
+		and not (HotkeyManager and HotkeyManager.is_action_pressed("visual_move"))
 	):
-		var alt_key: bool = Input.is_key_pressed(KEY_ALT)
+		var alt_key: bool = (
+			(HotkeyManager and HotkeyManager.is_action_pressed("visual_scale"))
+			or Input.is_key_pressed(KEY_ALT)
+		)
 
 		#var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 
@@ -2276,6 +2293,29 @@ func _is_text_input_focused(event: InputEventKey) -> bool:
 			return false
 		return true
 	return false
+
+func _get_hotkey_display(action: String) -> String:
+	if not HotkeyManager:
+		return action
+	var binding: Dictionary = HotkeyManager.get_binding(action)
+	return HotkeyManager.get_key_string(binding)
+
+
+func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
+	if not HotkeyManager or not is_instance_valid(hovered_ball):
+		return ""
+	var parts: Array = []
+	parts.append(_get_hotkey_display("select_jump_info") + " or " + _get_hotkey_display("select_jump_info_alt") + ": [Ball Info] or [Add Ball]")
+	parts.append(_get_hotkey_display("select_jump_move") + " or " + _get_hotkey_display("select_jump_move_alt") + ": [Move]")
+	parts.append(_get_hotkey_display("select_jump_project") + " or " + _get_hotkey_display("select_jump_project_alt") + ": [Project Ball]")
+	parts.append(_get_hotkey_display("select_jump_line") + " or " + _get_hotkey_display("select_jump_line_alt") + ": [Line]")
+	var result: String = ""
+	for i in range(parts.size()):
+		result += parts[i]
+		if i < parts.size() - 1:
+			result += " | "
+	return "\n" + result
+
 
 func _exit_all_modes() -> void:
 	paintball_check_box.pressed = false
@@ -4800,7 +4840,8 @@ func _on_nudge_selection(vector: Vector3) -> void:
 	_record_move_end_state("Nudge")
 
 func _on_move_mode_select_group(group_name: String) -> void:
-	if not Input.is_key_pressed(KEY_CONTROL):
+	if not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
+		or Input.is_key_pressed(KEY_CONTROL)):
 		_on_unselect_all()
 
 	var balls_to_select: Array = KeyBallsData.get_group_balls(group_name)
@@ -5130,7 +5171,10 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 
 	# Group pan: SHIFT + left-click drag on any area (background or selected area)
 	# Exclude ALT to let SHIFT+ALT+drag go through to the resize handler
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_ALT):
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed
+		and ((HotkeyManager and HotkeyManager.is_action_pressed("move_group_pan"))
+			or Input.is_key_pressed(KEY_SHIFT))
+		and not Input.is_key_pressed(KEY_ALT):
 		_group_panning = true
 		_group_pan_start_pos = event.position
 		# Capture the current world position of the first selected ball as reference

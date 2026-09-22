@@ -377,6 +377,7 @@ func _input(event: InputEvent) -> void:
 	if _listening_active and event is InputEventKey and event.pressed:
 		if event.scancode == KEY_ESCAPE:
 			_listening_active = false
+			listening_popup.window_title = "Press any key..."
 			listening_popup.hide()
 			return
 
