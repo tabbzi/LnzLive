@@ -13,6 +13,7 @@ onready var profile_option: OptionButton = $VBoxContainer/ProfileHBox/ProfileOpt
 onready var save_profile_btn: Button = $VBoxContainer/ProfileHBox/SaveProfileBtn
 onready var save_profile_line: LineEdit = $VBoxContainer/ProfileHBox/SaveProfileLine
 onready var load_profile_btn: Button = $VBoxContainer/ProfileHBox/LoadProfileBtn
+onready var delete_profile_btn: Button = $VBoxContainer/ProfileHBox/DeleteProfileBtn
 onready var reset_btn: Button = $VBoxContainer/ButtonHBox/ResetBtn
 onready var export_btn: Button = $VBoxContainer/ButtonHBox/ExportBtn
 onready var import_btn: Button = $VBoxContainer/ButtonHBox/ImportBtn
@@ -67,6 +68,8 @@ func _setup_connections() -> void:
 		save_profile_btn.connect("pressed", self, "_on_save_profile_pressed")
 	if load_profile_btn:
 		load_profile_btn.connect("pressed", self, "_on_load_profile_pressed")
+	if delete_profile_btn:
+		delete_profile_btn.connect("pressed", self, "_on_delete_profile_pressed")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_pressed")
 	if export_btn:
@@ -98,8 +101,35 @@ func _update_profile_options() -> void:
 
 
 func show_dialog() -> void:
+	_update_profile_options()
 	_populate_action_list()
+	_sync_profile_selection()
 	popup_centered(Vector2(700, 550))
+
+
+func _sync_profile_selection() -> void:
+	if not profile_option or not HotkeyManager:
+		return
+	var current_bindings = HotkeyManager.get_all_user_bindings()
+	for i in range(profile_option.get_item_count()):
+		var name = profile_option.get_item_text(i)
+		if name == "Default":
+			if current_bindings.size() == 0:
+				profile_option.select(i)
+		elif HotkeyManager.has_profile(name):
+			var profile = HotkeyManager.profiles[name]
+			if _bindings_match_dict(current_bindings, profile):
+				profile_option.select(i)
+				return
+
+
+func _bindings_match_dict(a: Dictionary, b: Dictionary) -> bool:
+	if a.size() != b.size():
+		return false
+	for key in a:
+		if not b.has(key) or a[key] != b[key]:
+			return false
+	return true
 
 
 func _populate_action_list() -> void:
@@ -240,7 +270,22 @@ func _on_load_profile_pressed() -> void:
 	if HotkeyManager:
 		HotkeyManager.load_profile(selected_text)
 		_populate_action_list()
+		_sync_profile_selection()
 		emit_signal("hotkeys_changed")
+
+
+func _on_delete_profile_pressed() -> void:
+	if not profile_option or profile_option.selected < 0:
+		return
+	var selected_text: String = profile_option.get_item_text(profile_option.selected)
+	if selected_text == "Default":
+		print("[HotkeySettings] Cannot delete Default profile.")
+		return
+	if HotkeyManager:
+		if HotkeyManager.erase_profile(selected_text):
+			_update_profile_options()
+			_sync_profile_selection()
+			print("[HotkeySettings] Profile '", selected_text, "' deleted.")
 
 
 func _on_reset_pressed() -> void:

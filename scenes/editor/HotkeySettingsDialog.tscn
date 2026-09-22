@@ -50,8 +50,12 @@ text = "Save"
 __meta__ = {}
 
 [node name="LoadProfileBtn" type="Button" parent="VBoxContainer/ProfileHBox"]
-text = "Load"
-__meta__ = {}
+	text = "Load"
+	__meta__ = {}
+
+[node name="DeleteProfileBtn" type="Button" parent="VBoxContainer/ProfileHBox"]
+	text = "Delete"
+	__meta__ = {}
 
 [node name="Separator1" type="HSeparator" parent="VBoxContainer"]
 __meta__ = {}

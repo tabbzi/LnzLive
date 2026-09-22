@@ -435,7 +435,7 @@ func save_profile(name: String) -> bool:
 	if not config.has_section(PROFILES_SECTION):
 		config.set_value(PROFILES_SECTION, "_dummy_", null)
 
-	config.set_value(PROFILES_SECTION, name, profile)
+	config.set_value(PROFILES_SECTION, name, JSON.print(profile))
 
 	var err2: int = config.save(SETTINGS_PATH)
 	if err2 != OK:
@@ -916,6 +916,26 @@ func get_profile_names() -> Array:
 
 func has_profile(name: String) -> bool:
 	return profiles.has(name) or name == "Default"
+
+
+func erase_profile(name: String) -> bool:
+	if name == "Default":
+		return false
+	if not profiles.has(name):
+		return false
+
+	profiles.erase(name)
+
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		printerr("[HotkeyManager] Error loading settings config for profile erase: ", err)
+
+	if config.has_section(PROFILES_SECTION) and config.has_section_key(PROFILES_SECTION, name):
+		config.erase_section_key(PROFILES_SECTION, name)
+
+	config.save(SETTINGS_PATH)
+	return true
 
 
 func get_all_user_bindings() -> Dictionary:
