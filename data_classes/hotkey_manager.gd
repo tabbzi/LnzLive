@@ -33,6 +33,9 @@ var non_remappable_actions: Array = [
 	"line_connect",
 	"visual_scale",
 	"global_box_select",
+	"move_scale_group",
+	"move_group_pan",
+	"move_set_pivot",
 ]
 
 func is_context_specific(action: String) -> bool:
@@ -318,12 +321,12 @@ var action_display_names: Dictionary = {
 	"move_set_pivot": "Set Pivot Ball",
 	"move_scale_group": "Scale/Resize Group",
 	"move_group_pan": "Group Pan",
-	"move_nudge_positive": "Nudge +",
-	"move_nudge_positive_alt": "Nudge + (alt)",
-	"move_nudge_negative": "Nudge -",
-	"move_nudge_negative_alt": "Nudge - (alt)",
-	"move_nudge_value_up": "Increase Nudge Value",
-	"move_nudge_value_down": "Decrease Nudge Value",
+	"move_nudge_positive": "Nudge X/Y/Z +",
+	"move_nudge_positive_alt": "Nudge X/Y/Z + (alt)",
+	"move_nudge_negative": "Nudge X/Y/Z -",
+	"move_nudge_negative_alt": "Nudge X/Y/Z - (alt)",
+	"move_nudge_value_up": "Increase X/Y/Z Nudge Value",
+	"move_nudge_value_down": "Decrease X/Y/Z Nudge Value",
 	"move_mini_undo": "Mini-History Undo",
 	"move_mini_redo": "Mini-History Redo",
 	"paint_draw": "Draw Paintball",
