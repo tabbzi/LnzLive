@@ -402,7 +402,7 @@ func _input(event: InputEvent) -> void:
 				get_tree().set_input_as_handled()
 				emit_signal("hide_ball", ball_no)
 				return
-		elif (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
+		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.BALL)
 		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
