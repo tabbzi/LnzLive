@@ -816,6 +816,16 @@ func _scancode_to_string(scancode: int) -> String:
 			return "["
 		KEY_BRACKETRIGHT:
 			return "]"
+		KEY_BRACELEFT:
+			return "{"
+		KEY_BRACERIGHT:
+			return "}"
+		KEY_QUOTELEFT:
+			return "`"
+		KEY_BAR:
+			return "|"
+		KEY_UNDERSCORE:
+			return "_"
 		KEY_APOSTROPHE:
 			return "'"
 		KEY_BACKSLASH:

@@ -345,6 +345,13 @@ func _input(event: InputEvent) -> void:
 		}
 
 		if HotkeyManager:
+			var display: String = HotkeyManager.get_key_string(binding)
+			if display == "Key " + str(event.scancode) or display == "":
+				listening_popup.window_title = "Unsupported key: " + str(event.scancode)
+				get_viewport().set_input_as_handled()
+				return
+
+		if HotkeyManager:
 			var conflict: String = HotkeyManager.check_conflict(binding, _listening_for_action)
 			if conflict != "":
 				listening_popup.window_title = "Conflict! '" + HotkeyManager.get_key_string(binding) + "' is used by " + HotkeyManager.get_action_display_name(conflict)
