@@ -31,6 +31,8 @@ var non_remappable_actions: Array = [
 	"preset_apply",
 	"recolor_apply",
 	"line_connect",
+	"visual_scale",
+	"global_box_select",
 ]
 
 func is_context_specific(action: String) -> bool:

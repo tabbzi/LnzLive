@@ -981,11 +981,7 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	return global_pos - self.rect_global_position
 
 func _handle_box_selection(event: InputEvent) -> bool:
-	if (
-		not (move_mode or preset_mode or auto_paintballer_mode)
-		or not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
-			or Input.is_key_pressed(KEY_CONTROL))
-	):
+	if not Input.is_key_pressed(KEY_CONTROL):
 		return false
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
@@ -1104,11 +1100,10 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 				if hover:
 					# Locked balls cannot be selected or moved
-					if _is_ball_locked(hover) and not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
-						or Input.is_key_pressed(KEY_CONTROL)):
+					if _is_ball_locked(hover) and not Input.is_key_pressed(KEY_CONTROL):
 						return true
 
-					if (HotkeyManager and HotkeyManager.is_action_pressed("global_box_select")) or Input.is_key_pressed(KEY_CONTROL):
+					if Input.is_key_pressed(KEY_CONTROL):
 						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
@@ -4823,8 +4818,7 @@ func _on_nudge_selection(vector: Vector3) -> void:
 	_record_move_end_state("Nudge")
 
 func _on_move_mode_select_group(group_name: String) -> void:
-	if not ((HotkeyManager and HotkeyManager.is_action_pressed("global_box_select"))
-		or Input.is_key_pressed(KEY_CONTROL)):
+	if not Input.is_key_pressed(KEY_CONTROL):
 		_on_unselect_all()
 
 	var balls_to_select: Array = KeyBallsData.get_group_balls(group_name)
