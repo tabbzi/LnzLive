@@ -551,7 +551,7 @@ func get_key_string(binding: Dictionary) -> String:
 	var scancode: int = binding.get("scancode", 0)
 	var key_code: int = binding.get("key_code", -1)
 
-	if scancode >= KEY_SPACE and scancode <= KEY_Z:
+	if _is_standard_key(scancode):
 		parts.append(_scancode_to_string(scancode))
 	elif scancode == BUTTON_WHEEL_UP:
 		parts.append("Wheel Up")
@@ -630,6 +630,11 @@ func _bindings_match(a: Dictionary, b: Dictionary) -> bool:
 
 	return a.get("scancode", 0) == b.get("scancode", 0)
 
+
+func _is_standard_key(scancode: int) -> bool:
+	return (scancode >= KEY_SPACE and scancode <= KEY_Z) or \
+		(scancode >= KEY_ESCAPE and scancode <= KEY_F16) or \
+		(scancode >= KEY_KP_MULTIPLY and scancode <= KEY_KP_9)
 
 func _scancode_to_string(scancode: int) -> String:
 	match scancode:
@@ -906,7 +911,7 @@ func _create_input_event(binding: Dictionary) -> InputEvent:
 		event.meta = binding.get("meta", false)
 		return event
 
-	if scancode >= KEY_SPACE and scancode <= KEY_Z:
+	if _is_standard_key(scancode):
 		var event: InputEventKey = InputEventKey.new()
 		event.scancode = scancode
 		event.pressed = true
