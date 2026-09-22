@@ -1775,10 +1775,11 @@ func _gui_input(event: InputEvent) -> void:
 		# 	else:
 		# 		pass
 
-		var space_and_left: bool = (
-			Input.is_key_pressed(KEY_SPACE)
-			and Input.is_mouse_button_pressed(BUTTON_LEFT)
-		)
+		var space_and_left: bool = false
+		if HotkeyManager and HotkeyManager.is_action_pressed("viewport_pan_alt") and Input.is_mouse_button_pressed(BUTTON_LEFT):
+			space_and_left = true
+		elif Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT):
+			space_and_left = true
 		var middle_drag: bool = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
 
 		if space_and_left or middle_drag:

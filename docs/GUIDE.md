@@ -32,10 +32,10 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 | Context | Input / Hotkey | Action |
 | :--- | :--- | :--- |
-| **Viewport** | `wheel up` / `wheel down` | Zoom View In / Out |
-| **Viewport** | `SHIFT` + `+` / `-` | Zoom View In / Out |
-| **Viewport** | `SPACE` + `left-click drag` or `middle/wheel drag` | Pan Camera View |
-| **Viewport** | `left-click drag` | Rotate Camera View |
+| **Viewport** | `wheel up` / `wheel down` | **Zoom In / Out** (continuous) |
+| **Viewport** | `SHIFT` + `+` / `-` | **Zoom In / Out** (incremental) |
+| **Viewport** | `SPACE` + `left-click drag` or `middle mouse drag` | **Pan Camera View** |
+| **Viewport** | `left-click drag` | **Rotate Camera View** |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
 | **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top) |
 | **Viewport** | `CTRL` + `Z` | Undo last committed action |
@@ -43,6 +43,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `ESCAPE` | Exit Current Mode |
 | **Viewport** | `CTRL` + `left-click`| Add or remove ballz in group selection |
 | **Viewport** | `CTRL` + `left-click drag`| Box selection of ballz |
+| **Viewport** | `F1` | Toggle Hotkey Overlay |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `V` | Open/Close Variation Viewer |
@@ -93,6 +94,35 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `X`, `Y`, and/or `Z` + `arrow up` / `arrow down` | Change nudge amount for specific axis |
 | **Move Mode** | `X`, `Y`, and/or `Z` + `+` / `-` | Nudge specific axis by nudge amount |
 | **Move Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued move/scale action |
+
+### Remapping Hotkeys
+
+LnzLive includes a built-in Hotkey Settings dialog for customizing all default bindings.
+
+**Opening the dialog:** Go to `File > User Settings` and navigate to the Hotkey Settings tab (or open it from the sidebar).
+
+**Remapping a key:**
+
+1. Find the action you want to change in the list (grouped by context).
+2. Click **Remap** next to the action.
+3. Press the new key combination (e.g., `comma`, `T`, `CTRL+T`).
+4. Click **Apply & Save** to persist the change.
+
+> **Note:** Hotkeys are applied immediately upon pressing the new key. The "Apply & Save" button writes the changes to `settings.cfg` so they persist across sessions.
+
+**Resetting a single hotkey:** Click **Reset** next to any action to restore its default binding.
+
+**Resetting all hotkeys:** Click **Reset All** to restore every hotkey to its default.
+
+**Saving a profile:** Enter a name in the profile text field and click **Save** to save your current hotkey layout as a named profile (e.g., "Lefty", "FPS-style"). Profiles are stored in `settings.cfg`.
+
+**Loading a profile:** Select a saved profile from the dropdown and click **Load**.
+
+**Exporting hotkeys:** Click **Export** to open a file picker dialog. Choose a location and the current hotkey bindings will be saved as a JSON file. This is useful for backing up your layout or sharing it with others.
+
+**Importing hotkeys:** Click **Import** to open a file picker dialog. Select a previously exported JSON file to restore its hotkey bindings.
+
+**Zoom In/Out note:** The default `wheel up` / `wheel down` zoom is **continuous** — each scroll tick zooms once. The `SHIFT` + `+` / `-` bindings are **incremental** — each press zooms exactly once. Both can be remapped independently in the Hotkey Settings.
 
 ### History System
 
@@ -149,7 +179,7 @@ The 3D viewport displays the LNZ model.
 
 *   **Rotate:** Click and hold the left mouse button to rotate the model.
 *   **Zoom:** Use the mouse wheel to zoom in and out.
-*   **Pan:** Press the middle mouse button or hold `Space` and drag to move the model.
+*   **Pan:** Press the middle mouse button or hold the pan key (default `SPACE`) and drag to move the model. Remap the pan key in Hotkey Settings.
 *   **Quick Views:** Use the number keys `1-0` to jump to different camera angles (front, top, isometric, etc.).
 
 #### Features
@@ -530,7 +560,7 @@ SHIFT + ALT + left-click and drag to resize a ball interactively, which will sho
 
 ## Tools menu
 
-Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
+Press `CTRL` + `SPACE` in the pet view to open the tools menu, or right-click on a ball in the pet view.
 
 ### Color...
 
