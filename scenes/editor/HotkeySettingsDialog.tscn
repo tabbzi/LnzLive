@@ -137,5 +137,13 @@ margin_bottom = 60.0
 text = "Press Escape to cancel"
 align = 1
 __meta__ = {
-"_edit_use_anchors_": false
+	"_edit_use_anchors_": false
 }
+
+[node name="FileDialog" type="FileDialog" parent="."]
+mode = 0
+access = 0
+__meta__ = {
+	"_edit_use_anchors_": false
+}
+

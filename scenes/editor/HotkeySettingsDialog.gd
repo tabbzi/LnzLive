@@ -21,6 +21,7 @@ onready var cancel_btn: Button = $VBoxContainer/ButtonHBox/CancelBtn
 onready var action_list_container: VBoxContainer = $VBoxContainer/ScrollContainer/ActionListVBox
 
 onready var listening_popup: WindowDialog = $ListeningPopup
+onready var file_dialog: FileDialog = $FileDialog
 
 var _listening_for_action: String = ""
 var _listening_active: bool = false
@@ -78,6 +79,8 @@ func _setup_connections() -> void:
 		cancel_btn.connect("pressed", self, "_on_cancel_pressed")
 	if listening_popup:
 		listening_popup.connect("popup_hide", self, "_on_listening_popup_hide")
+	if file_dialog:
+		file_dialog.connect("file_selected", self, "_on_file_selected")
 
 	if HotkeyManager:
 		HotkeyManager.connect("hotkeys_reloaded", self, "_on_hotkeys_reloaded")
@@ -252,35 +255,52 @@ func _on_export_pressed() -> void:
 		return
 	var bindings: Dictionary = HotkeyManager.get_all_user_bindings()
 	var json_str: String = JSON.print(bindings)
-	var filename: String = "user://hotkeys_export.json"
-	var file: File = File.new()
-	var err: int = file.open(filename, File.WRITE)
-	if err == OK:
-		file.store_string(json_str)
-		file.close()
-		print("[HotkeySettings] Exported to ", filename)
-	else:
-		printerr("[HotkeySettings] Export failed: ", err)
-
+	file_dialog.mode = FileDialog.MODE_SAVE_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.clear_filters()
+	file_dialog.add_filter("*.json ; JSON Files")
+	file_dialog.current_path = "user://hotkeys_export.json"
+	file_dialog.popup_centered(Vector2(600, 400))
+	_export_json = json_str
 
 func _on_import_pressed() -> void:
-	var filename: String = "user://hotkeys_export.json"
-	var file: File = File.new()
-	var err: int = file.open(filename, File.READ)
-	if err == OK:
-		var json_str: String = file.get_as_text()
-		file.close()
-		var json: JSONParseResult = JSON.parse(json_str)
-		if json.result is Dictionary:
-			if HotkeyManager:
-				HotkeyManager.set_all_user_bindings(json.result)
-				_populate_action_list()
-				emit_signal("hotkeys_changed")
-				print("[HotkeySettings] Import successful.")
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.clear_filters()
+	file_dialog.add_filter("*.json ; JSON Files")
+	file_dialog.current_path = "user://hotkeys_export.json"
+	file_dialog.popup_centered(Vector2(600, 400))
+
+var _export_json: String = ""
+
+func _on_file_selected(path: String) -> void:
+	if _export_json != "":
+		var file: File = File.new()
+		var err: int = file.open(path, File.WRITE)
+		if err == OK:
+			file.store_string(_export_json)
+			file.close()
+			print("[HotkeySettings] Exported to ", path)
 		else:
-			printerr("[HotkeySettings] Invalid JSON in import file.")
+			printerr("[HotkeySettings] Export failed: ", err)
+		_export_json = ""
 	else:
-		printerr("[HotkeySettings] Import file not found: ", filename)
+		var file: File = File.new()
+		var err: int = file.open(path, File.READ)
+		if err == OK:
+			var json_str: String = file.get_as_text()
+			file.close()
+			var json: JSONParseResult = JSON.parse(json_str)
+			if json.result is Dictionary:
+				if HotkeyManager:
+					HotkeyManager.set_all_user_bindings(json.result)
+					_populate_action_list()
+					emit_signal("hotkeys_changed")
+					print("[HotkeySettings] Import successful from ", path)
+			else:
+				printerr("[HotkeySettings] Invalid JSON in import file.")
+		else:
+			printerr("[HotkeySettings] Import file not found: ", path)
 
 
 func _on_apply_pressed() -> void:

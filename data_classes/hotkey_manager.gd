@@ -433,7 +433,7 @@ func save_profile(name: String) -> bool:
 		printerr("[HotkeyManager] Error loading settings config for profile save: ", err)
 
 	if not config.has_section(PROFILES_SECTION):
-		config.add_section(PROFILES_SECTION)
+		config.set_value(PROFILES_SECTION, "_dummy_", null)
 
 	config.set_value(PROFILES_SECTION, name, profile)
 
