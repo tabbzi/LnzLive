@@ -677,11 +677,6 @@ func _unhandled_key_input(event):
 					search_input.grab_focus()
 			return
 
-	if HotkeyManager and HotkeyManager.is_action_pressed("text_save") and Input.is_key_pressed(KEY_CONTROL):
-		save_file(false)
-	elif Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
-		save_file(false)
-
 	if HotkeyManager:
 		if HotkeyManager.is_action_pressed("text_undo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
 			undo_visual_edit() # Ctrl+Z

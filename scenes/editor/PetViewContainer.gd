@@ -2181,20 +2181,6 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 					get_tree().set_input_as_handled()
 					return true
 
-			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_positive"):
-				_record_move_start_state()
-				var dirsign: float = 1.0
-				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
-				_record_move_end_state("Nudge +")
-				get_tree().set_input_as_handled()
-				return true
-			if HotkeyManager and HotkeyManager.is_action_pressed("move_nudge_positive_alt"):
-				_record_move_start_state()
-				var dirsign: float = 1.0
-				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
-				_record_move_end_state("Nudge +")
-				get_tree().set_input_as_handled()
-				return true
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD:  # + key
 				_record_move_start_state()
 				var dirsign: float = 1.0
@@ -2485,17 +2471,6 @@ func _sync_mode_cursor() -> void:
 			mouse_default_cursor_shape = CURSOR_ARROW
 
 func _unhandled_key_input(event: InputEventKey) -> void:
-	if HotkeyManager and HotkeyManager.is_action_pressed("global_exit_mode"):
-		_exit_all_modes()
-		var focus_owner = get_focus_owner()
-		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
-			focus_owner.release_focus()
-		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
-			var floating_panels = sidebar_controller.floating_layer.get_children()
-			for panel in floating_panels:
-				sidebar_controller.dock_panel(panel)
-		get_tree().set_input_as_handled()
-		return
 	if HotkeyManager and HotkeyManager.is_action_pressed("global_exit_mode"):
 		_exit_all_modes()
 		var focus_owner = get_focus_owner()
