@@ -11,9 +11,6 @@ const HOTKEYS_SECTION: String = "HotkeyProperties"
 const PROFILES_SECTION: String = "HotkeyProfiles"
 
 signal hotkeys_reloaded
-
-var current_context: String = "global"
-
 var context_specific_actions: Array = [
 	"texture_tool_line", "texture_tool_hline", "texture_tool_vline",
 	"texture_tool_brush", "texture_tool_eraser", "texture_tool_eyedropper",
@@ -523,10 +520,6 @@ func is_action_pressed(action: String) -> bool:
 	return Input.is_action_pressed(action)
 
 
-func is_action_pressed_frame(action: String) -> bool:
-	return Input.is_action_pressed(action) and Input.is_action_released(action + "_latched") == false
-
-
 func get_action_display_name(action: String) -> String:
 	if action_display_names.has(action):
 		return action_display_names[action]
@@ -922,10 +915,6 @@ func _create_input_event(binding: Dictionary) -> InputEvent:
 		return event
 
 	return null
-
-
-func set_context(context: String) -> void:
-	current_context = context
 
 
 func get_profile_names() -> Array:
