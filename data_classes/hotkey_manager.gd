@@ -24,8 +24,20 @@ var context_specific_actions: Array = [
 	"text_next_section", "text_prev_section", "text_jump_ball_index",
 ]
 
+var non_remappable_actions: Array = [
+	"viewport_rotate",
+	"select_tools_menu_alt",
+	"paint_draw",
+	"preset_apply",
+	"recolor_apply",
+	"line_connect",
+]
+
 func is_context_specific(action: String) -> bool:
 	return action in context_specific_actions
+
+func is_non_remappable(action: String) -> bool:
+	return action in non_remappable_actions
 
 var default_bindings: Dictionary = {
 	# === Viewport / Camera ===

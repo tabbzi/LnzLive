@@ -207,8 +207,9 @@ func _add_action_row(action: String) -> void:
 	var remap_btn: Button = Button.new()
 	remap_btn.text = "Remap"
 	remap_btn.set_custom_minimum_size(Vector2(70, 0))
-	remap_btn.connect("pressed", self, "_on_remap_pressed", [action])
-	row.add_child(remap_btn)
+	if not HotkeyManager.is_non_remappable(action):
+		remap_btn.connect("pressed", self, "_on_remap_pressed", [action])
+		row.add_child(remap_btn)
 
 	var reset_btn_local: Button = Button.new()
 	reset_btn_local.text = "Reset"

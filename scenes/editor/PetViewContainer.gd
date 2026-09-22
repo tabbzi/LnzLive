@@ -3922,7 +3922,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 	var result: Dictionary = space_state.intersect_ray(from, to, [self], 1, true, true)
 
 	if result and result.collider and result.collider.get_parent() == target_ball:
-		print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
+		# print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
 		var intersection_point: Vector3 = result.position
 
 		if paintball_settings_instance.is_design_mode_active():
