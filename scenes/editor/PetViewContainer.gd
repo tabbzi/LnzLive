@@ -5146,16 +5146,21 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
 
-	# Group pan: SHIFT + left-click drag on any area (background or selected area)
+	# Group pan: SHIFT + left-click drag on selected balls
+	# Only activates when LMB is over a selected ball, so camera rotation works on empty background
 	# Exclude ALT to let SHIFT+ALT+drag go through to the resize handler
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and ((HotkeyManager and HotkeyManager.is_action_pressed("move_group_pan")) or Input.is_key_pressed(KEY_SHIFT)) and not Input.is_key_pressed(KEY_ALT):
-		_group_panning = true
-		_group_pan_start_pos = event.position
-		# Capture the current world position of the first selected ball as reference
-		if selected_balls.size() > 0 and is_instance_valid(selected_balls[0]):
-			_group_pan_start_origin = selected_balls[0].global_transform.origin
-		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
-		return true
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and not Input.is_key_pressed(KEY_ALT):
+		if ((HotkeyManager and HotkeyManager.is_action_pressed("move_group_pan")) or Input.is_key_pressed(KEY_SHIFT)):
+			var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+			var hover_ball = get_intended_ball(screen_pos)
+			if hover_ball and hover_ball in selected_balls:
+				_group_panning = true
+				_group_pan_start_pos = event.position
+				# Capture the current world position of the first selected ball as reference
+				if selected_balls.size() > 0 and is_instance_valid(selected_balls[0]):
+					_group_pan_start_origin = selected_balls[0].global_transform.origin
+				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
+				return true
 
 	# End group pan on mouse release
 	if _group_panning and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
@@ -5199,6 +5204,7 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 		return true
 
 	return false
+
 
 func _on_lock_all() -> void:
 	for b in selected_balls:
