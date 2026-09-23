@@ -75,6 +75,12 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `L` or `ALT` (hold while freeline active) | **Straight Line**: Constrain freeline to a straight line. Hold `X` or `Y` to lock axis |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `wheel down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `SHIFT` + `arrow up` / `arrow down` | **Scale/Resize**: Resize diameter of paintballz |
+| **Paintball Mode** | `CTRL` + `wheel up` / `wheel down` | **Scale Stamp**: Increase/decrease stamp size (min and max together) |
+| **Paintball Mode** | `ALT` + `wheel up` / `wheel down` | **Rotate Stamp**: Increase/decrease fixed rotation angle (degrees) |
+| **Paintball Mode** | `CTRL` + `B` | **Design - Brush**: Activate brush tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `L` | **Design - Line**: Activate line tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `H` | **Design - Horizontal**: Activate H-line tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `V` | **Design - Vertical**: Activate V-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
@@ -430,9 +436,11 @@ The Design tab introduces a "stamp" system. Instead of placing single balls, you
 
 **Stamping Controls:**
 
-*Scale (`CTRL` + `wheel up` / `wheel down`):* Change the overall footprint size of the stamp using the `Diameter` setting shared with Standard mode.
+*Scale (`CTRL` + `wheel up` / `wheel down`):* Change the overall footprint size of the stamp. Adjusts both min and max diameter equally, preserving the size range.
 
-*Design Jitter:* Adds randomness to the paintballz positions (`Jitter`), design rotation (`Rotation`), and placement spread (`Spread`).
+*Rotation (`ALT` + `wheel up` / `wheel down`):* Adjust the fixed/starting rotation angle of the stamp in degrees.
+
+*Design Jitter:* Adds randomness to the paintballz positions (`Jitter`), design rotation jitter (`Rotation`), and placement spread (`Spread`).
 
 *Import/Export:* You can save your custom designs as `.json` files to share with others or reuse them across different projects.
 
