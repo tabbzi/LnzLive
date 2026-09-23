@@ -103,32 +103,30 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 ### Remapping Hotkeys
 
-LnzLive includes a built-in Hotkey Settings dialog for customizing all default bindings.
+The Hotkey Settings dialog can be used to customize most default key bindings.
 
-**Opening the dialog:** Go to `File > User Settings` and navigate to the Hotkey Settings tab (or open it from the sidebar).
+**Opening the dialog:** Go to `File > User Settings` and navigate to the Hotkey Settings tab.
 
 **Remapping a key:**
 
 1. Find the action you want to change in the list (grouped by context).
 2. Click **Remap** next to the action.
 3. Press the new key combination (e.g., `comma`, `T`, `CTRL+T`).
-4. Click **Apply & Save** to persist the change.
+4. Click **Apply** to persist the change.
 
-> **Note:** Hotkeys are applied immediately upon pressing the new key. The "Apply & Save" button writes the changes to `settings.cfg` so they persist across sessions.
+Hotkeys are applied immediately upon pressing the new key. The "Apply & Save" button writes the changes to your settings config.
 
 **Resetting a single hotkey:** Click **Reset** next to any action to restore its default binding.
 
 **Resetting all hotkeys:** Click **Reset All** to restore every hotkey to its default.
 
-**Saving a profile:** Enter a name in the profile text field and click **Save** to save your current hotkey layout as a named profile (e.g., "Lefty", "FPS-style"). Profiles are stored in `settings.cfg`.
+**Saving a profile:** Enter a name in the profile text field and click **Save** to save your current hotkey layout as a named profile. Profiles are stored in your settings config as well.
 
 **Loading a profile:** Select a saved profile from the dropdown and click **Load**.
 
-**Exporting hotkeys:** Click **Export** to open a file picker dialog. Choose a location and the current hotkey bindings will be saved as a JSON file. This is useful for backing up your layout or sharing it with others.
+**Exporting hotkeys:** Click **Export** to open a file picker dialog. Choose a location and the current hotkey bindings will be saved as a JSON file.
 
 **Importing hotkeys:** Click **Import** to open a file picker dialog. Select a previously exported JSON file to restore its hotkey bindings.
-
-**Zoom In/Out note:** The default `wheel up` / `wheel down` zoom is **continuous** — each scroll tick zooms once. The `SHIFT` + `+` / `-` bindings are **incremental** — each press zooms exactly once. Both can be remapped independently in the Hotkey Settings.
 
 ### History System
 
