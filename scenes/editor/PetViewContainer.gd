@@ -1518,42 +1518,49 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		var d_rotate_up: bool = false
 		var d_rotate_down: bool = false
 
+		# 1. Check HotkeyManager actions with exact modifier matching
 		if HotkeyManager and InputMap.has_action("design_stamp_scale"):
 			d_scale_up = HotkeyManager.is_exact_action(event, "design_stamp_scale")
 			d_scale_down = HotkeyManager.is_exact_action(event, "design_stamp_scale_down")
 			d_rotate_up = HotkeyManager.is_exact_action(event, "design_stamp_rotate")
 			d_rotate_down = HotkeyManager.is_exact_action(event, "design_stamp_rotate_down")
 
+		# 2. Fallback to raw inputs (CTRL + Wheel for Scale, ALT + Wheel for Rotate)
 		if not (d_scale_up or d_scale_down or d_rotate_up or d_rotate_down):
 			if is_wheel_up:
 				if event.control:
 					d_scale_up = true
-				else:
+				elif event.alt:
 					d_rotate_up = true
 			elif is_wheel_down:
 				if event.control:
 					d_scale_down = true
-				else:
+				elif event.alt:
 					d_rotate_down = true
 
+		# 3. Apply changes and sync back to the settings panel UI
 		if d_scale_up:
-			print("[STATUS] PetViewContainer: adjusted design stamp scale (UP)")
 			design_scale_multiplier += 0.1
+			if paintball_settings_instance.has_method("update_design_scale"):
+				paintball_settings_instance.update_design_scale(1)
 			get_tree().set_input_as_handled()
 			return true
 		elif d_scale_down:
-			print("[STATUS] PetViewContainer: adjusted design stamp scale (DOWN)")
 			design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
+			if paintball_settings_instance.has_method("update_design_scale"):
+				paintball_settings_instance.update_design_scale(-1)
 			get_tree().set_input_as_handled()
 			return true
 		elif d_rotate_up:
-			print("[STATUS] PetViewContainer: adjusted design stamp rotation (UP)")
-			design_rotation_angle += 0.1
+			design_rotation_angle += 1
+			if paintball_settings_instance.has_method("update_design_rotation"):
+				paintball_settings_instance.update_design_rotation(1)
 			get_tree().set_input_as_handled()
 			return true
 		elif d_rotate_down:
-			print("[STATUS] PetViewContainer: adjusted design stamp rotation (DOWN)")
-			design_rotation_angle -= 0.1
+			design_rotation_angle -= 1
+			if paintball_settings_instance.has_method("update_design_rotation"):
+				paintball_settings_instance.update_design_rotation(-1)
 			get_tree().set_input_as_handled()
 			return true
 
@@ -3994,13 +4001,16 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			var tangent_right: Vector3 = tangent_up.cross(normal).normalized()
 			var basis: Basis = Basis(tangent_right, normal, tangent_up)
 
+			var fixed_rotation: float = paintball_settings_instance.get_design_rotation() if paintball_settings_instance.has_method("get_design_rotation") else 0.0
+			var total_rotation: float = design_rotation_angle + fixed_rotation
+
 			var pattern_pbs: Dictionary = paintball_settings_instance.paste_paintball_design(
 				normal,
 				basis,
 				target_ball.ball_no,
 				lnz_diam,
 				design_scale_multiplier,
-				design_rotation_angle
+				total_rotation
 			)
 
 			if not pattern_pbs or not pattern_pbs.has("positions") or not pattern_pbs.has("diameters"):

@@ -142,8 +142,8 @@ var default_bindings: Dictionary = {
 	# === Paintball Design Mode ===
 	"design_stamp_scale": { "scancode": BUTTON_WHEEL_UP, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"design_stamp_scale_down": { "scancode": BUTTON_WHEEL_DOWN, "ctrl": true, "shift": false, "alt": false, "meta": false },
-	"design_stamp_rotate": { "scancode": BUTTON_WHEEL_UP, "ctrl": false, "shift": false, "alt": false, "meta": false },
-	"design_stamp_rotate_down": { "scancode": BUTTON_WHEEL_DOWN, "ctrl": false, "shift": false, "alt": false, "meta": false },
+	"design_stamp_rotate": { "scancode": BUTTON_WHEEL_UP, "ctrl": false, "shift": false, "alt": true, "meta": false },
+	"design_stamp_rotate_down": { "scancode": BUTTON_WHEEL_DOWN, "ctrl": false, "shift": false, "alt": true, "meta": false },
 	"design_sync_brush": { "scancode": KEY_B, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"design_sync_line": { "scancode": KEY_L, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"design_sync_horizontal": { "scancode": KEY_H, "ctrl": true, "shift": false, "alt": false, "meta": false },

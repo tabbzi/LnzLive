@@ -55,6 +55,7 @@ onready var _walk_spread: SpinBox = find_node("WalkSpreadSpinBox")
 onready var _design_canvas: Control = find_node("DesignCanvas")
 onready var _design_total_diameter: SpinBox = find_node("DesignTotalDiameter")
 onready var _design_total_diameter_max: SpinBox = find_node("DesignTotalDiameterMax")
+onready var _design_rotation: SpinBox = find_node("DesignRotation")
 onready var _design_pixel_mode: CheckBox = find_node("DesignPixelMode")
 onready var _design_jitter: SpinBox = find_node("DesignJitter")
 onready var _brush_size_slider: HSlider = find_node("BrushSizeSlider")
@@ -560,6 +561,31 @@ func _on_palette_changed(palette_name = "") -> void:
 func is_design_mode_active() -> bool:
 	return _tab_container.current_tab == 1
 
+func update_design_scale(delta: float) -> void:
+	if is_instance_valid(_design_total_diameter):
+		_design_total_diameter.set_block_signals(true)
+		_design_total_diameter.value = clamp(_design_total_diameter.value + delta, _design_total_diameter.min_value, _design_total_diameter.max_value)
+		_design_total_diameter.set_block_signals(false)
+	if is_instance_valid(_design_total_diameter_max):
+		_design_total_diameter_max.set_block_signals(true)
+		_design_total_diameter_max.value = clamp(_design_total_diameter_max.value + delta, _design_total_diameter_max.min_value, _design_total_diameter_max.max_value)
+		_design_total_diameter_max.set_block_signals(false)
+
+func reset_design_scale_base() -> void:
+	_design_total_diameter.value = 20.0
+	_design_total_diameter_max.value = 30.0
+
+func update_design_rotation(delta: float) -> void:
+	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
+		_design_rotation.set_block_signals(true)
+		_design_rotation.value = clamp(int(_design_rotation.value + delta), -360, 360)
+		_design_rotation.set_block_signals(false)
+
+func get_design_rotation() -> float:
+	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
+		return deg2rad(_design_rotation.value)
+	return 0.0
+
 func get_properties() -> Dictionary:
 	var properties: Dictionary = {}
 	properties["diameter_min"] = _diameter_min.value
@@ -841,6 +867,7 @@ func _connect_design_signals() -> void:
 	_brush_size_slider.connect("value_changed", self, "_on_brush_size_changed")
 	_design_total_diameter.connect("value_changed", self, "_on_setting_changed")
 	_design_total_diameter_max.connect("value_changed", self, "_on_setting_changed")
+	_design_rotation.connect("value_changed", self, "_on_setting_changed")
 	_rotate_fixed.connect("toggled", self, "_on_setting_changed")
 	_design_pixel_mode.connect("toggled", self, "_on_setting_changed")
 
@@ -1300,6 +1327,7 @@ func save_settings() -> void:
 	design_values["design_jitter"] = _design_jitter.value
 	design_values["rotate_jitter"] = _rotate_jitter.value
 	design_values["rotate_fixed"] = _rotate_fixed.pressed
+	design_values["design_rotation"] = _design_rotation.value
 	design_values["spread_jitter"] = _spread_jitter.value
 	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
 
@@ -1377,6 +1405,7 @@ func load_settings() -> void:
 	_design_jitter.value = design_data.get("design_jitter", 0.0)
 	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
 	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
+	_design_rotation.value = design_data.get("design_rotation", 0.0)
 	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
 
 	_on_design_tool_toggled(null)
@@ -1433,6 +1462,7 @@ func _on_reset_defaults_pressed() -> void:
 	_brush_size_slider.value = 30.0
 	_design_total_diameter.value = 20.0
 	_design_total_diameter_max.value = 30.0
+	_design_rotation.value = 0.0
 	_design_pixel_mode.pressed = false
 
 	design_color_slots.clear()
