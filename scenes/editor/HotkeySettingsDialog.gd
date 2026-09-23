@@ -243,6 +243,7 @@ func _on_reset_action_pressed(action: String) -> void:
 		return
 	if HotkeyManager.user_bindings.has(action):
 		HotkeyManager.user_bindings.erase(action)
+		HotkeyManager._apply_bindings()
 		_update_row_binding(action)
 		emit_signal("hotkeys_changed")
 
@@ -299,15 +300,12 @@ func _on_reset_pressed() -> void:
 func _on_export_pressed() -> void:
 	if not HotkeyManager:
 		return
-	var bindings: Dictionary = HotkeyManager.get_all_user_bindings()
-	var json_str: String = JSON.print(bindings)
 	file_dialog.mode = FileDialog.MODE_SAVE_FILE
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.json ; JSON Files")
 	file_dialog.current_path = "user://hotkeys_export.json"
 	file_dialog.popup_centered(Vector2(600, 400))
-	_export_json = json_str
 
 func _on_import_pressed() -> void:
 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
@@ -317,20 +315,20 @@ func _on_import_pressed() -> void:
 	file_dialog.current_path = "user://hotkeys_export.json"
 	file_dialog.popup_centered(Vector2(600, 400))
 
-var _export_json: String = ""
-
 func _on_file_selected(path: String) -> void:
-	if _export_json != "":
+	if file_dialog.mode == FileDialog.MODE_SAVE_FILE:
+		if not HotkeyManager:
+			return
 		var file: File = File.new()
 		var err: int = file.open(path, File.WRITE)
 		if err == OK:
-			file.store_string(_export_json)
+			var bindings: Dictionary = HotkeyManager.get_all_user_bindings()
+			file.store_string(JSON.print(bindings))
 			file.close()
 			print("[HotkeySettings] Exported to ", path)
 		else:
 			printerr("[HotkeySettings] Export failed: ", err)
-		_export_json = ""
-	else:
+	elif file_dialog.mode == FileDialog.MODE_OPEN_FILE:
 		var file: File = File.new()
 		var err: int = file.open(path, File.READ)
 		if err == OK:
@@ -381,6 +379,10 @@ func _input(event: InputEvent) -> void:
 			listening_popup.hide()
 			return
 
+		if event.scancode in [KEY_CONTROL, KEY_SHIFT, KEY_ALT, KEY_META]:
+			listening_popup.window_title = "Holding modifier..."
+			return
+
 		get_viewport().set_input_as_handled()
 
 		var binding: Dictionary = {
@@ -408,6 +410,7 @@ func _input(event: InputEvent) -> void:
 		if not HotkeyManager:
 			return
 		HotkeyManager.user_bindings[_listening_for_action] = binding
+		HotkeyManager._apply_bindings()
 		_update_row_binding(_listening_for_action)
 		_listening_active = false
 		listening_popup.hide()
@@ -436,6 +439,7 @@ func _input(event: InputEvent) -> void:
 		if not HotkeyManager:
 			return
 		HotkeyManager.user_bindings[_listening_for_action] = binding
+		HotkeyManager._apply_bindings()
 		_update_row_binding(_listening_for_action)
 		_listening_active = false
 		listening_popup.hide()
@@ -464,4 +468,3 @@ func _on_row_mouse_entered(panel: PanelContainer) -> void:
 func _on_row_mouse_exited(panel: PanelContainer) -> void:
 	if _row_normal_style:
 		panel.add_stylebox_override("panel", _row_normal_style)
-
