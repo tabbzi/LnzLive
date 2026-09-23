@@ -105,7 +105,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 The Hotkey Settings dialog can be used to customize most default key bindings.
 
-**Opening the dialog:** Go to `File > User Settings` and navigate to the Hotkey Settings tab.
+**Opening the dialog:** Go to `File > Hotkey Settings` and navigate to the Hotkey Settings tab.
 
 **Remapping a key:**
 
