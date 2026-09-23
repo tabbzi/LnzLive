@@ -658,24 +658,9 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 # _on_menu_id_pressed
 
 func _unhandled_key_input(event):
-	if HotkeyManager:
-		if HotkeyManager.is_action_pressed("text_save") and Input.is_key_pressed(KEY_CONTROL):
-			save_file(false)
-			return
-		if HotkeyManager.is_action_pressed("text_undo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
-			undo_visual_edit()
-			return
-		if HotkeyManager.is_action_pressed("text_redo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
-			redo_visual_edit()
-			return
-		if HotkeyManager.is_action_pressed("text_find"):
-			find_panel.visible = not find_panel.visible
-			self.readonly = find_panel.visible
-			if find_panel.visible:
-				var search_input = find_panel.get_node("VBoxContainer/LineEdit")
-				if search_input:
-					search_input.grab_focus()
-			return
+	if HotkeyManager and HotkeyManager.is_action_pressed("text_save") and Input.is_key_pressed(KEY_CONTROL):
+		save_file(false)
+		return
 
 	if HotkeyManager:
 		if HotkeyManager.is_action_pressed("text_undo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
