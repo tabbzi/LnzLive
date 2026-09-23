@@ -237,15 +237,15 @@ align = 1
 
 [node name="BtnUpdate" type="Button" parent="Background/MarginContainer/HBoxContainer/VBoxContainer/MenuContainer"]
 visible = false
-margin_top = 146.0
+margin_top = 35.0
 margin_right = 470.0
-margin_bottom = 171.0
-rect_min_size = Vector2( 0, 25 )
+margin_bottom = 70.0
+rect_min_size = Vector2( 0, 35 )
 custom_styles/hover = SubResource( 3 )
-custom_styles/pressed = SubResource( 7 )
-custom_styles/focus = SubResource( 7 )
-custom_styles/disabled = SubResource( 7 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
 custom_fonts/font = ExtResource( 9 )
 text = "Update Available"
 
