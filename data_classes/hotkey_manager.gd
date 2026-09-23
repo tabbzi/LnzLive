@@ -11,6 +11,7 @@ const HOTKEYS_SECTION: String = "HotkeyProperties"
 const PROFILES_SECTION: String = "HotkeyProfiles"
 
 signal hotkeys_reloaded
+
 var context_specific_actions: Array = [
 	"texture_tool_line", "texture_tool_hline", "texture_tool_vline",
 	"texture_tool_brush", "texture_tool_eraser", "texture_tool_eyedropper",
@@ -25,7 +26,10 @@ var non_remappable_actions: Array = [
 	"viewport_rotate",
 	"select_tools_menu_alt",
 	"paint_draw",
+	"paint_eraser",
+	"paint_freeline",
 	"preset_apply",
+	"preset_eyedropper",
 	"recolor_apply",
 	"line_connect",
 	"visual_scale",
@@ -519,6 +523,21 @@ func get_all_actions() -> Array:
 func is_action_pressed(action: String) -> bool:
 	return Input.is_action_pressed(action)
 
+func is_exact_action(event: InputEvent, action: String) -> bool:
+	if not event.is_action(action):
+		return false
+		
+	var binding: Dictionary = get_binding(action)
+	if not binding.empty() and (event is InputEventMouseButton or event is InputEventKey):
+		if event.shift != binding.get("shift", false):
+			return false
+		if event.control != binding.get("ctrl", false):
+			return false
+		if event.alt != binding.get("alt", false):
+			return false
+			
+	return true
+
 
 func get_action_display_name(action: String) -> String:
 	if action_display_names.has(action):
@@ -545,24 +564,24 @@ func get_key_string(binding: Dictionary) -> String:
 	var key_code: int = binding.get("key_code", -1)
 
 	if _is_standard_key(scancode):
-		parts.append(_scancode_to_string(scancode))
+		parts.append(OS.get_scancode_string(scancode))
 	elif scancode == BUTTON_WHEEL_UP:
 		parts.append("Wheel Up")
 	elif scancode == BUTTON_WHEEL_DOWN:
 		parts.append("Wheel Down")
 	elif scancode == BUTTON_LEFT:
 		if key_code != -1:
-			parts.append("L" + _scancode_to_string(key_code))
+			parts.append("L" + OS.get_scancode_string(key_code))
 		else:
 			parts.append("LMB")
 	elif scancode == BUTTON_MIDDLE:
 		if key_code != -1:
-			parts.append("M" + _scancode_to_string(key_code))
+			parts.append("M" + OS.get_scancode_string(key_code))
 		else:
 			parts.append("MMB")
 	elif scancode == BUTTON_RIGHT:
 		if key_code != -1:
-			parts.append("R" + _scancode_to_string(key_code))
+			parts.append("R" + OS.get_scancode_string(key_code))
 		else:
 			parts.append("RMB")
 	elif scancode >= BUTTON_LEFT and scancode <= BUTTON_RIGHT:
@@ -587,14 +606,19 @@ func check_conflict(proposed_binding: Dictionary, exclude_action: String = "") -
 			continue
 		if is_context_specific(exclude_action) and not is_context_specific(action):
 			continue
-		var existing = default_bindings[action]
-		if _bindings_match(proposed_binding, existing):
+		var effective = default_bindings[action].duplicate()
+		if user_bindings.has(action):
+			for key in user_bindings[action]:
+				effective[key] = user_bindings[action][key]
+		if _bindings_match(proposed_binding, effective):
 			return action
 
 	for action in user_bindings:
 		if action == exclude_action:
 			continue
 		if is_context_specific(action) and not is_context_specific(exclude_action):
+			continue
+		if is_context_specific(exclude_action) and not is_context_specific(action):
 			continue
 		var user_val = user_bindings[action]
 		if _bindings_match(proposed_binding, user_val):
@@ -628,233 +652,6 @@ func _is_standard_key(scancode: int) -> bool:
 	return (scancode >= KEY_SPACE and scancode <= KEY_Z) or \
 		(scancode >= KEY_ESCAPE and scancode <= KEY_F16) or \
 		(scancode >= KEY_KP_MULTIPLY and scancode <= KEY_KP_9)
-
-func _scancode_to_string(scancode: int) -> String:
-	match scancode:
-		KEY_ESCAPE:
-			return "Esc"
-		KEY_TAB:
-			return "Tab"
-		KEY_BACKSPACE:
-			return "Bksp"
-		KEY_ENTER:
-			return "Enter"
-		KEY_KP_ENTER:
-			return "KP Enter"
-		KEY_INSERT:
-			return "Ins"
-		KEY_DELETE:
-			return "Del"
-		KEY_PAUSE:
-			return "Pause"
-		KEY_PRINT:
-			return "Print"
-		KEY_HOME:
-			return "Home"
-		KEY_END:
-			return "End"
-		KEY_LEFT:
-			return "Left"
-		KEY_UP:
-			return "Up"
-		KEY_RIGHT:
-			return "Right"
-		KEY_DOWN:
-			return "Down"
-		KEY_PAGEUP:
-			return "PgUp"
-		KEY_PAGEDOWN:
-			return "PgDn"
-		KEY_SHIFT:
-			return "Shift"
-		KEY_CONTROL:
-			return "Ctrl"
-		KEY_ALT:
-			return "Alt"
-		KEY_META:
-			return "Meta"
-		KEY_KP_ADD:
-			return "KP +"
-		KEY_KP_SUBTRACT:
-			return "KP -"
-		KEY_KP_MULTIPLY:
-			return "KP *"
-		KEY_KP_DIVIDE:
-			return "KP /"
-		KEY_KP_0:
-			return "KP 0"
-		KEY_KP_1:
-			return "KP 1"
-		KEY_KP_2:
-			return "KP 2"
-		KEY_KP_3:
-			return "KP 3"
-		KEY_KP_4:
-			return "KP 4"
-		KEY_KP_5:
-			return "KP 5"
-		KEY_KP_6:
-			return "KP 6"
-		KEY_KP_7:
-			return "KP 7"
-		KEY_KP_8:
-			return "KP 8"
-		KEY_KP_9:
-			return "KP 9"
-		KEY_0:
-			return "0"
-		KEY_1:
-			return "1"
-		KEY_2:
-			return "2"
-		KEY_3:
-			return "3"
-		KEY_4:
-			return "4"
-		KEY_5:
-			return "5"
-		KEY_6:
-			return "6"
-		KEY_7:
-			return "7"
-		KEY_8:
-			return "8"
-		KEY_9:
-			return "9"
-		KEY_A:
-			return "A"
-		KEY_B:
-			return "B"
-		KEY_C:
-			return "C"
-		KEY_D:
-			return "D"
-		KEY_E:
-			return "E"
-		KEY_F:
-			return "F"
-		KEY_G:
-			return "G"
-		KEY_H:
-			return "H"
-		KEY_I:
-			return "I"
-		KEY_J:
-			return "J"
-		KEY_K:
-			return "K"
-		KEY_L:
-			return "L"
-		KEY_M:
-			return "M"
-		KEY_N:
-			return "N"
-		KEY_O:
-			return "O"
-		KEY_P:
-			return "P"
-		KEY_Q:
-			return "Q"
-		KEY_R:
-			return "R"
-		KEY_S:
-			return "S"
-		KEY_T:
-			return "T"
-		KEY_U:
-			return "U"
-		KEY_V:
-			return "V"
-		KEY_W:
-			return "W"
-		KEY_X:
-			return "X"
-		KEY_Y:
-			return "Y"
-		KEY_Z:
-			return "Z"
-		KEY_COMMA:
-			return ","
-		KEY_PERIOD:
-			return "."
-		KEY_SLASH:
-			return "/"
-		KEY_EQUAL:
-			return "="
-		KEY_PLUS:
-			return "+"
-		KEY_MINUS:
-			return "-"
-		KEY_F1:
-			return "F1"
-		KEY_F2:
-			return "F2"
-		KEY_F3:
-			return "F3"
-		KEY_F4:
-			return "F4"
-		KEY_F5:
-			return "F5"
-		KEY_F6:
-			return "F6"
-		KEY_F7:
-			return "F7"
-		KEY_F8:
-			return "F8"
-		KEY_F9:
-			return "F9"
-		KEY_F10:
-			return "F10"
-		KEY_F11:
-			return "F11"
-		KEY_F12:
-			return "F12"
-		KEY_F13:
-			return "F13"
-		KEY_F14:
-			return "F14"
-		KEY_F15:
-			return "F15"
-		KEY_F16:
-			return "F16"
-		KEY_SPACE:
-			return "Space"
-		KEY_SEMICOLON:
-			return ";"
-		KEY_COLON:
-			return ":"
-		KEY_LESS:
-			return "<"
-		KEY_GREATER:
-			return ">"
-		KEY_BRACKETLEFT:
-			return "["
-		KEY_BRACKETRIGHT:
-			return "]"
-		KEY_BRACELEFT:
-			return "{"
-		KEY_BRACERIGHT:
-			return "}"
-		KEY_QUOTELEFT:
-			return "`"
-		KEY_BAR:
-			return "|"
-		KEY_UNDERSCORE:
-			return "_"
-		KEY_APOSTROPHE:
-			return "'"
-		KEY_BACKSLASH:
-			return "\\"
-		KEY_SLASH:
-			return "/"
-		KEY_ASCIITILDE:
-			return "~"
-		KEY_KP_DIVIDE:
-			return "KP /"
-		KEY_KP_PERIOD:
-			return "KP ."
-		_:
-			return "Key " + str(scancode)
 
 
 func _apply_bindings() -> void:
