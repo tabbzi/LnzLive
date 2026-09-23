@@ -32,10 +32,10 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 | Context | Input / Hotkey | Action |
 | :--- | :--- | :--- |
-| **Viewport** | `wheel up` / `wheel down` | Zoom View In / Out |
-| **Viewport** | `SHIFT` + `+` / `-` | Zoom View In / Out |
-| **Viewport** | `SPACE` + `left-click drag` or `middle/wheel drag` | Pan Camera View |
-| **Viewport** | `left-click drag` | Rotate Camera View |
+| **Viewport** | `wheel up` / `wheel down` | **Zoom In / Out** (continuous) |
+| **Viewport** | `SHIFT` + `+` / `-` | **Zoom In / Out** (incremental) |
+| **Viewport** | `SPACE` + `left-click drag` or `middle mouse drag` | **Pan Camera View** |
+| **Viewport** | `left-click drag` | **Rotate Camera View** |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
 | **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top) |
 | **Viewport** | `CTRL` + `Z` | Undo last committed action |
@@ -43,6 +43,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `ESCAPE` | Exit Current Mode |
 | **Viewport** | `CTRL` + `left-click`| Add or remove ballz in group selection |
 | **Viewport** | `CTRL` + `left-click drag`| Box selection of ballz |
+| **Viewport** | `F1` | Toggle Hotkey Overlay |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `V` | Open/Close Variation Viewer |
@@ -74,6 +75,12 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `L` or `ALT` (hold while freeline active) | **Straight Line**: Constrain freeline to a straight line. Hold `X` or `Y` to lock axis |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `wheel down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `SHIFT` + `arrow up` / `arrow down` | **Scale/Resize**: Resize diameter of paintballz |
+| **Paintball Mode** | `CTRL` + `wheel up` / `wheel down` | **Scale Stamp**: Increase/decrease stamp size (min and max together) |
+| **Paintball Mode** | `ALT` + `wheel up` / `wheel down` | **Rotate Stamp**: Increase/decrease fixed rotation angle (degrees) |
+| **Paintball Mode** | `CTRL` + `B` | **Design - Brush**: Activate brush tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `L` | **Design - Line**: Activate line tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `H` | **Design - Horizontal**: Activate H-line tool in Design canvas |
+| **Paintball Mode** | `CTRL` + `V` | **Design - Vertical**: Activate V-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
@@ -93,6 +100,33 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `X`, `Y`, and/or `Z` + `arrow up` / `arrow down` | Change nudge amount for specific axis |
 | **Move Mode** | `X`, `Y`, and/or `Z` + `+` / `-` | Nudge specific axis by nudge amount |
 | **Move Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued move/scale action |
+
+### Remapping Hotkeys
+
+The Hotkey Settings dialog can be used to customize most default key bindings.
+
+**Opening the dialog:** Go to `File > User Settings` and navigate to the Hotkey Settings tab.
+
+**Remapping a key:**
+
+1. Find the action you want to change in the list (grouped by context).
+2. Click **Remap** next to the action.
+3. Press the new key combination (e.g., `comma`, `T`, `CTRL+T`).
+4. Click **Apply** to persist the change.
+
+Hotkeys are applied immediately upon pressing the new key. The "Apply & Save" button writes the changes to your settings config.
+
+**Resetting a single hotkey:** Click **Reset** next to any action to restore its default binding.
+
+**Resetting all hotkeys:** Click **Reset All** to restore every hotkey to its default.
+
+**Saving a profile:** Enter a name in the profile text field and click **Save** to save your current hotkey layout as a named profile. Profiles are stored in your settings config as well.
+
+**Loading a profile:** Select a saved profile from the dropdown and click **Load**.
+
+**Exporting hotkeys:** Click **Export** to open a file picker dialog. Choose a location and the current hotkey bindings will be saved as a JSON file.
+
+**Importing hotkeys:** Click **Import** to open a file picker dialog. Select a previously exported JSON file to restore its hotkey bindings.
 
 ### History System
 
@@ -149,7 +183,7 @@ The 3D viewport displays the LNZ model.
 
 *   **Rotate:** Click and hold the left mouse button to rotate the model.
 *   **Zoom:** Use the mouse wheel to zoom in and out.
-*   **Pan:** Press the middle mouse button or hold `Space` and drag to move the model.
+*   **Pan:** Press the middle mouse button or hold the pan key (default `SPACE`) and drag to move the model. Remap the pan key in Hotkey Settings.
 *   **Quick Views:** Use the number keys `1-0` to jump to different camera angles (front, top, isometric, etc.).
 
 #### Features
@@ -400,9 +434,11 @@ The Design tab introduces a "stamp" system. Instead of placing single balls, you
 
 **Stamping Controls:**
 
-*Scale (`CTRL` + `wheel up` / `wheel down`):* Change the overall footprint size of the stamp using the `Diameter` setting shared with Standard mode.
+*Scale (`CTRL` + `wheel up` / `wheel down`):* Change the overall footprint size of the stamp. Adjusts both min and max diameter equally, preserving the size range.
 
-*Design Jitter:* Adds randomness to the paintballz positions (`Jitter`), design rotation (`Rotation`), and placement spread (`Spread`).
+*Rotation (`ALT` + `wheel up` / `wheel down`):* Adjust the fixed/starting rotation angle of the stamp in degrees.
+
+*Design Jitter:* Adds randomness to the paintballz positions (`Jitter`), design rotation jitter (`Rotation`), and placement spread (`Spread`).
 
 *Import/Export:* You can save your custom designs as `.json` files to share with others or reuse them across different projects.
 
@@ -530,7 +566,7 @@ SHIFT + ALT + left-click and drag to resize a ball interactively, which will sho
 
 ## Tools menu
 
-Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
+Press `CTRL` + `SPACE` in the pet view to open the tools menu, or right-click on a ball in the pet view.
 
 ### Color...
 

@@ -16,6 +16,9 @@ onready var pet_view_container: Control = get_node("HSplitContainer/HSplitContai
 
 onready var settings_dialog: WindowDialog = get_node("UserSettingsDialog")
 onready var user_settings_btn: Button = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/UserSettingsButton")
+onready var hotkey_settings_btn: Button = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/HotkeySettingsButton")
+
+var _hotkey_dialog: WindowDialog
 onready var lnz_text_edit: Control = get_node("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 
 var _cached_window_size: Vector2 = Vector2(1024, 600)
@@ -85,6 +88,12 @@ func _ready() -> void:
 		settings_dialog.connect("texture_path_changed", self, "_on_texture_path_changed")
 		settings_dialog.connect("append_dimensions_changed", self, "_on_append_dimensions_changed")
 
+	_hotkey_dialog = get_tree().root.get_node_or_null("SceneRoot/HotkeySettingsDialog")
+	if _hotkey_dialog:
+		_hotkey_dialog.connect("hotkeys_changed", self, "_on_hotkeys_changed")
+	if hotkey_settings_btn:
+		hotkey_settings_btn.connect("pressed", self, "_on_hotkey_settings_pressed")
+
 	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
 
 func _on_toggle_ref_image_btn_pressed() -> void:
@@ -95,6 +104,13 @@ func _on_toggle_ref_image_btn_pressed() -> void:
 func _on_user_settings_pressed() -> void:
 	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, append_dimensions, default_texture_path)
 	settings_dialog.popup_centered()
+
+func _on_hotkey_settings_pressed() -> void:
+	if _hotkey_dialog:
+		_hotkey_dialog.show_dialog()
+
+func _on_hotkeys_changed() -> void:
+	save_settings()
 
 func _on_delimiter_changed(new_delim: String) -> void:
 	preferred_delimiter = new_delim

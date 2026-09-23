@@ -1,0 +1,173 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scenes/editor/HotkeySettingsDialog.gd" type="Script" id=1]
+
+[node name="HotkeySettingsDialog" type="WindowDialog"]
+margin_right = 800.0
+margin_bottom = 550.0
+rect_min_size = Vector2( 700, 550 )
+window_title = "Hotkey Settings"
+resizable = true
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+custom_constants/separation = 8
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ProfileHBox" type="HBoxContainer" parent="VBoxContainer"]
+margin_right = 780.0
+margin_bottom = 24.0
+
+[node name="ProfileLabel" type="Label" parent="VBoxContainer/ProfileHBox"]
+margin_top = 5.0
+margin_right = 45.0
+margin_bottom = 19.0
+text = "Profile:"
+
+[node name="ProfileOption" type="OptionButton" parent="VBoxContainer/ProfileHBox"]
+margin_left = 49.0
+margin_right = 337.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="SaveProfileLine" type="LineEdit" parent="VBoxContainer/ProfileHBox"]
+margin_left = 341.0
+margin_right = 630.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+placeholder_text = "Profile name..."
+
+[node name="SaveProfileBtn" type="Button" parent="VBoxContainer/ProfileHBox"]
+margin_left = 634.0
+margin_right = 675.0
+margin_bottom = 24.0
+text = "Save"
+
+[node name="LoadProfileBtn" type="Button" parent="VBoxContainer/ProfileHBox"]
+margin_left = 679.0
+margin_right = 721.0
+margin_bottom = 24.0
+text = "Load"
+
+[node name="DeleteProfileBtn" type="Button" parent="VBoxContainer/ProfileHBox"]
+margin_left = 725.0
+margin_right = 780.0
+margin_bottom = 24.0
+text = "Delete"
+
+[node name="Separator1" type="HSeparator" parent="VBoxContainer"]
+margin_top = 32.0
+margin_right = 780.0
+margin_bottom = 36.0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 44.0
+margin_right = 780.0
+margin_bottom = 490.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ActionListVBox" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
+margin_right = 780.0
+margin_bottom = 446.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/separation = 4
+
+[node name="Separator2" type="HSeparator" parent="VBoxContainer"]
+margin_top = 498.0
+margin_right = 780.0
+margin_bottom = 502.0
+
+[node name="ButtonHBox" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 510.0
+margin_right = 780.0
+margin_bottom = 530.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ExportBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
+margin_right = 52.0
+margin_bottom = 20.0
+text = "Export"
+
+[node name="ImportBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
+margin_left = 56.0
+margin_right = 112.0
+margin_bottom = 20.0
+text = "Import"
+
+[node name="ResetBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
+margin_left = 116.0
+margin_right = 185.0
+margin_bottom = 20.0
+text = "Reset All"
+
+[node name="ApplyBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
+margin_left = 189.0
+margin_right = 284.0
+margin_bottom = 20.0
+text = "Apply & Save"
+
+[node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
+margin_left = 288.0
+margin_right = 342.0
+margin_bottom = 20.0
+text = "Cancel"
+
+[node name="ListeningPopup" type="WindowDialog" parent="."]
+margin_right = 300.0
+margin_bottom = 100.0
+window_title = "Press any key..."
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ListeningPopup"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+custom_constants/separation = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ListeningLabel" type="Label" parent="ListeningPopup/VBoxContainer"]
+margin_right = 280.0
+margin_bottom = 30.0
+text = "Press any key or mouse button..."
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ListeningHint" type="Label" parent="ListeningPopup/VBoxContainer"]
+margin_right = 280.0
+margin_bottom = 60.0
+text = "Press Escape to cancel"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FileDialog" type="FileDialog" parent="."]
+window_title = "Open a File"
+mode = 0
+__meta__ = {
+"_edit_use_anchors_": false
+}

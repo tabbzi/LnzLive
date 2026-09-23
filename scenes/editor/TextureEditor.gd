@@ -186,26 +186,49 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and not event.echo:
 			if event.control:
 				var tool_to_switch: int = -1
-				if event.scancode == KEY_L:
-					tool_to_switch = Tool.LINE
-				elif event.scancode == KEY_H:
-					tool_to_switch = Tool.HLINE
-				elif event.scancode == KEY_V:
-					tool_to_switch = Tool.VLINE
-				elif event.scancode == KEY_B:
-					tool_to_switch = Tool.BRUSH
-				elif event.scancode == KEY_E:
-					tool_to_switch = Tool.ERASER
-				elif event.scancode == KEY_Q:
-					tool_to_switch = Tool.EYEDROPPER
-				elif event.scancode == KEY_F:
-					tool_to_switch = Tool.FILL
+				if HotkeyManager:
+					if HotkeyManager.is_action_pressed("texture_tool_line"):
+						tool_to_switch = Tool.LINE
+					elif HotkeyManager.is_action_pressed("texture_tool_hline"):
+						tool_to_switch = Tool.HLINE
+					elif HotkeyManager.is_action_pressed("texture_tool_vline"):
+						tool_to_switch = Tool.VLINE
+					elif HotkeyManager.is_action_pressed("texture_tool_brush"):
+						tool_to_switch = Tool.BRUSH
+					elif HotkeyManager.is_action_pressed("texture_tool_eraser"):
+						tool_to_switch = Tool.ERASER
+					elif HotkeyManager.is_action_pressed("texture_tool_eyedropper"):
+						tool_to_switch = Tool.EYEDROPPER
+					elif HotkeyManager.is_action_pressed("texture_tool_fill"):
+						tool_to_switch = Tool.FILL
+				
+				# Fallback: raw scancode
+				if tool_to_switch == -1:
+					if event.scancode == KEY_L:
+						tool_to_switch = Tool.LINE
+					elif event.scancode == KEY_H:
+						tool_to_switch = Tool.HLINE
+					elif event.scancode == KEY_V:
+						tool_to_switch = Tool.VLINE
+					elif event.scancode == KEY_B:
+						tool_to_switch = Tool.BRUSH
+					elif event.scancode == KEY_E:
+						tool_to_switch = Tool.ERASER
+					elif event.scancode == KEY_Q:
+						tool_to_switch = Tool.EYEDROPPER
+					elif event.scancode == KEY_F:
+						tool_to_switch = Tool.FILL
 				
 				if tool_to_switch != -1 and tool_to_switch != current_tool:
 					current_tool = tool_to_switch
 					_clear_line_state()
 					_update_tool_buttons()
 					_trigger_setting_save()
+			elif HotkeyManager and HotkeyManager.is_action_pressed("texture_tool_bucket_toggle"):
+				if is_instance_valid(bucket_check):
+					bucket_check.pressed = not bucket_check.pressed
+				return
+			# Fallback: raw scancode
 			elif event.scancode == KEY_G:
 				if is_instance_valid(bucket_check):
 					bucket_check.pressed = not bucket_check.pressed

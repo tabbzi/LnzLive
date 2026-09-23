@@ -654,9 +654,18 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 
 	elif paintball_mode:
-		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode: bool = eraser_check_box.pressed
-		var temp_eraser_active: bool = Input.is_key_pressed(KEY_CONTROL)
+		var temp_eraser_active: bool = delete_mode
+
+		if HotkeyManager and InputMap.has_action("paint_eraser"):
+			var binding = HotkeyManager.get_binding("paint_eraser")
+			if not binding.empty():
+				if binding.get("ctrl", false) and Input.is_key_pressed(KEY_CONTROL): temp_eraser_active = true
+				if binding.get("shift", false) and Input.is_key_pressed(KEY_SHIFT): temp_eraser_active = true
+				if binding.get("alt", false) and Input.is_key_pressed(KEY_ALT): temp_eraser_active = true
+		elif Input.is_key_pressed(KEY_CONTROL):
+			temp_eraser_active = true
+
 		var is_design_mode: bool = paintball_settings_instance.is_design_mode_active()
 
 		if delete_mode:
@@ -702,9 +711,9 @@ func _process(_delta: float) -> void:
 
 	elif move_mode:
 		var queued_count: int = pending_moves.size()
-		var hint: String = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group. Q = lock hovered ball."
+		var hint: String = "Move Mode: Click to select, " + _get_hotkey_display("global_box_select") + " to toggle multiple.\nDrag selected balls to move group. " + _get_hotkey_display("move_lock_ball") + " = lock hovered ball."
 		if not selected_balls.empty():
-			hint += "\nSHIFT + drag = pan selected group"
+			hint += "\n" + _get_hotkey_display("move_group_pan") + " = pan selected group"
 		body = hint
 		if queued_count > 0:
 			body += "\nQueued Moves: " + str(queued_count)
@@ -712,14 +721,15 @@ func _process(_delta: float) -> void:
 	elif preset_mode:
 		preset_settings_instance.sync_camera(camera.global_transform)
 		var is_eyedropper: bool = (
-			Input.is_key_pressed(KEY_ALT)
+			(HotkeyManager and HotkeyManager.is_action_pressed("preset_eyedropper"))
+			or Input.is_key_pressed(KEY_ALT)
 			or preset_settings_instance.is_eyedropper_active()
 		)
 		if is_eyedropper:
 			body = "Eyedropper Mode: Left-click a ball to sample its properties."
 			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 		else:
-			body = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
+			body = "Preset Mode: Left-click to apply preset.\nHold " + _get_hotkey_display("preset_eyedropper") + " for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 
@@ -728,7 +738,7 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif selecting_on:
-		body = "Select Mode: when hovering, cycle ballz using N key..."
+		body = "Select Mode: when hovering, cycle ballz using " + _get_hotkey_display("select_cycle_nearby") + " key..."
 
 	elif is_dragging:
 		pass
@@ -736,17 +746,19 @@ func _process(_delta: float) -> void:
 
 	else:
 		if Input.is_key_pressed(KEY_CONTROL):
-			body = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
+			body = "Open Tools Menu (" + _get_hotkey_display("select_tools_menu") + ")\nApply and Save Changes (" + _get_hotkey_display("text_save") + ")\nFlash Ballz (" + _get_hotkey_display("global_flash_ballz") + ")"
 		elif Input.is_key_pressed(KEY_SHIFT):
-			body = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
+			body = "Move Ball (" + _get_hotkey_display("visual_move") + ")\nScale Ball (" + _get_hotkey_display("visual_scale") + ")"
 		elif Input.is_key_pressed(KEY_SPACE):
-			body = "Pan View (SPACE + left-click drag)"
+			body = "Pan View (<pan key> + left-click drag)"
 		else:
 			body = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
 	# HOTKEYS
-	if highlighted_ball:
-		footer = "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+	if is_instance_valid(ball_label) and ball_label.visible:
+		var hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+		var hotkey_hint: String = _get_hotkey_hint_for_ball(hovered_ball)
+		footer = hotkey_hint
 
 	var locks: Array = []
 	if Input.is_key_pressed(KEY_X):
@@ -974,34 +986,47 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	return global_pos - self.rect_global_position
 
 func _handle_box_selection(event: InputEvent) -> bool:
-	if (
-		not (move_mode or preset_mode or auto_paintballer_mode)
-		or not Input.is_key_pressed(KEY_CONTROL)
-	):
+	if not (move_mode or preset_mode or auto_paintballer_mode):
 		return false
 
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		if event.pressed:
-			box_selecting = true
-			box_start_pos = event.position
-			box_end_pos = event.position
-			return true
-		elif box_selecting:
-			box_selecting = false
-			update()
-			if box_start_pos.distance_to(event.position) < 5.0:
-				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-				if hover:
-					if hover in selected_balls:
-						selected_balls.erase(hover)
-					else:
-						selected_balls.append(hover)
-					if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
-						hover.apply_outline_state(get_visual_state_for_ball(hover))
-					_update_selected_ballz_in_settings()
-			else:
-				_commit_box_selection()
-			return true
+	var start_select: bool = false
+	if HotkeyManager and InputMap.has_action("global_box_select"):
+		start_select = HotkeyManager.is_exact_action(event, "global_box_select") and event.pressed
+	elif event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.control and event.pressed:
+		start_select = true
+
+	if start_select:
+		box_selecting = true
+		box_start_pos = event.position
+		box_end_pos = event.position
+		return true
+
+	var is_mouse_release: bool = event is InputEventMouseButton and not event.pressed
+	var is_bound_button_release: bool = false
+	
+	if is_mouse_release:
+		if HotkeyManager and InputMap.has_action("global_box_select"):
+			var binding: Dictionary = HotkeyManager.get_binding("global_box_select")
+			is_bound_button_release = (event.button_index == binding.get("scancode", BUTTON_LEFT))
+		else:
+			is_bound_button_release = (event.button_index == BUTTON_LEFT)
+
+	if box_selecting and is_bound_button_release:
+		box_selecting = false
+		update()
+		if box_start_pos.distance_to(event.position) < 5.0:
+			var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			if hover:
+				if hover in selected_balls:
+					selected_balls.erase(hover)
+				else:
+					selected_balls.append(hover)
+				if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
+					hover.apply_outline_state(get_visual_state_for_ball(hover))
+				_update_selected_ballz_in_settings()
+		else:
+			_commit_box_selection()
+		return true
 
 	if event is InputEventMouseMotion and box_selecting:
 		box_end_pos = event.position
@@ -1047,22 +1072,38 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 
 	mark_ui_dirty()
 
+
 func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
 
-	# Group pan: SHIFT+drag on any area
+	# Handle group pan (fallback/default: SHIFT + LMB click-drag)
+
+	# 	InputMap actions:
+	# 		move_group_pan
+
 	if _handle_group_pan_input(event):
 		return true
 
-	# Check for Nudge hotkey via Scroll
+	# Handle X/Y/Z nudge with mouse wheel (fallback/default: X/Y/Z + Mouse Wheel)
+
+	# 	InputMap actions:
+	# 		axis_lock_x
+	# 		axis_lock_y
+	# 		axis_lock_z
+
 	if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		var nudge_axis: String = ""
-		if Input.is_key_pressed(KEY_X):
+		
+		var lock_x: bool = Input.is_action_pressed("axis_lock_x") if (HotkeyManager and InputMap.has_action("axis_lock_x")) else Input.is_key_pressed(KEY_X)
+		var lock_y: bool = Input.is_action_pressed("axis_lock_y") if (HotkeyManager and InputMap.has_action("axis_lock_y")) else Input.is_key_pressed(KEY_Y)
+		var lock_z: bool = Input.is_action_pressed("axis_lock_z") if (HotkeyManager and InputMap.has_action("axis_lock_z")) else Input.is_key_pressed(KEY_Z)
+
+		if lock_x:
 			nudge_axis = "x"
-		elif Input.is_key_pressed(KEY_Y):
+		elif lock_y:
 			nudge_axis = "y"
-		elif Input.is_key_pressed(KEY_Z):
+		elif lock_z:
 			nudge_axis = "z"
 
 		if nudge_axis != "":
@@ -1071,35 +1112,64 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 			get_tree().set_input_as_handled()
 			return true
 
+	# Handle selection, pivot setting, group scaling, and movement (fallback/default: LMB, CTRL+LMB, ALT+LMB, ALT+SHIFT+LMB)
+	
+	# 	InputMap actions:
+	# 		move_scale_group
+	# 		move_set_pivot
+	# 		global_multi_select
+	# 		visual_move
+
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
-				if Input.is_key_pressed(KEY_ALT):
-					if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
-						_initialize_move_drag(selected_balls[0], event.position, true)
+				var is_scale_group: bool = false
+				var is_set_pivot: bool = false
+				var is_multi_select: bool = false
+
+				if HotkeyManager:
+					if InputMap.has_action("move_scale_group") and HotkeyManager.is_exact_action(event, "move_scale_group"):
+						is_scale_group = true
+					elif InputMap.has_action("move_set_pivot") and HotkeyManager.is_exact_action(event, "move_set_pivot"):
+						is_set_pivot = true
+					
+					if InputMap.has_action("global_multi_select") and HotkeyManager.is_exact_action(event, "global_multi_select"):
+						is_multi_select = true
+
+				# Fallbacks if unmapped or HotkeyManager missing
+				if not is_scale_group and not is_set_pivot and not is_multi_select:
+					if event.alt and event.shift:
+						is_scale_group = true
+					elif event.alt:
+						is_set_pivot = true
+					elif event.control:
+						is_multi_select = true
+
+				if is_scale_group and selected_balls.size() > 0:
+					_initialize_move_drag(selected_balls[0], event.position, true)
+					return true
+				elif is_set_pivot:
+					var hover_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+					var hover_ball = get_intended_ball(hover_pos)
+					if hover_ball:
+						move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
+						var all_balls: Array = (
+							get_tree().get_nodes_in_group("balls")
+							+ get_tree().get_nodes_in_group("addballs")
+						)
+						for b in all_balls:
+							if is_instance_valid(b) and b.has_method("apply_outline_state"):
+								b.apply_outline_state(get_visual_state_for_ball(b))
 						return true
-					else:
-						var hover_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
-						var hover_ball = get_intended_ball(hover_pos)
-						if hover_ball:
-							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
-							var all_balls: Array = (
-								get_tree().get_nodes_in_group("balls")
-								+ get_tree().get_nodes_in_group("addballs")
-							)
-							for b in all_balls:
-								if is_instance_valid(b) and b.has_method("apply_outline_state"):
-									b.apply_outline_state(get_visual_state_for_ball(b))
-							return true
 
 				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 
 				if hover:
 					# Locked balls cannot be selected or moved
-					if _is_ball_locked(hover) and not Input.is_key_pressed(KEY_CONTROL):
+					if _is_ball_locked(hover) and not is_multi_select:
 						return true
 
-					if Input.is_key_pressed(KEY_CONTROL):
+					if is_multi_select:
 						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
@@ -1229,9 +1299,18 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 				var constraints: Dictionary = move_mode_settings_instance.get_constraints()
 
-				var constrain_x: bool = Input.is_key_pressed(KEY_X)
-				var constrain_y: bool = Input.is_key_pressed(KEY_Y)
-				var constrain_z: bool = Input.is_key_pressed(KEY_Z)
+				var constrain_x: bool = false
+				var constrain_y: bool = false
+				var constrain_z: bool = false
+
+				if HotkeyManager:
+					constrain_x = Input.is_action_pressed("axis_lock_x") if InputMap.has_action("axis_lock_x") else Input.is_key_pressed(KEY_X)
+					constrain_y = Input.is_action_pressed("axis_lock_y") if InputMap.has_action("axis_lock_y") else Input.is_key_pressed(KEY_Y)
+					constrain_z = Input.is_action_pressed("axis_lock_z") if InputMap.has_action("axis_lock_z") else Input.is_key_pressed(KEY_Z)
+				else:
+					constrain_x = Input.is_key_pressed(KEY_X)
+					constrain_y = Input.is_key_pressed(KEY_Y)
+					constrain_z = Input.is_key_pressed(KEY_Z)
 
 				var final_lock_x: bool = constraints.x
 				var final_lock_y: bool = constraints.y
@@ -1249,137 +1328,139 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				if final_lock_z:
 					delta.z = 0
 
-				for b in selected_balls:
-					if is_instance_valid(b):
-						if _is_ball_locked(b):
-							continue
-
-						var addballz_base_selected: bool = false
-						var p: Node = b.get_parent()
-						while is_instance_valid(p) and p != get_tree().root:
-							if p in selected_balls:
-								addballz_base_selected = true
-								break
-							p = p.get_parent()
-
-						if not addballz_base_selected:
-							b.global_transform.origin += delta
-
-						_track_pending_move(b)
-
-				if move_mode_settings_instance.is_mirror_x_active():
-					_apply_mirror_move(selected_balls, delta)
+				_apply_translation_to_selection(delta)
 
 		return true
 
 	return false
+
 
 func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 	if not preset_mode:
 		return false
 
+	# Handle eyedropper and preset apply (fallback/default: ALT+LMB for eyedropper, LMB for apply)
+	
+	# 	InputMap actions:
+	# 		preset_eyedropper
+	# 		preset_apply
+
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-		if target_ball:
-			var ball_no: int = target_ball.ball_no
-			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, ball_no)
-			
-			var is_eyedropper_active: bool = (
-				preset_settings_instance.find_node("EyedropperToggle").pressed
-				or Input.is_key_pressed(KEY_ALT)
-			)
-			if is_eyedropper_active:
-				var ball_data = null
-				if pet_node.lnz.balls.has(ball_no):
-					ball_data = pet_node.lnz.balls[ball_no]
-				elif pet_node.lnz.addballs.has(ball_no):
-					ball_data = pet_node.lnz.addballs[ball_no]
+		if not target_ball:
+			return false
 
-				if ball_data:
-					var properties: Dictionary = {
-						"fuzz": ball_data.fuzz,
-						"outline": ball_data.outline,
-						"color_index": ball_data.color_index,
-						"outline_color_index": ball_data.outline_color_index,
-						"texture_id": ball_data.texture_id,
-						"group": ball_data.group,
-						"size": int(round(target_ball.ball_size))
-					}
+		var ball_no: int = target_ball.ball_no
+		var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, ball_no)
+		
+		var is_eyedropper_active: bool = preset_settings_instance.find_node("EyedropperToggle").pressed
+		if HotkeyManager and InputMap.has_action("preset_eyedropper"):
+			if HotkeyManager.is_exact_action(event, "preset_eyedropper"):
+				is_eyedropper_active = true
+		elif event.alt:
+			is_eyedropper_active = true
 
-					if pet_node.lnz.paintballs.has(ball_no):
-						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
-					preset_settings_instance.set_properties(properties)
-					if is_instance_valid(pet_node.lnz):
-						var current_ntrot = pet_node.lnz.no_texture_rotate.has(ball_no)
-						if is_instance_valid(preset_settings_instance.no_texture_rotate_chk):
-							preset_settings_instance.no_texture_rotate_chk.pressed = current_ntrot
-			else:  # Brush mode
-				var properties: Dictionary = preset_settings_instance.get_properties()
-				var ref_size: int = int(round(preset_settings_instance.size_spinbox.value))
-				var size_mode: int = preset_settings_instance.size_mode_option.selected
+		if is_eyedropper_active:
+			var ball_data = null
+			if pet_node.lnz.balls.has(ball_no):
+				ball_data = pet_node.lnz.balls[ball_no]
+			elif pet_node.lnz.addballs.has(ball_no):
+				ball_data = pet_node.lnz.addballs[ball_no]
 
-				match size_mode:
-					preset_settings_instance.SizeMode.SET:
-						pass
+			if ball_data:
+				var properties: Dictionary = {
+					"fuzz": ball_data.fuzz,
+					"outline": ball_data.outline,
+					"color_index": ball_data.color_index,
+					"outline_color_index": ball_data.outline_color_index,
+					"texture_id": ball_data.texture_id,
+					"group": ball_data.group,
+					"size": int(round(target_ball.ball_size))
+				}
 
-					preset_settings_instance.SizeMode.SUM:
-						if properties.has("size"):
-							var original_size: int = 0
-							if pet_node.lnz.balls.has(ball_no):
-								original_size = pet_node.lnz.balls[ball_no]["size"] 
-							elif pet_node.lnz.addballs.has(ball_no):
-								original_size = pet_node.lnz.addballs[ball_no]["size"]
-							properties["size"] = original_size + properties["size"]
-
-					preset_settings_instance.SizeMode.TRUE:
-						if properties.has("size"):
-							var scale: float = pet_node.lnz.scales[1]
-							properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-								properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
-							)
-
-				var scale_ratio: float = 1.0
-				if properties.get("scale_paintballz", false) and properties.has("paintballz"):
-					var source_ref: float = preset_settings_instance.source_ball_reference_size
-					
-					var final_lnz: float = properties.get("size", sizing_info.bhd_size)
-					var current_base_size: float = sizing_info.bhd_size + final_lnz
-					if not sizing_info.is_addball:
-						current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
-					
-					var scale: float = pet_node.lnz.scales[1]
-					var target_visual_size: int = round((current_base_size - 2.0) * (scale / 255.0))
-					target_visual_size -= 1.0 - fmod(target_visual_size, 2.0)
-					
-					scale_ratio = float(target_visual_size) / float(source_ref) if source_ref > 0 else 1.0
-
-					var p_size_mod: float = properties.get("paintball_size_scale", 1.0)
-					var p_pos_mod: float = properties.get("paintball_pos_scale", 1.0)
-
-					if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
-						var scaled_paintballz: Array = []
-						for pb in properties.paintballz:
-							var new_pb: Dictionary = pb.duplicate()
-							#new_pb.position *= (scale_ratio * p_pos_mod)
-							#new_pb["size"] = int(round(new_pb["size"] * scale_ratio * p_size_mod))
-							new_pb.position *= p_pos_mod
-							new_pb.size = int(round(new_pb.size * p_size_mod))
-							scaled_paintballz.append(new_pb)
-						properties["paintballz"] = scaled_paintballz
-						
-				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
+				if pet_node.lnz.paintballs.has(ball_no):
+					properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
+				preset_settings_instance.set_properties(properties)
 				
-				if properties.has("no_texture_rotate"):
-					var no_texture_rotate: bool = properties.no_texture_rotate
-					if no_texture_rotate:
-						lnz_text_edit.write_no_texture_rotate_entry(ball_no)
-						target_ball.tile_texture = false
-					else:
-						lnz_text_edit.remove_no_texture_rotate_entry(ball_no)
-						target_ball.tile_texture = true
-		return true
+				if is_instance_valid(pet_node.lnz):
+					var current_ntrot = pet_node.lnz.no_texture_rotate.has(ball_no)
+					if is_instance_valid(preset_settings_instance.no_texture_rotate_chk):
+						preset_settings_instance.no_texture_rotate_chk.pressed = current_ntrot
+			return true
+
+		var is_apply: bool = false
+		if HotkeyManager and InputMap.has_action("preset_apply"):
+			if HotkeyManager.is_exact_action(event, "preset_apply"):
+				is_apply = true
+		elif not event.shift and not event.control and not event.alt:
+			is_apply = true
+
+		if is_apply:
+			var properties: Dictionary = preset_settings_instance.get_properties()
+			var ref_size: int = int(round(preset_settings_instance.size_spinbox.value))
+			var size_mode: int = preset_settings_instance.size_mode_option.selected
+
+			match size_mode:
+				preset_settings_instance.SizeMode.SET:
+					pass
+
+				preset_settings_instance.SizeMode.SUM:
+					if properties.has("size"):
+						var original_size: int = 0
+						if pet_node.lnz.balls.has(ball_no):
+							original_size = pet_node.lnz.balls[ball_no]["size"] 
+						elif pet_node.lnz.addballs.has(ball_no):
+							original_size = pet_node.lnz.addballs[ball_no]["size"]
+						properties["size"] = original_size + properties["size"]
+
+				preset_settings_instance.SizeMode.TRUE:
+					if properties.has("size"):
+						var scale: float = pet_node.lnz.scales[1]
+						properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
+							properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+						)
+
+			var scale_ratio: float = 1.0
+			if properties.get("scale_paintballz", false) and properties.has("paintballz"):
+				var source_ref: float = preset_settings_instance.source_ball_reference_size
+				
+				var final_lnz: float = properties.get("size", sizing_info.bhd_size)
+				var current_base_size: float = sizing_info.bhd_size + final_lnz
+				if not sizing_info.is_addball:
+					current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
+				
+				var scale: float = pet_node.lnz.scales[1]
+				var target_visual_size: int = round((current_base_size - 2.0) * (scale / 255.0))
+				target_visual_size -= 1.0 - fmod(target_visual_size, 2.0)
+				
+				scale_ratio = float(target_visual_size) / float(source_ref) if source_ref > 0 else 1.0
+
+				var p_size_mod: float = properties.get("paintball_size_scale", 1.0)
+				var p_pos_mod: float = properties.get("paintball_pos_scale", 1.0)
+
+				if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
+					var scaled_paintballz: Array = []
+					for pb in properties.paintballz:
+						var new_pb: Dictionary = pb.duplicate()
+						new_pb.position *= p_pos_mod
+						new_pb.size = int(round(new_pb.size * p_size_mod))
+						scaled_paintballz.append(new_pb)
+					properties["paintballz"] = scaled_paintballz
+					
+			lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
+			
+			if properties.has("no_texture_rotate"):
+				var no_texture_rotate: bool = properties.no_texture_rotate
+				if no_texture_rotate:
+					lnz_text_edit.write_no_texture_rotate_entry(ball_no)
+					target_ball.tile_texture = false
+				else:
+					lnz_text_edit.remove_no_texture_rotate_entry(ball_no)
+					target_ball.tile_texture = true
+			return true
 
 	return false
+
 
 func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 	if not paintball_mode:
@@ -1394,37 +1475,101 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		print("[ERROR] PetViewContainer: get_properties() returned null. Aborting input handling.")
 		return false
 		
-	# Check for paintball size adjustment via SHIFT + scroll or arrow keys
-	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-		#var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
-		#var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
-		print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll")
-		if event.button_index == BUTTON_WHEEL_UP:
-			diameter_min_spinbox.value += 1
-			diameter_max_spinbox.value += 1
-		else:
-			diameter_min_spinbox.value -= 1
-			diameter_max_spinbox.value -= 1
+	
+	# Check for paintball size adjustment (fallback/default: SHIFT + scroll or arrow keys)
+
+	# 	InputMap actions:
+	# 		paint_scale_brush
+	# 		paint_scale_brush_alt
+	# 		paint_scale_brush_down
+	# 		paint_scale_brush_alt_down
+
+	var is_wheel_up: bool = (event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_WHEEL_UP)
+	var is_wheel_down: bool = (event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_WHEEL_DOWN)
+
+	var scale_up: bool = false
+	var scale_down: bool = false
+	if HotkeyManager:
+		scale_up = HotkeyManager.is_exact_action(event, "paint_scale_brush") or HotkeyManager.is_exact_action(event, "paint_scale_brush_alt")
+		scale_down = HotkeyManager.is_exact_action(event, "paint_scale_brush_down") or HotkeyManager.is_exact_action(event, "paint_scale_brush_alt_down")
+
+	if not scale_up and not scale_down and event.shift:
+		if is_wheel_up:
+			scale_up = true
+		elif is_wheel_down:
+			scale_down = true
+
+	if scale_up:
+		print("[STATUS] PetViewContainer: adjusting brush size constraints (UP)")
+		diameter_min_spinbox.value += 1
+		diameter_max_spinbox.value += 1
+		get_tree().set_input_as_handled()
+		return true
+	elif scale_down:
+		print("[STATUS] PetViewContainer: adjusting brush size constraints (DOWN)")
+		diameter_min_spinbox.value -= 1
+		diameter_max_spinbox.value -= 1
+		get_tree().set_input_as_handled()
 		return true
 
 	if paintball_settings_instance.is_design_mode_active():
-		if event is InputEventMouseButton and event.pressed:
-			if event.button_index == BUTTON_WHEEL_UP:
-				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (UP)")
+		var d_scale_up: bool = false
+		var d_scale_down: bool = false
+		var d_rotate_up: bool = false
+		var d_rotate_down: bool = false
+
+		# 1. Check HotkeyManager actions with exact modifier matching
+		if HotkeyManager and InputMap.has_action("design_stamp_scale"):
+			d_scale_up = HotkeyManager.is_exact_action(event, "design_stamp_scale")
+			d_scale_down = HotkeyManager.is_exact_action(event, "design_stamp_scale_down")
+			d_rotate_up = HotkeyManager.is_exact_action(event, "design_stamp_rotate")
+			d_rotate_down = HotkeyManager.is_exact_action(event, "design_stamp_rotate_down")
+
+		# 2. Fallback to raw inputs (CTRL + Wheel for Scale, ALT + Wheel for Rotate)
+		if not (d_scale_up or d_scale_down or d_rotate_up or d_rotate_down):
+			if is_wheel_up:
 				if event.control:
-					design_scale_multiplier += 0.1
-				else:
-					design_rotation_angle += 0.1
-				get_tree().set_input_as_handled()
-				return true
-			elif event.button_index == BUTTON_WHEEL_DOWN:
-				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (DOWN)")
+					d_scale_up = true
+				elif event.alt:
+					d_rotate_up = true
+			elif is_wheel_down:
 				if event.control:
-					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
-				else:
-					design_rotation_angle -= 0.1
-				get_tree().set_input_as_handled()
-				return true
+					d_scale_down = true
+				elif event.alt:
+					d_rotate_down = true
+
+		# 3. Apply changes and sync back to the settings panel UI
+		if d_scale_up:
+			design_scale_multiplier += 0.1
+			if paintball_settings_instance.has_method("update_design_scale"):
+				paintball_settings_instance.update_design_scale(1)
+			get_tree().set_input_as_handled()
+			return true
+		elif d_scale_down:
+			design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
+			if paintball_settings_instance.has_method("update_design_scale"):
+				paintball_settings_instance.update_design_scale(-1)
+			get_tree().set_input_as_handled()
+			return true
+		elif d_rotate_up:
+			design_rotation_angle += 1
+			if paintball_settings_instance.has_method("update_design_rotation"):
+				paintball_settings_instance.update_design_rotation(1)
+			get_tree().set_input_as_handled()
+			return true
+		elif d_rotate_down:
+			design_rotation_angle -= 1
+			if paintball_settings_instance.has_method("update_design_rotation"):
+				paintball_settings_instance.update_design_rotation(-1)
+			get_tree().set_input_as_handled()
+			return true
+
+
+	# Handle freeline paintballing (fallback/default: SHIFT + LMB click-drag)
+
+	# 	InputMap actions:
+	# 		paint_straight_line
+	# 		paint_freeline
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		var freeline_mode: bool = (
@@ -1485,9 +1630,19 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			last_freeline_point = current_pos
 		return true
 
+
+	# Handle paintball draw or eraser (fallback/default: LMB click with or without CTRL)
+
+	# 	InputMap actions:
+	# 		paint_eraser
+
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		#var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
-		var delete_mode: bool = eraser_check_box.pressed or Input.is_key_pressed(KEY_CONTROL)
+		var delete_mode: bool = eraser_check_box.pressed
+		if HotkeyManager and InputMap.has_action("paint_eraser"):
+			if HotkeyManager.is_exact_action(event, "paint_eraser"):
+				delete_mode = true
+		elif event.control:
+			delete_mode = true
 
 		if delete_mode:
 			print("[STATUS] PetViewContainer: attempted eraser click")
@@ -1510,6 +1665,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				var dist_sq: float = click_pos_local.distance_squared_to(paintball_screen_pos)
 
 				if dist_sq < min_dist_sq:
+					min_dist_sq = dist_sq
 					min_dist_sq = dist_sq
 					closest_paintball = pb_node
 
@@ -1545,6 +1701,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	return false
+
 
 func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
@@ -1593,14 +1750,16 @@ func _gui_input(event: InputEvent) -> void:
 		tools_menu.popup()
 		return
 
-	# Zoom view using mouse wheel or SPACE + arrow keys:
-	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
-		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale /= ZOOM_STEP
-		return
-	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
+	# Zoom view using mouse wheel or remapped hotkeys:
+	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_in"):
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale *= ZOOM_STEP
+		get_tree().set_input_as_handled()
+		return
+	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_out"):
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale /= ZOOM_STEP
+		get_tree().set_input_as_handled()
 		return
 	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if (
@@ -1609,21 +1768,19 @@ func _gui_input(event: InputEvent) -> void:
 		and event.pressed
 		and Input.is_key_pressed(KEY_SHIFT)
 	):
-		var alt_key: bool = Input.is_key_pressed(KEY_ALT)
-
-		#var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var is_resize: bool = Input.is_key_pressed(KEY_ALT)
 
 		var hover = null
 		if is_instance_valid(_last_selected_by_tab):
 			hover = _last_selected_by_tab
 		else:
 			hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-			
+
 		if hover:
 			drag_ball = hover
 			is_dragging = true
 
-			if alt_key:
+			if is_resize:
 				is_resizing = true
 				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 				original_scale = drag_ball.ball_size
@@ -1631,7 +1788,6 @@ func _gui_input(event: InputEvent) -> void:
 				print("[STATUS] PetViewContainer: started scale drag on ball:", drag_ball.name)
 			else:
 				print("[STATUS] PetViewContainer: started drag on ball:", drag_ball.name)
-				# is_dragging = true
 				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
 		return
@@ -1755,10 +1911,11 @@ func _gui_input(event: InputEvent) -> void:
 		# 	else:
 		# 		pass
 
-		var space_and_left: bool = (
-			Input.is_key_pressed(KEY_SPACE)
-			and Input.is_mouse_button_pressed(BUTTON_LEFT)
-		)
+		var space_and_left: bool = false
+		if HotkeyManager and HotkeyManager.is_action_pressed("viewport_pan_alt") and Input.is_mouse_button_pressed(BUTTON_LEFT):
+			space_and_left = true
+		elif Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT):
+			space_and_left = true
 		var middle_drag: bool = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
 
 		if space_and_left or middle_drag:
@@ -1889,10 +2046,44 @@ func _gui_input(event: InputEvent) -> void:
 			get_tree().set_input_as_handled()
 			return
 
+
 func _handle_camera_view_key_input(event: InputEventKey) -> bool:
 	if not event.pressed:
 		return false
 
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("viewport_view_front"):
+			_set_camera_view("front")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_bottom"):
+			_set_camera_view("bottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_top"):
+			_set_camera_view("top")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_right"):
+			_set_camera_view("right")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_left"):
+			_set_camera_view("left")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_back"):
+			_set_camera_view("back")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_rb"):
+			_set_camera_view("isorightbottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_rt"):
+			_set_camera_view("isorighttop")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_lb"):
+			_set_camera_view("isoleftbottom")
+			return true
+		if HotkeyManager.is_action_pressed("viewport_view_iso_lt"):
+			_set_camera_view("isolefttop")
+			return true
+
+	# Fallback: raw scancode
 	match event.scancode:
 		KEY_1:
 			_set_camera_view("front")
@@ -1960,50 +2151,124 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 	if not event.control and not event.alt and not event.shift:
 		if _is_text_input_focused(event):
 			return false
+
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_select"):
+			select_check_box.pressed = not select_check_box.pressed
+			_on_SelectCheckBox_pressed()
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_paintball"):
+			paintball_check_box.pressed = not paintball_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_paintball_alt"):
+			paintball_check_box.pressed = not paintball_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_line"):
+			line_mode_check_box.pressed = not line_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_line_alt"):
+			line_mode_check_box.pressed = not line_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_preset"):
+			preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_preset_alt"):
+			preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_move"):
+			move_mode_check_box.pressed = not move_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_move_alt"):
+			move_mode_check_box.pressed = not move_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_recolor"):
+			recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_recolor_alt"):
+			recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_auto_paintballer"):
+			auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_palette_viewer"):
+			view_palette_check_box.pressed = not view_palette_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_variation_viewer"):
+			view_variations_check_box.pressed = not view_variations_check_box.pressed
+			get_tree().set_input_as_handled()
+			return true
+		if HotkeyManager and HotkeyManager.is_action_pressed("mode_toggle_capture_headshot"):
+			lnz_text_edit.capture_headshot()
+			get_tree().set_input_as_handled()
+			return true
+
 		match event.scancode:
 			KEY_S:
-				select_check_box.pressed = not select_check_box.pressed
-				_on_SelectCheckBox_pressed()
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_select").size() == 0:
+					select_check_box.pressed = not select_check_box.pressed
+					_on_SelectCheckBox_pressed()
+					get_tree().set_input_as_handled()
+					return true
 			KEY_W:
-				paintball_check_box.pressed = not paintball_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_paintball").size() == 0:
+					paintball_check_box.pressed = not paintball_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_E:
-				line_mode_check_box.pressed = not line_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_line").size() == 0:
+					line_mode_check_box.pressed = not line_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_R:
-				preset_mode_check_box.pressed = not preset_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_preset").size() == 0:
+					preset_mode_check_box.pressed = not preset_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_U:
-				move_mode_check_box.pressed = not move_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_move").size() == 0:
+					move_mode_check_box.pressed = not move_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_D:
-				project_mode_check_box.pressed = not project_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_shape").size() == 0:
+					project_mode_check_box.pressed = not project_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_A:
-				auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_auto_paintballer").size() == 0:
+					auto_paintballer_check_box.pressed = not auto_paintballer_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_T:
-				view_palette_check_box.pressed = not view_palette_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_palette_viewer").size() == 0:
+					view_palette_check_box.pressed = not view_palette_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_G:
-				recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_recolor").size() == 0:
+					recolor_mode_check_box.pressed = not recolor_mode_check_box.pressed
+					get_tree().set_input_as_handled()
+					return true
 			KEY_K:
-				lnz_text_edit.capture_headshot()
-				get_tree().set_input_as_handled()
-				return true
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_capture_headshot").size() == 0:
+					lnz_text_edit.capture_headshot()
+					get_tree().set_input_as_handled()
+					return true
 			KEY_V:
-				view_variations_check_box.pressed = not view_variations_check_box.pressed
+				if not HotkeyManager or InputMap.get_action_list("mode_toggle_variation_viewer").size() == 0:
+					view_variations_check_box.pressed = not view_variations_check_box.pressed
 				get_tree().set_input_as_handled()
 				return true
 	return false
@@ -2011,10 +2276,16 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 	if move_mode and event.pressed:
 		var nudge_axis: String = ""
-		if Input.is_key_pressed(KEY_X):
+		if HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_x"):
 			nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_X):
+			nudge_axis = "x"
+		elif HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_y"):
+			nudge_axis = "y"
 		elif Input.is_key_pressed(KEY_Y):
 			nudge_axis = "y"
+		elif HotkeyManager and HotkeyManager.is_action_pressed("axis_lock_z"):
+			nudge_axis = "z"
 		elif Input.is_key_pressed(KEY_Z):
 			nudge_axis = "z"
 
@@ -2026,21 +2297,21 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				_record_move_end_state("Nudge +")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
+			if event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:  # - key
 				_record_move_start_state()
 				var dirsign: float = -1.0
 				move_mode_settings_instance.apply_nudge_axis(nudge_axis, dirsign)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_UP:
+			if event.scancode == KEY_UP:
 				_record_move_start_state()
 				var delta: float = 1.0
 				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
 				_record_move_end_state("Nudge up")
 				get_tree().set_input_as_handled()
 				return true
-			elif event.scancode == KEY_DOWN:
+			if event.scancode == KEY_DOWN:
 				_record_move_start_state()
 				var delta: float = -1.0
 				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
@@ -2056,6 +2327,29 @@ func _is_text_input_focused(event: InputEventKey) -> bool:
 			return false
 		return true
 	return false
+
+func _get_hotkey_display(action: String) -> String:
+	if not HotkeyManager:
+		return action
+	var binding: Dictionary = HotkeyManager.get_binding(action)
+	return HotkeyManager.get_key_string(binding)
+
+
+func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
+	if not HotkeyManager or not is_instance_valid(hovered_ball):
+		return ""
+	var parts: Array = []
+	parts.append(_get_hotkey_display("select_jump_info") + " or " + _get_hotkey_display("select_jump_info_alt") + ": [Ball Info] or [Add Ball]")
+	parts.append(_get_hotkey_display("select_jump_move") + " or " + _get_hotkey_display("select_jump_move_alt") + ": [Move]")
+	parts.append(_get_hotkey_display("select_jump_project") + " or " + _get_hotkey_display("select_jump_project_alt") + ": [Project Ball]")
+	parts.append(_get_hotkey_display("select_jump_line") + " or " + _get_hotkey_display("select_jump_line_alt") + ": [Line]")
+	var result: String = ""
+	for i in range(parts.size()):
+		result += parts[i]
+		if i < parts.size() - 1:
+			result += " | "
+	return "\n" + result
+
 
 func _exit_all_modes() -> void:
 	paintball_check_box.pressed = false
@@ -2258,17 +2552,26 @@ func _sync_mode_cursor() -> void:
 			mouse_default_cursor_shape = CURSOR_ARROW
 
 func _unhandled_key_input(event: InputEventKey) -> void:
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_exit_mode"):
+		_exit_all_modes()
+		var focus_owner = get_focus_owner()
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
+			focus_owner.release_focus()
+		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
+			var floating_panels = sidebar_controller.floating_layer.get_children()
+			for panel in floating_panels:
+				sidebar_controller.dock_panel(panel)
+		get_tree().set_input_as_handled()
+		return
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:
 		_exit_all_modes()
 		var focus_owner = get_focus_owner()
 		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
 			focus_owner.release_focus()
-
 		if is_instance_valid(sidebar_controller) and is_instance_valid(sidebar_controller.floating_layer):
 			var floating_panels = sidebar_controller.floating_layer.get_children()
 			for panel in floating_panels:
 				sidebar_controller.dock_panel(panel)
-
 		get_tree().set_input_as_handled()
 		return
 
@@ -2277,6 +2580,16 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Zoom view using SHIFT + + / -
 	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_in_incremental") or HotkeyManager.is_action_pressed("viewport_zoom_in_alt2")):
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_out_incremental") or HotkeyManager.is_action_pressed("viewport_zoom_out_alt2")):
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
 		if event.scancode == KEY_EQUAL or event.scancode == KEY_PLUS or event.scancode == KEY_KP_ADD:
 			tex.rect_pivot_offset = tex.rect_size / 2.0
 			tex.rect_scale *= ZOOM_STEP
@@ -2295,6 +2608,11 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
 			mark_ui_dirty()
 
+	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):
+		if selecting_on or recolor_mode:
+			get_tree().set_input_as_handled()
+			_cycle_nearby_ballz()
+			return
 	if event is InputEventKey and event.pressed and event.scancode == KEY_N:
 		if selecting_on or recolor_mode:
 			get_tree().set_input_as_handled()
@@ -2302,6 +2620,28 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			return
 
 	# Mini-history for Paintball and Move modes
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("paint_mini_undo"):
+			if paintball_mode:
+				_undo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("move_mini_undo"):
+			if move_mode:
+				_undo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("paint_mini_redo"):
+			if paintball_mode:
+				_redo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+		if HotkeyManager.is_action_pressed("move_mini_redo"):
+			if move_mode:
+				_redo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+
 	if event is InputEventKey and event.pressed and event.control and event.shift:
 		if event.scancode == KEY_Z:  # Undo
 			if paintball_mode:
@@ -2325,6 +2665,11 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_move_nudge_key_input(event):
 		return
 
+	if HotkeyManager and HotkeyManager.is_action_pressed("global_unhide_all"):
+		get_tree().set_input_as_handled()
+		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
+			pet_node.unhide_all_balls()
+		return
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_H:
 		get_tree().set_input_as_handled()
 		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
@@ -2332,6 +2677,15 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
+	if HotkeyManager and HotkeyManager.is_action_pressed("select_tools_menu"):
+		get_tree().set_input_as_handled()
+		if last_selected_is_valid():
+			tools_menu.selected_visual_ball = last_selected
+		else:
+			tools_menu.selected_visual_ball = null
+		tools_menu.rect_global_position = get_viewport().get_mouse_position()
+		tools_menu.popup()
+		return
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
 		if last_selected_is_valid():
@@ -2347,24 +2701,43 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Move Mode ball lock: Q to toggle lock on hovered ball, CTRL+Q to unlock all
 	if move_mode and event.pressed and not event.alt:
-		if event.control:
-			if event.scancode == KEY_Q:
-				_unlock_all_balls()
+		if HotkeyManager and HotkeyManager.is_action_pressed("move_unlock_all"):
+			_unlock_all_balls()
+			get_tree().set_input_as_handled()
+			return
+		if event.control and event.scancode == KEY_Q:
+			_unlock_all_balls()
+			get_tree().set_input_as_handled()
+			return
+		if HotkeyManager and HotkeyManager.is_action_pressed("move_lock_ball"):
+			var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+			if hover and is_instance_valid(hover) and "ball_no" in hover:
+				_toggle_lock_ball(hover)
 				get_tree().set_input_as_handled()
 				return
-		else:
-			if event.scancode == KEY_Q:
-				var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
-				if hover and is_instance_valid(hover) and "ball_no" in hover:
-					_toggle_lock_ball(hover)
-					get_tree().set_input_as_handled()
-					return
+		if event.scancode == KEY_Q:
+			var hover: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+			if hover and is_instance_valid(hover) and "ball_no" in hover:
+				_toggle_lock_ball(hover)
+				get_tree().set_input_as_handled()
+				return
 
 	if _handle_camera_view_key_input(event):
 		return
 
 	# Paintball Mode: SHIFT + arrow up/down to adjust brush size
 	if paintball_mode and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		if HotkeyManager and (HotkeyManager.is_action_pressed("paint_scale_brush_alt") or HotkeyManager.is_action_pressed("paint_scale_brush_alt_down")):
+			if event.scancode == KEY_UP:
+				diameter_min_spinbox.value += 1
+				diameter_max_spinbox.value += 1
+				get_tree().set_input_as_handled()
+				return
+			elif event.scancode == KEY_DOWN:
+				diameter_min_spinbox.value -= 1
+				diameter_max_spinbox.value -= 1
+				get_tree().set_input_as_handled()
+				return
 		if event.scancode == KEY_UP:
 			diameter_min_spinbox.value += 1
 			diameter_max_spinbox.value += 1
@@ -3612,7 +3985,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 	var result: Dictionary = space_state.intersect_ray(from, to, [self], 1, true, true)
 
 	if result and result.collider and result.collider.get_parent() == target_ball:
-		print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
+		# print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
 		var intersection_point: Vector3 = result.position
 
 		if paintball_settings_instance.is_design_mode_active():
@@ -3628,13 +4001,16 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			var tangent_right: Vector3 = tangent_up.cross(normal).normalized()
 			var basis: Basis = Basis(tangent_right, normal, tangent_up)
 
+			var fixed_rotation: float = paintball_settings_instance.get_design_rotation() if paintball_settings_instance.has_method("get_design_rotation") else 0.0
+			var total_rotation: float = design_rotation_angle + fixed_rotation
+
 			var pattern_pbs: Dictionary = paintball_settings_instance.paste_paintball_design(
 				normal,
 				basis,
 				target_ball.ball_no,
 				lnz_diam,
 				design_scale_multiplier,
-				design_rotation_angle
+				total_rotation
 			)
 
 			if not pattern_pbs or not pattern_pbs.has("positions") or not pattern_pbs.has("diameters"):
@@ -4457,6 +4833,29 @@ func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, t
 			b.global_transform.origin.z += offset
 		_track_pending_move(b)
 
+func _apply_translation_to_selection(delta: Vector3) -> void:
+	for b in selected_balls:
+		if is_instance_valid(b):
+			if _is_ball_locked(b):
+				continue
+
+			var addballz_base_selected: bool = false
+			var p: Node = b.get_parent()
+			while is_instance_valid(p) and p != get_tree().root:
+				if p in selected_balls:
+					addballz_base_selected = true
+					break
+				p = p.get_parent()
+
+			if not addballz_base_selected:
+				b.global_transform.origin += delta
+
+			# Record for undo/redo
+			_track_pending_move(b)
+
+	if move_mode_settings_instance.is_mirror_x_active():
+		_apply_mirror_move(selected_balls, delta)
+
 func _on_nudge_selection(vector: Vector3) -> void:
 	if selected_balls.empty():
 		return
@@ -4473,19 +4872,7 @@ func _on_nudge_selection(vector: Vector3) -> void:
 		vector, pet_node.pixel_world_size, pet_node.lnz.scales.x
 	)
 
-	for b in selected_balls:
-		var addballz_base_selected: bool = false
-		var p: Node = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in selected_balls:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
-		if not addballz_base_selected:
-			b.global_transform.origin += world_delta
-
-		_track_pending_move(b)
+	_apply_translation_to_selection(world_delta)
 
 	_record_move_end_state("Nudge")
 
@@ -4879,6 +5266,7 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 		return true
 
 	return false
+
 
 func _on_lock_all() -> void:
 	for b in selected_balls:
