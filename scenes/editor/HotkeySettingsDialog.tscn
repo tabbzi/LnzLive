@@ -117,13 +117,13 @@ text = "Reset All"
 
 [node name="ApplyBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
 margin_left = 189.0
-margin_right = 284.0
+margin_right = 237.0
 margin_bottom = 20.0
-text = "Apply & Save"
+text = "Apply"
 
 [node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonHBox"]
-margin_left = 288.0
-margin_right = 342.0
+margin_left = 241.0
+margin_right = 295.0
 margin_bottom = 20.0
 text = "Cancel"
 
