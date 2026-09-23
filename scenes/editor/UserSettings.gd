@@ -88,12 +88,11 @@ func _ready() -> void:
 		settings_dialog.connect("texture_path_changed", self, "_on_texture_path_changed")
 		settings_dialog.connect("append_dimensions_changed", self, "_on_append_dimensions_changed")
 
-	_hotkey_dialog = load("res://scenes/editor/HotkeySettingsDialog.tscn").instance()
-	add_child(_hotkey_dialog)
-	if hotkey_settings_btn:
-		hotkey_settings_btn.connect("pressed", self, "_on_hotkey_settings_pressed")
+	_hotkey_dialog = get_tree().root.get_node_or_null("SceneRoot/HotkeySettingsDialog")
 	if _hotkey_dialog:
 		_hotkey_dialog.connect("hotkeys_changed", self, "_on_hotkeys_changed")
+	if hotkey_settings_btn:
+		hotkey_settings_btn.connect("pressed", self, "_on_hotkey_settings_pressed")
 
 	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
 
