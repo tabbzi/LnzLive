@@ -243,7 +243,7 @@ func _on_reset_action_pressed(action: String) -> void:
 		return
 	if HotkeyManager.user_bindings.has(action):
 		HotkeyManager.user_bindings.erase(action)
-		HotkeyManager._apply_bindings()
+		HotkeyManager._update_single_binding(action)
 		_update_row_binding(action)
 		emit_signal("hotkeys_changed")
 
@@ -411,13 +411,12 @@ func _input(event: InputEvent) -> void:
 		if not HotkeyManager:
 			return
 		HotkeyManager.user_bindings[_listening_for_action] = binding
-		HotkeyManager._apply_bindings()
+		HotkeyManager._update_single_binding(_listening_for_action)
 		_update_row_binding(_listening_for_action)
 		_listening_active = false
 		listening_popup.hide()
 		emit_signal("hotkeys_changed")
 		print("[HotkeySettings] Remapped '", _listening_for_action, "' to '", HotkeyManager.get_key_string(binding), "'")
-		get_tree().set_input_as_handled()
 		return
 
 	if _listening_active and event is InputEventMouseButton and event.pressed:
@@ -440,7 +439,7 @@ func _input(event: InputEvent) -> void:
 		if not HotkeyManager:
 			return
 		HotkeyManager.user_bindings[_listening_for_action] = binding
-		HotkeyManager._apply_bindings()
+		HotkeyManager._update_single_binding(_listening_for_action)
 		_update_row_binding(_listening_for_action)
 		_listening_active = false
 		listening_popup.hide()

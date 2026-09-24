@@ -453,8 +453,7 @@ func save_profile(name: String) -> bool:
 
 	var profile: Dictionary = {}
 	for action in user_bindings:
-		if user_bindings.has(action):
-			profile[action] = user_bindings[action]
+		profile[action] = user_bindings[action]
 
 	profiles[name] = profile
 
@@ -484,7 +483,7 @@ func load_profile(name: String) -> bool:
 
 	user_bindings = {}
 	for action in profiles[name]:
-		user_bindings[action] = profiles[name][action]
+		user_bindings[action] = profiles[name][action].duplicate()
 
 	_apply_bindings()
 	emit_signal("hotkeys_reloaded")
@@ -548,6 +547,8 @@ func is_exact_action(event: InputEvent, action: String) -> bool:
 			return false
 		if event.alt != binding.get("alt", false):
 			return false
+		if event.meta != binding.get("meta", false):
+			return false
 			
 	return true
 
@@ -574,7 +575,6 @@ func get_key_string(binding: Dictionary) -> String:
 		parts.append("Meta")
 
 	var scancode: int = binding.get("scancode", 0)
-	var key_code: int = binding.get("key_code", -1)
 
 	if _is_standard_key(scancode):
 		var scancode_str: String = OS.get_scancode_string(scancode)
@@ -587,20 +587,11 @@ func get_key_string(binding: Dictionary) -> String:
 	elif scancode == BUTTON_WHEEL_DOWN:
 		parts.append("Wheel Down")
 	elif scancode == BUTTON_LEFT:
-		if key_code != -1:
-			parts.append("L" + OS.get_scancode_string(key_code))
-		else:
-			parts.append("LMB")
+		parts.append("LMB")
 	elif scancode == BUTTON_MIDDLE:
-		if key_code != -1:
-			parts.append("M" + OS.get_scancode_string(key_code))
-		else:
-			parts.append("MMB")
+		parts.append("MMB")
 	elif scancode == BUTTON_RIGHT:
-		if key_code != -1:
-			parts.append("R" + OS.get_scancode_string(key_code))
-		else:
-			parts.append("RMB")
+		parts.append("RMB")
 	elif scancode >= BUTTON_LEFT and scancode <= BUTTON_RIGHT:
 		parts.append("Button " + str(scancode))
 
@@ -661,17 +652,6 @@ func check_conflict(proposed_binding: Dictionary, exclude_action: String = "") -
 		if _bindings_match(proposed_binding, effective):
 			return action
 
-	for action in user_bindings:
-		if action == exclude_action:
-			continue
-		if is_context_specific(action) and not is_context_specific(exclude_action):
-			continue
-		if is_context_specific(exclude_action) and not is_context_specific(action):
-			continue
-		var user_val = user_bindings[action]
-		if _bindings_match(proposed_binding, user_val):
-			return action
-
 	return ""
 
 
@@ -708,12 +688,19 @@ func _is_standard_key(scancode: int) -> bool:
 
 
 func _apply_bindings() -> void:
-	var actions: Array = InputMap.get_actions()
-	for action in actions:
-		if action in default_bindings:
-			InputMap.erase_action(action)
+	_apply_bindings_for_actions(default_bindings.keys())
 
-	for action_name in default_bindings:
+
+func _apply_bindings_for_actions(actions_to_apply: Array) -> void:
+	# Erase only the actions being updated
+	for action_name in actions_to_apply:
+		if InputMap.has_action(action_name):
+			InputMap.erase_action(action_name)
+
+	# Re-add them with effective bindings
+	for action_name in actions_to_apply:
+		if not action_name in default_bindings:
+			continue
 		var binding: Dictionary = default_bindings[action_name]
 		var user_override: Dictionary = {}
 		if user_bindings.has(action_name):
@@ -724,6 +711,19 @@ func _apply_bindings() -> void:
 			effective[key] = user_override[key]
 
 		_input_add_action_input(action_name, effective)
+
+
+func _update_single_binding(action_name: String) -> void:
+	if InputMap.has_action(action_name):
+		InputMap.erase_action(action_name)
+	var binding: Dictionary = default_bindings[action_name]
+	var user_override: Dictionary = {}
+	if user_bindings.has(action_name):
+		user_override = user_bindings[action_name]
+	var effective: Dictionary = binding.duplicate()
+	for key in user_override:
+		effective[key] = user_override[key]
+	_input_add_action_input(action_name, effective)
 
 
 func _input_add_action_input(action_name: String, binding: Dictionary) -> void:
