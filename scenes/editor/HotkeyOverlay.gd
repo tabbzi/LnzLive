@@ -14,7 +14,7 @@ const KEY_MAP = {
 	"N": [7, 2, 1, 1], "M": [8, 2, 1, 1],
 	"1": [1, 3, 1, 1], "2": [2, 3, 1, 1], "3": [3, 3, 1, 1], "4": [4, 3, 1, 1], "5": [5, 3, 1, 1],
 	"6": [6, 3, 1, 1], "7": [7, 3, 1, 1], "8": [8, 3, 1, 1], "9": [9, 3, 1, 1], "0": [10, 3, 1, 1],
-	"'": [1, 4, 1, 1], '"': [2, 4, 1, 1], "-": [3, 4, 1, 1], "=": [4, 4, 1, 1],
+	"'": [1, 4, 1, 1], '"': [2, 4, 1, 1], "-": [3, 4, 1, 1], "=": [4, 4, 1, 1], "+": [4, 4, 1, 1],
 	"[": [5, 4, 2, 1], "]": [7, 4, 2, 1], "\\": [9, 4, 2, 1],
 	"TAB": [1, 5, 2, 1], "CAPS_LOCK": [3, 5, 3, 1],
 	"SHIFT": [5, 6, 2, 1], "SHIFT_L": [5, 6, 2, 1],
@@ -37,6 +37,8 @@ const SCANEODE_TO_DISPLAY = {
 	KEY_BACKSPACE: "BACKSPACE", KEY_TAB: "TAB", KEY_DELETE: "DELETE",
 	KEY_UP: "UP", KEY_DOWN: "DOWN", KEY_LEFT: "LEFT", KEY_RIGHT: "RIGHT",
 	KEY_SHIFT: "SHIFT", KEY_CONTROL: "CTRL", KEY_ALT: "ALT", KEY_META: "WIN",
+	KEY_EQUAL: "+", KEY_PLUS: "+", KEY_KP_ADD: "+",
+	KEY_MINUS: "-", KEY_KP_SUBTRACT: "-",
 	KEY_F1: "F1", KEY_F2: "F2", KEY_F3: "F3", KEY_F4: "F4",
 	KEY_F5: "F5", KEY_F6: "F6", KEY_F7: "F7", KEY_F8: "F8",
 	KEY_F9: "F9", KEY_F10: "F10", KEY_F11: "F11", KEY_F12: "F12",
@@ -57,11 +59,6 @@ func _init():
 		DISPLAY_TO_SCANEODE[SCANEODE_TO_DISPLAY[k]] = k
 
 # Mouse button display names
-const MOUSE_DISPLAY = {
-	BUTTON_LEFT: "left-click", BUTTON_RIGHT: "right-click",
-	BUTTON_MIDDLE: "middle mouse",
-	BUTTON_WHEEL_UP: "wheel up", BUTTON_WHEEL_DOWN: "wheel down",
-}
 
 func _ready():
 	self.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -197,32 +194,13 @@ func _binding_to_key_components(binding: Dictionary) -> Array:
 	elif scancode == BUTTON_WHEEL_DOWN:
 		components.append({"display": "wheel down", "scancode": BUTTON_WHEEL_DOWN})
 	elif scancode == KEY_EQUAL or scancode == KEY_PLUS or scancode == KEY_KP_ADD:
-		# Render combo '+' as text, not as a sprite tile
-		var plus_label = Label.new()
-		plus_label.name = "Label_Plus"
-		plus_label.text = "+"
-		plus_label.set_custom_minimum_size(Vector2(16, 24))
-		plus_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
-		plus_label.size_flags_horizontal = 0
-		plus_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		components.append({"display": "+", "scancode": scancode, "is_plus": true})
+		components.append({"display": "+", "scancode": scancode})
 	elif SCANEODE_TO_DISPLAY.has(scancode):
 		components.append({"display": SCANEODE_TO_DISPLAY[scancode], "scancode": scancode})
 	
 	return components
 
 func _create_key_node(display_name: String) -> Control:
-	if display_name == "+":
-		var label = Label.new()
-		label.name = "Label_Plus"
-		label.text = "+"
-		label.set_custom_minimum_size(Vector2(16, 24))
-		label.set("custom_fonts/normal_font", FONT_DYNAMIC)
-		label.align = Label.ALIGN_CENTER
-		label.size_flags_horizontal = 0
-		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		return label
-	
 	# Check KEY_MAP for sprite tiles
 	if KEY_MAP.has(display_name):
 		var atlas = _get_atlas_for_key(display_name)
