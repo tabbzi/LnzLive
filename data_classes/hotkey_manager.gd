@@ -22,6 +22,19 @@ var context_specific_actions: Array = [
 	"text_next_section", "text_prev_section", "text_jump_ball_index",
 ]
 
+var web_shift_aliases: Dictionary = {
+	KEY_MINUS: KEY_UNDERSCORE,
+	KEY_EQUAL: KEY_PLUS,
+	KEY_BRACKETLEFT: KEY_BRACELEFT,
+	KEY_BRACKETRIGHT: KEY_BRACERIGHT,
+	KEY_SEMICOLON: KEY_COLON,
+	KEY_APOSTROPHE: KEY_QUOTEDBL,
+	KEY_COMMA: KEY_LESS,
+	KEY_PERIOD: KEY_GREATER,
+	KEY_SLASH: KEY_QUESTION,
+	KEY_BACKSLASH: KEY_BAR
+}
+
 var non_remappable_actions: Array = [
 	"viewport_rotate",
 	"select_tools_menu_alt",
@@ -49,8 +62,8 @@ var default_bindings: Dictionary = {
 	# === Viewport / Camera ===
 	"viewport_zoom_in": { "scancode": BUTTON_WHEEL_UP, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"viewport_zoom_out": { "scancode": BUTTON_WHEEL_DOWN, "ctrl": false, "shift": false, "alt": false, "meta": false },
-	"viewport_zoom_in_incremental": { "scancode": KEY_PLUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
-	"viewport_zoom_out_incremental": { "scancode": KEY_MINUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
+	"viewport_zoom_in_incremental": { "scancode": KEY_PLUS, "physical_scancode": KEY_EQUAL, "ctrl": false, "shift": true, "alt": false, "meta": false },
+	"viewport_zoom_out_incremental": { "scancode": KEY_MINUS, "physical_scancode": KEY_MINUS, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_zoom_in_alt2": { "scancode": KEY_KP_ADD, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_zoom_out_alt2": { "scancode": KEY_KP_SUBTRACT, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"viewport_pan": { "scancode": BUTTON_MIDDLE, "ctrl": false, "shift": false, "alt": false, "meta": false },
@@ -564,7 +577,11 @@ func get_key_string(binding: Dictionary) -> String:
 	var key_code: int = binding.get("key_code", -1)
 
 	if _is_standard_key(scancode):
-		parts.append(OS.get_scancode_string(scancode))
+		var scancode_str: String = OS.get_scancode_string(scancode)
+		# Fallback for web exports where OS.get_scancode_string() returns empty
+		if scancode_str == "":
+			scancode_str = _get_fallback_scancode_string(scancode)
+		parts.append(scancode_str)
 	elif scancode == BUTTON_WHEEL_UP:
 		parts.append("Wheel Up")
 	elif scancode == BUTTON_WHEEL_DOWN:
@@ -594,6 +611,37 @@ func get_key_string(binding: Dictionary) -> String:
 			result += " + "
 	return result
 
+
+func _get_fallback_scancode_string(scancode: int) -> String:
+	match scancode:
+		KEY_SPACE: return "Space"
+		KEY_ESCAPE: return "Escape"
+		KEY_ENTER: return "Enter"
+		KEY_BACKSPACE: return "Backspace"
+		KEY_TAB: return "Tab"
+		KEY_DELETE: return "Delete"
+		KEY_UP: return "Up"
+		KEY_DOWN: return "Down"
+		KEY_LEFT: return "Left"
+		KEY_RIGHT: return "Right"
+		KEY_F1: return "F1"
+		KEY_F2: return "F2"
+		KEY_F3: return "F3"
+		KEY_F4: return "F4"
+		KEY_F5: return "F5"
+		KEY_F6: return "F6"
+		KEY_F7: return "F7"
+		KEY_F8: return "F8"
+		KEY_F9: return "F9"
+		KEY_F10: return "F10"
+		KEY_F11: return "F11"
+		KEY_F12: return "F12"
+		_:
+			# For alphanumeric keys (A-Z, 0-9), convert ASCII/Unicode value directly
+			if (scancode >= KEY_A and scancode <= KEY_Z) or (scancode >= KEY_0 and scancode <= KEY_9):
+				return char(scancode).to_upper()
+			return "Key_" + str(scancode)
+			
 
 func check_conflict(proposed_binding: Dictionary, exclude_action: String = "") -> String:
 	if not proposed_binding or proposed_binding.size() == 0:
@@ -645,6 +693,11 @@ func _bindings_match(a: Dictionary, b: Dictionary) -> bool:
 	elif key_a != -1 or key_b != -1:
 		return false
 
+	var phys_a: int = a.get("physical_scancode", 0)
+	var phys_b: int = b.get("physical_scancode", 0)
+	
+	if phys_a != 0 and phys_b != 0:
+		return phys_a == phys_b
 	return a.get("scancode", 0) == b.get("scancode", 0)
 
 
@@ -682,6 +735,16 @@ func _input_add_action_input(action_name: String, binding: Dictionary) -> void:
 		InputMap.add_action(action_name)
 
 	InputMap.action_add_event(action_name, input_event)
+
+	# HTML5 / Web fallback: Automatically bind the translated symbol variant
+	var scancode: int = binding.get("scancode", 0)
+	if binding.get("shift", false) and web_shift_aliases.has(scancode):
+		var alias_binding: Dictionary = binding.duplicate()
+		alias_binding["scancode"] = web_shift_aliases[scancode]
+		
+		var alias_event: InputEvent = _create_input_event(alias_binding)
+		if alias_event != null:
+			InputMap.action_add_event(action_name, alias_event)
 
 
 func _create_input_event(binding: Dictionary) -> InputEvent:

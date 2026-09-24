@@ -387,6 +387,7 @@ func _input(event: InputEvent) -> void:
 
 		var binding: Dictionary = {
 			"scancode": event.scancode,
+			"physical_scancode": event.physical_scancode if "physical_scancode" in event else 0,
 			"ctrl": event.control,
 			"shift": event.shift,
 			"alt": event.alt,
