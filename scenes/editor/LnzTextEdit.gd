@@ -1431,7 +1431,7 @@ func _detect_delimiter(start_line: int, end_line: int, test: bool = false) -> St
 	if !test:
 		var preferred = _get_user_preferred_delimiter()
 		if preferred != "auto":
-			print("[STATUS] LnzTextEdit: _detect_delimiter: Using user preferred delimiter: %s" % preferred)
+			#print("[STATUS] LnzTextEdit: _detect_delimiter: Using user preferred delimiter: %s" % preferred)
 			return preferred
 
 	var delim_counts = {
@@ -3763,6 +3763,16 @@ func _apply_multi_color_recolor(parts: Array, recolor_rules: Array, color_indice
 			updates[ci] = new_color
 	return updates
 
+func _apply_multi_color_recolor_outline(parts: Array, recolor_rules: Array, color_indices: Array, info_dict) -> Dictionary:
+	var updates = {}
+	for ci in color_indices:
+		if ci >= parts.size(): continue
+		var current_color = parts[ci]
+		var new_color = _resolve_recolor(current_color, true, recolor_rules, info_dict, "")
+		if new_color != null:
+			updates[ci] = new_color
+	return updates
+
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
@@ -3776,7 +3786,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				balls_to_exclude.erase(n)
 
 	# [Ballz Info] - color=0, outline=1, texture=7
-	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+	if all_recolor_info.balls_fill or all_recolor_info.balls_outline:
 		var bounds = get_section_bounds("[Ballz Info]")
 		if not bounds.empty():
 			var count = 0
@@ -3797,7 +3807,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				count += 1
 
 	# [Add Ball] - color=4, outline=5, texture=13
-	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+	if all_recolor_info.balls_fill or all_recolor_info.balls_outline:
 		var bounds = get_section_bounds("[Add Ball]")
 		if not bounds.empty():
 			var count = 0
@@ -3816,7 +3826,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				count += 1
 
 	# [Paint Ballz] - color=5, outline=6, texture=10
-	if all_recolor_info.paintballs_on:
+	if all_recolor_info.paintballs_fill or all_recolor_info.paintballs_outline:
 		var bounds = get_section_bounds("[Paint Ballz]")
 		if not bounds.empty():
 			var count = 0
@@ -3833,8 +3843,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					set_line(i, _update_fields(parts, updates, delim))
 				count += 1
 
-	# [Linez] - main=3, left=4, right=5 (no texture)
-	if all_recolor_info.lines_on:
+	# [Linez] - main=3 (fill), left=4 (outline), right=5 (outline)
+	if all_recolor_info.lines_fill:
 		var bounds = get_section_bounds("[Linez]")
 		if not bounds.empty():
 			var count = 0
@@ -3845,14 +3855,31 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				if parts.size() < 6:
 					count += 1
 					continue
-				var updates = _apply_multi_color_recolor(parts, recolor_rules, [3, 4, 5], all_recolor_info)
+				var updates = _apply_multi_color_recolor(parts, recolor_rules, [3], all_recolor_info)
+				if not updates.empty():
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
+
+	if all_recolor_info.lines_outline:
+		var bounds = get_section_bounds("[Linez]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 6:
+					count += 1
+					continue
+				var updates = _apply_multi_color_recolor_outline(parts, recolor_rules, [4, 5], all_recolor_info)
 				if not updates.empty():
 					var delim = _detect_delimiter(bounds.start, bounds.end)
 					set_line(i, _update_fields(parts, updates, delim))
 				count += 1
 
 	# [Polygons] - main=4, left=5, right=6, texture=8
-	if all_recolor_info.polygons_on:
+	if all_recolor_info.polygons_fill or all_recolor_info.polygons_outline:
 		var bounds = get_section_bounds("[Polygons]")
 		if not bounds.empty():
 			var count = 0
@@ -3940,10 +3967,13 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 
 func _resolve_recolor(color_str: String, is_outline: bool, rules: Array, info, texture: String):
 	for rule in rules:
-		var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-		if not texture_match: continue
-		if is_outline and not info.ball_outlines_on: continue
-		if not is_outline and not info.balls_on and not info.lines_on: continue
+		if not is_outline:
+			var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+			if not texture_match: continue
+		if is_outline:
+			if not info.balls_outline and not info.lines_outline and not info.paintballs_outline and not info.polygons_outline: continue
+		else:
+			if not info.balls_fill and not info.lines_fill and not info.paintballs_fill and not info.polygons_fill: continue
 		var new_color = null
 		if rule.is_ramp:
 			new_color = LnzLiveUtils.get_ramp_color(color_str, rule)

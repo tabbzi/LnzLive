@@ -127,6 +127,12 @@ func _ready() -> void:
 	if is_instance_valid(tex_list_check):
 		tex_list_check.connect("toggled", self, "_on_tex_list_toggled")
 	
+	for child in color_swap_check_container.get_children():
+		if child is HBoxContainer:
+			for cb in child.get_children():
+				if cb is CheckBox and not cb.is_connected("toggled", self, "_on_recolor_toggle_changed"):
+					cb.connect("toggled", self, "_on_recolor_toggle_changed")
+	
 	_populate_color_theory_options()
 		
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll.connect("resized", self, "_on_bucket_scroll_resized")
@@ -162,6 +168,10 @@ func _on_nose_ballz_toggled(is_on: bool) -> void:
 	save_settings()
 
 func _on_tex_list_toggled(is_on: bool) -> void:
+	if _is_loading_settings: return
+	save_settings()
+
+func _on_recolor_toggle_changed(is_on: bool) -> void:
 	if _is_loading_settings: return
 	save_settings()
 
@@ -431,22 +441,25 @@ func _on_RecolorButton_pressed() -> void:
 			"is_ramp": is_ramp
 		})
 
-	var balls_on: bool = color_swap_check_container.get_node("Balls").pressed
-	var ball_outlines_on: bool = color_swap_check_container.get_node("Ball outlines").pressed
-	var paintballs_on: bool = color_swap_check_container.get_node("Paintballs").pressed
-	var lines_on: bool = color_swap_check_container.get_node("Lines").pressed
-
-	var polygons_on: bool = color_swap_check_container.get_parent().get_node("CheckContainer2/Polygons").pressed
-	var nose_ballz_on: bool = is_instance_valid(nose_ballz_check) and nose_ballz_check.pressed
-
-	recolor_info.balls_on = balls_on
-	recolor_info.ball_outlines_on = ball_outlines_on
-	recolor_info.paintballs_on = paintballs_on
-	recolor_info.lines_on = lines_on
-	recolor_info.polygons_on = polygons_on
-	recolor_info.nose_ballz_on = nose_ballz_on
+	recolor_info.balls_fill = _get_checkbox_pressed("BallzFill")
+	recolor_info.balls_outline = _get_checkbox_pressed("BallzOutline")
+	recolor_info.paintballs_fill = _get_checkbox_pressed("PaintballzFill")
+	recolor_info.paintballs_outline = _get_checkbox_pressed("PaintballzOutline")
+	recolor_info.lines_fill = _get_checkbox_pressed("LinezFill")
+	recolor_info.lines_outline = _get_checkbox_pressed("LinezOutline")
+	recolor_info.polygons_fill = _get_checkbox_pressed("PolygonsFill")
+	recolor_info.polygons_outline = _get_checkbox_pressed("PolygonsOutline")
+	recolor_info.nose_ballz_on = is_instance_valid(nose_ballz_check) and nose_ballz_check.pressed
 
 	emit_signal("recolor", recolor_info)
+
+func _get_checkbox_pressed(name: String) -> bool:
+	for child in color_swap_check_container.get_children():
+		if child is HBoxContainer:
+			var cb = child.get_node_or_null(name)
+			if is_instance_valid(cb) and cb is CheckBox:
+				return cb.pressed
+	return false
 
 func _on_ClearSwap_pressed() -> void:
 	var lines: Array = swap_lines_container.get_children()
@@ -458,17 +471,18 @@ func _on_ClearSwap_pressed() -> void:
 		l.find_node("AfterTexture", true, false).text = ""
 		l.find_node("ColorRampCheck", true, false).pressed = false
 
-	for cb in color_swap_check_container.get_children():
-		if cb is CheckBox or cb is Button:
-			if cb.has_method("set_pressed"):
-				cb.pressed = true
+	# Reset all fill toggles to on, outline toggles to off
+	var fill_names = ["BallzFill", "PaintballzFill", "LinezFill", "PolygonsFill"]
+	var outline_names = ["BallzOutline", "PaintballzOutline", "LinezOutline", "PolygonsOutline"]
+	for name in fill_names:
+		var cb = color_swap_check_container.get_node_or_null(name)
+		if is_instance_valid(cb):
+			cb.pressed = true
+	for name in outline_names:
+		var cb = color_swap_check_container.get_node_or_null(name)
+		if is_instance_valid(cb):
+			cb.pressed = false
 
-	var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
-	if check_container_2:
-		for cb in check_container_2.get_children():
-			if cb is CheckBox:
-				cb.pressed = true
-				
 	_refresh_all_previews()
 	populate_bucket_palette()
 
@@ -526,14 +540,11 @@ func _gather_swap_data() -> Array:
 
 func _get_check_states() -> Dictionary:
 	var states: Dictionary = {}
-	for cb in color_swap_check_container.get_children():
-		if cb is CheckBox:
-			states[cb.name] = cb.pressed
-	var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
-	if check_container_2:
-		for cb in check_container_2.get_children():
-			if cb is CheckBox:
-				states[cb.name] = cb.pressed
+	for child in color_swap_check_container.get_children():
+		if child is HBoxContainer:
+			for cb in child.get_children():
+				if cb is CheckBox:
+					states[cb.name] = cb.pressed
 	return states
 
 func _apply_swap_data(data: Dictionary) -> void:
@@ -567,20 +578,12 @@ func _apply_swap_data(data: Dictionary) -> void:
 
 	var checks = data.get("checks", {})
 	for key in checks:
-		var found = false
-		for cb in color_swap_check_container.get_children():
-			if cb is CheckBox and cb.name == key:
-				cb.pressed = checks[key]
-				found = true
-				break
-		if not found:
-			var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
-			if check_container_2:
-				for cb in check_container_2.get_children():
-					if cb is CheckBox and cb.name == key:
-						cb.pressed = checks[key]
-						found = true
-						break
+		for child in color_swap_check_container.get_children():
+			if child is HBoxContainer:
+				var cb = child.get_node_or_null(key)
+				if is_instance_valid(cb) and cb is CheckBox:
+					cb.pressed = checks[key]
+					break
 
 	_refresh_all_previews()
 
@@ -898,16 +901,12 @@ func save_settings() -> void:
 		values["nose_ballz"] = nose_ballz_check.pressed
 	if is_instance_valid(tex_list_check):
 		values["tex_list"] = tex_list_check.pressed
-	var check_container = color_swap_check_container
 	var checks: Dictionary = {}
-	for cb in check_container.get_children():
-		if cb is CheckBox:
-			checks[cb.name] = cb.pressed
-	var check_container_2 = check_container.get_parent().get_node("CheckContainer2")
-	if check_container_2:
-		for cb in check_container_2.get_children():
-			if cb is CheckBox:
-				checks[cb.name] = cb.pressed
+	for child in color_swap_check_container.get_children():
+		if child is HBoxContainer:
+			for cb in child.get_children():
+				if cb is CheckBox:
+					checks[cb.name] = cb.pressed
 	values["checks"] = checks
 	values["swaps"] = _gather_swap_data()
 	save_eye_colors_settings(values)
@@ -926,20 +925,12 @@ func load_settings() -> void:
 		tex_list_check.pressed = data.get("tex_list", false)
 	var checks = data.get("checks", {})
 	for key in checks:
-		var found = false
-		for cb in color_swap_check_container.get_children():
-			if cb is CheckBox and cb.name == key:
-				cb.pressed = checks[key]
-				found = true
-				break
-		if not found:
-			var check_container_2 = color_swap_check_container.get_parent().get_node("CheckContainer2")
-			if check_container_2:
-				for cb in check_container_2.get_children():
-					if cb is CheckBox and cb.name == key:
-						cb.pressed = checks[key]
-						found = true
-						break
+		for child in color_swap_check_container.get_children():
+			if child is HBoxContainer:
+				var cb = child.get_node_or_null(key)
+				if is_instance_valid(cb) and cb is CheckBox:
+					cb.pressed = checks[key]
+					break
 	var swaps = data.get("swaps", [])
 	for i in range(swaps.size()):
 		var swap = swaps[i]

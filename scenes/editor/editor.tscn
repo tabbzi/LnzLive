@@ -1530,67 +1530,127 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CheckContainer" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
+[node name="CheckContainer" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
 margin_right = 622.0
-margin_bottom = 29.0
+margin_bottom = 180.0
+custom_constants/separation = 2
 
-[node name="Balls" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_right = 151.0
-margin_bottom = 29.0
-custom_fonts/font = ExtResource( 27 )
-pressed = true
+[node name="BallzRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_right = 622.0
+margin_bottom = 25.0
+
+[node name="BallzRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
+custom_fonts/label_font = ExtResource( 27 )
 text = "Balls/addballs"
 
-[node name="Ball outlines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 155.0
-margin_right = 287.0
-margin_bottom = 29.0
+[node name="BallzFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
+margin_left = 300.0
+margin_right = 370.0
+margin_bottom = 25.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
-text = "Ball outlines"
+text = "Fill"
 
-[node name="Paintballs" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 291.0
-margin_right = 403.0
-margin_bottom = 29.0
+[node name="BallzOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
+margin_left = 400.0
+margin_right = 470.0
+margin_bottom = 25.0
 custom_fonts/font = ExtResource( 27 )
-pressed = true
+text = "Outline"
+
+[node name="PaintballsRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_top = 29.0
+margin_right = 622.0
+margin_bottom = 54.0
+
+[node name="PaintballsRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
+custom_fonts/label_font = ExtResource( 27 )
 text = "Paintballs"
 
-[node name="Lines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 407.0
-margin_right = 474.0
-margin_bottom = 29.0
+[node name="PaintballsFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
+margin_left = 300.0
+margin_right = 370.0
+margin_bottom = 25.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
+text = "Fill"
+
+[node name="PaintballsOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
+margin_left = 400.0
+margin_right = 470.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
+text = "Outline"
+
+[node name="LinesRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_top = 33.0
+margin_right = 622.0
+margin_bottom = 58.0
+
+[node name="LinesRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
+custom_fonts/label_font = ExtResource( 27 )
 text = "Lines"
 
-[node name="Polygons" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 407.0
-margin_right = 474.0
-margin_bottom = 29.0
+[node name="LinesFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
+margin_left = 300.0
+margin_right = 370.0
+margin_bottom = 25.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
+text = "Fill"
+
+[node name="LinesOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
+margin_left = 400.0
+margin_right = 470.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
+text = "Outline"
+
+[node name="PolygonsRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_top = 37.0
+margin_right = 622.0
+margin_bottom = 62.0
+
+[node name="PolygonsRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
+custom_fonts/label_font = ExtResource( 27 )
 text = "Polygons"
 
+[node name="PolygonsFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
+margin_left = 300.0
+margin_right = 370.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Fill"
+
+[node name="PolygonsOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
+margin_left = 400.0
+margin_right = 470.0
+margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
+text = "Outline"
+
 [node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 478.0
-margin_right = 535.0
+margin_top = 41.0
+margin_left = 100.0
+margin_right = 200.0
 margin_bottom = 29.0
 size_flags_horizontal = 0
 custom_fonts/font = ExtResource( 27 )
 text = "Clear"
 
 [node name="AutofillButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 539.0
-margin_right = 609.0
+margin_top = 41.0
+margin_left = 250.0
+margin_right = 380.0
 margin_bottom = 29.0
 custom_fonts/font = ExtResource( 27 )
 text = "Autofill"
 
 [node name="RandomizeButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 613.0
-margin_right = 700.0
+margin_top = 41.0
+margin_left = 430.0
+margin_right = 550.0
 margin_bottom = 29.0
 custom_fonts/font = ExtResource( 27 )
 text = "Randomize"
