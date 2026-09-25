@@ -2427,7 +2427,7 @@ func apply_paintballz():
 				if line.begins_with("["):
 					break
 
-				if line.empty() or line.begins_with(";"):
+				if line.empty():
 					runner += 1
 				else:
 					break
