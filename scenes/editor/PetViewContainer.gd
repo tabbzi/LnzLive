@@ -645,11 +645,11 @@ func _process(_delta: float) -> void:
 			if polygon_balls.size() > 0:
 				body = "Polygon Mode: Click %d more ball(s) to complete polygon" % [MAX_POLYGON_BALLS - polygon_balls.size()]
 			else:
-				body = "Polygon Mode: Click 4 balls in order to create a polygon (key N to cycle ballz)"
+				body = "Polygon Mode: Click 4 balls in order to create a polygon (" + _get_hotkey_display("select_cycle_nearby") + " / " + _get_hotkey_display("select_cycle_nearby_alt") + " to cycle ballz)"
 		elif is_instance_valid(linez_start_ball): 
-			body = "Line Mode: Left-click target to END line (key N to cycle ballz)"
+			body = "Line Mode: Left-click target to END line (" + _get_hotkey_display("select_cycle_nearby") + " / " + _get_hotkey_display("select_cycle_nearby_alt") + " to cycle ballz)"
 		else:
-			body = "Line Mode: Left-click target to START line (key N to cycle ballz)"
+			body = "Line Mode: Left-click target to START line (" + _get_hotkey_display("select_cycle_nearby") + " / " + _get_hotkey_display("select_cycle_nearby_alt") + " to cycle ballz)"
 		
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 
@@ -734,11 +734,11 @@ func _process(_delta: float) -> void:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 
 	elif recolor_mode:
-		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes.\n(key N to cycle nearby ballz)"
+		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes.\n(" + _get_hotkey_display("select_cycle_nearby") + " / " + _get_hotkey_display("select_cycle_nearby_alt") + " to cycle nearby ballz)"
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif selecting_on:
-		body = "Select Mode: when hovering, cycle ballz using " + _get_hotkey_display("select_cycle_nearby") + " key..."
+		body = "Select Mode: when hovering, cycle ballz using " + _get_hotkey_display("select_cycle_nearby") + " or " + _get_hotkey_display("select_cycle_nearby_alt") + " key..."
 
 	elif is_dragging:
 		pass
@@ -2609,6 +2609,11 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			mark_ui_dirty()
 
 	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):
+		if selecting_on or recolor_mode:
+			get_tree().set_input_as_handled()
+			_cycle_nearby_ballz()
+			return
+	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby_alt"):
 		if selecting_on or recolor_mode:
 			get_tree().set_input_as_handled()
 			_cycle_nearby_ballz()

@@ -119,6 +119,7 @@ var default_bindings: Dictionary = {
 	"select_delete_ball": { "scancode": KEY_DELETE, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"select_hide_ball": { "scancode": KEY_H, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"select_cycle_nearby": { "scancode": KEY_N, "ctrl": false, "shift": false, "alt": false, "meta": false },
+	"select_cycle_nearby_alt": { "scancode": KEY_TAB, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"select_tools_menu": { "scancode": KEY_SPACE, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"select_tools_menu_alt": { "scancode": BUTTON_RIGHT, "ctrl": false, "shift": false, "alt": false, "meta": false },
 
@@ -223,7 +224,7 @@ var action_groups: Dictionary = {
 	"Select Mode": [
 		"select_jump_info", "select_jump_info_alt", "select_jump_move", "select_jump_move_alt",
 		"select_jump_project", "select_jump_project_alt", "select_jump_line", "select_jump_line_alt",
-		"select_delete_ball", "select_hide_ball", "select_cycle_nearby",
+		"select_delete_ball", "select_hide_ball", "select_cycle_nearby", "select_cycle_nearby_alt",
 		"select_tools_menu", "select_tools_menu_alt"
 	],
 	"Move Mode": [
@@ -328,6 +329,7 @@ var action_display_names: Dictionary = {
 	"select_delete_ball": "Delete Ball",
 	"select_hide_ball": "Hide Ball",
 	"select_cycle_nearby": "Cycle Nearby Balls",
+	"select_cycle_nearby_alt": "Cycle Nearby Balls (alt)",
 	"select_tools_menu": "Open Tools Menu",
 	"select_tools_menu_alt": "Open Tools Menu (alt)",
 	"move_lock_ball": "Lock/Unlock Ball",
