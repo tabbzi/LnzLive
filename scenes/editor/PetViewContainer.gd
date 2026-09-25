@@ -1622,6 +1622,27 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 				_finalize_freeline(event.position)
 			return true
+		elif freeline_active and not event.pressed:
+			freeline_active = false
+
+			if is_straight_line:
+				var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
+				var end_pos: Vector2 = event.position
+
+				if Input.is_key_pressed(KEY_X):
+					end_pos.y = start_pos.y
+				elif Input.is_key_pressed(KEY_Y):
+					end_pos.x = start_pos.x
+
+				freeline_path.clear()
+				var dist: float = start_pos.distance_to(end_pos)
+				var steps: int = max(1, round(dist / max(1.0, props.spacing)))
+				for i in range(steps + 1):
+					var t: float = float(i) / float(steps)
+					freeline_path.append(start_pos.linear_interpolate(end_pos, t))
+
+			_finalize_freeline(event.position)
+			return true
 
 	if event is InputEventMouseMotion and freeline_active:
 		var current_pos: Vector2 = event.position
