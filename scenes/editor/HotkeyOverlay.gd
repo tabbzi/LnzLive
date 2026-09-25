@@ -4,7 +4,9 @@ const TILE_SIZE = 16
 const KEYBOARD_ATLAS = preload("res://resources/icons/keys/Pixel_Keyboard_Buttons_1x.png")
 const FONT_DYNAMIC = preload("res://resources/fonts/font_pixel_maz_30.tres")
 
-# Key display name -> [col, row, width_tiles, height_tiles]
+# Key display name -> [col, row, width_tiles, height_tiles, pixel_offset_x, tile_width_override]
+# pixel_offset_x: optional horizontal pixel shift for visual alignment (default 0)
+# tile_width_override: optional actual pixel width of the tile (default 16)
 const KEY_MAP = {
 	"A": [0, 0, 1, 1],
 	"B": [1, 0, 1, 1],
@@ -53,8 +55,8 @@ const KEY_MAP = {
 	"SHIFT_L": [5, 6, 2, 1],
 	"SHIFT_R": [5, 6, 2, 1],
 	"CTRL": [3, 6, 2, 1], 
-	"ALT": [4, 7, 1, 1],
-	"DELETE": [6, 7, 1, 1],
+	"ALT": [4, 7, 1, 1, 0, 19],
+	"DELETE": [5, 7, 1, 1, 0, 19],
 	"WIN": [2, 6, 1, 1], 
 	"SPACE": [5, 6, 6, 1], 
 	"UP": [12, 7, 1, 2], 
@@ -267,6 +269,9 @@ func _create_key_node(display_name: String) -> Control:
 			var tw = region.size.x
 			var th = region.size.y
 			tex_rect.set_custom_minimum_size(Vector2(tw * 2, th * 2))
+			var key_data = KEY_MAP[display_name]
+			if key_data.size() > 4 and key_data[4] != 0:
+				atlas.region.position.x += key_data[4]
 			tex_rect.size_flags_horizontal = 0
 			tex_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			return tex_rect
@@ -291,13 +296,16 @@ func _get_atlas_for_key(key_name: String) -> AtlasTexture:
 	var row = pos[1]
 	var tile_w = pos[2] if len(pos) > 2 else 1
 	var tile_h = pos[3] if len(pos) > 3 else 1
+	var tile_px_w = TILE_SIZE
+	if len(pos) > 5 and pos[5] != 0:
+		tile_px_w = pos[5]
 	
 	var atlas = AtlasTexture.new()
 	atlas.atlas = KEYBOARD_ATLAS
 	atlas.region = Rect2(
 		col * TILE_SIZE,
 		row * TILE_SIZE,
-		tile_w * TILE_SIZE,
+		tile_w * tile_px_w,
 		tile_h * TILE_SIZE
 	)
 	return atlas
