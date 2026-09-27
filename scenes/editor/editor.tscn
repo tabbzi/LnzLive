@@ -1523,187 +1523,192 @@ anchor_bottom = 1.0
 margin_left = 8.0
 margin_top = 39.0
 margin_right = -8.0
-margin_bottom = -36.0
+margin_bottom = -5.0
 size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="CheckContainer" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
-margin_right = 622.0
-margin_bottom = 180.0
+margin_right = 799.0
+margin_bottom = 202.0
 custom_constants/separation = 2
 
 [node name="BallzRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_right = 622.0
-margin_bottom = 25.0
+margin_right = 799.0
+margin_bottom = 28.0
 
 [node name="BallzRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
-custom_fonts/label_font = ExtResource( 27 )
+margin_top = 7.0
+margin_right = 89.0
+margin_bottom = 21.0
 text = "Balls/addballs"
 
 [node name="BallzFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
-margin_left = 300.0
-margin_right = 370.0
-margin_bottom = 25.0
+margin_left = 93.0
+margin_right = 144.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Fill"
 
 [node name="BallzOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
-margin_left = 400.0
-margin_right = 470.0
-margin_bottom = 25.0
+margin_left = 148.0
+margin_right = 231.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 text = "Outline"
 
 [node name="PaintballsRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 29.0
-margin_right = 622.0
-margin_bottom = 54.0
+margin_top = 30.0
+margin_right = 799.0
+margin_bottom = 58.0
 
 [node name="PaintballsRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
-custom_fonts/label_font = ExtResource( 27 )
+margin_top = 7.0
+margin_right = 62.0
+margin_bottom = 21.0
 text = "Paintballs"
 
 [node name="PaintballsFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
-margin_left = 300.0
-margin_right = 370.0
-margin_bottom = 25.0
+margin_left = 66.0
+margin_right = 117.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Fill"
 
 [node name="PaintballsOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
-margin_left = 400.0
-margin_right = 470.0
-margin_bottom = 25.0
+margin_left = 121.0
+margin_right = 204.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 text = "Outline"
 
 [node name="LinesRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 33.0
-margin_right = 622.0
-margin_bottom = 58.0
+margin_top = 60.0
+margin_right = 799.0
+margin_bottom = 88.0
 
 [node name="LinesRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
-custom_fonts/label_font = ExtResource( 27 )
+margin_top = 7.0
+margin_right = 34.0
+margin_bottom = 21.0
 text = "Lines"
 
 [node name="LinesFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
-margin_left = 300.0
-margin_right = 370.0
-margin_bottom = 25.0
+margin_left = 38.0
+margin_right = 89.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Fill"
 
 [node name="LinesOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/LinesRow"]
-margin_left = 400.0
-margin_right = 470.0
-margin_bottom = 25.0
+margin_left = 93.0
+margin_right = 176.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 text = "Outline"
 
 [node name="PolygonsRow" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 37.0
-margin_right = 622.0
-margin_bottom = 62.0
+margin_top = 90.0
+margin_right = 799.0
+margin_bottom = 118.0
 
 [node name="PolygonsRowLabel" type="Label" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
-custom_fonts/label_font = ExtResource( 27 )
+margin_top = 7.0
+margin_right = 57.0
+margin_bottom = 21.0
 text = "Polygons"
 
 [node name="PolygonsFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
-margin_left = 300.0
-margin_right = 370.0
-margin_bottom = 25.0
+margin_left = 61.0
+margin_right = 112.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Fill"
 
 [node name="PolygonsOutline" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PolygonsRow"]
-margin_left = 400.0
-margin_right = 470.0
-margin_bottom = 25.0
+margin_left = 116.0
+margin_right = 199.0
+margin_bottom = 28.0
 custom_fonts/font = ExtResource( 27 )
 text = "Outline"
 
 [node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 41.0
-margin_left = 100.0
-margin_right = 200.0
-margin_bottom = 29.0
+margin_top = 120.0
+margin_right = 54.0
+margin_bottom = 146.0
 size_flags_horizontal = 0
 custom_fonts/font = ExtResource( 27 )
 text = "Clear"
 
 [node name="AutofillButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 41.0
-margin_left = 250.0
-margin_right = 380.0
-margin_bottom = 29.0
+margin_top = 148.0
+margin_right = 799.0
+margin_bottom = 174.0
 custom_fonts/font = ExtResource( 27 )
 text = "Autofill"
 
 [node name="RandomizeButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_top = 41.0
-margin_left = 430.0
-margin_right = 550.0
-margin_bottom = 29.0
+margin_top = 176.0
+margin_right = 799.0
+margin_bottom = 202.0
 custom_fonts/font = ExtResource( 27 )
 text = "Randomize"
 
 [node name="RecolorLines" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
-margin_top = 33.0
-margin_right = 622.0
-margin_bottom = 308.0
+margin_top = 206.0
+margin_right = 799.0
+margin_bottom = 481.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="Line1" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 27.0
 
 [node name="Line2" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 31.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 58.0
 
 [node name="Line3" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 62.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 89.0
 
 [node name="Line4" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 93.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 120.0
 
 [node name="Line5" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 124.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 151.0
 
 [node name="Line6" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 155.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 182.0
 
 [node name="Line7" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 186.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 213.0
 
 [node name="Line8" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 217.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 244.0
 
 [node name="Line9" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
 margin_top = 248.0
-margin_right = 622.0
+margin_right = 799.0
 margin_bottom = 275.0
 
 [node name="WebFileUploadPopup" type="ConfirmationDialog" parent="SceneRoot"]
@@ -1733,8 +1738,8 @@ margin_right = 668.0
 margin_bottom = 64.0
 
 [node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/BhdPromptDialog/VBoxContainer"]
-margin_right = 284.0
-margin_bottom = 20.0
+margin_right = 660.0
+margin_bottom = 26.0
 custom_fonts/font = ExtResource( 35 )
 
 [node name="ColorPopup" type="Popup" parent="SceneRoot"]
@@ -1866,17 +1871,22 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+margin_left = -300.0
+margin_top = -250.0
+margin_right = 300.0
+margin_bottom = 450.0
+rect_min_size = Vector2( 600, 700 )
 
 [node name="HotkeySettingsDialog" parent="SceneRoot" instance=ExtResource( 48 )]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -225.0
-margin_top = -200.0
-margin_right = 275.0
-margin_bottom = 300.0
-rect_min_size = Vector2( 400, 400 )
+margin_left = -250.0
+margin_top = -250.0
+margin_right = 250.0
+margin_bottom = 250.0
+rect_min_size = Vector2( 500, 500 )
 custom_styles/panel = ExtResource( 19 )
 custom_fonts/title_font = SubResource( 13 )
 custom_colors/title_color = Color( 1, 1, 1, 1 )
@@ -1886,11 +1896,11 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -350.0
-margin_top = -145.0
-margin_right = 350.0
-margin_bottom = 155.0
-rect_min_size = Vector2( 700, 300 )
+margin_left = -375.0
+margin_top = -200.0
+margin_right = 375.0
+margin_bottom = 200.0
+rect_min_size = Vector2( 750, 400 )
 custom_styles/panel = ExtResource( 19 )
 custom_fonts/title_font = SubResource( 13 )
 custom_colors/title_color = Color( 1, 1, 1, 1 )
@@ -1955,7 +1965,9 @@ Most destructive operations (like applying paintballs, creating lines, or using 
 [b]Tools Menu[/b]
 
 Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
-text = "Basic Controls
+text = "MAY BE OUTDATED! See tabbloza.com/lnzlive for the latest User Guide!
+
+Basic Controls
 
 Load a sample pet by double-clicking it in the left-hand menu.
 
@@ -1992,12 +2004,12 @@ __meta__ = {
 [connection signal="delete_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_delete_ball"]
 [connection signal="omit_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_omit_ball"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_rmb_selected"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2/RescanButton" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
@@ -2034,8 +2046,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
