@@ -432,14 +432,16 @@ func test_lnzlive_requantize_bmp_data():
 	bmp_palette.append(Color(0, 1.0, 0))  # index 1 = green
 	
 	var target_palette: Array = []
-	target_palette.append(Color(1.0, 0, 0))  # index 0 = red
-	target_palette.append(Color(0, 0.9, 0))  # index 1 = slightly different green
+	for i in range(10):
+		target_palette.append(Color(0, 0, 0))
+	target_palette.append(Color(1.0, 0, 0))  # index 10 = red (matches bmp index 0)
+	target_palette.append(Color(0, 0.9, 0))  # index 11 = slightly different green (matches bmp index 1)
 	
 	var raw_data = PoolByteArray([0, 1])
 	var new_data = LnzLiveUtils.requantize_bmp_data(raw_data, bmp_palette, target_palette)
 	assert_eq(new_data.size(), 2, "Output should have same size as input.")
-	# Index 0 (red) should map to 0 (red)
-	assert_eq(new_data[0], 0, "Red should map to index 0.")
+	# Index 0 (red) maps to target index 10 (red)
+	assert_eq(new_data[0], 10, "Red should map to target index 10.")
 
 func test_lnzlive_update_color_list_previews():
 	# Verify that update_color_list_previews handles empty palette gracefully.
@@ -2145,6 +2147,416 @@ func test_lnz_find_next_after_replace_resets_pattern():
 	# Only one "hello" was replaced by the single replace operation
 	assert_true("hello" in lnz_text.text, "One 'hello' should remain after single replace.")
 	assert_true("world" in lnz_text.text, "Text should contain 'world'.")
+
+func test_lnz_text_resolve_recolor():
+	# Verify that _resolve_recolor correctly evaluates the toggle flags,
+	# matches before_color rules, and delegates to get_ramp_color when is_ramp is true.
+	if not lnz_text: return
+
+	# Build a minimal recolor rule and info dict
+	var rule = {
+		"before_color": "10",
+		"after_color": "20",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var info = {
+		"balls_fill": true,
+		"balls_outline": false,
+		"paintballs_fill": false,
+		"paintballs_outline": false,
+		"lines_fill": false,
+		"lines_outline": false,
+		"polygons_fill": false,
+		"polygons_outline": false
+	}
+
+	# Test 1: fill recolor with matching color
+	var result = lnz_text._resolve_recolor("10", false, [rule], info, "")
+	assert_eq(result, "20", "Fill recolor should return after_color when before_color matches.")
+
+	# Test 2: fill recolor with non-matching color
+	result = lnz_text._resolve_recolor("99", false, [rule], info, "")
+	assert_null(result, "Fill recolor should return null when before_color does not match.")
+
+	# Test 3: outline recolor with balls_outline disabled should always skip
+	info["balls_outline"] = false
+	result = lnz_text._resolve_recolor("10", true, [rule], info, "")
+	assert_null(result, "Outline recolor should return null when balls_outline is false.")
+
+	# Test 4: outline recolor with balls_outline enabled
+	info["balls_outline"] = true
+	info["balls_fill"] = false  # disable fill so only outline toggle matters
+	result = lnz_text._resolve_recolor("10", true, [rule], info, "")
+	assert_eq(result, "20", "Outline recolor should return after_color when balls_outline is true and before_color matches.")
+
+	# Test 5: ramp recolor
+	var ramp_rule = {
+		"before_color": "60",
+		"after_color": "50",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": true
+	}
+	info["balls_fill"] = true
+	info["balls_outline"] = false
+	result = lnz_text._resolve_recolor("60", false, [ramp_rule], info, "")
+	assert_eq(result, "50", "Ramp recolor with identical before/after should return after_color.")
+
+	# Test 6: ramp with offset (62 -> 55 means offset within base group)
+	# get_ramp_color works within base groups of 10: 60s base.
+	# current=60, before_base=(62/10)*10=60, current_base=(60/10)*10=60 → match
+	# after_base=(55/10)*10=50, offset=60-60=0 → returns "50"
+	var ramp_offset_rule = {
+		"before_color": "62",
+		"after_color": "55",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": true
+	}
+	result = lnz_text._resolve_recolor("60", false, [ramp_offset_rule], info, "")
+	assert_eq(result, "50", "Ramp recolor within 10-base group: 60→50 (offset 0 applied to base 50).")
+
+	# Test 7: before_texture match (non-empty before_texture)
+	var tex_rule = {
+		"before_color": "",
+		"after_color": "30",
+		"before_texture": "5",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	info["balls_fill"] = true
+	info["balls_outline"] = false
+	result = lnz_text._resolve_recolor("10", false, [tex_rule], info, "5")
+	assert_eq(result, "30", "Rule with before_texture should match when current texture matches.")
+
+	# Test 8: before_texture mismatch should skip
+	result = lnz_text._resolve_recolor("10", false, [tex_rule], info, "9")
+	assert_null(result, "Rule with before_texture should skip when current texture does not match.")
+
+
+func test_lnz_text_apply_recolor_rules_to_parts():
+	# Verify that _apply_recolor_rules_to_parts reads the correct column indices
+	# and returns an updates dictionary targeting those indices.
+	if not lnz_text: return
+
+	var rule = {
+		"before_color": "10",
+		"after_color": "20",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var info = {
+		"balls_fill": true,
+		"balls_outline": true,
+		"paintballs_fill": false,
+		"paintballs_outline": false,
+		"lines_fill": false,
+		"lines_outline": false,
+		"polygons_fill": false,
+		"polygons_outline": false
+	}
+
+	# Test 1: [Ballz Info] - color at index 0, outline at index 1
+	var parts_rule = {
+		"before_color": "10",
+		"after_color": "20",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var outline_rule = {
+		"before_color": "15",
+		"after_color": "25",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var ballz_parts = ["10", "15", "0", "0", "0", "50", "0", "1"]
+	var updates = lnz_text._apply_recolor_rules_to_parts(ballz_parts, [parts_rule, outline_rule], 0, 1, 7, info)
+	assert_gt(updates.size(), 0, "Updates should not be empty.")
+	var found_color = false
+	var found_outline = false
+	for key in updates:
+		if key == 0:
+			assert_eq(str(updates[key]), "20", "Color at index 0 should be updated to after_color.")
+			found_color = true
+		if key == 1:
+			assert_eq(str(updates[key]), "25", "Outline at index 1 should be updated to after_color.")
+			found_outline = true
+	assert_true(found_color, "Updates should contain color index 0.")
+	assert_true(found_outline, "Updates should contain outline index 1.")
+
+	# Test 2: [Add Ball] - color at index 4, outline at index 5
+	# Add Ball color at index 4 is "10" (matches parts_rule), outline at index 5 is "15" (matches outline_rule)
+	var addball_parts = ["1", "100", "10", "0", "10", "15", "0", "0", "0", "0", "30", "1", "5", "0"]
+	updates = lnz_text._apply_recolor_rules_to_parts(addball_parts, [parts_rule, outline_rule], 4, 5, 13, info)
+	assert_gt(updates.size(), 0, "Updates should not be empty.")
+	found_color = false
+	found_outline = false
+	for key in updates:
+		if key == 4:
+			assert_eq(str(updates[key]), "20", "Addball color at index 4 should be updated.")
+			found_color = true
+		if key == 5:
+			assert_eq(str(updates[key]), "25", "Addball outline at index 5 should be updated.")
+			found_outline = true
+	assert_true(found_color, "Updates should contain color index 4 for addball.")
+	assert_true(found_outline, "Updates should contain outline index 5 for addball.")
+
+	# Test 3: parts too short for color index should return empty updates
+	var short_parts = ["10"]
+	updates = lnz_text._apply_recolor_rules_to_parts(short_parts, [rule], 4, 5, -1, info)
+	assert_true(updates.empty(), "Short parts should return empty updates.")
+
+	# Test 4: no matching rule should return empty updates
+	var no_match_rule = {
+		"before_color": "99",
+		"after_color": "88",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	updates = lnz_text._apply_recolor_rules_to_parts(ballz_parts, [no_match_rule], 0, 1, -1, info)
+	assert_true(updates.empty(), "No match should return empty updates.")
+
+	# Test 5: outline_idx = -1 should skip outline
+	updates = lnz_text._apply_recolor_rules_to_parts(ballz_parts, [rule], 0, -1, -1, info)
+	assert_true(updates.has(0), "Color should still be updated.")
+	assert_false(updates.has(1), "Outline should NOT be updated when outline_idx is -1.")
+
+
+func test_lnz_text_recolor_skips_exclusions():
+	# Verify that _on_ToolsMenu_recolor skips excluded ball IDs.
+	# Dog eyes (ball 8 and 32) should remain unchanged after a global recolor.
+	if not lnz_text: return
+
+	# Set up species context
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+
+	# Mock LNZ with dog eye balls (8 and 32) at indices 8 and 31 (0-based)
+	var lines = []
+	for i in range(35):
+		# color=10, outline=15 for all balls
+		lines.append("10 15 0 0 0 50 0 1 ; ball_%d" % i)
+	var joined = ""
+	for li in range(lines.size()):
+		joined += lines[li]
+		if li < lines.size() - 1:
+			joined += "\n"
+	lnz_text.text = "[Ballz Info]\n" + joined
+
+	# Store original lines for comparison
+	var original_text = lnz_text.text
+	var original_lines = original_text.split("\n")
+
+	# Build recolor info: change color 10 -> 99
+	var recolor_rules = [{
+		"before_color": "10",
+		"after_color": "99",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}]
+	var recolor_info = {
+		"recolor": recolor_rules,
+		"recolors": recolor_rules,
+		"balls_fill": true,
+		"balls_outline": false,
+		"paintballs_fill": false,
+		"paintballs_outline": false,
+		"lines_fill": false,
+		"lines_outline": false,
+		"polygons_fill": false,
+		"polygons_outline": false,
+		"nose_ballz_on": false
+	}
+
+	lnz_text._on_ToolsMenu_recolor(recolor_info)
+
+	# Verify: balls 8 and 32 should NOT have been changed (excluded as eyes)
+	var result_lines = lnz_text.text.split("\n")
+
+	# Ball 8 (index 8 in data) -> line 9 in text (line 0 is header)
+	var ball8_line = result_lines[9]  # [Ballz Info]\n + 8 data lines = line 9
+	var ball32_line = result_lines[33]
+
+	# Extract the color (first field) from each line
+	var ball8_parts = lnz_text.split_line(ball8_line)
+	var ball32_parts = lnz_text.split_line(ball32_line)
+
+	# Balls 8 and 32 are excluded, so their color should remain 10
+	assert_eq(ball8_parts[0], "10", "Excluded ball 8 (eye) should retain original color 10.")
+	assert_eq(ball32_parts[0], "10", "Excluded ball 32 (eye) should retain original color 10.")
+
+	# Ball 0 should have been changed to 99
+	var ball0_parts = lnz_text.split_line(result_lines[1])
+	assert_eq(ball0_parts[0], "99", "Non-excluded ball 0 should have color changed to 99.")
+
+
+func test_lnz_text_recolor_all_sections():
+	if not lnz_text: return
+
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+
+	var mock_text = """[Ballz Info]
+10 15 0 0 0 50 0 1
+[Add Ball]
+1 100 10 0 20 25 0 0 0 0 30 1 5 0
+[Paint Ballz]
+5 30 10 20 0 30 35 0 0 0 0
+[Linez]
+1 2 0 40 45 50 100 100 -1 -1
+[Polygons]
+1 2 3 4 50 55 60 0 0
+[256 Eyelid Color]
+60 65"""
+
+	lnz_text.text = mock_text
+	var before_text = lnz_text.text
+
+	var recolor_rules = [{
+		"before_color": "10",
+		"after_color": "99",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}]
+	var recolor_info = {
+		"recolor": recolor_rules,
+		"recolors": recolor_rules,
+		"balls_fill": true,
+		"balls_outline": false,
+		"paintballs_fill": false,
+		"paintballs_outline": false,
+		"lines_fill": false,
+		"lines_outline": false,
+		"polygons_fill": false,
+		"polygons_outline": false,
+		"nose_ballz_on": false
+	}
+
+	lnz_text._on_ToolsMenu_recolor(recolor_info)
+	var after_text = lnz_text.text
+
+	# Verify [Ballz Info] - color at column 0 changed 10 -> 99
+	var ballz_lines = after_text.split("\n")
+	var ballz_data = lnz_text.split_line(ballz_lines[1])
+	assert_eq(ballz_data[0], "99", "[Ballz Info] color (col 0) should be 99.")
+
+	# Verify [Add Ball] - color at column 4 changed 20 -> 99 (10 doesn't match)
+	# Actually color in Add Ball is at column 4 which is "20", not "10"
+	# So only [Ballz Info] should match. Let's verify the addball color stays 20.
+	var addball_section_start = after_text.find("[Add Ball]")
+	assert_true(addball_section_start != -1, "[Add Ball] section should exist.")
+
+	# Verify [Paint Ballz] - color at column 5 (value 30, no match for "10")
+	var paintball_section_start = after_text.find("[Paint Ballz]")
+	assert_true(paintball_section_start != -1, "[Paint Ballz] section should exist.")
+
+	# Verify [Linez] - no fill change (40 != 10)
+	var linez_section_start = after_text.find("[Linez]")
+	assert_true(linez_section_start != -1, "[Linez] section should exist.")
+
+	# Verify [Polygons] - no fill change (50 != 10)
+	var polygon_section_start = after_text.find("[Polygons]")
+	assert_true(polygon_section_start != -1, "[Polygons] section should exist.")
+
+	# Verify [256 Eyelid Color] - no fill change (60 != 10)
+	var eyelid_section_start = after_text.find("[256 Eyelid Color]")
+	assert_true(eyelid_section_start != -1, "[256 Eyelid Color] section should exist.")
+
+	# Verify the text was actually modified (at least one change occurred)
+	assert_false(after_text == before_text, "Text should have been modified by recolor.")
+
+
+func test_lnz_text_recolor_polygon_edges():
+	# Verify that [Polygons] correctly recolor both the left and right edge outlines.
+	# Polygons are unique because they have two distinct outline columns (cols 5 and 6).
+	if not lnz_text: return
+
+	KeyBallsData.species = KeyBallsData.Species.DOG
+	KeyBallsData.max_base_ball_num = 67
+
+	# Test _apply_recolor_rules_to_parts directly with polygon-like data
+	var fill_rule = {
+		"before_color": "10",
+		"after_color": "99",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var outline_rule = {
+		"before_color": "15",
+		"after_color": "88",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var edge_rule = {
+		"before_color": "20",
+		"after_color": "77",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	var polygon_info = {
+		"balls_fill": false,
+		"balls_outline": false,
+		"paintballs_fill": false,
+		"paintballs_outline": false,
+		"lines_fill": false,
+		"lines_outline": false,
+		"polygons_fill": true,
+		"polygons_outline": true
+	}
+
+	# 9-part polygon: ball1 ball2 ball3 ball4 color left_edge right_edge fuzz texture
+	var poly_parts = ["1", "2", "3", "4", "10", "15", "20", "0", "0"]
+
+	# Test fill (col 4): 10 -> 99
+	var updates = lnz_text._apply_recolor_rules_to_parts(poly_parts, [fill_rule], 4, 5, -1, polygon_info)
+	assert_gt(updates.size(), 0, "Polygon fill updates should not be empty.")
+	var found_fill = false
+	for key in updates:
+		if key == 4:
+			assert_eq(str(updates[key]), "99", "Polygon fill (col 4) should be 99.")
+			found_fill = true
+	assert_true(found_fill, "Updates should contain fill index 4.")
+
+	# Test outline (col 5): 15 -> 88
+	updates = lnz_text._apply_recolor_rules_to_parts(poly_parts, [outline_rule], 5, 5, -1, polygon_info)
+	assert_gt(updates.size(), 0, "Polygon outline updates should not be empty.")
+	var found_outline = false
+	for key in updates:
+		if key == 5:
+			assert_eq(str(updates[key]), "88", "Polygon left edge (col 5) should be 88.")
+			found_outline = true
+	assert_true(found_outline, "Updates should contain outline index 5.")
+
+	# Test right edge (col 6): 20 -> 77 (simulating the > 6 check in _on_ToolsMenu_recolor)
+	updates = lnz_text._apply_recolor_rules_to_parts(poly_parts, [edge_rule], 6, -1, -1, polygon_info)
+	assert_gt(updates.size(), 0, "Polygon right edge updates should not be empty.")
+	var found_edge = false
+	for key in updates:
+		if key == 6:
+			assert_eq(str(updates[key]), "77", "Polygon right edge (col 6) should be 77.")
+			found_edge = true
+	assert_true(found_edge, "Updates should contain right edge index 6.")
+
+	# Test 6-part polygon (no right edge): should not crash
+	var short_poly_parts = ["1", "2", "3", "4", "10", "15"]
+	updates = lnz_text._apply_recolor_rules_to_parts(short_poly_parts, [fill_rule], 4, 5, -1, polygon_info)
+	assert_gt(updates.size(), 0, "Short polygon fill updates should not be empty.")
+	for key in updates:
+		if key == 4:
+			assert_eq(str(updates[key]), "99", "Short polygon fill should still be 99.")
+		if key == 5:
+			assert_eq(str(updates[key]), "88", "Short polygon outline should still be 88.")
 
 # ------------------------------------------------------------------------------
 # PetViewContainer.gd
