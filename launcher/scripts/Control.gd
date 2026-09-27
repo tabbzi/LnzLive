@@ -22,6 +22,7 @@ var notes_scroll
 var notes_text: RichTextLabel
 var executable_selector: OptionButton
 var btn_notes: Button
+var btn_website: Button
 var btn_appdata: Button
 var btn_change_path: Button
 var lbl_path_display: Label
@@ -102,13 +103,26 @@ func setup_dynamic_ui() -> void:
 	add_child(executable_selector)
 	move_child(executable_selector, version_selector.get_index() + 1)
 
+	var links_hbox = HBoxContainer.new()
+	links_hbox.add_constant_override("separation", 10)
+	add_child(links_hbox)
+	move_child(links_hbox, executable_selector.get_index() + 1)
+
 	btn_notes = Button.new()
 	btn_notes.text = "See Release Notes"
 	btn_notes.rect_min_size = Vector2(0, 25)
+	btn_notes.size_flags_horizontal = SIZE_EXPAND_FILL
 	_copy_button_style(btn_install, btn_notes)
 	btn_notes.connect("pressed", self, "_on_BtnNotes_pressed")
-	add_child(btn_notes)
-	move_child(btn_notes, executable_selector.get_index() + 1)
+	links_hbox.add_child(btn_notes)
+	
+	btn_website = Button.new()
+	btn_website.text = "See LnzLive Website"
+	btn_website.rect_min_size = Vector2(0, 25)
+	btn_website.size_flags_horizontal = SIZE_EXPAND_FILL
+	_copy_button_style(btn_install, btn_website)
+	btn_website.connect("pressed", self, "_on_BtnWebsite_pressed")
+	links_hbox.add_child(btn_website)
 
 	var folder_hbox = HBoxContainer.new()
 	folder_hbox.add_constant_override("separation", 10)
@@ -596,6 +610,9 @@ func _on_download_request_completed(result: int, response_code: int, _headers: P
 	update_paths_and_label()
 	update_ui_state()
 	status_label.text = "Ready!"
+
+func _on_BtnWebsite_pressed() -> void:
+	OS.shell_open("https://www.tabbloza.com/lnzlive")
 
 func _on_BtnInstall_pressed() -> void:
 	start_download()

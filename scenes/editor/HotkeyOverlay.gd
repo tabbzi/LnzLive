@@ -1,31 +1,326 @@
 extends Control
 
+const TILE_SIZE = 16
+const KEYBOARD_ATLAS = preload("res://resources/icons/keys/Pixel_Keyboard_Buttons_1x.png")
+const FONT_DYNAMIC = preload("res://resources/fonts/font_pixel_maz_30.tres")
+
+# Key display name -> [col, row, width_tiles, height_tiles, pixel_offset_x, tile_width_override]
+# pixel_offset_x: optional horizontal pixel shift for visual alignment (default 0)
+# tile_width_override: optional actual pixel width of the tile (default 16)
+const KEY_MAP = {
+	"A": [0, 0, 1, 1],
+	"B": [1, 0, 1, 1],
+	"C": [2, 0, 1, 1],
+	"D": [3, 0, 1, 1],
+	"E": [4, 0, 1, 1],
+	"F": [5, 0, 1, 1], 
+	"G": [6, 0, 1, 1], 
+	"H": [7, 0, 1, 1], 
+	"I": [8, 0, 1, 1],
+	"J": [9, 0, 1, 1],
+	"K": [10, 0, 1, 1],	 
+	"L": [11, 0, 1, 1],
+	"M": [0, 1, 1, 1],
+	"N": [1, 1, 1, 1],
+	"O": [2, 1, 1, 1],
+	"P": [3, 1, 1, 1],
+	"Q": [4, 1, 1, 1],
+	"R": [5, 1, 1, 1],
+	"S": [6, 1, 1, 1],
+	"T": [7, 1, 1, 1],
+	"U": [8, 1, 1, 1],
+	"V": [9, 1, 1, 1],
+	"W": [10, 1, 1, 1],
+	"X": [11, 1, 1, 1],
+	"Y": [0, 2, 1, 1],
+	"Z": [1, 2, 1, 1],
+	"1": [0, 3, 1, 1], 
+	"2": [1, 3, 1, 1], 
+	"3": [2, 3, 1, 1], 
+	"4": [3, 3, 1, 1], 
+	"5": [4, 3, 1, 1],
+	"6": [5, 3, 1, 1], 
+	"7": [6, 3, 1, 1], 
+	"8": [7, 3, 1, 1], 
+	"9": [8, 3, 1, 1], 
+	"0": [9, 3, 1, 1],
+	"=": [7, 5, 1, 1],
+	"-": [8, 5, 1, 1],
+	"+": [9, 5, 1, 1],
+	"[": [5, 4, 2, 1],
+	"]": [7, 4, 2, 1],
+	"TAB": [1, 6, 2, 1], 
+	"CAPS_LOCK": [0, 7, 3, 1],
+	"SHIFT": [5, 6, 2, 1], 
+	"SHIFT_L": [5, 6, 2, 1],
+	"SHIFT_R": [5, 6, 2, 1],
+	"CTRL": [3, 6, 2, 1], 
+	"ALT": [4, 7, 1, 1, 0, 19],
+	"DELETE": [5, 7, 1, 1, 3, 19],
+	"WIN": [2, 6, 1, 1], 
+	"SPACE": [4, 8, 3, 1, 3], 
+	"UP": [2, 2, 1, 1], 
+	"DOWN": [3, 2, 1, 1],
+	"LEFT": [11, 7, 1, 1], 
+	"RIGHT": [15, 7, 2, 1],
+	"F1": [0, 4, 1, 1], 
+	"F2": [1, 5, 1, 1],
+	"F3": [2, 6, 1, 1],
+	"F4": [3, 7, 1, 1],
+	"F5": [0, 8, 1, 1], 
+	"F6": [1, 9, 1, 1], 
+	"F7": [2, 10, 1, 1], 
+	"F8": [3, 11, 1, 1],
+	"F9": [0, 12, 1, 1], 
+	"F10": [1, 13, 2, 1], 
+	"F11": [3, 14, 2, 1], 
+	"F12": [5, 15, 2, 1],
+	"ESCAPE": [0, 6, 1, 1], 
+	"BACKSPACE": [3, 10, 3, 1],
+	"ENTER": [6, 10, 2, 1], 
+	"INSERT": [10, 10, 1, 1], 
+	"HOME": [11, 10, 1, 1], 
+	"END": [12, 10, 1, 1],
+	"PAGE_UP": [13, 10, 1, 1], 
+	"PAGE_DOWN": [14, 10, 1, 1],
+}
+
+# Maps scancode constants to display names used in KEY_MAP
+const SCANEODE_TO_DISPLAY = {
+	KEY_SPACE: "SPACE", KEY_ESCAPE: "ESCAPE", KEY_ENTER: "ENTER",
+	KEY_BACKSPACE: "BACKSPACE", KEY_TAB: "TAB", KEY_DELETE: "DELETE",
+	KEY_UP: "UP", KEY_DOWN: "DOWN", KEY_LEFT: "LEFT", KEY_RIGHT: "RIGHT",
+	KEY_SHIFT: "SHIFT", KEY_CONTROL: "CTRL", KEY_ALT: "ALT", KEY_META: "WIN",
+	KEY_EQUAL: "+", KEY_PLUS: "+", KEY_KP_ADD: "+",
+	KEY_MINUS: "-", KEY_KP_SUBTRACT: "-",
+	KEY_F1: "F1", KEY_F2: "F2", KEY_F3: "F3", KEY_F4: "F4",
+	KEY_F5: "F5", KEY_F6: "F6", KEY_F7: "F7", KEY_F8: "F8",
+	KEY_F9: "F9", KEY_F10: "F10", KEY_F11: "F11", KEY_F12: "F12",
+	KEY_1: "1", KEY_2: "2", KEY_3: "3", KEY_4: "4", KEY_5: "5",
+	KEY_6: "6", KEY_7: "7", KEY_8: "8", KEY_9: "9", KEY_0: "0",
+	KEY_A: "A", KEY_B: "B", KEY_C: "C", KEY_D: "D", KEY_E: "E",
+	KEY_F: "F", KEY_G: "G", KEY_H: "H", KEY_I: "I", KEY_J: "J",
+	KEY_K: "K", KEY_L: "L", KEY_M: "M", KEY_N: "N", KEY_O: "O",
+	KEY_P: "P", KEY_Q: "Q", KEY_R: "R", KEY_S: "S", KEY_T: "T",
+	KEY_U: "U", KEY_V: "V", KEY_W: "W", KEY_X: "X", KEY_Y: "Y",
+	KEY_Z: "Z",
+}
+
+# Maps display names back to scancode for sprite lookup
+const DISPLAY_TO_SCANEODE = {}
+func _init():
+	for k in SCANEODE_TO_DISPLAY:
+		DISPLAY_TO_SCANEODE[SCANEODE_TO_DISPLAY[k]] = k
+
+var hint_label: Control
+
 func _ready():
 	self.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	self.focus_mode = Control.FOCUS_NONE
 	$Panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	$Panel/Label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
 	hide()
-	
-#	$Panel/Label.text = """HOTKEYS
-#
-#Viewport:
-#Rotate: Left Click Drag | Pan: Space + Drag | Zoom: Scroll | Views: 1-0
-#
-#Edit:
-#Undo: Ctrl+Z | Redo: Ctrl+Y | Save/Apply Changes: Ctrl+S
-#Mini-Undo/Redo (Move/Paint): Ctrl+Shift+Z/X
-#
-#Move Mode:
-#Move: Drag | Scale: Shift+Alt+Drag
-#Lock Axis: Hold X/Y/Z
-#
-#Paintball:
-#Draw: Click | Freeline: Shift+Drag | Erase: Ctrl+Click
-#
-#Toggle Overlay: F1"""
+	if HotkeyManager:
+		HotkeyManager.connect("hotkeys_reloaded", self, "_on_hotkeys_reloaded")
+		_build_overlay()
 
 func _input(event):
+	if Input.is_action_just_pressed("global_toggle_hotkey_overlay"):
+		visible = not visible
+		if hint_label:
+			hint_label.visible = visible
+		return
 	if event is InputEventKey and event.pressed and event.scancode == KEY_F1:
 		visible = not visible
+		if hint_label:
+			hint_label.visible = visible
+
+func _on_hotkeys_reloaded():
+	# Clear and rebuild to reflect remapped hotkeys
+	for child in $Panel.get_children():
+		$Panel.remove_child(child)
+		child.free()
+	_build_overlay()
+
+func _build_overlay():
+	if not HotkeyManager:
+		return
+	
+	if not hint_label:
+		hint_label = $HintLabel
+	
+	hint_label.text = "Hit F1 to hide"
+	hint_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+	hint_label.add_color_override("font_color", Color("053535"))
+	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	var panel = $Panel
+	var scroll = ScrollContainer.new()
+	scroll.name = "ScrollContainer"
+	scroll.anchor_right = 1.0
+	scroll.anchor_bottom = 1.0
+	scroll.margin_left = -10.0
+	scroll.margin_top = -10.0
+	scroll.margin_right = -10.0
+	scroll.margin_bottom = -10.0
+	panel.add_child(scroll)
+	
+	var scroll_style = StyleBoxFlat.new()
+	scroll_style.bg_color = Color(0, 0, 0, 0)
+	scroll.set("custom_styles/normal", scroll_style)
+	
+	var main_vbox = VBoxContainer.new()
+	main_vbox.name = "MainVBox"
+	main_vbox.anchor_right = 1.0
+	main_vbox.anchor_bottom = 1.0
+	main_vbox.margin_left = 15.0
+	main_vbox.margin_top = 15.0
+	main_vbox.margin_right = 15.0
+	main_vbox.margin_bottom = 15.0
+	scroll.add_child(main_vbox)
+	
+	var groups = HotkeyManager.action_groups
+	var last_group_vbox: VBoxContainer = null
+	for group_name in groups:
+		var actions = groups[group_name]
+		var section_vbox = VBoxContainer.new()
+		section_vbox.set_custom_minimum_size(Vector2(500, 0))
+		section_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		main_vbox.add_child(section_vbox)
+		
+		var title_label = Label.new()
+		title_label.name = "Title_" + group_name
+		title_label.text = group_name
+		title_label.set_custom_minimum_size(Vector2(0, 30))
+		title_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+		title_label.add_color_override("font_color", Color("053535"))
+		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		section_vbox.add_child(title_label)
+		
+		for action in actions:
+			var binding = HotkeyManager.get_binding(action)
+			if not binding or binding.size() == 0:
+				continue
+			
+			var display_name = HotkeyManager.get_action_display_name(action)
+			var key_components = _binding_to_key_components(binding)
+			
+			var item_hbox = HBoxContainer.new()
+			item_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			item_hbox.set_custom_minimum_size(Vector2(480, 32))
+			section_vbox.add_child(item_hbox)
+			
+			var context_label = Label.new()
+			context_label.name = "Label_Context"
+			context_label.text = display_name
+			context_label.set_custom_minimum_size(Vector2(180, 24))
+			context_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+			context_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			context_label.size_flags_vertical = 0
+			item_hbox.add_child(context_label)
+			
+			for i in range(len(key_components)):
+				var comp = key_components[i]
+				var key_node = _create_key_node(comp["display"])
+				if key_node:
+					key_node.size_flags_horizontal = 0
+					key_node.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					item_hbox.add_child(key_node)
+				
+				if i < len(key_components) - 1:
+					var plus_label = Label.new()
+					plus_label.name = "Label_Plus"
+					plus_label.text = "+"
+					plus_label.set_custom_minimum_size(Vector2(16, 24))
+					plus_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+					plus_label.size_flags_horizontal = 0
+					plus_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					item_hbox.add_child(plus_label)
+		
+		last_group_vbox = section_vbox
+
+func _binding_to_key_components(binding: Dictionary) -> Array:
+	var components = []
+	
+	if binding.get("ctrl", false):
+		components.append({"display": "CTRL", "scancode": KEY_CONTROL})
+	if binding.get("shift", false):
+		components.append({"display": "SHIFT", "scancode": KEY_SHIFT})
+	if binding.get("alt", false):
+		components.append({"display": "ALT", "scancode": KEY_ALT})
+	if binding.get("meta", false):
+		components.append({"display": "WIN", "scancode": KEY_META})
+	
+	var scancode = binding.get("scancode", 0)
+	
+	if scancode == BUTTON_LEFT:
+		components.append({"display": "left-click", "scancode": BUTTON_LEFT})
+	elif scancode == BUTTON_RIGHT:
+		components.append({"display": "right-click", "scancode": BUTTON_RIGHT})
+	elif scancode == BUTTON_MIDDLE:
+		components.append({"display": "middle mouse", "scancode": BUTTON_MIDDLE})
+	elif scancode == BUTTON_WHEEL_UP:
+		components.append({"display": "wheel up", "scancode": BUTTON_WHEEL_UP})
+	elif scancode == BUTTON_WHEEL_DOWN:
+		components.append({"display": "wheel down", "scancode": BUTTON_WHEEL_DOWN})
+	elif scancode == KEY_EQUAL or scancode == KEY_PLUS or scancode == KEY_KP_ADD:
+		components.append({"display": "+", "scancode": scancode})
+	elif SCANEODE_TO_DISPLAY.has(scancode):
+		components.append({"display": SCANEODE_TO_DISPLAY[scancode], "scancode": scancode})
+	
+	return components
+
+func _create_key_node(display_name: String) -> Control:
+	# Check KEY_MAP for sprite tiles
+	if KEY_MAP.has(display_name):
+		var atlas = _get_atlas_for_key(display_name)
+		if atlas:
+			var tex_rect = TextureRect.new()
+			tex_rect.name = "Key_" + display_name
+			tex_rect.texture = atlas
+			tex_rect.expand = true
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var region = atlas.region
+			var tw = region.size.x
+			var th = region.size.y
+			tex_rect.set_custom_minimum_size(Vector2(tw * 2, th * 2))
+			var key_data = KEY_MAP[display_name]
+			if key_data.size() > 4 and key_data[4] != 0:
+				atlas.region.position.x += key_data[4]
+			tex_rect.size_flags_horizontal = 0
+			tex_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			return tex_rect
+	
+	# Fallback: text label for mouse actions, unknown keys
+	var label = Label.new()
+	label.name = "Label_Key_" + display_name
+	label.text = display_name
+	label.set_custom_minimum_size(Vector2(60, 24))
+	label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+	label.align = Label.ALIGN_CENTER
+	label.size_flags_horizontal = 0
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return label
+
+func _get_atlas_for_key(key_name: String) -> AtlasTexture:
+	var pos = KEY_MAP.get(key_name)
+	if not pos:
+		return null
+	
+	var col = pos[0]
+	var row = pos[1]
+	var tile_w = pos[2] if len(pos) > 2 else 1
+	var tile_h = pos[3] if len(pos) > 3 else 1
+	var tile_px_w = TILE_SIZE
+	if len(pos) > 5 and pos[5] != 0:
+		tile_px_w = pos[5]
+	
+	var atlas = AtlasTexture.new()
+	atlas.atlas = KEYBOARD_ATLAS
+	atlas.region = Rect2(
+		col * TILE_SIZE,
+		row * TILE_SIZE,
+		tile_w * tile_px_w,
+		tile_h * TILE_SIZE
+	)
+	return atlas

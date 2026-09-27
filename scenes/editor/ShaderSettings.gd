@@ -9,6 +9,7 @@ signal texture_rotation_input_changed(input_vec)
 signal texture_affected_by_size_changed(is_affected)
 signal texture_affected_by_rotation_changed(is_affected)
 signal texture_flat_colors_changed(is_flat)
+signal petza_noses_changed(is_on)
 
 var _is_loading_settings: bool = false
 
@@ -17,6 +18,7 @@ var _pending_input_vec: Vector2 = Vector2.ZERO
 var _pending_affected_by_size: bool = true
 var _pending_affected_by_rotation: bool = false
 var _pending_render_flat_colors: bool = false
+var _pending_petza_noses: bool = false
 
 onready var mode_option: OptionButton = $MarginContainer/VBoxContainer/ModeOptionButton
 onready var input_x_spinbox: SpinBox = $MarginContainer/VBoxContainer/HBoxContainer/InputX
@@ -24,6 +26,7 @@ onready var input_y_spinbox: SpinBox = $MarginContainer/VBoxContainer/HBoxContai
 onready var size_checkbox: CheckBox = $MarginContainer/VBoxContainer/HBoxContainer2/SizeCheckBox
 onready var rotation_checkbox: CheckBox = $MarginContainer/VBoxContainer/HBoxContainer2/RotationCheckBox
 onready var flat_colors_checkbox: CheckBox = $MarginContainer/VBoxContainer/HBoxContainer3/FlatColorsCheckBox
+onready var petza_noses_checkbox: CheckBox = $MarginContainer/VBoxContainer/HBoxContainer4/PetzANosesCheckBox
 
 func _ready() -> void:
 	# Apply initial pending values before connecting signals
@@ -33,6 +36,7 @@ func _ready() -> void:
 	size_checkbox.pressed = _pending_affected_by_size
 	rotation_checkbox.pressed = _pending_affected_by_rotation
 	flat_colors_checkbox.pressed = _pending_render_flat_colors
+	petza_noses_checkbox.pressed = _pending_petza_noses
 
 	mode_option.connect("item_selected", self, "_on_mode_selected")
 	input_x_spinbox.connect("value_changed", self, "_on_input_changed")
@@ -40,6 +44,7 @@ func _ready() -> void:
 	size_checkbox.connect("toggled", self, "_on_size_toggled")
 	rotation_checkbox.connect("toggled", self, "_on_rotation_toggled")
 	flat_colors_checkbox.connect("toggled", self, "_on_flat_colors_toggled")
+	petza_noses_checkbox.connect("toggled", self, "_on_petza_noses_toggled")
 
 	# Load stored values to overwrite defaults
 	_load_settings()
@@ -63,6 +68,14 @@ func get_affected_by_size() -> bool:
 
 func get_affected_by_rotation() -> bool:
 	return rotation_checkbox.pressed
+
+func get_petza_noses() -> bool:
+	return petza_noses_checkbox.pressed
+
+func _on_petza_noses_toggled(is_on: bool) -> void:
+	emit_signal("petza_noses_changed", is_on)
+	if not _is_loading_settings:
+		_save_settings()
 
 func _on_mode_selected(index: int) -> void:
 	emit_signal("texture_rotation_mode_changed", index)
@@ -100,6 +113,7 @@ func _save_settings() -> void:
 	values["affected_by_size"] = size_checkbox.pressed
 	values["affected_by_rotation"] = rotation_checkbox.pressed
 	values["flat_colors"] = flat_colors_checkbox.pressed
+	values["petza_noses"] = petza_noses_checkbox.pressed
 	LnzLiveUtils.save_config("ShaderProperties", values, SETTINGS_PATH)
 
 func _load_settings() -> void:
@@ -114,4 +128,5 @@ func _load_settings() -> void:
 	size_checkbox.pressed = data.get("affected_by_size", true)
 	rotation_checkbox.pressed = data.get("affected_by_rotation", false)
 	flat_colors_checkbox.pressed = data.get("flat_colors", false)
+	petza_noses_checkbox.pressed = data.get("petza_noses", false)
 	_is_loading_settings = false

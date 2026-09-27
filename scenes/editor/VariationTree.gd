@@ -375,10 +375,14 @@ func _handle_section_toggle(meta, checked: bool, config: Dictionary) -> void:
 	var id = meta.id
 	_ensure_config_section(config, section)
 	if meta.get("is_group", false):
+		if checked:
+			_sync_block_siblings(section, meta.get("subblock_key"), id)
 		_handle_bare_toggle(section, id, checked, config, meta.get("subblock_key"))
 	elif meta.has("suffix"):
 		_handle_suffix_toggle(section, id, meta, checked, config)
 	elif meta.has("subblock_key"):
+		if checked:
+			_sync_block_siblings(section, meta.subblock_key, id)
 		_handle_subblock_toggle(section, id, meta.subblock_key, checked, config)
 
 func _handle_bare_toggle(section: String, id: int, checked: bool, config: Dictionary, subblock_key = null) -> void:
@@ -868,6 +872,42 @@ func _sync_global_siblings(gid: int) -> void:
 		if meta != null and meta.get("id", -1) != gid:
 			child.set_checked(0, false)
 		child = child.get_next()
+
+func _sync_block_siblings(section: String, subblock_key, keep_id: int) -> void:
+	var root: TreeItem = tree_node.get_root()
+	if not is_instance_valid(root):
+		return
+	var section_item: TreeItem = _find_section_item(root, section)
+	if not is_instance_valid(section_item):
+		return
+	var block_item: TreeItem = _find_block_item(section_item, subblock_key)
+	if not is_instance_valid(block_item):
+		return
+	var child: TreeItem = block_item.get_children()
+	while is_instance_valid(child):
+		var meta = child.get_metadata(0)
+		if meta != null and meta.get("section") == section and meta.get("subblock_key") == subblock_key:
+			var child_id = meta.get("id", -1)
+			if child_id != keep_id:
+				child.set_checked(0, false)
+		child = child.get_next()
+
+func _find_section_item(parent: TreeItem, section: String) -> TreeItem:
+	var child: TreeItem = parent.get_children()
+	while is_instance_valid(child):
+		if child.get_text(0) == section:
+			return child
+		child = child.get_next()
+	return null
+
+func _find_block_item(parent: TreeItem, subblock_key) -> TreeItem:
+	var child: TreeItem = parent.get_children()
+	while is_instance_valid(child):
+		var text = child.get_text(0)
+		if text.begins_with("Block ") and str(subblock_key) in text:
+			return child
+		child = child.get_next()
+	return null
 
 func _sorted_sections() -> Array:
 	var sections = _sections_map.keys()

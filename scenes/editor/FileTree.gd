@@ -76,7 +76,7 @@ onready var menu_import_tex: Button = get_tree().root.get_node("Root/SceneRoot/H
 onready var menu_import_pal: Button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/MenuImportPalette")
 onready var menu_open_user_folder: Button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/MenuOpenUserFolder")
 
-onready var file_dialog: FileDialog = get_node("./ItemPopupMenu/FileDialog")
+onready var file_dialog: FileDialog = get_node("../FileDialog")
 
 var saved_subfolder_states: Dictionary = {}
 

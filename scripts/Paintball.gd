@@ -331,7 +331,28 @@ func _input(event):
 		if event.scancode == KEY_SPACE and event.control:
 			return
 			
-		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
+		if HotkeyManager:
+			if HotkeyManager.is_action_pressed("select_jump_info") or HotkeyManager.is_action_pressed("select_jump_info_alt"):
+				if not event.alt and not event.control and ball_no != -1:
+					get_tree().set_input_as_handled()
+					emit_signal("ball_selected", ball_no, Section.Section.BALL)
+					return
+			if HotkeyManager.is_action_pressed("select_jump_move") or HotkeyManager.is_action_pressed("select_jump_move_alt"):
+				if not event.alt and not event.control and ball_no != -1:
+					get_tree().set_input_as_handled()
+					emit_signal("ball_selected", ball_no, Section.Section.MOVE)
+					return
+			if HotkeyManager.is_action_pressed("select_jump_project") or HotkeyManager.is_action_pressed("select_jump_project_alt"):
+				if not event.alt and not event.control and ball_no != -1:
+					get_tree().set_input_as_handled()
+					emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
+					return
+			if HotkeyManager.is_action_pressed("select_jump_line") or HotkeyManager.is_action_pressed("select_jump_line_alt"):
+				if not event.alt and not event.control and ball_no != -1:
+					get_tree().set_input_as_handled()
+					emit_signal("ball_selected", ball_no, Section.Section.LINE)
+					return
+		elif (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.BALL)

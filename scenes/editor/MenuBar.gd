@@ -8,6 +8,7 @@ enum FileMenu {
 	IMPORT_PALETTE,
 	OPEN_USER_FOLDER,
 	USER_SETTINGS,
+	HOTKEY_SETTINGS,  # Temporarily hidden from File menu - needs more testing
 	REFERENCE_IMAGE,
 	SHADER_SETTINGS
 }
@@ -34,6 +35,8 @@ enum ModeMenu {
 
 enum HelpMenu {
 	BASIC_CONTROLS,
+	TOGGLE_HOTKEY_OVERLAY,
+	LNZLIVE_SITE,
 	USER_GUIDE,
 	CAROLYNS_BIBLE,
 	PALETTEIARE
@@ -166,6 +169,7 @@ func _setup_file_menu() -> void:
 	popup.add_item("Open User Folder", FileMenu.OPEN_USER_FOLDER)
 	popup.add_separator()
 	popup.add_item("User Settings", FileMenu.USER_SETTINGS)
+	popup.add_item("Hotkey Settings", FileMenu.HOTKEY_SETTINGS)
 	popup.add_item("Reference Image", FileMenu.REFERENCE_IMAGE)
 	popup.add_item("Shader Settings", FileMenu.SHADER_SETTINGS)
 	popup.connect("id_pressed", self, "_on_file_menu_id_pressed")
@@ -257,7 +261,9 @@ func _setup_help_menu() -> void:
 	var popup: PopupMenu = help_menu_btn.get_popup()
 	_style_popup(popup)
 	popup.add_item("Basic Controls", HelpMenu.BASIC_CONTROLS)
+	popup.add_item("Toggle Hotkey Overlay (F1)", HelpMenu.TOGGLE_HOTKEY_OVERLAY)
 	popup.add_separator()
+	popup.add_item("LnzLive Guides", HelpMenu.LNZLIVE_SITE)
 	popup.add_item("User Guide", HelpMenu.USER_GUIDE)
 	popup.add_item("Carolyn's Bible", HelpMenu.CAROLYNS_BIBLE)
 	popup.add_item("Petz Paletteiare", HelpMenu.PALETTEIARE)
@@ -295,6 +301,8 @@ func _on_file_menu_id_pressed(id: int) -> void:
 			$FileOptionButton/PopupPanel/FileOptionContainer/MenuOpenUserFolder.emit_signal("pressed")
 		FileMenu.USER_SETTINGS:
 			$FileOptionButton/PopupPanel/FileOptionContainer/UserSettingsButton.emit_signal("pressed")
+		FileMenu.HOTKEY_SETTINGS:
+			_on_hotkey_settings_pressed()
 		FileMenu.REFERENCE_IMAGE:
 			scene_root.get_node("ReferenceImageSettings").popup_centered()
 		FileMenu.SHADER_SETTINGS:
@@ -373,9 +381,24 @@ func _on_help_menu_id_pressed(id: int) -> void:
 	match id:
 		HelpMenu.BASIC_CONTROLS:
 			scene_root.get_node("HelpPopupDialog").popup_centered()
+		HelpMenu.TOGGLE_HOTKEY_OVERLAY:
+			var overlay = pet_view_container.get_node_or_null("HotkeyOverlay")
+			if overlay:
+				overlay.visible = not overlay.visible
+			else:
+				var overlay_inst = pet_view_container.get("hotkey_overlay_instance")
+				if is_instance_valid(overlay_inst):
+					overlay_inst.visible = not overlay_inst.visible
+		HelpMenu.LNZLIVE_SITE:
+			OS.shell_open("https://tabbloza.com/lnzlive/")
 		HelpMenu.USER_GUIDE:
 			OS.shell_open("https://github.com/tabbzi/LnzLive/blob/master/docs/GUIDE.md")
 		HelpMenu.CAROLYNS_BIBLE:
 			OS.shell_open("https://github.com/melissamcewen/carolyns-bible")
 		HelpMenu.PALETTEIARE:
 			OS.shell_open("https://tabbzi.github.io/petz-paletteiare/")
+
+func _on_hotkey_settings_pressed() -> void:
+	var dialog = scene_root.get_node_or_null("HotkeySettingsDialog")
+	if dialog and dialog.has_method("show_dialog"):
+		dialog.show_dialog()

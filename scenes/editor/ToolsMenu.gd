@@ -522,16 +522,23 @@ func _on_RecolorPopup_confirmed() -> void:
 			"is_ramp": is_ramp
 		})
 
-	var balls_on: bool = popup.get_node("CheckContainer/Balls").pressed
-	var ball_outlines_on: bool = popup.get_node("CheckContainer/Ball outlines").pressed
-	var paintballs_on: bool = popup.get_node("CheckContainer/Paintballs").pressed
-	var lines_on: bool = popup.get_node("CheckContainer/Lines").pressed
-	var polygons_on: bool = popup.get_node("CheckContainer/Polygons").pressed
-	recolor_info.balls_on = balls_on
-	recolor_info.ball_outlines_on = ball_outlines_on
-	recolor_info.paintballs_on = paintballs_on
-	recolor_info.lines_on = lines_on
-	recolor_info.polygons_on = polygons_on
+	var check_container = popup.get_node("CheckContainer")
+	var balls_fill = check_container.get_node_or_null("BallzFill")
+	var balls_outline = check_container.get_node_or_null("BallzOutline")
+	var paintballs_fill = check_container.get_node_or_null("PaintballsFill")
+	var paintballs_outline = check_container.get_node_or_null("PaintballsOutline")
+	var lines_fill = check_container.get_node_or_null("LinesFill")
+	var lines_outline = check_container.get_node_or_null("LinesOutline")
+	var polygons_fill = check_container.get_node_or_null("PolygonsFill")
+	var polygons_outline = check_container.get_node_or_null("PolygonsOutline")
+	recolor_info.balls_fill = is_instance_valid(balls_fill) and balls_fill.pressed
+	recolor_info.balls_outline = is_instance_valid(balls_outline) and balls_outline.pressed
+	recolor_info.paintballs_fill = is_instance_valid(paintballs_fill) and paintballs_fill.pressed
+	recolor_info.paintballs_outline = is_instance_valid(paintballs_outline) and paintballs_outline.pressed
+	recolor_info.lines_fill = is_instance_valid(lines_fill) and lines_fill.pressed
+	recolor_info.lines_outline = is_instance_valid(lines_outline) and lines_outline.pressed
+	recolor_info.polygons_fill = is_instance_valid(polygons_fill) and polygons_fill.pressed
+	recolor_info.polygons_outline = is_instance_valid(polygons_outline) and polygons_outline.pressed
 	emit_signal("recolor", recolor_info)
 
 func _on_ClearButton_pressed() -> void:
@@ -542,9 +549,17 @@ func _on_ClearButton_pressed() -> void:
 		l.get_node("BeforeTexture").text = ""
 		l.get_node("AfterColor").text = ""
 		l.get_node("AfterTexture").text = ""
-	for cb in popup.get_node("CheckContainer").get_children():
-		if cb.has_method("set_pressed"):
+	var check_container = popup.get_node("CheckContainer")
+	var fill_names = ["BallzFill", "PaintballsFill", "LinesFill", "PolygonsFill"]
+	var outline_names = ["BallzOutline", "PaintballsOutline", "LinesOutline", "PolygonsOutline"]
+	for name in fill_names:
+		var cb = check_container.get_node_or_null(name)
+		if is_instance_valid(cb):
 			cb.pressed = true
+	for name in outline_names:
+		var cb = check_container.get_node_or_null(name)
+		if is_instance_valid(cb):
+			cb.pressed = false
 
 func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 	return a.count > b.count

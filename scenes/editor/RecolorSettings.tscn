@@ -333,57 +333,114 @@ margin_bottom = 21.0
 custom_fonts/font = SubResource( 4 )
 text = "Color Swap"
 
-[node name="CheckContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="CheckContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 26.0
 margin_right = 475.0
-margin_bottom = 51.0
+margin_bottom = 180.0
+custom_constants/separation = 2
 
-[node name="Balls" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
-margin_right = 63.0
+[node name="BallzRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+margin_right = 475.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
-pressed = true
+
+[node name="BallzRowLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/BallzRow"]
+custom_fonts/label_font = SubResource( 5 )
 text = "Ballz"
 
-[node name="Ball outlines" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
-margin_left = 67.0
-margin_right = 149.0
+[node name="BallzFill" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/BallzRow"]
+margin_left = 200.0
+margin_right = 260.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
-text = "Outlines"
+text = "Fill"
 
-[node name="Paintballs" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
-margin_left = 153.0
-margin_right = 250.0
+[node name="BallzOutline" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/BallzRow"]
+margin_left = 280.0
+margin_right = 360.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
-pressed = true
+text = "Outline"
+
+[node name="PaintballzRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+margin_top = 29.0
+margin_right = 475.0
+margin_bottom = 54.0
+
+[node name="PaintballzRowLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PaintballzRow"]
+custom_fonts/label_font = SubResource( 5 )
 text = "Paintballz"
 
-[node name="Lines" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
-margin_left = 254.0
-margin_right = 315.0
+[node name="PaintballzFill" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PaintballzRow"]
+margin_left = 200.0
+margin_right = 260.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
+text = "Fill"
+
+[node name="PaintballzOutline" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PaintballzRow"]
+margin_left = 280.0
+margin_right = 360.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+text = "Outline"
+
+[node name="LinezRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+margin_top = 33.0
+margin_right = 475.0
+margin_bottom = 58.0
+
+[node name="LinezRowLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/LinezRow"]
+custom_fonts/label_font = SubResource( 5 )
 text = "Linez"
 
-[node name="CheckContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
-margin_top = 56.0
-margin_right = 475.0
-margin_bottom = 81.0
-
-[node name="Polygons" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
-margin_right = 88.0
+[node name="LinezFill" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/LinezRow"]
+margin_left = 200.0
+margin_right = 260.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
+text = "Fill"
+
+[node name="LinezOutline" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/LinezRow"]
+margin_left = 280.0
+margin_right = 360.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+text = "Outline"
+
+[node name="PolygonsRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+margin_top = 37.0
+margin_right = 475.0
+margin_bottom = 62.0
+
+[node name="PolygonsRowLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PolygonsRow"]
+custom_fonts/label_font = SubResource( 5 )
 text = "Polygons"
 
+[node name="PolygonsFill" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PolygonsRow"]
+margin_left = 200.0
+margin_right = 260.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+pressed = true
+text = "Fill"
+
+[node name="PolygonsOutline" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer/PolygonsRow"]
+margin_left = 280.0
+margin_right = 360.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+text = "Outline"
+
+[node name="CheckContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
+margin_top = 42.0
+margin_right = 475.0
+margin_bottom = 67.0
+
 [node name="NoseBallz" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
-margin_left = 92.0
-margin_right = 189.0
+margin_right = 120.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 5 )
 pressed = true

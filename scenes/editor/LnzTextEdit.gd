@@ -658,16 +658,27 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 # _on_menu_id_pressed
 
 func _unhandled_key_input(event):
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
+	if HotkeyManager and HotkeyManager.is_action_pressed("text_save") and Input.is_key_pressed(KEY_CONTROL):
 		save_file(false)
+		return
 
-	if Input.is_key_pressed(KEY_CONTROL) and not event.shift and event.pressed:
-		if event.scancode == KEY_Z:
+	if HotkeyManager:
+		if HotkeyManager.is_action_pressed("text_undo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
 			undo_visual_edit() # Ctrl+Z
-		elif event.scancode == KEY_Y:
+		elif HotkeyManager.is_action_pressed("text_redo") and Input.is_key_pressed(KEY_CONTROL) and not event.shift:
 			redo_visual_edit() # Ctrl+Y
 
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
+	if HotkeyManager and HotkeyManager.is_action_pressed("text_find") and Input.is_key_pressed(KEY_CONTROL):
+		find_panel.visible = not find_panel.visible
+		self.readonly = find_panel.visible
+
+		if find_panel.visible:
+			var search_input = find_panel.get_node("VBoxContainer/LineEdit")
+			if search_input:
+				search_input.grab_focus()
+
+		_setup_context_menu()
+	elif Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
 		find_panel.visible = not find_panel.visible
 		self.readonly = find_panel.visible
 
@@ -680,6 +691,28 @@ func _unhandled_key_input(event):
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed:
+		if HotkeyManager:
+			if HotkeyManager.is_action_pressed("text_next_section"):
+				var next = _get_next_section_line_idx(cursor_get_line() + 1)
+				if next != -1:
+					cursor_set_line(next)
+					cursor_set_column(0)
+					center_viewport_to_cursor()
+					print("[JUMP] Next Section: ", next)
+					accept_event()
+					get_tree().set_input_as_handled()
+					return
+			if HotkeyManager.is_action_pressed("text_prev_section"):
+				var prev = _get_prev_section_line_idx(cursor_get_line() - 1)
+				if prev != -1:
+					cursor_set_line(prev)
+					cursor_set_column(0)
+					center_viewport_to_cursor()
+					print("[JUMP] Prev Section: ", prev)
+					accept_event()
+					get_tree().set_input_as_handled()
+					return
+					
 		if event.scancode == KEY_PAGEDOWN:
 			var next = _get_next_section_line_idx(cursor_get_line() + 1)
 			if next != -1:
@@ -700,7 +733,7 @@ func _on_LnzTextEdit_gui_input(event):
 				accept_event()
 				get_tree().set_input_as_handled()
 
-		elif event.control and event.scancode == KEY_Q:
+		elif HotkeyManager and HotkeyManager.is_action_pressed("text_jump_ball_index") and event.control:
 			var ball_no = get_current_ball_index()
 			var current_line_idx = cursor_get_line()
 			
@@ -1398,7 +1431,7 @@ func _detect_delimiter(start_line: int, end_line: int, test: bool = false) -> St
 	if !test:
 		var preferred = _get_user_preferred_delimiter()
 		if preferred != "auto":
-			print("[STATUS] LnzTextEdit: _detect_delimiter: Using user preferred delimiter: %s" % preferred)
+			#print("[STATUS] LnzTextEdit: _detect_delimiter: Using user preferred delimiter: %s" % preferred)
 			return preferred
 
 	var delim_counts = {
@@ -2271,15 +2304,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				return
 			applied_something = true
 			var bounds = _ensure_section_exists("[Paint Ballz]")
-			var insert_line_num = bounds.start
-			var j = 0
-			while insert_line_num + j < bounds.end:
-				var line = get_line(insert_line_num + j).strip_edges()
-				if line.begins_with(";"):
-					j += 1
-					continue
-				break
-			insert_line_num += j
+			var insert_line_num = _find_insertion_line(bounds.start, bounds.end)
 
 			var delim = _detect_delimiter(bounds.start, bounds.end)
 			var new_paintball_lines = ""
@@ -2402,8 +2427,7 @@ func apply_paintballz():
 				if line.begins_with("["):
 					break
 
-				#if line.empty() or line.begins_with(";"):
-				if line.begins_with(";"):
+				if line.empty():
 					runner += 1
 				else:
 					break
@@ -2579,15 +2603,7 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			printerr("[ERROR] LnzTextEdit: _apply_paintball_preset_no_save: %d paintballs exceeds 50000 limit. Aborting." % paintballz.size())
 			return
 		var bounds = _ensure_section_exists("[Paint Ballz]")
-		var insert_line_num = bounds.start
-		var j = 0
-		while insert_line_num + j < bounds.end:
-			var line = get_line(insert_line_num + j).strip_edges()
-			if line.begins_with(";"):
-				j += 1
-				continue
-			break
-		insert_line_num += j
+		var insert_line_num = _find_insertion_line(bounds.start, bounds.end)
 
 		var delim = _detect_delimiter(bounds.start, bounds.end)
 		var new_paintball_lines = ""
@@ -3113,9 +3129,7 @@ func create_line(start_ball, end_ball, silent: bool = false):
 			break
 
 	if not line_updated:
-		var insert_line = end_line
-		while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
-			insert_line -= 1
+		var insert_line = _find_insertion_line(start_line, end_line)
 
 		var new_line_parts = [
 			str(start_ball),
@@ -3749,6 +3763,16 @@ func _apply_multi_color_recolor(parts: Array, recolor_rules: Array, color_indice
 			updates[ci] = new_color
 	return updates
 
+func _apply_multi_color_recolor_outline(parts: Array, recolor_rules: Array, color_indices: Array, info_dict) -> Dictionary:
+	var updates = {}
+	for ci in color_indices:
+		if ci >= parts.size(): continue
+		var current_color = parts[ci]
+		var new_color = _resolve_recolor(current_color, true, recolor_rules, info_dict, "")
+		if new_color != null:
+			updates[ci] = new_color
+	return updates
+
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
@@ -3762,7 +3786,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				balls_to_exclude.erase(n)
 
 	# [Ballz Info] - color=0, outline=1, texture=7
-	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+	if all_recolor_info.balls_fill or all_recolor_info.balls_outline:
 		var bounds = get_section_bounds("[Ballz Info]")
 		if not bounds.empty():
 			var count = 0
@@ -3783,7 +3807,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				count += 1
 
 	# [Add Ball] - color=4, outline=5, texture=13
-	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+	if all_recolor_info.balls_fill or all_recolor_info.balls_outline:
 		var bounds = get_section_bounds("[Add Ball]")
 		if not bounds.empty():
 			var count = 0
@@ -3802,7 +3826,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				count += 1
 
 	# [Paint Ballz] - color=5, outline=6, texture=10
-	if all_recolor_info.paintballs_on:
+	if all_recolor_info.paintballs_fill or all_recolor_info.paintballs_outline:
 		var bounds = get_section_bounds("[Paint Ballz]")
 		if not bounds.empty():
 			var count = 0
@@ -3819,8 +3843,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					set_line(i, _update_fields(parts, updates, delim))
 				count += 1
 
-	# [Linez] - main=3, left=4, right=5 (no texture)
-	if all_recolor_info.lines_on:
+	# [Linez] - main=3 (fill), left=4 (outline), right=5 (outline)
+	if all_recolor_info.lines_fill:
 		var bounds = get_section_bounds("[Linez]")
 		if not bounds.empty():
 			var count = 0
@@ -3831,14 +3855,31 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				if parts.size() < 6:
 					count += 1
 					continue
-				var updates = _apply_multi_color_recolor(parts, recolor_rules, [3, 4, 5], all_recolor_info)
+				var updates = _apply_multi_color_recolor(parts, recolor_rules, [3], all_recolor_info)
+				if not updates.empty():
+					var delim = _detect_delimiter(bounds.start, bounds.end)
+					set_line(i, _update_fields(parts, updates, delim))
+				count += 1
+
+	if all_recolor_info.lines_outline:
+		var bounds = get_section_bounds("[Linez]")
+		if not bounds.empty():
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with(";") or line.begins_with("["): continue
+				var parts = split_line(line)
+				if parts.size() < 6:
+					count += 1
+					continue
+				var updates = _apply_multi_color_recolor_outline(parts, recolor_rules, [4, 5], all_recolor_info)
 				if not updates.empty():
 					var delim = _detect_delimiter(bounds.start, bounds.end)
 					set_line(i, _update_fields(parts, updates, delim))
 				count += 1
 
 	# [Polygons] - main=4, left=5, right=6, texture=8
-	if all_recolor_info.polygons_on:
+	if all_recolor_info.polygons_fill or all_recolor_info.polygons_outline:
 		var bounds = get_section_bounds("[Polygons]")
 		if not bounds.empty():
 			var count = 0
@@ -3926,10 +3967,13 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 
 func _resolve_recolor(color_str: String, is_outline: bool, rules: Array, info, texture: String):
 	for rule in rules:
-		var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-		if not texture_match: continue
-		if is_outline and not info.ball_outlines_on: continue
-		if not is_outline and not info.balls_on and not info.lines_on: continue
+		if not is_outline:
+			var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+			if not texture_match: continue
+		if is_outline:
+			if not info.balls_outline and not info.lines_outline and not info.paintballs_outline and not info.polygons_outline: continue
+		else:
+			if not info.balls_fill and not info.lines_fill and not info.paintballs_fill and not info.polygons_fill: continue
 		var new_color = null
 		if rule.is_ramp:
 			new_color = LnzLiveUtils.get_ramp_color(color_str, rule)
@@ -5214,9 +5258,7 @@ func write_polygon_section(ball_ids: Array) -> void:
 		fuzz_val = int(props["fuzz"])
 
 	var poly_bounds = _ensure_section_exists("[Polygons]")
-	var insert_line = poly_bounds.end - 1
-	if insert_line < poly_bounds.start:
-		insert_line = poly_bounds.start
+	var insert_line = _find_insertion_line(poly_bounds.start, poly_bounds.end)
 
 	var poly_line = _join_array([
 		str(ball_ids[0]),

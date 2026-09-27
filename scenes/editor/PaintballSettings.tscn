@@ -747,6 +747,24 @@ min_value = 1.0
 max_value = 200.0
 value = 30.0
 
+[node name="DesignRotationLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_left = 281.0
+margin_top = 4.0
+margin_right = 377.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 3 )
+text = "Rotation"
+
+[node name="DesignRotation" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_left = 381.0
+margin_right = 455.0
+margin_bottom = 29.0
+hint_tooltip = "Fixed/starting rotation angle in degrees"
+min_value = -360.0
+max_value = 360.0
+step = 1.0
+value = 0.0
+
 [node name="DesignPixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
 margin_left = 281.0
 margin_right = 385.0
