@@ -61,7 +61,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `X` or `M` | Jumps to the `[Move]` entries involving hovered ball |
 | **Select Mode** | `C` or `P` | Jumps to the `[Project Ball]` entries involving hovered ball |
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
-| **Select Mode** | `N` | Cycle through nearby balls (when overlapping or hard to select) |
+| **Select Mode** | `N` or `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
 | **Select Mode** | `DELETE` | Omit (if base ballz) or delete (if add ballz) hovered ball |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
@@ -112,21 +112,8 @@ The Hotkey Settings dialog can be used to customize most default key bindings.
 1. Find the action you want to change in the list (grouped by context).
 2. Click **Remap** next to the action.
 3. Press the new key combination (e.g., `comma`, `T`, `CTRL+T`).
-4. Click **Apply** to persist the change.
 
-Hotkeys are applied immediately upon pressing the new key. The "Apply & Save" button writes the changes to your settings config.
-
-**Resetting a single hotkey:** Click **Reset** next to any action to restore its default binding.
-
-**Resetting all hotkeys:** Click **Reset All** to restore every hotkey to its default.
-
-**Saving a profile:** Enter a name in the profile text field and click **Save** to save your current hotkey layout as a named profile. Profiles are stored in your settings config as well.
-
-**Loading a profile:** Select a saved profile from the dropdown and click **Load**.
-
-**Exporting hotkeys:** Click **Export** to open a file picker dialog. Choose a location and the current hotkey bindings will be saved as a JSON file.
-
-**Importing hotkeys:** Click **Import** to open a file picker dialog. Select a previously exported JSON file to restore its hotkey bindings.
+Hotkeys are applied immediately upon pressing the new key. The "Apply" button writes the changes to your settings config.
 
 ### History System
 
