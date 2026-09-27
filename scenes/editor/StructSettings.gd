@@ -273,6 +273,8 @@ func get_preset_color(preset_id: int) -> Color:
 	if preset_id < 0 or preset_id >= presets.size():
 		preset_id = 0
 	var color_idx: int = presets[preset_id].get("color", 10)
+	if color_idx == 0:
+		return Color(0, 0, 0, 0)
 	var h = fmod((color_idx / 10) * 0.137, 1.0)
 	return Color.from_hsv(h, 0.8, 0.9)
 

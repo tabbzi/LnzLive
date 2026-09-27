@@ -104,6 +104,8 @@ var default_bindings: Dictionary = {
 	"mode_toggle_shape": { "scancode": KEY_D, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"mode_toggle_shape_alt": { "scancode": KEY_P, "ctrl": false, "shift": false, "alt": true, "meta": false },
 	"mode_toggle_auto_paintballer": { "scancode": KEY_A, "ctrl": false, "shift": false, "alt": false, "meta": false },
+	"mode_toggle_struct": { "scancode": KEY_C, "ctrl": false, "shift": false, "alt": false, "meta": false },
+	"mode_toggle_struct_alt": { "scancode": KEY_X, "ctrl": false, "shift": false, "alt": true, "meta": false },
 	"mode_toggle_palette_viewer": { "scancode": KEY_T, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"mode_toggle_variation_viewer": { "scancode": KEY_V, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"mode_toggle_capture_headshot": { "scancode": KEY_K, "ctrl": false, "shift": false, "alt": false, "meta": false },
@@ -219,7 +221,8 @@ var action_groups: Dictionary = {
 		"mode_toggle_line", "mode_toggle_line_alt", "mode_toggle_recolor", "mode_toggle_recolor_alt",
 		"mode_toggle_shape", "mode_toggle_shape_alt",
 		"mode_toggle_auto_paintballer", "mode_toggle_palette_viewer",
-		"mode_toggle_variation_viewer", "mode_toggle_capture_headshot"
+		"mode_toggle_variation_viewer", "mode_toggle_capture_headshot",
+		"mode_toggle_struct", "mode_toggle_struct_alt",
 	],
 	"Select Mode": [
 		"select_jump_info", "select_jump_info_alt", "select_jump_move", "select_jump_move_alt",
@@ -315,6 +318,8 @@ var action_display_names: Dictionary = {
 	"mode_toggle_recolor_alt": "Toggle Recolor Mode",
 	"mode_toggle_shape": "Toggle Shape Mode",
 	"mode_toggle_shape_alt": "Toggle Shape Mode",
+	"mode_toggle_struct": "Toggle Struct Mode",
+	"mode_toggle_struct_alt": "Toggle Struct Mode",
 	"mode_toggle_auto_paintballer": "Toggle Auto Paintballer",
 	"mode_toggle_palette_viewer": "Toggle Palette Viewer",
 	"mode_toggle_variation_viewer": "Toggle Variation Viewer",
