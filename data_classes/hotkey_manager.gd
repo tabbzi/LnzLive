@@ -15,7 +15,8 @@ signal hotkeys_reloaded
 var context_specific_actions: Array = [
 	"texture_tool_line", "texture_tool_hline", "texture_tool_vline",
 	"texture_tool_brush", "texture_tool_eraser", "texture_tool_eyedropper",
-	"texture_tool_fill", "texture_tool_bucket_toggle",
+	"texture_tool_fill",
+	"texture_tool_bucket_toggle",
 	"design_stamp_scale", "design_stamp_scale_down", "design_stamp_rotate", "design_stamp_rotate_down",
 	"design_sync_brush", "design_sync_line", "design_sync_horizontal", "design_sync_vertical",
 	"text_save", "text_undo", "text_redo", "text_find",
@@ -198,8 +199,7 @@ var default_bindings: Dictionary = {
 	"texture_tool_brush": { "scancode": KEY_B, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"texture_tool_eraser": { "scancode": KEY_E, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"texture_tool_eyedropper": { "scancode": KEY_Q, "ctrl": true, "shift": false, "alt": false, "meta": false },
-	"texture_tool_fill": { "scancode": KEY_F, "ctrl": true, "shift": false, "alt": false, "meta": false },
-	"texture_tool_bucket_toggle": { "scancode": KEY_G, "ctrl": false, "shift": false, "alt": false, "meta": false },
+	"texture_tool_fill": { "scancode": KEY_G, "ctrl": true, "shift": false, "alt": false, "meta": false },
 }
 
 var action_groups: Dictionary = {
@@ -266,7 +266,7 @@ var action_groups: Dictionary = {
 	"Texture Editor": [
 		"texture_tool_line", "texture_tool_hline", "texture_tool_vline",
 		"texture_tool_brush", "texture_tool_eraser", "texture_tool_eyedropper",
-		"texture_tool_fill", "texture_tool_bucket_toggle"
+		"texture_tool_fill"
 	],
 }
 
@@ -390,7 +390,6 @@ var action_display_names: Dictionary = {
 	"texture_tool_eraser": "Eraser Tool",
 	"texture_tool_eyedropper": "Eyedropper",
 	"texture_tool_fill": "Fill Tool",
-	"texture_tool_bucket_toggle": "Toggle Paint Bucket",
 }
 
 
