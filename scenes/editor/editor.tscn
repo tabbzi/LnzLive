@@ -1,4 +1,4 @@
-[gd_scene load_steps=59 format=2]
+[gd_scene load_steps=61 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -29,6 +29,8 @@
 [ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=27]
 [ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="DynamicFont" id=28]
 [ext_resource path="res://resources/fonts/font_pixel_operator_default.tres" type="DynamicFont" id=29]
+[ext_resource path="res://resources/icons/ico_tree_arr_open_2x.png" type="Texture" id=30]
+[ext_resource path="res://resources/icons/ico_tree_arr_closed_2x.png" type="Texture" id=31]
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/icons/ico_ref_img.png" type="Texture" id=34]
@@ -309,7 +311,13 @@ margin_right = 376.0
 margin_bottom = 955.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_icons/arrow = ExtResource( 30 )
+custom_icons/arrow_collapsed = ExtResource( 31 )
 custom_styles/bg = SubResource( 5 )
+custom_constants/item_margin = 48
+custom_constants/hseparation = 32
+custom_constants/draw_relationship_lines = 16
+custom_constants/button_margin = 48
 allow_rmb_select = true
 hide_root = true
 script = ExtResource( 2 )
@@ -330,6 +338,8 @@ margin_bottom = 1425.0
 window_title = "Open File(s)"
 mode = 1
 access = 2
+current_dir = "/Users/kathl/Documents/GitHub/LnzLive"
+current_path = "/Users/kathl/Documents/GitHub/LnzLive/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -2001,12 +2011,12 @@ __meta__ = {
 [connection signal="delete_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_delete_ball"]
 [connection signal="omit_ball" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_omit_ball"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_rmb_selected"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2/RescanButton" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
@@ -2043,8 +2053,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
