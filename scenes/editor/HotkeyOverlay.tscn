@@ -19,15 +19,30 @@ __meta__ = {
 	"_edit_use_anchors_": false
 }
 
+[node name="HintLabel" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -100.0
+margin_top = -107.036
+margin_right = 100.0
+margin_bottom = -87.036
+visible = false
+__meta__ = {
+	"_edit_use_anchors_": false
+}
+
+
 [node name="Panel" type="Panel" parent="."]
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-	margin_left = -450.0
-	margin_top = -527.036
-	margin_right = 450.0
-	margin_bottom = -127.036
+margin_left = -450.0
+margin_top = -527.036
+margin_right = 450.0
+margin_bottom = -127.036
 custom_styles/panel = SubResource( 1 )
 __meta__ = {
 	"_edit_use_anchors_": false

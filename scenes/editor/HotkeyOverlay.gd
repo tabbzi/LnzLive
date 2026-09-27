@@ -112,7 +112,7 @@ func _init():
 	for k in SCANEODE_TO_DISPLAY:
 		DISPLAY_TO_SCANEODE[SCANEODE_TO_DISPLAY[k]] = k
 
-# Mouse button display names
+var hint_label: Control
 
 func _ready():
 	self.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -126,9 +126,13 @@ func _ready():
 func _input(event):
 	if Input.is_action_just_pressed("global_toggle_hotkey_overlay"):
 		visible = not visible
+		if hint_label:
+			hint_label.visible = visible
 		return
 	if event is InputEventKey and event.pressed and event.scancode == KEY_F1:
 		visible = not visible
+		if hint_label:
+			hint_label.visible = visible
 
 func _on_hotkeys_reloaded():
 	# Clear and rebuild to reflect remapped hotkeys
@@ -140,6 +144,14 @@ func _on_hotkeys_reloaded():
 func _build_overlay():
 	if not HotkeyManager:
 		return
+	
+	if not hint_label:
+		hint_label = $HintLabel
+	
+	hint_label.text = "Hit F1 to hide"
+	hint_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
+	hint_label.add_color_override("font_color", Color("053535"))
+	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
 	var panel = $Panel
 	var scroll = ScrollContainer.new()
@@ -167,6 +179,7 @@ func _build_overlay():
 	scroll.add_child(main_vbox)
 	
 	var groups = HotkeyManager.action_groups
+	var last_group_vbox: VBoxContainer = null
 	for group_name in groups:
 		var actions = groups[group_name]
 		var section_vbox = VBoxContainer.new()
@@ -222,6 +235,8 @@ func _build_overlay():
 					plus_label.size_flags_horizontal = 0
 					plus_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 					item_hbox.add_child(plus_label)
+		
+		last_group_vbox = section_vbox
 
 func _binding_to_key_components(binding: Dictionary) -> Array:
 	var components = []
