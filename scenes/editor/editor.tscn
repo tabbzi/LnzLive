@@ -330,8 +330,6 @@ margin_bottom = 300.0
 window_title = "Open File(s)"
 mode = 1
 access = 2
-current_dir = "/Users/kathl/Documents/GitHub/LnzLive"
-current_path = "/Users/kathl/Documents/GitHub/LnzLive/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1119,7 +1117,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-06"
+text = "PB-beta-v1.4.8-preview-07"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
