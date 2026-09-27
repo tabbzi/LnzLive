@@ -143,7 +143,7 @@ var default_bindings: Dictionary = {
 	"paint_eraser": { "scancode": BUTTON_LEFT, "ctrl": true, "shift": false, "alt": false, "meta": false },
 	"paint_freeline": { "scancode": BUTTON_LEFT, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"paint_straight_line": { "scancode": KEY_L, "ctrl": false, "shift": false, "alt": false, "meta": false },
-	"paint_straight_line_alt": { "scancode": KEY_ALT, "ctrl": false, "shift": false, "alt": true, "meta": false },
+	"paint_straight_line_alt": { "scancode": KEY_ALT, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"paint_lock_axis_x": { "scancode": KEY_X, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"paint_lock_axis_y": { "scancode": KEY_Y, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"paint_scale_brush": { "scancode": BUTTON_WHEEL_UP, "ctrl": false, "shift": true, "alt": false, "meta": false },

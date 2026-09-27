@@ -179,7 +179,7 @@ func _build_overlay():
 		title_label.text = group_name
 		title_label.set_custom_minimum_size(Vector2(0, 30))
 		title_label.set("custom_fonts/normal_font", FONT_DYNAMIC)
-		title_label.add_color_override("font_color", Color(0.168627, 0.45098, 0.45098, 1))
+		title_label.add_color_override("font_color", Color("053535"))
 		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		section_vbox.add_child(title_label)
 		
