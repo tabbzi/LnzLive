@@ -1855,6 +1855,113 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 
 	return false
 
+func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
+	if not struct_mode:
+		return false
+	if not is_instance_valid(struct_settings_instance):
+		return false
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		if event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_CONTROL):
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var verts = struct_settings_instance.vertices
+			# First check if clicking on an existing vertex
+			var selected_idx = -1
+			var min_dist = 100000.0
+			for i in range(verts.size()):
+				var v = verts[i]
+				var proj_2d = camera.unproject_position(v.pos)
+				var dist = proj_2d.distance_to(screen_pos)
+				if dist < 20 and dist < min_dist:
+					min_dist = dist
+					selected_idx = i
+			if selected_idx != -1:
+				struct_selected_vertex = selected_idx
+				struct_is_dragging = true
+				mark_ui_dirty()
+				return true
+			# No vertex hit — place new vertex (SHIFT+Q)
+			var space_state = camera.get_world().direct_space_state
+			var result = space_state.intersect_ray(ray_o, ray_o + ray_d * 1000, [], 0x7FFFFFFF, false, true)
+			var drop_pos = null
+			if result and result.collider:
+				var parent = result.collider.get_parent()
+				if parent and (parent.is_in_group("balls") or parent.is_in_group("addballs")):
+					drop_pos = result.position
+			if not drop_pos:
+				var best_depth_pos = Vector3.ZERO
+				if struct_selected_vertex != -1 and struct_selected_vertex < verts.size():
+					best_depth_pos = verts[struct_selected_vertex].pos
+				else:
+					var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+					var min_dist_2d = 100000.0
+					for b in all_balls:
+						var pos_2d = camera.unproject_position(b.global_transform.origin)
+						var dist_to_cursor = pos_2d.distance_to(screen_pos)
+						if dist_to_cursor < min_dist_2d:
+							min_dist_2d = dist_to_cursor
+							best_depth_pos = b.global_transform.origin
+				var plane_n = camera.global_transform.basis.z.normalized()
+				var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, best_depth_pos)
+				if intersect:
+					drop_pos = intersect
+			if drop_pos != null:
+				verts.append({"pos": drop_pos, "preset_id": struct_settings_instance.active_preset_idx})
+				struct_selected_vertex = verts.size() - 1
+				struct_is_dragging = true
+				mark_ui_dirty()
+				if is_instance_valid(struct_settings_instance):
+					struct_settings_instance._update_vertex_count()
+				return true
+		elif not event.pressed:
+			if Input.is_key_pressed(KEY_SHIFT):
+				struct_is_dragging = false
+				
+		# Ball selection on normal left-click
+		elif event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+			var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			if target_ball:
+				var current_ids: Array = []
+				if struct_settings_instance.base_ball_range.strip_edges() != "":
+					current_ids = LnzLiveUtils.parse_number_list(struct_settings_instance.base_ball_range)
+				if Input.is_key_pressed(KEY_CONTROL):
+					if target_ball.ball_no in current_ids:
+						current_ids.erase(target_ball.ball_no)
+					else:
+						current_ids.append(target_ball.ball_no)
+				else:
+					current_ids = [target_ball.ball_no]
+				var str_ids = PoolStringArray()
+				for id in current_ids:
+					str_ids.append(str(id))
+				struct_settings_instance.base_ball_range_edit.text = str_ids.join(", ")
+				struct_settings_instance._on_base_ball_range_changed(struct_settings_instance.base_ball_range_edit.text)
+				return true
+			else:
+				if not Input.is_key_pressed(KEY_CONTROL):
+					struct_settings_instance.base_ball_range_edit.text = ""
+					struct_settings_instance._on_base_ball_range_changed("")
+				return true
+
+	if event is InputEventMouseMotion and struct_is_dragging and struct_selected_vertex != -1:
+		if Input.is_key_pressed(KEY_SHIFT):
+			var verts = struct_settings_instance.vertices
+			if struct_selected_vertex < verts.size():
+				var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+				var ray_o = camera.project_ray_origin(screen_pos)
+				var ray_d = camera.project_ray_normal(screen_pos)
+				var plane_n = camera.global_transform.basis.z.normalized()
+				var plane_p = verts[struct_selected_vertex].pos
+				var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+				if intersect:
+					verts[struct_selected_vertex].pos = intersect
+					mark_ui_dirty()
+				return true
+
+	return false
+
 
 func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
