@@ -746,16 +746,26 @@ func _on_LnzTextEdit_gui_input(event):
 					clean_section = line.split(";")[0].strip_edges()
 					break
 
+			if console_log:
+				console_log.log_message("[JUMP] ball_no=%d section='%s' line=%d" % [ball_no, clean_section, current_line_idx])
+
 			if ball_no != -1:
-				emit_signal("find_ball", ball_no)
-				var b_name = get_ball_name(ball_no)
-				var prefix = "[HELPER] Ballz"
-				if "Override" in clean_section: prefix = "[HELPER] Override Ballz"
-				if clean_section == "[Add Ball]": prefix = "[HELPER] Addballz"
-				console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
+				if clean_section == "[Ballz Info]" or clean_section == "[Add Ball]" or clean_section == "[Ball Size Override]" or clean_section == "[Fuzz Override]" or "Override" in clean_section:
+					var max_ball = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+					if ball_no >= 0 and ball_no < max_ball + 100:
+						emit_signal("find_ball", ball_no)
+						var b_name = get_ball_name(ball_no)
+						var prefix = "[HELPER] Ballz"
+						if "Override" in clean_section: prefix = "[HELPER] Override Ballz"
+						if clean_section == "[Add Ball]": prefix = "[HELPER] Addballz"
+						if b_name != "":
+							console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
+					else:
+						if console_log:
+							console_log.log_message("[JUMP] Ball #%d out of valid range (0-%d)" % [ball_no, max_ball - 1])
 			
 			var data_line_idx = _get_line_no_from_line_index(current_line_idx, clean_section)
-			if data_line_idx != -1:
+			if data_line_idx != -1 and data_line_idx >= 0:
 				match clean_section:
 					"[Linez]": emit_signal("find_line", data_line_idx)
 					"[Paint Ballz]": emit_signal("find_paintball", data_line_idx)
@@ -767,10 +777,14 @@ func _on_LnzTextEdit_gui_input(event):
 				var word = get_word_under_cursor()
 				if word.is_valid_integer():
 					var fallback_no = int(word)
-					emit_signal("find_ball", fallback_no)
-					var b_name = get_ball_name(fallback_no)
-					if b_name != "":
-						console_log.log_message("[HELPER] Ballz #%d (%s)" % [fallback_no, b_name])
+					if KeyBallsData and fallback_no >= 0 and fallback_no < KeyBallsData.max_base_ball_num:
+						emit_signal("find_ball", fallback_no)
+						var b_name = get_ball_name(fallback_no)
+						if b_name != "":
+							console_log.log_message("[HELPER] Ballz #%d (%s)" % [fallback_no, b_name])
+					else:
+						if console_log:
+							console_log.log_message("[JUMP] Word under cursor '%s' is not a valid ball index" % word)
 
 func _get_user_preferred_delimiter() -> String:
 	var settings = get_tree().root.get_node_or_null("Root/SceneRoot")
