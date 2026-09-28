@@ -289,6 +289,12 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 		
 	return int(round(req_total - bhd_size))
 
+static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> float:
+	var total: float = lnz_size + bhd_size
+	if not is_addball:
+		total = total * (enl_x / 100.0) + enl_y
+	return (total - 2.0) * (engine_scale / 255.0)
+
 static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> float:
 	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y)
 	var current_base_size: float = bhd_size + final_lnz
@@ -1108,3 +1114,183 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 
 	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):
 		le.connect("text_changed", parent_script, "_on_color_list_text_changed", [preview_container])
+
+static func color_to_hsv(color: Color) -> Vector3:
+	var h: float = 0.0
+	var s: float = 0.0
+	var v: float = 0.0
+	var min_c: float = min(color.r, min(color.g, color.b))
+	var max_c: float = max(color.r, max(color.g, color.b))
+	var delta: float = max_c - min_c
+	v = max_c
+	if delta != 0.0:
+		if max_c == color.r:
+			h = fmod((color.g - color.b) / delta, 6.0)
+		elif max_c == color.g:
+			h = fmod((color.b - color.r) / delta + 2.0, 6.0)
+		else:
+			h = fmod((color.r - color.g) / delta + 4.0, 6.0)
+		h = fmod(h, 6.0)
+		if h < 0.0:
+			h += 6.0
+		h = h / 6.0
+		s = delta / max_c
+	else:
+		s = 0.0
+	return Vector3(h, s, v)
+
+static func hsv_to_color(h: float, s: float, v: float) -> Color:
+	var r: float = 0.0
+	var g: float = 0.0
+	var b: float = 0.0
+	var hi: int = int(floor(h * 6.0)) % 6
+	var f: float = (h * 6.0) - floor(h * 6.0)
+	var p: float = v * (1.0 - s)
+	var q: float = v * (1.0 - f * s)
+	var t: float = v * (1.0 - (1.0 - f) * s)
+	if hi == 0:
+		r = v; g = t; b = p
+	elif hi == 1:
+		r = q; g = v; b = p
+	elif hi == 2:
+		r = p; g = v; b = t
+	elif hi == 3:
+		r = p; g = q; b = v
+	elif hi == 4:
+		r = t; g = p; b = v
+	else:
+		r = v; g = p; b = q
+	return Color(r, g, b, 1.0)
+
+static func color_distance_rgb(a: Color, b: Color) -> float:
+	var dr: float = a.r - b.r
+	var dg: float = a.g - b.g
+	var db: float = a.b - b.b
+	return sqrt(dr * dr + dg * dg + db * db)
+
+static func sort_colors_by_hue(colors: Array) -> Array:
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
+	_bubble_sort_by_hue(indexed)
+	var result: Array = []
+	for item in indexed:
+		result.append(item[1])
+	return result
+
+static func _bubble_sort_by_hue(arr: Array) -> void:
+	for i in range(arr.size()):
+		for j in range(arr.size() - 1):
+			var hsv_a = color_to_hsv(arr[j][1])
+			var hsv_b = color_to_hsv(arr[j + 1][1])
+			if hsv_a.x > hsv_b.x:
+				var tmp = arr[j]
+				arr[j] = arr[j + 1]
+				arr[j + 1] = tmp
+
+static func sort_colors_by_saturation(colors: Array, descending: bool = false) -> Array:
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
+	_bubble_sort_by_saturation(indexed)
+	if descending:
+		_reverse_array(indexed)
+	var result: Array = []
+	for item in indexed:
+		result.append(item[1])
+	return result
+
+static func _bubble_sort_by_saturation(arr: Array) -> void:
+	for i in range(arr.size()):
+		for j in range(arr.size() - 1):
+			var hsv_a = color_to_hsv(arr[j][1])
+			var hsv_b = color_to_hsv(arr[j + 1][1])
+			if hsv_a.y > hsv_b.y:
+				var tmp = arr[j]
+				arr[j] = arr[j + 1]
+				arr[j + 1] = tmp
+
+static func sort_colors_by_value(colors: Array, descending: bool = false) -> Array:
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
+	_bubble_sort_by_value(indexed)
+	if descending:
+		_reverse_array(indexed)
+	var result: Array = []
+	for item in indexed:
+		result.append(item[1])
+	return result
+
+static func _bubble_sort_by_value(arr: Array) -> void:
+	for i in range(arr.size()):
+		for j in range(arr.size() - 1):
+			var hsv_a = color_to_hsv(arr[j][1])
+			var hsv_b = color_to_hsv(arr[j + 1][1])
+			if hsv_a.z > hsv_b.z:
+				var tmp = arr[j]
+				arr[j] = arr[j + 1]
+				arr[j + 1] = tmp
+
+static func sort_colors_by_luminance(colors: Array, descending: bool = false) -> Array:
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
+	_bubble_sort_by_luminance(indexed)
+	if descending:
+		_reverse_array(indexed)
+	var result: Array = []
+	for item in indexed:
+		result.append(item[1])
+	return result
+
+static func _bubble_sort_by_luminance(arr: Array) -> void:
+	for i in range(arr.size()):
+		for j in range(arr.size() - 1):
+			var lum_a = _get_luminance(arr[j][1])
+			var lum_b = _get_luminance(arr[j + 1][1])
+			if lum_a > lum_b:
+				var tmp = arr[j]
+				arr[j] = arr[j + 1]
+				arr[j + 1] = tmp
+
+static func _get_luminance(color: Color) -> float:
+	return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
+
+static func _reverse_array(arr: Array) -> void:
+	var sz: int = arr.size()
+	var sz_half: int = int(sz / 2)
+	for i in sz_half:
+		var tmp = arr[i]
+		arr[i] = arr[sz - 1 - i]
+		arr[sz - 1 - i] = tmp
+
+static func find_closest_color_index(colors: Array, target: Color) -> int:
+	var best_idx: int = 0
+	var best_dist: float = color_distance_rgb(colors[0], target)
+	for i in range(1, colors.size()):
+		var d = color_distance_rgb(colors[i], target)
+		if d < best_dist:
+			best_dist = d
+			best_idx = i
+	return best_idx
+
+static func find_closest_color(colors: Array, target: Color) -> Color:
+	var idx = find_closest_color_index(colors, target)
+	return colors[idx]
+
+static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
+	var sorted: Array = sort_colors_by_hue(colors)
+	if sort_mode == "saturation":
+		sorted = sort_colors_by_saturation(colors)
+	elif sort_mode == "saturation_desc":
+		sorted = sort_colors_by_saturation(colors, true)
+	elif sort_mode == "value":
+		sorted = sort_colors_by_value(colors)
+	elif sort_mode == "value_desc":
+		sorted = sort_colors_by_value(colors, true)
+	elif sort_mode == "luminance":
+		sorted = sort_colors_by_luminance(colors)
+	elif sort_mode == "luminance_desc":
+		sorted = sort_colors_by_luminance(colors, true)
+	return sorted
