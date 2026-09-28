@@ -3636,6 +3636,169 @@ func unomit_ball(ball_no: int):
 		
 		i += 1
 
+func batch_omit_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var count = 0
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var section = search("[Omissions]", 0, 0, 0)
+		if section.empty():
+			if count == 0:
+				cursor_set_line(get_line_count())
+				insert_text_at_cursor("\n[Omissions]\n" + str(ball_no))
+				count += 1
+				continue
+		else:
+			var line_idx = section[SEARCH_RESULT_LINE] + 1
+			cursor_set_line(line_idx)
+			cursor_set_column(0)
+			insert_text_at_cursor(str(ball_no) + "\n")
+			count += 1
+	
+	if count > 0:
+		var bounds = get_section_bounds("[Linez]")
+		if not bounds.empty():
+			var lines_to_comment = []
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with("[") or line.begins_with(";"): continue
+				var parts = split_line(line)
+				if parts.size() >= 2:
+					for bid in ball_ids:
+						if bid < 0:
+							continue
+						if parts[0] == str(bid) or parts[1] == str(bid):
+							lines_to_comment.append(i)
+							break
+			if not lines_to_comment.empty():
+				_apply_comments(lines_to_comment, "; ")
+		save_file(true)
+		commit_full_snapshot("Omitted Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_unomit_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var section = search("[Omissions]", 0, 0, 0)
+		if section.empty():
+			continue
+		var start = section[SEARCH_RESULT_LINE] + 1
+		var i = 0
+		while true:
+			var line_idx = start + i
+			if line_idx >= get_line_count(): break
+			var line = get_line(line_idx).strip_edges()
+			if line.begins_with("["): break
+			if line == str(ball_no):
+				select(line_idx, 0, line_idx + 1, 0)
+				cut()
+				var bounds = get_section_bounds("[Linez]")
+				if not bounds.empty():
+					var lines_to_uncomment = []
+					for j in range(bounds.start, bounds.end):
+						var l = get_line(j).strip_edges()
+						if not l.begins_with("; "): continue
+						if not " ; commented out by Omit Ballz action" in l: continue
+						var parts = split_line(l)
+						if parts.size() < 2: continue
+						if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
+						lines_to_uncomment.append(j)
+					if not lines_to_uncomment.empty():
+						_remove_comments(lines_to_uncomment, "; ")
+				save_file(true)
+				break
+			i += 1
+	commit_full_snapshot("Unomitted Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_delete_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var deleted = []
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var is_addball = ball_no > KeyBallsData.max_base_ball_num
+		if is_addball:
+			var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+			if line_no != -1:
+				select(line_no, 0, line_no + 1, 0)
+				cut()
+				deleted.append(ball_no)
+	_update_all_references(0) if not deleted.empty() else null
+	if not deleted.empty():
+		save_file(true)
+		commit_full_snapshot("Deleted Addballz %s" % LnzLiveUtils.format_ball_ranges(deleted))
+
+func batch_delete_base_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var deleted = []
+	for ball_no in ball_ids:
+		if ball_no < 0 or ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		var line_no = find_line_in_ball_section(ball_no)
+		if line_no != -1:
+			select(line_no, 0, line_no + 1, 0)
+			cut()
+			deleted.append(ball_no)
+	if not deleted.empty():
+		save_file(true)
+		commit_full_snapshot("Deleted Ballz %s" % LnzLiveUtils.format_ball_ranges(deleted))
+
+func batch_comment_linez_for_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	var bounds = get_section_bounds("[Linez]")
+	if bounds.empty():
+		return
+	var lines_to_comment = []
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with("[") or line.begins_with(";"): continue
+		var parts = split_line(line)
+		if parts.size() >= 2:
+			for bid in ball_ids:
+				if bid < 0:
+					continue
+				if parts[0] == str(bid) or parts[1] == str(bid):
+					lines_to_comment.append(i)
+					break
+	if not lines_to_comment.empty():
+		_apply_comments(lines_to_comment, "; ")
+		save_file(true)
+		commit_full_snapshot("Commented Linez for Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_uncomment_linez_for_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	var bounds = get_section_bounds("[Linez]")
+	if bounds.empty():
+		return
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var lines_to_uncomment = []
+		for j in range(bounds.start, bounds.end):
+			var l = get_line(j).strip_edges()
+			if not l.begins_with("; "): continue
+			if not " ; commented out by Omit Ballz action" in l: continue
+			var parts = split_line(l)
+			if parts.size() < 2: continue
+			if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
+			lines_to_uncomment.append(j)
+		if not lines_to_uncomment.empty():
+			_remove_comments(lines_to_uncomment, "; ")
+	save_file(true)
+	commit_full_snapshot("Uncommented Linez for Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
 func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 	save_backup()
 	print("[STATUS] LnzTextEdit: _on_ToolsMenu_clear_ball_paintballz: Commenting out paintballz for ball_no %d" % ball_no)
