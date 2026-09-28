@@ -743,6 +743,7 @@ func _input_add_action_input(action_name: String, binding: Dictionary) -> void:
 	if binding.get("shift", false) and web_shift_aliases.has(scancode):
 		var alias_binding: Dictionary = binding.duplicate()
 		alias_binding["scancode"] = web_shift_aliases[scancode]
+		alias_binding["shift"] = false
 		
 		var alias_event: InputEvent = _create_input_event(alias_binding)
 		if alias_event != null:
