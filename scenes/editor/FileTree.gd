@@ -607,7 +607,7 @@ func rescan_textures(reload_model: bool = false) -> void:
 			if pet_node.lnz:
 				pet_node.recompose_model()
 
-func rescan_palettes() -> void:
+func rescan_palettes(allow_bmp_conversion: bool = false) -> void:
 	var was_collapsed: bool = true
 	if is_instance_valid(local_storage_palettes):
 		was_collapsed = local_storage_palettes.collapsed
@@ -615,7 +615,7 @@ func rescan_palettes() -> void:
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
-	scan_local_palettes()
+	scan_local_palettes(allow_bmp_conversion)
 
 func rescan_bases() -> void:
 	var was_collapsed: bool = true
@@ -888,7 +888,7 @@ func scan_res_textures() -> void:
 	print("[STATUS] FileTree: scan_res_textures: complete")
 	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-func scan_local_palettes() -> void:
+func scan_local_palettes(allow_bmp_conversion: bool = false) -> void:
 	print("[STATUS] FileTree: scan_local_palettes: running")
 	var t_start: int = OS.get_ticks_msec()
 	var dir2: Directory = Directory.new()
@@ -905,7 +905,7 @@ func scan_local_palettes() -> void:
 			var full_path: String = user_file_location + "/palettes/" + filename
 			_process_palette_item(filename, full_path)
 		
-		elif filename.ends_with(".bmp"):
+		elif allow_bmp_conversion and filename.ends_with(".bmp"):
 			var bmp_path: String = user_file_location + "/palettes/" + filename
 			var png_filename: String = filename.get_basename() + ".png"
 			var png_path: String = user_file_location + "/palettes/" + png_filename
@@ -1686,5 +1686,5 @@ func _sort_by_time(a: Dictionary, b: Dictionary) -> bool:
 func _on_RescanButton_pressed() -> void:
 	rescan(null)
 	rescan_textures(true) 
-	rescan_palettes()
+	rescan_palettes(true)
 	rescan_bases()
