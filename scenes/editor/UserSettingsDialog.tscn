@@ -2,6 +2,27 @@
 
 [ext_resource path="res://scenes/editor/UserSettingsDialog.gd" type="Script" id=1]
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=2]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFont" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+size = 30
+font_data = ExtResource( 3 )
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
 
 [node name="UserSettingsDialog" type="WindowDialog"]
 visible = true
@@ -200,7 +221,38 @@ margin_right = 430.0
 margin_bottom = 338.0
 
 [node name="TexturePathEdit" type="LineEdit" parent="VBoxContainer/TexturePathHBox"]
-margin_right = 430.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-text = "\\resource\\textures\\"
+	margin_right = 430.0
+	margin_bottom = 24.0
+	size_flags_horizontal = 3
+	text = "\\resource\\textures\\"
+
+[node name="TransparentColorLabel" type="Label" parent="VBoxContainer"]
+	margin_top = 358.0
+	margin_right = 430.0
+	margin_bottom = 372.0
+	custom_fonts/font = SubResource( 1 )
+	text = "Default Transparent Color"
+	align = 1
+
+[node name="TransparentColorHBox" type="HBoxContainer" parent="VBoxContainer"]
+	margin_top = 376.0
+	margin_right = 430.0
+	margin_bottom = 400.0
+
+[node name="Label" type="Label" parent="VBoxContainer/TransparentColorHBox"]
+	margin_top = 5.0
+	margin_right = 213.0
+	margin_bottom = 19.0
+	size_flags_horizontal = 3
+	text = "Transparent Color Index:"
+
+[node name="TransparentColorSpin" type="SpinBox" parent="VBoxContainer/TransparentColorHBox"]
+	margin_left = 217.0
+	margin_right = 430.0
+	margin_bottom = 24.0
+	size_flags_horizontal = 3
+	custom_icons/updown = ExtResource( 2 )
+	min_value = 0.0
+	max_value = 255.0
+	step = 1.0
+	value = 0.0

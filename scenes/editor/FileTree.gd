@@ -1355,23 +1355,25 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	
-	lnz.texture_list.append({
-		"filename": tex_filename,
-		"transparent_color": 0,
-		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
-	})
-	
 	var display_path: String = _get_display_path(source_path, is_user_texture)
 	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
 	var append_dims: bool = false
+	var default_transparent_color: int = 0
 	if is_instance_valid(user_settings):
-		append_dims = user_settings.get("append_dimensions")
+		append_dims = user_settings.append_dimensions
+		default_transparent_color = user_settings.default_transparent_color
+	
+	lnz.texture_list.append({
+		"filename": tex_filename,
+		"transparent_color": default_transparent_color,
+		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
+	})
 	
 	var tex_line: String
 	if append_dims:
-		tex_line = display_path + " 0 " + str(width) + " " + str(height)
+		tex_line = display_path + " " + str(default_transparent_color) + " " + str(width) + " " + str(height)
 	else:
-		tex_line = display_path + " 0"
+		tex_line = display_path + " " + str(default_transparent_color)
 	
 	print("[STATUS] FileTree: Added '%s' as texture index %d to Texture List (size: %dx%d, transparency: 0)" % [tex_filename, tex_index, width, height])
 	
