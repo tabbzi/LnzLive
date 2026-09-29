@@ -1518,6 +1518,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
 
+				# Inherit no_texture_rotate from base ball so paintball texture stays centered
+				if lnz.no_texture_rotate.has(key):
+					node.set_tile_texture(false)
+
 			#node.base_ball_position = base_node.transform.origin
 			node.base_ball_position = base_node.global_transform.origin
 			
