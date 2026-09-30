@@ -19,6 +19,7 @@ export var z_add                  = 0.0                setget set_z_add
 export var ball_no                = -1
 export var visible_override       = true               setget set_visible
 export var omitted                = false
+export var paint_layer_id         = -1
 
 var select_mode_active            = false
 

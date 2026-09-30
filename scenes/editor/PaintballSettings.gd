@@ -358,6 +358,13 @@ func _on_GeneratePaletteButton_pressed() -> void:
 func _process(delta: float) -> void:
 	if _is_loading_settings: return
 	
+	if PaintballLayerManager and PaintballLayerManager.layers.size() > 0:
+		var total_count: int = PaintballLayerManager.get_total_paintball_count()
+		if total_count != _pending_paintball_count:
+			_pending_paintball_count = total_count
+			_update_paintball_buttons()
+		return
+	
 	var raw_array = null
 	if is_instance_valid(dog_generator) and "_pending_paintballs_data" in dog_generator:
 		raw_array = dog_generator.get("_pending_paintballs_data")
@@ -478,6 +485,8 @@ func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func get_pending_paintball_count() -> int:
+	if PaintballLayerManager:
+		return PaintballLayerManager.get_total_paintball_count()
 	if is_instance_valid(dog_generator):
 		if dog_generator.has_method("get_pending_paintball_nodes"):
 			return dog_generator.get_pending_paintball_nodes().size()

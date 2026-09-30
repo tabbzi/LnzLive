@@ -1667,7 +1667,12 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 		if delete_mode:
 			print("[STATUS] PetViewContainer: attempted eraser click")
-			var pending_paintballs: Array = pet_node.get_pending_paintball_nodes()
+			var active_layer_id: int = PaintballLayerManager.active_layer_id
+			var pending_paintballs: Array
+			if active_layer_id >= 0:
+				pending_paintballs = pet_node.get_pending_paintball_nodes_for_layer(active_layer_id)
+			else:
+				pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
 				print("[WARNING] PetViewContainer: no pending paintballs to erase")
 				return true

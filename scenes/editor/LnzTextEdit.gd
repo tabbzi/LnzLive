@@ -2395,7 +2395,16 @@ func _on_apply_paintballz():
 func apply_paintballz():
 	save_backup()
 
-	var pending_paintballs = pet_node.get_pending_paintballs_data()
+	var pending_paintballs: Array
+	if PaintballLayerManager and PaintballLayerManager.layers.size() > 0:
+		pending_paintballs = []
+		for layer in PaintballLayerManager.layers:
+			if layer.visible:
+				for pb in layer.paintballs:
+					pending_paintballs.append(pb)
+	else:
+		pending_paintballs = pet_node.get_pending_paintballs_data()
+
 	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
@@ -2484,6 +2493,55 @@ func apply_paintballz():
 
 	if pet_view.close_paintball_on_apply:
 		pet_view.close_paintball_mode()
+
+func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -> int:
+	var bounds = get_section_bounds("[Paint Ballz]")
+	if bounds.empty():
+		print("[WARNING] LnzTextEdit: no [Paint Ballz] section found to transfer from")
+		return 0
+
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var transferred_count: int = 0
+	var new_layer_id: int = -1
+
+	for line_idx in range(bounds.start + 1, bounds.end):
+		var line = get_line(line_idx).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+
+		var parts: Array = split_line(line)
+		if parts.size() < 12:
+			continue
+
+		var pb_dict: Dictionary = {
+			"base_ball_no": int(parts[0]),
+			"diameter": int(parts[1]),
+			"relative_pos_lnz": Vector3(int(parts[2]), int(parts[3]), int(parts[4])),
+			"color": int(parts[5]),
+			"outline_color": int(parts[6]),
+			"fuzz": int(parts[7]),
+			"outline_type": int(parts[8]),
+			"group": int(parts[9]),
+			"texture": int(parts[10]),
+			"anchored": bool(int(parts[11])),
+			"relative_pos_local": Vector3.ZERO,
+			"lnz_line_index": line_idx
+		}
+
+		if new_layer_id < 0:
+			new_layer_id = PaintballLayerManager.create_layer(layer_name)
+
+		PaintballLayerManager.get_layer(new_layer_id).add_paintball(pb_dict)
+		transferred_count += 1
+
+	if new_layer_id >= 0:
+		PaintballLayerManager.set_active_layer(new_layer_id)
+		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNK to layer '%s' (id %d)"
+			% [transferred_count, layer_name, new_layer_id])
+	else:
+		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNK")
+
+	return transferred_count
 
 func _on_palette_selected(filename_without_extension):
 	save_backup()
