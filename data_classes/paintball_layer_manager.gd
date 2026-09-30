@@ -3,17 +3,17 @@ extends Node
 ## Autoload singleton that manages paintball layers for paintball mode
 ## Provides layer CRUD, active layer tracking, and signals for UI updates
 
+signal layer_changed
+signal layer_added
+signal layer_removed
+signal layer_cleared
+signal layer_renamed
+signal layer_visibility_toggled
+signal layer_reordered
+
 var layers: Array = []
 var active_layer_id: int = -1
 var next_layer_id: int = 1
-
-signal layer_changed(layer_id)
-signal layer_added(layer_id)
-signal layer_removed(layer_id)
-signal layer_cleared(layer_id)
-signal layer_renamed(layer_id, new_name)
-signal layer_visibility_toggled(layer_id, visible)
-signal layer_reordered(old_index, new_index)
 
 
 func create_layer(name: String = "") -> int:
@@ -60,7 +60,6 @@ func delete_layer(layer_id: int, merge_to_below: bool = false) -> bool:
 			active_layer_id = -1
 
 	layers.remove(idx)
-	layer.free()
 
 	print("[STATUS] PaintballLayerManager: deleted layer %d" % layer_id)
 
@@ -92,10 +91,18 @@ func set_active_layer(layer_id: int) -> bool:
 
 
 func get_active_layer() -> PaintballLayerData:
+	ensure_default_layer()
 	for layer in layers:
 		if layer.layer_id == active_layer_id:
 			return layer
 	return null
+
+
+func ensure_default_layer() -> int:
+	if layers.empty():
+		create_layer("Layer 1")
+		return layers[0].layer_id
+	return active_layer_id
 
 
 func get_layer(layer_id: int) -> PaintballLayerData:
@@ -155,9 +162,11 @@ func toggle_layer_visibility(layer_id: int) -> void:
 		emit_signal("layer_visibility_toggled", layer_id, layer.visible)
 
 
-func get_total_paintball_count() -> int:
+func get_total_paintball_count(visible_only: bool = true) -> int:
 	var total: int = 0
 	for layer in layers:
+		if visible_only and not layer.visible:
+			continue
 		total += layer.get_paintball_count()
 	return total
 
@@ -181,6 +190,13 @@ func clear_all_paintballs() -> void:
 	print("[STATUS] PaintballLayerManager: cleared all paintballs (kept layer structure)")
 
 
+func remove_paintball_by_uid(uid: int) -> bool:
+	for layer in layers:
+		if layer.remove_paintball_by_uid(uid):
+			return true
+	return false
+
+
 func merge_layer_to_below(layer_id: int) -> bool:
 	var idx: int = _get_layer_index(layer_id)
 	if idx <= 0:
@@ -197,7 +213,6 @@ func merge_layer_to_below(layer_id: int) -> bool:
 		+ "to layer %d" % [source.paintballs.size(), layer_id, target.layer_id])
 
 	layers.remove(idx)
-	source.free()
 
 	if active_layer_id == layer_id:
 		active_layer_id = target.layer_id

@@ -2495,6 +2495,9 @@ func apply_paintballz():
 		pet_view.close_paintball_mode()
 
 func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -> int:
+	save_backup()
+	commit_full_snapshot("Transfer Paintballs from LNK")
+	
 	var bounds = get_section_bounds("[Paint Ballz]")
 	if bounds.empty():
 		print("[WARNING] LnzTextEdit: no [Paint Ballz] section found to transfer from")
@@ -2503,6 +2506,7 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var transferred_count: int = 0
 	var new_layer_id: int = -1
+	var lines_to_remove: Dictionary = {}
 
 	for line_idx in range(bounds.start + 1, bounds.end):
 		var line = get_line(line_idx).strip_edges()
@@ -2516,7 +2520,7 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 		var pb_dict: Dictionary = {
 			"base_ball_no": int(parts[0]),
 			"diameter": int(parts[1]),
-			"relative_pos_lnz": Vector3(int(parts[2]), int(parts[3]), int(parts[4])),
+			"relative_pos_lnz": Vector3(float(parts[2]), float(parts[3]), float(parts[4])),
 			"color": int(parts[5]),
 			"outline_color": int(parts[6]),
 			"fuzz": int(parts[7]),
@@ -2533,11 +2537,29 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 
 		PaintballLayerManager.get_layer(new_layer_id).add_paintball(pb_dict)
 		transferred_count += 1
+		lines_to_remove[line_idx] = true
 
 	if new_layer_id >= 0:
+		var all_text: String = get_text()
+		var text_lines: Array = all_text.split("\n")
+		var new_lines: Array = []
+		for i in range(text_lines.size()):
+			if not i in lines_to_remove:
+				new_lines.append(text_lines[i])
+		var new_text: String = ""
+		for i in range(new_lines.size()):
+			new_text += new_lines[i]
+			if i < new_lines.size() - 1:
+				new_text += "\n"
+		text = new_text
+		
 		PaintballLayerManager.set_active_layer(new_layer_id)
 		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNK to layer '%s' (id %d)"
 			% [transferred_count, layer_name, new_layer_id])
+		save_file(true)
+		commit_full_snapshot("Applied Transferred Paintballs")
+		if is_instance_valid(pet_node) and pet_node.has_method("rebuild_pending_paintball_visuals"):
+			pet_node.rebuild_pending_paintball_visuals()
 	else:
 		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNK")
 

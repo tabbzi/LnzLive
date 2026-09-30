@@ -363,6 +363,76 @@ func _process(delta: float) -> void:
 		if total_count != _pending_paintball_count:
 			_pending_paintball_count = total_count
 			_update_paintball_buttons()
+		
+		var props: Dictionary = get_properties()
+		var is_random_walk: bool = props.get("random_walk", false)
+		var is_freeline: bool = props.get("freeline", false)
+
+		if is_random_walk and not is_freeline:
+			var walk_steps: int = props.get("walk_steps", 3)
+			var walk_spread: float = props.get("walk_spread", 50.0) / 100.0
+			var new_walks: Array = []
+			var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
+			var unprocessed: Array = []
+			
+			if active_layer:
+				for pb in active_layer.paintballs:
+					if not pb.get("walk_done", false):
+						unprocessed.append(pb)
+			
+			for dict in unprocessed:
+				dict["walk_done"] = true
+
+				var base_no: int = dict.get("base_ball_no", -1)
+				var base_ball: Spatial = _get_ball_node(base_no)
+				if not is_instance_valid(base_ball): continue
+
+				var world_pos: Vector3 = dict.get("relative_pos_local", Vector3.ZERO)
+				if dict.has("relative_pos_lnz") and dict.get("relative_pos_local", Vector3.ZERO) == Vector3.ZERO:
+					var norm_pos: Vector3 = dict["relative_pos_lnz"].normalized()
+					world_pos = norm_pos * Vector3(1, -1, 1) * (base_ball.ball_size / 2.0) * 0.002
+
+				var base_origin: Vector3 = base_ball.global_transform.origin
+				var curr_size: float = dict.get("diameter", dict.get("size", 20.0))
+				
+				var radius: float = _get_pb_world_radius(dict, null, base_ball)
+				var walk_positions: Array = LnzLiveUtils.generate_surface_walk(world_pos, base_origin, radius, walk_steps, walk_spread)
+				
+				for s in range(walk_steps):
+					var curr_pos: Vector3 = walk_positions[s]
+					curr_size *= rand_range(0.7, 0.95)
+					curr_size = max(1.0, floor(curr_size))
+					
+					var child_dict: Dictionary = dict.duplicate(true)
+					child_dict["walk_done"] = true 
+					child_dict["noise_checked"] = true 
+
+					var local_rel: Vector3 = base_ball.to_local(curr_pos)
+					var engine_scale: float = 1.0
+					if is_instance_valid(dog_generator):
+						if "lnz" in dog_generator and is_instance_valid(dog_generator.lnz):
+							if "scales" in dog_generator.lnz:
+								engine_scale = dog_generator.lnz.scales.x
+
+					var lnz_rel: Vector3 = LnzLiveUtils.world_to_lnz_delta(curr_pos - base_origin, 0.002, engine_scale)
+
+					child_dict["relative_pos_local"] = local_rel
+					child_dict["relative_pos_lnz"] = lnz_rel
+					if child_dict.has("x"):
+						child_dict["x"] = lnz_rel.x
+						child_dict["y"] = lnz_rel.y
+						child_dict["z"] = lnz_rel.z
+					if child_dict.has("position"):
+						child_dict["position"] = lnz_rel
+
+					child_dict["diameter"] = max(1.0, curr_size)
+					if child_dict.has("size"): child_dict["size"] = max(1.0, curr_size)
+					
+					new_walks.append(child_dict)
+
+			for w in new_walks:
+				if is_instance_valid(dog_generator) and dog_generator.has_method("add_pending_paintball"):
+					dog_generator.add_pending_paintball(w)
 		return
 	
 	var raw_array = null
