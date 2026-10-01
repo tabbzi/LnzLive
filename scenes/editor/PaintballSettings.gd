@@ -91,6 +91,8 @@ onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
 onready var _layers_tree: Tree = find_node("LayersTree")
 onready var _clear_all_paintballs_button: Button = find_node("ClearAllPaintballsButton")
 onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
+onready var _layer_section: Control = find_node("LayerSection")
+onready var _use_layers_checkbox: CheckBox = find_node("UseLayersCheckBox")
 
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
@@ -709,6 +711,7 @@ func get_properties() -> Dictionary:
 	properties["walk_steps"] = _walk_steps.value
 	properties["walk_spread"] = _walk_spread.value
 	properties["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	properties["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
 	return properties
 
 func export_paintball_json() -> void:
@@ -811,6 +814,9 @@ func _apply_settings_dict(data: Dictionary) -> void:
 	if data.has("walk_steps"): _walk_steps.value = data["walk_steps"]
 	if data.has("walk_spread"): _walk_spread.value = data["walk_spread"]
 	if data.has("exclude_eye_ballz"): _exclude_eye_ballz.pressed = data["exclude_eye_ballz"]
+	if data.has("use_layers"):
+		if _use_layers_checkbox: _use_layers_checkbox.pressed = data["use_layers"]
+		if _layer_section: _layer_section.visible = data["use_layers"]
 	_is_loading_settings = false
 	save_settings()
 	_refresh_all_previews()
@@ -936,6 +942,9 @@ func _connect_settings_signals() -> void:
 	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
 	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
 	_line_btn.connect("toggled", self, "_on_line_btn_toggled")
+	
+	if _use_layers_checkbox:
+		_use_layers_checkbox.connect("toggled", self, "_on_use_layers_toggled")
 	_hline_btn.connect("toggled", self, "_on_hline_btn_toggled")
 	_vline_btn.connect("toggled", self, "_on_vline_btn_toggled")
 	_brush_btn.connect("toggled", self, "_on_brush_btn_toggled")
@@ -1406,6 +1415,7 @@ func save_settings() -> void:
 	values["walk_steps"] = _walk_steps.value
 	values["walk_spread"] = _walk_spread.value
 	values["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	values["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
 	LnzLiveUtils.save_config("PaintballProperties", values, "user://settings.cfg")
 	var design_values: Dictionary = {}
 	design_values["design_paintballs"] = _design_canvas.design_paintballs
@@ -1460,6 +1470,9 @@ func load_settings() -> void:
 	_walk_steps.value = data.get("walk_steps", 3.0)
 	_walk_spread.value = data.get("walk_spread", 5.0)
 	_exclude_eye_ballz.pressed = data.get("exclude_eye_ballz", true)
+	var use_layers: bool = data.get("use_layers", false)
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = use_layers
+	if _layer_section: _layer_section.visible = use_layers
 
 	var loaded_paintballs: Array = design_data.get("design_paintballs", [])
 	if loaded_paintballs.size() > 0:
@@ -1571,6 +1584,9 @@ func _on_reset_defaults_pressed() -> void:
 	_on_palette_changed()
 	_refresh_all_previews()
 
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = false
+	if _layer_section: _layer_section.visible = false
+
 func _get_design_line_mode() -> int:
 	if _brush_btn.pressed:
 		return 0
@@ -1581,6 +1597,12 @@ func _get_design_line_mode() -> int:
 	elif _vline_btn.pressed:
 		return 3
 	return 0
+
+func _on_use_layers_toggled(is_on: bool) -> void:
+	print("[STATUS] PaintballSettings: use_layers toggled: %s" % is_on)
+	if is_instance_valid(_layer_section):
+		_layer_section.visible = is_on
+	_on_setting_changed()
 
 func _sync_design_line_mode(mode: int) -> void:
 	_brush_btn.set_block_signals(true)

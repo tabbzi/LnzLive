@@ -286,6 +286,7 @@ custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
 [node name="LayerSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
 margin_left = 0.0
 margin_top = 61.0
 margin_right = 483.0
@@ -1276,6 +1277,14 @@ hint_tooltip = "Exclude eye ballz (eyes and irises) from paintball generation"
 custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Exclude Eye Ballz"
+
+[node name="UseLayersCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced"]
+margin_top = 126.0
+margin_right = 485.0
+margin_bottom = 155.0
+hint_tooltip = "Show layer management controls"
+custom_fonts/font = SubResource( 3 )
+text = "Use Layers"
 
 [node name="PatternInfoDialog" type="WindowDialog" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_left = 35.0
