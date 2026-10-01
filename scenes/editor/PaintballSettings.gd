@@ -84,6 +84,13 @@ onready var _pattern_info_dialog: WindowDialog = find_node("PatternInfoDialog")
 onready var _import_pattern_button: Button = find_node("ImportPatternButton")
 onready var _export_pattern_button: Button = find_node("ExportPatternButton")
 
+onready var _add_layer_button: Button = find_node("AddLayerButton")
+onready var _transfer_lnz_button: Button = find_node("TransferLnzButton")
+onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
+onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
+onready var _layers_tree: Tree = find_node("LayersTree")
+onready var _clear_all_paintballs_button: Button = find_node("ClearAllPaintballsButton")
+
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
@@ -140,6 +147,8 @@ const DEFAULT_DESIGN_SLOTS: Array = [
 
 var design_color_slots: Array = []
 
+const LAYER_ARROW_ICON = preload("res://resources/icons/ico_arr_UD.png")
+
 var _pending_paintball_count: int = 0
 
 const DESIGN_CANVAS_SIZE: float = 200.0
@@ -174,6 +183,8 @@ func _ready() -> void:
 	_setup_color_previews()
 	_connect_settings_signals()
 	_connect_design_signals()
+	_setup_layer_tree()
+	_connect_layer_manager_signals()
 
 	_brush_space_slider.connect("value_changed", self, "_on_brush_space_changed")
 
@@ -363,6 +374,7 @@ func _process(delta: float) -> void:
 		if total_count != _pending_paintball_count:
 			_pending_paintball_count = total_count
 			_update_paintball_buttons()
+			_refresh_layers_tree()
 		
 		var props: Dictionary = get_properties()
 		var is_random_walk: bool = props.get("random_walk", false)
@@ -387,16 +399,17 @@ func _process(delta: float) -> void:
 				var base_ball: Spatial = _get_ball_node(base_no)
 				if not is_instance_valid(base_ball): continue
 
-				var world_pos: Vector3 = dict.get("relative_pos_local", Vector3.ZERO)
-				if dict.has("relative_pos_lnz") and dict.get("relative_pos_local", Vector3.ZERO) == Vector3.ZERO:
+				var rel_local: Vector3 = dict.get("relative_pos_local", Vector3.ZERO)
+				if rel_local == Vector3.ZERO and dict.has("relative_pos_lnz"):
 					var norm_pos: Vector3 = dict["relative_pos_lnz"].normalized()
-					world_pos = norm_pos * Vector3(1, -1, 1) * (base_ball.ball_size / 2.0) * 0.002
-
-				var base_origin: Vector3 = base_ball.global_transform.origin
+					rel_local = norm_pos * Vector3(1, -1, 1) * (base_ball.ball_size / 2.0) * 0.002
+					dict["relative_pos_local"] = rel_local
+				
+				var world_pos: Vector3 = base_ball.to_global(rel_local)
 				var curr_size: float = dict.get("diameter", dict.get("size", 20.0))
 				
 				var radius: float = _get_pb_world_radius(dict, null, base_ball)
-				var walk_positions: Array = LnzLiveUtils.generate_surface_walk(world_pos, base_origin, radius, walk_steps, walk_spread)
+				var walk_positions: Array = LnzLiveUtils.generate_surface_walk(world_pos, base_ball.global_transform.origin, radius, walk_steps, walk_spread)
 				
 				for s in range(walk_steps):
 					var curr_pos: Vector3 = walk_positions[s]
@@ -414,7 +427,7 @@ func _process(delta: float) -> void:
 							if "scales" in dog_generator.lnz:
 								engine_scale = dog_generator.lnz.scales.x
 
-					var lnz_rel: Vector3 = LnzLiveUtils.world_to_lnz_delta(curr_pos - base_origin, 0.002, engine_scale)
+					var lnz_rel: Vector3 = LnzLiveUtils.world_to_lnz_delta(curr_pos - base_ball.global_transform.origin, 0.002, engine_scale)
 
 					child_dict["relative_pos_local"] = local_rel
 					child_dict["relative_pos_lnz"] = lnz_rel
@@ -1630,3 +1643,213 @@ func _on_brush_btn_toggled(pressed: bool) -> void:
 		_design_canvas.update()
 		save_settings()
 		call_deferred("_sync_design_line_mode", 0)
+
+
+### LAYER MANAGEMENT ###
+
+const BTN_UP = 0
+const BTN_DOWN = 1
+const BTN_MERGE = 2
+const BTN_CLEAR = 3
+const BTN_DELETE = 4
+
+var _layer_icons: Dictionary = {}
+var _is_refreshing_layer_tree: bool = false
+
+func _connect_layer_manager_signals() -> void:
+	if not is_instance_valid(PaintballLayerManager):
+		return
+	PaintballLayerManager.ensure_default_layer()
+	PaintballLayerManager.connect("layer_added", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_removed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_cleared", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_renamed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_visibility_toggled", self, "_on_layer_visibility_toggled")
+	PaintballLayerManager.connect("layer_reordered", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_changed", self, "_on_layer_visuals_dirty")
+
+func _on_layer_visuals_dirty(_arg1 = null, _arg2 = null) -> void:
+	call_deferred("_refresh_layers_tree")
+
+func _on_layer_visibility_toggled(layer_id: int, is_vis: bool) -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("get_pending_paintball_nodes_for_layer"):
+		var nodes: Array = dog_gen.get_pending_paintball_nodes_for_layer(layer_id)
+		for node in nodes:
+			if is_instance_valid(node):
+				node.visible = is_vis
+	_update_paintball_buttons()
+	call_deferred("_refresh_layers_tree")
+
+func _setup_layer_tree() -> void:
+	if not is_instance_valid(_layers_tree):
+		return
+	_layers_tree.columns = 4
+	_layers_tree.hide_root = true
+	_layers_tree.select_mode = Tree.SELECT_ROW
+	_layers_tree.set_column_titles_visible(true)
+	_layers_tree.set_column_title(0, "Vis")
+	_layers_tree.set_column_title(1, "Layer")
+	_layers_tree.set_column_title(2, "PB")
+	_layers_tree.set_column_title(3, "Actions")
+	_layers_tree.set_column_expand(0, false)
+	_layers_tree.set_column_min_width(0, 36)
+	_layers_tree.set_column_expand(1, true)
+	_layers_tree.set_column_expand(2, false)
+	_layers_tree.set_column_min_width(2, 45)
+	_layers_tree.set_column_expand(3, false)
+	_layers_tree.set_column_min_width(3, 120)
+	_layers_tree.connect("item_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("cell_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("item_edited", self, "_on_LayersTree_item_edited")
+	_layers_tree.connect("button_pressed", self, "_on_LayersTree_button_pressed")
+	if is_instance_valid(_add_layer_button):
+		_add_layer_button.connect("pressed", self, "_on_AddLayerButton_pressed")
+	if is_instance_valid(_transfer_lnz_button):
+		_transfer_lnz_button.connect("pressed", self, "_on_TransferLnzButton_pressed")
+	if is_instance_valid(_clear_all_layers_button):
+		_clear_all_layers_button.connect("pressed", self, "_on_ClearAllLayersButton_pressed")
+	if is_instance_valid(_clear_all_paintballs_button):
+		_clear_all_paintballs_button.connect("pressed", self, "_on_ClearAllPaintballsButton_pressed")
+	_refresh_layers_tree()
+
+func _refresh_layers_tree() -> void:
+	if not is_instance_valid(_layers_tree) or _is_refreshing_layer_tree:
+		return
+	_is_refreshing_layer_tree = true
+	_layers_tree.clear()
+	_load_layer_icons()
+	var root_item: TreeItem = _layers_tree.create_item()
+	var layer_count: int = PaintballLayerManager.layers.size()
+	for i in range(layer_count):
+		var layer: PaintballLayerData = PaintballLayerManager.layers[i]
+		var item: TreeItem = _layers_tree.create_item(root_item)
+		item.set_metadata(0, layer.layer_id)
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		item.set_checked(0, layer.visible)
+		item.set_editable(0, true)
+		item.set_cell_mode(1, TreeItem.CELL_MODE_STRING)
+		item.set_text(1, layer.name)
+		item.set_editable(1, true)
+		item.set_cell_mode(2, TreeItem.CELL_MODE_STRING)
+		item.set_text(2, str(layer.get_paintball_count()))
+		item.set_editable(2, false)
+		item.set_cell_mode(3, TreeItem.CELL_MODE_STRING)
+		item.set_text(3, "")
+		item.set_editable(3, false)
+		item.add_button(3, _layer_icons["up"], BTN_UP, i == 0, "Move Layer Up")
+		item.add_button(3, _layer_icons["down"], BTN_DOWN, i == layer_count - 1, "Move Layer Down")
+		item.add_button(3, _layer_icons["merge"], BTN_MERGE, i == 0, "Merge Into Layer Above")
+		item.add_button(3, _layer_icons["clear"], BTN_CLEAR, layer.get_paintball_count() == 0, "Clear Layer Paintballs")
+		item.add_button(3, _layer_icons["delete"], BTN_DELETE, layer_count <= 1, "Delete Layer")
+		if layer.layer_id == PaintballLayerManager.active_layer_id:
+			for col_idx in range(4):
+				item.set_custom_bg_color(col_idx, Color(0.25, 0.45, 0.45, 0.6))
+	if is_instance_valid(_active_layer_label):
+		var active: PaintballLayerData = PaintballLayerManager.get_active_layer()
+		_active_layer_label.text = "Active: " + (active.name if active else "None")
+	_update_paintball_buttons()
+	_is_refreshing_layer_tree = false
+
+func _make_btn_icon(bg: Color) -> ImageTexture:
+	var img := Image.new()
+	img.create(14, 14, false, Image.FORMAT_RGBA8)
+	img.fill(bg)
+	var tex := ImageTexture.new()
+	tex.create_from_image(img, 0)
+	return tex
+
+func _load_layer_icons() -> void:
+	if not _layer_icons.empty():
+		return
+	_layer_icons["up"] = _make_btn_icon(Color(0.35, 0.65, 0.85))
+	_layer_icons["down"] = _make_btn_icon(Color(0.25, 0.50, 0.70))
+	_layer_icons["merge"] = _make_btn_icon(Color(0.65, 0.45, 0.85))
+	_layer_icons["clear"] = _make_btn_icon(Color(0.85, 0.65, 0.25))
+	_layer_icons["delete"] = _make_btn_icon(Color(0.85, 0.30, 0.30))
+
+func _rebuild_3d_pending_visuals() -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("rebuild_pending_paintball_visuals"):
+		dog_gen.rebuild_pending_paintball_visuals()
+
+func _on_AddLayerButton_pressed() -> void:
+	PaintballLayerManager.create_layer()
+	_refresh_layers_tree()
+
+func _on_TransferLnzButton_pressed() -> void:
+	var lnz_text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+	if lnz_text_edit and lnz_text_edit.has_method("transfer_paintballs_from_lnz_to_layer"):
+		var count: int = lnz_text_edit.transfer_paintballs_from_lnz_to_layer("Transferred")
+		if count > 0:
+			_refresh_layers_tree()
+
+func _on_ClearAllLayersButton_pressed() -> void:
+	PaintballLayerManager.clear_all_paintballs()
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+func _on_ClearAllPaintballsButton_pressed() -> void:
+	PaintballLayerManager.clear_all_paintballs()
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+func _on_LayersTree_item_selected() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if layer_id >= 0 and layer_id != PaintballLayerManager.active_layer_id:
+		PaintballLayerManager.set_active_layer(layer_id)
+		call_deferred("_refresh_layers_tree")
+
+func _on_LayersTree_item_edited() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var item: TreeItem = _layers_tree.get_edited()
+	if not is_instance_valid(item):
+		return
+	var col: int = _layers_tree.get_selected_column()
+	var layer_id: int = int(item.get_metadata(0))
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
+	if col == 0:
+		var new_checked: bool = item.is_checked(0)
+		if new_checked != layer.visible:
+			PaintballLayerManager.toggle_layer_visibility(layer_id)
+	elif col == 1:
+		var new_name: String = item.get_text(1).strip_edges()
+		if new_name != "" and new_name != layer.name:
+			PaintballLayerManager.rename_layer(layer_id, new_name)
+
+func _on_LayersTree_button_pressed(item: TreeItem, _column: int, id: int) -> void:
+	if not is_instance_valid(item):
+		return
+	var layer_id: int = int(item.get_metadata(0))
+	match id:
+		BTN_UP:
+			if PaintballLayerManager.move_layer_up(layer_id):
+				_rebuild_3d_pending_visuals()
+				_refresh_layers_tree()
+		BTN_DOWN:
+			if PaintballLayerManager.move_layer_down(layer_id):
+				_rebuild_3d_pending_visuals()
+				_refresh_layers_tree()
+		BTN_MERGE:
+			if PaintballLayerManager.merge_layer_to_below(layer_id):
+				_rebuild_3d_pending_visuals()
+				_refresh_layers_tree()
+		BTN_CLEAR:
+			PaintballLayerManager.clear_layer(layer_id)
+			_rebuild_3d_pending_visuals()
+			_refresh_layers_tree()
+		BTN_DELETE:
+			_delete_layer(layer_id)
+
+func _delete_layer(layer_id: int) -> void:
+	if PaintballLayerManager.delete_layer(layer_id, false):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()

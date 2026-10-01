@@ -2840,7 +2840,7 @@ func remove_last_pending_paintball():
 	for node in _pending_paintball_nodes:
 		if not is_instance_valid(node):
 			continue
-		if node.get_meta("pb_uid", -1) == uid:
+		if node.has_meta("pb_uid") and node.get_meta("pb_uid") == uid:
 			node_to_remove = node
 			break
 
@@ -2864,12 +2864,12 @@ func remove_specific_pending_paintball(paintball_node):
 			found = true
 			print("[STATUS] Node: remove_specific_pending_paintball: removed by uid %d from layer" % uid)
 		
-		if not found:
-			var index = _pending_paintball_nodes.find(paintball_node)
-			if index != -1:
-				_pending_paintball_nodes.remove(index)
-				_pending_paintballs_data.remove(index)
-				print("[STATUS] Node: remove_specific_pending_paintball: removed from fallback list at index %d" % index)
+		var node_idx = _pending_paintball_nodes.find(paintball_node)
+		if node_idx != -1:
+			_pending_paintball_nodes.remove(node_idx)
+			_pending_paintballs_data.remove(node_idx)
+			found = true
+			print("[STATUS] Node: remove_specific_pending_paintball: removed from fallback list at index %d" % node_idx)
 		
 		if is_instance_valid(paintball_node):
 			paintball_node.queue_free()

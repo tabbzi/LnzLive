@@ -2515,19 +2515,22 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 
 		var parts: Array = split_line(line)
 		if parts.size() < 12:
-			continue
+			if parts.size() < 5:
+				continue
+			while parts.size() < 12:
+				parts.append("0")
 
 		var pb_dict: Dictionary = {
 			"base_ball_no": int(parts[0]),
 			"diameter": int(parts[1]),
 			"relative_pos_lnz": Vector3(float(parts[2]), float(parts[3]), float(parts[4])),
-			"color": int(parts[5]),
-			"outline_color": int(parts[6]),
-			"fuzz": int(parts[7]),
-			"outline_type": int(parts[8]),
-			"group": int(parts[9]),
-			"texture": int(parts[10]),
-			"anchored": bool(int(parts[11])),
+			"color": int(parts[5]) if parts.size() > 5 else 0,
+			"outline_color": int(parts[6]) if parts.size() > 6 else 0,
+			"fuzz": int(parts[7]) if parts.size() > 7 else 0,
+			"outline_type": int(parts[8]) if parts.size() > 8 else -1,
+			"group": int(parts[9]) if parts.size() > 9 else 0,
+			"texture": int(parts[10]) if parts.size() > 10 else -1,
+			"anchored": bool(int(parts[11])) if parts.size() > 11 else false,
 			"relative_pos_local": Vector3.ZERO,
 			"lnz_line_index": line_idx
 		}

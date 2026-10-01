@@ -14,6 +14,7 @@ signal layer_reordered
 var layers: Array = []
 var active_layer_id: int = -1
 var next_layer_id: int = 1
+var _next_pb_uid: int = 1
 
 
 func create_layer(name: String = "") -> int:
@@ -46,9 +47,9 @@ func delete_layer(layer_id: int, merge_to_below: bool = false) -> bool:
 	if merge_to_below and idx > 0:
 		var target: PaintballLayerData = layers[idx - 1]
 		for pb in layer.paintballs:
-			target.add_paintball(pb)
-		print("[STATUS] PaintballLayerManager: merged %d paintballs from layer %d "
-			+ "to layer below" % [layer.paintballs.size(), layer_id])
+			target.paintballs.append(pb)
+		print("[STATUS] PaintballLayerManager: merged %d paintballs from layer %d to layer below"
+			% [layer.paintballs.size(), layer_id])
 
 	if active_layer_id == layer_id:
 		if layers.size() > 1:
@@ -157,8 +158,8 @@ func toggle_layer_visibility(layer_id: int) -> void:
 	var layer: PaintballLayerData = get_layer(layer_id)
 	if layer:
 		layer.visible = not layer.visible
-		print("[STATUS] PaintballLayerManager: toggled visibility of layer %d "
-			+ "to %s" % [layer_id, str(layer.visible)])
+		print("[STATUS] PaintballLayerManager: toggled visibility of layer %d to %s"
+			% [layer_id, str(layer.visible)])
 		emit_signal("layer_visibility_toggled", layer_id, layer.visible)
 
 
@@ -207,10 +208,10 @@ func merge_layer_to_below(layer_id: int) -> bool:
 	var target: PaintballLayerData = layers[idx - 1]
 
 	for pb in source.paintballs:
-		target.add_paintball(pb)
+		target.paintballs.append(pb)
 
-	print("[STATUS] PaintballLayerManager: merged %d paintballs from layer %d "
-		+ "to layer %d" % [source.paintballs.size(), layer_id, target.layer_id])
+	print("[STATUS] PaintballLayerManager: merged %d paintballs from layer %d to layer %d"
+		% [source.paintballs.size(), layer_id, target.layer_id])
 
 	layers.remove(idx)
 
@@ -226,3 +227,9 @@ func _get_layer_index(layer_id: int) -> int:
 		if layers[i].layer_id == layer_id:
 			return i
 	return -1
+
+
+func allocate_paintball_uid() -> int:
+	var uid: int = _next_pb_uid
+	_next_pb_uid += 1
+	return uid
