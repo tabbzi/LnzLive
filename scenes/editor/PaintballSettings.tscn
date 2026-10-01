@@ -412,7 +412,7 @@ custom_styles/focus = SubResource( 5 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
-text = "Merge Up"
+text = "Merge Down"
 
 [node name="ClearLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
 margin_left = 252.0

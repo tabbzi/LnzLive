@@ -1680,12 +1680,13 @@ func _refresh_layers_tree() -> void:
 		item.set_metadata(0, layer.layer_id)
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
 		item.set_checked(0, layer.visible)
+		item.set_text(0, layer.name)
 		item.set_editable(0, true)
 		item.set_cell_mode(1, TreeItem.CELL_MODE_STRING)
-		item.set_text(1, layer.name)
-		item.set_editable(1, true)
+		item.set_text(1, str(layer.get_paintball_count()))
+		item.set_editable(1, false)
 		item.set_cell_mode(2, TreeItem.CELL_MODE_STRING)
-		item.set_text(2, str(layer.get_paintball_count()))
+		item.set_text(2, "")
 		item.set_editable(2, false)
 		if layer.layer_id == PaintballLayerManager.active_layer_id:
 			for col_idx in range(3):
@@ -1748,6 +1749,9 @@ func _on_LayersTree_item_edited() -> void:
 		var new_checked: bool = item.is_checked(0)
 		if new_checked != layer.visible:
 			PaintballLayerManager.toggle_layer_visibility(layer_id)
+		var new_name: String = item.get_text(0).strip_edges()
+		if new_name != "" and new_name != layer.name:
+			PaintballLayerManager.rename_layer(layer_id, new_name)
 	elif col == 1:
 		var new_name: String = item.get_text(1).strip_edges()
 		if new_name != "" and new_name != layer.name:
@@ -1828,9 +1832,13 @@ func _delete_layer(layer_id: int) -> void:
 			_delete_layer_dialog.connect("confirmed", self, "_on_delete_layer_confirmed")
 		if not _delete_layer_dialog.is_connected("canceled", self, "_on_delete_layer_confirmed"):
 			_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_confirmed")
-		if not _delete_layer_dialog.get_cancel_button().is_connected("pressed", self, "_on_delete_layer_confirmed"):
-			_delete_layer_dialog.get_cancel_button().connect("pressed", self, "_on_delete_layer_confirmed")
-		_delete_layer_dialog.get_ok_button().visible = false
+		var cancel_btn: Button = _delete_layer_dialog.find_node("CancelButton")
+		if is_instance_valid(cancel_btn):
+			if not cancel_btn.is_connected("pressed", self, "_on_delete_layer_confirmed"):
+				cancel_btn.connect("pressed", self, "_on_delete_layer_confirmed")
+		var ok_btn: Button = _delete_layer_dialog.find_node("OKButton")
+		if is_instance_valid(ok_btn):
+			ok_btn.visible = false
 		var merge_btn: Button = _delete_layer_dialog.find_node("MergeButton")
 		var discard_btn: Button = _delete_layer_dialog.find_node("DiscardButton")
 		if is_instance_valid(merge_btn):
