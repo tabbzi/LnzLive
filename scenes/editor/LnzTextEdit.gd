@@ -2556,7 +2556,8 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 		if new_layer_id < 0:
 			new_layer_id = PaintballLayerManager.create_layer(layer_name)
 
-		PaintballLayerManager.get_layer(new_layer_id).add_paintball(pb_dict)
+		var layer = PaintballLayerManager.get_layer(new_layer_id)
+		layer.paintballs.insert(0, pb_dict)
 		transferred_count += 1
 		lines_to_remove[line_idx] = true
 
