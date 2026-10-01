@@ -1605,13 +1605,6 @@ func _on_brush_btn_toggled(pressed: bool) -> void:
 
 ### LAYER MANAGEMENT ###
 
-const BTN_UP = 0
-const BTN_DOWN = 1
-const BTN_MERGE = 2
-const BTN_CLEAR = 3
-const BTN_DELETE = 4
-
-var _layer_icons: Dictionary = {}
 var _is_refreshing_layer_tree: bool = false
 var _pending_delete_layer_id: int = -1
 
@@ -1643,33 +1636,35 @@ func _on_layer_visibility_toggled(layer_id: int, is_vis: bool) -> void:
 func _setup_layer_tree() -> void:
 	if not is_instance_valid(_layers_tree):
 		return
-	_layers_tree.columns = 4
+	_layers_tree.columns = 3
 	_layers_tree.hide_root = true
 	_layers_tree.select_mode = Tree.SELECT_ROW
 	_layers_tree.set_column_titles_visible(true)
 	_layers_tree.set_column_title(0, "Vis")
 	_layers_tree.set_column_title(1, "Layer")
 	_layers_tree.set_column_title(2, "PB")
-	_layers_tree.set_column_title(3, "Actions")
-	_layers_tree.set_column_expand(0, false)
-	_layers_tree.set_column_min_width(0, 36)
+	_layers_tree.set_column_expand(0, true)
 	_layers_tree.set_column_expand(1, true)
-	_layers_tree.set_column_expand(2, false)
-	_layers_tree.set_column_min_width(2, 45)
-	_layers_tree.set_column_expand(3, false)
-	_layers_tree.set_column_min_width(3, 120)
+	_layers_tree.set_column_expand(2, true)
 	_layers_tree.connect("item_selected", self, "_on_LayersTree_item_selected")
 	_layers_tree.connect("cell_selected", self, "_on_LayersTree_item_selected")
 	_layers_tree.connect("item_edited", self, "_on_LayersTree_item_edited")
-	_layers_tree.connect("button_pressed", self, "_on_LayersTree_button_pressed")
 	if is_instance_valid(_add_layer_button):
 		_add_layer_button.connect("pressed", self, "_on_AddLayerButton_pressed")
 	if is_instance_valid(_transfer_lnz_button):
 		_transfer_lnz_button.connect("pressed", self, "_on_TransferLnzButton_pressed")
 	if is_instance_valid(_clear_all_layers_button):
 		_clear_all_layers_button.connect("pressed", self, "_on_ClearAllLayersButton_pressed")
-	if is_instance_valid(_clear_all_paintballs_button):
-		_clear_all_paintballs_button.connect("pressed", self, "_on_ClearAllPaintballsButton_pressed")
+	if is_instance_valid(find_node("MoveUpButton")):
+		find_node("MoveUpButton").connect("pressed", self, "_on_MoveUpButton_pressed")
+	if is_instance_valid(find_node("MoveDownButton")):
+		find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
+	if is_instance_valid(find_node("MergeButton")):
+		find_node("MergeButton").connect("pressed", self, "_on_MergeButton_pressed")
+	if is_instance_valid(find_node("ClearLayerButton")):
+		find_node("ClearLayerButton").connect("pressed", self, "_on_ClearLayerButton_pressed")
+	if is_instance_valid(find_node("DeleteLayerButton")):
+		find_node("DeleteLayerButton").connect("pressed", self, "_on_DeleteLayerButton_pressed")
 	_refresh_layers_tree()
 
 func _refresh_layers_tree() -> void:
@@ -1677,7 +1672,6 @@ func _refresh_layers_tree() -> void:
 		return
 	_is_refreshing_layer_tree = true
 	_layers_tree.clear()
-	_load_layer_icons()
 	var root_item: TreeItem = _layers_tree.create_item()
 	var layer_count: int = PaintballLayerManager.layers.size()
 	for i in range(layer_count):
@@ -1693,39 +1687,14 @@ func _refresh_layers_tree() -> void:
 		item.set_cell_mode(2, TreeItem.CELL_MODE_STRING)
 		item.set_text(2, str(layer.get_paintball_count()))
 		item.set_editable(2, false)
-		item.set_cell_mode(3, TreeItem.CELL_MODE_STRING)
-		item.set_text(3, "")
-		item.set_editable(3, false)
-		item.add_button(3, _layer_icons["up"], BTN_UP, i == 0, "Move Layer Up")
-		item.add_button(3, _layer_icons["down"], BTN_DOWN, i == layer_count - 1, "Move Layer Down")
-		item.add_button(3, _layer_icons["merge"], BTN_MERGE, i == 0, "Merge Into Layer Above")
-		item.add_button(3, _layer_icons["clear"], BTN_CLEAR, layer.get_paintball_count() == 0, "Clear Layer Paintballs")
-		item.add_button(3, _layer_icons["delete"], BTN_DELETE, layer_count <= 1, "Delete Layer")
 		if layer.layer_id == PaintballLayerManager.active_layer_id:
-			for col_idx in range(4):
+			for col_idx in range(3):
 				item.set_custom_bg_color(col_idx, Color(0.25, 0.45, 0.45, 0.6))
 	if is_instance_valid(_active_layer_label):
 		var active: PaintballLayerData = PaintballLayerManager.get_active_layer()
 		_active_layer_label.text = "Active: " + (active.name if active else "None")
 	_update_paintball_buttons()
 	_is_refreshing_layer_tree = false
-
-func _make_btn_icon(bg: Color) -> ImageTexture:
-	var img := Image.new()
-	img.create(14, 14, false, Image.FORMAT_RGBA8)
-	img.fill(bg)
-	var tex := ImageTexture.new()
-	tex.create_from_image(img, 0)
-	return tex
-
-func _load_layer_icons() -> void:
-	if not _layer_icons.empty():
-		return
-	_layer_icons["up"] = _make_btn_icon(Color(0.35, 0.65, 0.85))
-	_layer_icons["down"] = _make_btn_icon(Color(0.25, 0.50, 0.70))
-	_layer_icons["merge"] = _make_btn_icon(Color(0.65, 0.45, 0.85))
-	_layer_icons["clear"] = _make_btn_icon(Color(0.85, 0.65, 0.25))
-	_layer_icons["delete"] = _make_btn_icon(Color(0.85, 0.30, 0.30))
 
 func _rebuild_3d_pending_visuals() -> void:
 	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
@@ -1784,29 +1753,61 @@ func _on_LayersTree_item_edited() -> void:
 		if new_name != "" and new_name != layer.name:
 			PaintballLayerManager.rename_layer(layer_id, new_name)
 
-func _on_LayersTree_button_pressed(item: TreeItem, _column: int, id: int) -> void:
-	if not is_instance_valid(item):
+
+func _on_MoveDownButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
 		return
-	var layer_id: int = int(item.get_metadata(0))
-	match id:
-		BTN_UP:
-			if PaintballLayerManager.move_layer_up(layer_id):
-				_rebuild_3d_pending_visuals()
-				_refresh_layers_tree()
-		BTN_DOWN:
-			if PaintballLayerManager.move_layer_down(layer_id):
-				_rebuild_3d_pending_visuals()
-				_refresh_layers_tree()
-		BTN_MERGE:
-			if PaintballLayerManager.merge_layer_to_below(layer_id):
-				_rebuild_3d_pending_visuals()
-				_refresh_layers_tree()
-		BTN_CLEAR:
-			PaintballLayerManager.clear_layer(layer_id)
-			_rebuild_3d_pending_visuals()
-			_refresh_layers_tree()
-		BTN_DELETE:
-			_delete_layer(layer_id)
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_up(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_MoveUpButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_down(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_MergeButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	var idx: int = -1
+	for i in range(PaintballLayerManager.layers.size()):
+		if PaintballLayerManager.layers[i].layer_id == layer_id:
+			idx = i
+			break
+	if idx <= 0:
+		print("[WARNING] PaintballSettings: cannot merge layer %d — it is already the top layer" % layer_id)
+		return
+	if PaintballLayerManager.merge_layer_to_below(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_ClearLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	PaintballLayerManager.clear_layer(layer_id)
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+
+func _on_DeleteLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	_delete_layer(layer_id)
 
 func _delete_layer(layer_id: int) -> void:
 	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)

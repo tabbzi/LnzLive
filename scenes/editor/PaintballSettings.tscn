@@ -361,7 +361,7 @@ margin_bottom = 190.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 rect_min_size = Vector2( 0, 150 )
-columns = 4
+columns = 3
 hide_root = true
 select_mode = 1
 
@@ -371,9 +371,10 @@ margin_top = 195.0
 margin_right = 483.0
 margin_bottom = 220.0
 alignment = 1
+custom_constants/separation = 4
 
-[node name="ClearAllPaintballsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_right = 483.0
+[node name="MoveUpButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_right = 80.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -383,7 +384,65 @@ custom_styles/focus = SubResource( 5 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
-text = "Clear All Paintballs"
+text = "Move Up"
+
+[node name="MoveDownButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 84.0
+margin_right = 164.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Move Down"
+
+[node name="MergeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 168.0
+margin_right = 248.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Merge Up"
+
+[node name="ClearLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 252.0
+margin_right = 318.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 0.2, 0.5, 1, 1 )
+text = "Clear"
+
+[node name="DeleteLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 322.0
+margin_right = 388.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 1, 0.2, 0.2, 1 )
+text = "Delete"
 
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 321.0
