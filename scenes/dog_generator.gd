@@ -485,6 +485,8 @@ func generate_pet(file_path):
 
 	if file_path != last_loaded_filepath:
 
+		_clear_pending_paintballs_on_pet_switch()
+
 		# TBD: May be helpful to clear caches when switching models (not on every reload)
 		# clear_texture_cache()
 		# _atlas_textures.clear()
@@ -3296,3 +3298,12 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 	addball.position = addball.position * (lnz.scales[0] / 255.0)
 	
 	return addball
+
+func _clear_pending_paintballs_on_pet_switch() -> void:
+	if is_instance_valid(PaintballLayerManager):
+		PaintballLayerManager.clear_all_paintballs()
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()

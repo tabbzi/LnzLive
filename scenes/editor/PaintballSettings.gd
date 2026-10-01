@@ -181,6 +181,8 @@ func _ready() -> void:
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
 
+	_load_layer_config()
+
 	_setup_color_previews()
 	_connect_settings_signals()
 	_connect_design_signals()
@@ -1902,6 +1904,9 @@ func save_layer_config() -> void:
 	settings.save("user://paintball_layer_config.cfg")
 
 func load_layer_config() -> void:
+	_load_layer_config()
+
+func _load_layer_config() -> void:
 	var settings := ConfigFile.new()
 	var err := settings.load("user://paintball_layer_config.cfg")
 	if err != OK:
