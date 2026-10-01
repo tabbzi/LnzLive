@@ -37,6 +37,13 @@ func create_layer(name: String = "") -> int:
 
 
 func delete_layer(layer_id: int, merge_to_below: bool = false) -> bool:
+	if layers.size() <= 1:
+		print("[WARNING] PaintballLayerManager: cannot delete last layer %d, clearing paintballs instead" % layer_id)
+		if layers.size() > 0:
+			layers[0].clear_paintballs()
+			emit_signal("layer_cleared", layers[0].layer_id)
+		return false
+
 	var idx: int = _get_layer_index(layer_id)
 	if idx < 0:
 		print("[WARNING] PaintballLayerManager: layer %d not found for deletion" % layer_id)
@@ -182,12 +189,14 @@ func get_active_layer_paintball_count() -> int:
 func clear_all_layers() -> void:
 	for layer in layers:
 		layer.clear_paintballs()
+		emit_signal("layer_cleared", layer.layer_id)
 	print("[STATUS] PaintballLayerManager: cleared paintballs from all layers")
 
 
 func clear_all_paintballs() -> void:
 	for layer in layers:
 		layer.clear_paintballs()
+		emit_signal("layer_cleared", layer.layer_id)
 	print("[STATUS] PaintballLayerManager: cleared all paintballs (kept layer structure)")
 
 

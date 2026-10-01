@@ -2395,21 +2395,24 @@ func _on_apply_paintballz():
 func apply_paintballz():
 	save_backup()
 
-	var pending_paintballs: Array
-	if PaintballLayerManager and PaintballLayerManager.layers.size() > 0:
-		pending_paintballs = []
+	var pending_paintballs: Array = pet_node.get_pending_paintballs_data()
+	var layers_to_clear: Array = []
+	
+	if is_instance_valid(PaintballLayerManager):
 		for layer in PaintballLayerManager.layers:
-			if layer.visible:
-				for pb in layer.paintballs:
-					pending_paintballs.append(pb)
-	else:
-		pending_paintballs = pet_node.get_pending_paintballs_data()
+			if layer.visible and layer.has_paintballs():
+				layers_to_clear.append(layer.layer_id)
 
 	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _ensure_section_exists("[Paint Ballz]")
+		if bounds.empty():
+			print("[WARNING] LnzTextEdit: apply_paintballz: could not ensure [Paint Ballz] section exists")
+			save_file(true)
+			commit_full_snapshot("Commited Paintballz")
+			return
 
 		var insert_at_line = bounds.start
 		var need_fillers = false
@@ -2486,7 +2489,11 @@ func apply_paintballz():
 			text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
-		pet_node.clear_pending_paintballz()
+
+	for l_id in layers_to_clear:
+		PaintballLayerManager.clear_layer(l_id)
+	
+	pet_node.rebuild_pending_paintball_visuals()
 
 	save_file(true)
 	commit_full_snapshot("Commited Paintballz")
@@ -2496,7 +2503,7 @@ func apply_paintballz():
 
 func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -> int:
 	save_backup()
-	commit_full_snapshot("Transfer Paintballs from LNK")
+	commit_full_snapshot("Transfer Paintballs from LNZ")
 	
 	var bounds = get_section_bounds("[Paint Ballz]")
 	if bounds.empty():
@@ -2520,10 +2527,20 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 			while parts.size() < 12:
 				parts.append("0")
 
+		var rel_lnz: Vector3 = Vector3(float(parts[2]), float(parts[3]), float(parts[4]))
+		
+		var engine_scale: float = 1.0
+		if is_instance_valid(pet_node):
+			var pet_lnz = pet_node.get("lnz")
+			if pet_lnz and "scales" in pet_lnz:
+				engine_scale = pet_lnz.scales[0]
+		var local_pos: Vector3 = LnzLiveUtils.lnz_to_world_delta(rel_lnz, pet_node.pixel_world_size if is_instance_valid(pet_node) else 0.002, engine_scale)
+		
 		var pb_dict: Dictionary = {
 			"base_ball_no": int(parts[0]),
 			"diameter": int(parts[1]),
-			"relative_pos_lnz": Vector3(float(parts[2]), float(parts[3]), float(parts[4])),
+			"relative_pos_lnz": rel_lnz,
+			"relative_pos_local": local_pos,
 			"color": int(parts[5]) if parts.size() > 5 else 0,
 			"outline_color": int(parts[6]) if parts.size() > 6 else 0,
 			"fuzz": int(parts[7]) if parts.size() > 7 else 0,
@@ -2531,7 +2548,6 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 			"group": int(parts[9]) if parts.size() > 9 else 0,
 			"texture": int(parts[10]) if parts.size() > 10 else -1,
 			"anchored": bool(int(parts[11])) if parts.size() > 11 else false,
-			"relative_pos_local": Vector3.ZERO,
 			"lnz_line_index": line_idx
 		}
 		print("[DEBUG] LnzTextEdit: transferred paintball line %d: base=%s diam=%s pos=(%s,%s,%s) color=%s outline=%s fuzz=%s outline_type=%s group=%s texture=%s anchored=%s"
@@ -2559,14 +2575,16 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 		text = new_text
 		
 		PaintballLayerManager.set_active_layer(new_layer_id)
-		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNK to layer '%s' (id %d)"
+		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNZ to layer '%s' (id %d)"
 			% [transferred_count, layer_name, new_layer_id])
 		save_file(true)
 		commit_full_snapshot("Applied Transferred Paintballs")
+		if is_instance_valid(pet_node):
+			pet_node.recompose_model()
 		if is_instance_valid(pet_node) and pet_node.has_method("rebuild_pending_paintball_visuals"):
 			pet_node.rebuild_pending_paintball_visuals()
 	else:
-		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNK")
+		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNZ")
 
 	return transferred_count
 

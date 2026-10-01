@@ -2813,11 +2813,11 @@ func add_pending_paintball(paintball_info):
 						paintball_map.get(paintball_info.base_ball_no, []).size(),
 						_pending_paintballs_data.size())
 	
-	if paintball_info.outline_type < 0:
+	if paintball_info.outline_type >= 0:
 		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
 	
 	_pending_paintball_nodes.append(pb_visual_ball)
-	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
+	# print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
 
 func remove_last_pending_paintball():
 	print("[STATUS] Node: remove_last_pending_paintball: request received")
@@ -2847,9 +2847,16 @@ func remove_last_pending_paintball():
 			break
 
 	if is_instance_valid(node_to_remove):
-		_pending_paintball_nodes.erase(node_to_remove)
-		node_to_remove.queue_free()
-		print("[STATUS] Node: remove_last_pending_paintball: freed visual node for uid %d" % uid)
+		var node_idx = _pending_paintball_nodes.find(node_to_remove)
+		if node_idx != -1:
+			_pending_paintball_nodes.remove(node_idx)
+			if uid >= 0:
+				for i in range(_pending_paintballs_data.size()):
+					if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
+						_pending_paintballs_data.remove(i)
+						break
+			node_to_remove.queue_free()
+			print("[STATUS] Node: remove_last_pending_paintball: freed visual node for uid %d" % uid)
 	else:
 		print("[WARNING] Node: remove_last_pending_paintball: no visual node found for uid %d" % uid)
 	print("[STATUS] Node: remove_last_pending_paintball: removed paintball, %d remaining on layer" % active_layer.get_paintball_count())
@@ -2860,27 +2867,29 @@ func remove_specific_pending_paintball(paintball_node):
 	if paintball_node.has_meta("pb_uid"):
 		uid = paintball_node.get_meta("pb_uid")
 	
-	if PaintballLayerManager.active_layer_id < 0 or paintball_node.paint_layer_id == PaintballLayerManager.active_layer_id:
-		var found: bool = false
-		if uid >= 0 and PaintballLayerManager.remove_paintball_by_uid(uid):
-			found = true
-			print("[STATUS] Node: remove_specific_pending_paintball: removed by uid %d from layer" % uid)
-		
-		var node_idx = _pending_paintball_nodes.find(paintball_node)
-		if node_idx != -1:
-			_pending_paintball_nodes.remove(node_idx)
+	var node_idx = _pending_paintball_nodes.find(paintball_node)
+	if node_idx != -1:
+		_pending_paintball_nodes.remove(node_idx)
+		if uid >= 0:
+			for i in range(_pending_paintballs_data.size()):
+				if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
+					_pending_paintballs_data.remove(i)
+					break
+		elif _pending_paintballs_data.size() > node_idx:
 			_pending_paintballs_data.remove(node_idx)
-			found = true
-			print("[STATUS] Node: remove_specific_pending_paintball: removed from fallback list at index %d" % node_idx)
-		
 		if is_instance_valid(paintball_node):
 			paintball_node.queue_free()
 			print("[STATUS] Node: remove_specific_pending_paintball: node freed")
 	else:
-		print("[WARNING] Node: remove_specific_pending_paintball: node layer %d != active layer %d"
-			% [paintball_node.paint_layer_id, PaintballLayerManager.active_layer_id])
+		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
 
 func get_pending_paintballs_data():
+	if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 0:
+		var all_paintballs: Array = []
+		for layer in PaintballLayerManager.layers:
+			for pb in layer.paintballs:
+				all_paintballs.append(pb)
+		return all_paintballs
 	return _pending_paintballs_data
 
 func get_pending_paintball_nodes():
@@ -2967,10 +2976,6 @@ func _on_apply_auto_paintballz():
 			"group": pb_data.group,
 			"anchored": pb_data.anchored == 1
 		}
-		var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
-		if active_layer:
-			active_layer.add_paintball(paintball_info)
-		
 		_pending_paintballs_data.append(paintball_info)
 
 		processed_count += 1
@@ -3036,8 +3041,6 @@ func rebuild_pending_paintball_visuals():
 
 	var visual_index: int = 0
 	for layer in PaintballLayerManager.layers:
-		if not layer.visible:
-			continue
 		for pb_data in layer.paintballs:
 			var base_ball_node = ball_map.get(pb_data.base_ball_no)
 			if not is_instance_valid(base_ball_node):
@@ -3045,13 +3048,17 @@ func rebuild_pending_paintball_visuals():
 
 			var local_pos: Vector3 = pb_data.get("relative_pos_local", Vector3.ZERO)
 			if local_pos == Vector3.ZERO and pb_data.has("relative_pos_lnz"):
-				var norm_pos: Vector3 = pb_data["relative_pos_lnz"].normalized()
-				local_pos = norm_pos * Vector3(1, -1, 1) * (base_ball_node.ball_size / 2.0) * pixel_world_size
+				var engine_scale: float = 1.0
+				if "lnz" in self and is_instance_valid(lnz):
+					if "scales" in lnz:
+						engine_scale = lnz.scales[0] / 255.0
+				local_pos = LnzLiveUtils.lnz_to_world_delta(pb_data["relative_pos_lnz"], pixel_world_size, engine_scale)
 				pb_data["relative_pos_local"] = local_pos
 
 			var pb_visual = _create_paintball_instance(base_ball_node)
 			pb_visual.paint_layer_id = layer.layer_id
 			pb_visual.set_meta("pb_uid", pb_data.get("_pb_uid", -1))
+			pb_visual.visible = layer.visible
 
 			var pb_info_data = {
 				"color": pb_data.color,
@@ -3072,7 +3079,7 @@ func rebuild_pending_paintball_visuals():
 				visual_index
 			)
 
-			if pb_data.outline_type < 0:
+			if pb_data.outline_type >= 0:
 				pb_visual.outline_color_index = get_layer_outline_color(layer.layer_id)
 
 			_pending_paintball_nodes.append(pb_visual)
@@ -3113,9 +3120,11 @@ func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int 
 		_pending_paintball_nodes.size()
 	)
 
-	pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
+	if paintball_info.outline_type >= 0:
+		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
 
 	_pending_paintball_nodes.append(pb_visual_ball)
+	_pending_paintballs_data.append(paintball_info)
 	print("[STATUS] Node: add_pending_paintball_with_layer: added visual paintball to layer %d on base ball %d"
 		% [layer_id, paintball_info.base_ball_no])
 
