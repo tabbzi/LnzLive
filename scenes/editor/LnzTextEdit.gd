@@ -2534,6 +2534,8 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 			"relative_pos_local": Vector3.ZERO,
 			"lnz_line_index": line_idx
 		}
+		print("[DEBUG] LnzTextEdit: transferred paintball line %d: base=%s diam=%s pos=(%s,%s,%s) color=%s outline=%s fuzz=%s outline_type=%s group=%s texture=%s anchored=%s"
+			% [line_idx, str(parts[0]), str(parts[1]), str(parts[2]), str(parts[3]), str(parts[4]), str(parts[5]), str(parts[6]), str(parts[7]), str(parts[8]), str(parts[9]), str(parts[10]), str(parts[11])])
 
 		if new_layer_id < 0:
 			new_layer_id = PaintballLayerManager.create_layer(layer_name)

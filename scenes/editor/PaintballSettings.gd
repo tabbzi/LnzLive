@@ -90,6 +90,7 @@ onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
 onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
 onready var _layers_tree: Tree = find_node("LayersTree")
 onready var _clear_all_paintballs_button: Button = find_node("ClearAllPaintballsButton")
+onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
 
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
@@ -1850,6 +1851,81 @@ func _on_LayersTree_button_pressed(item: TreeItem, _column: int, id: int) -> voi
 			_delete_layer(layer_id)
 
 func _delete_layer(layer_id: int) -> void:
-	if PaintballLayerManager.delete_layer(layer_id, false):
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
+	
+	var pb_count: int = layer.get_paintball_count()
+	if pb_count == 0:
+		if PaintballLayerManager.delete_layer(layer_id, false):
+			_rebuild_3d_pending_visuals()
+			_refresh_layers_tree()
+		return
+	
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.popup_centered()
+		_delete_layer_dialog.connect("confirmed", self, "_on_delete_layer_confirmed", [layer_id, true])
+		_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_confirmed", [layer_id, false])
+		_delete_layer_dialog.get_cancel_button().connect("pressed", self, "_on_delete_layer_confirmed", [layer_id, false])
+		_delete_layer_dialog.get_ok_button().visible = false
+		var merge_btn: Button = _delete_layer_dialog.find_node("MergeButton")
+		var discard_btn: Button = _delete_layer_dialog.find_node("DiscardButton")
+		if is_instance_valid(merge_btn):
+			merge_btn.connect("pressed", self, "_on_delete_layer_confirmed", [layer_id, true])
+		if is_instance_valid(discard_btn):
+			discard_btn.connect("pressed", self, "_on_delete_layer_confirmed", [layer_id, false])
+	else:
+		if PaintballLayerManager.delete_layer(layer_id, true):
+			_rebuild_3d_pending_visuals()
+			_refresh_layers_tree()
+
+func _on_delete_layer_confirmed(layer_id: int, merge: bool) -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if PaintballLayerManager.delete_layer(layer_id, merge):
 		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+func save_layer_config() -> void:
+	var config: Dictionary = {}
+	var layer_names: Array = []
+	for layer in PaintballLayerManager.layers:
+		layer_names.append({
+			"name": layer.name,
+			"visible": layer.visible,
+			"paintball_count": layer.get_paintball_count()
+		})
+	config["layers"] = layer_names
+	config["active_layer_id"] = PaintballLayerManager.active_layer_id
+	var settings := ConfigFile.new()
+	settings.set_value("paintball", "layer_config", config)
+	settings.save("user://paintball_layer_config.cfg")
+
+func load_layer_config() -> void:
+	var settings := ConfigFile.new()
+	var err := settings.load("user://paintball_layer_config.cfg")
+	if err != OK:
+		return
+	if not settings.has_section("paintball"):
+		return
+	if not settings.has_value("paintball", "layer_config"):
+		return
+	var config = settings.get_value("paintball", "layer_config")
+	if not config is Dictionary:
+		return
+	var layer_names = config.get("layers", [])
+	if layer_names is Array and layer_names.size() > 0:
+		PaintballLayerManager.clear_all_paintballs()
+		for i in range(layer_names.size()):
+			var layer_data = layer_names[i]
+			if layer_data is Dictionary:
+				var name = layer_data.get("name", "Layer " + str(i + 1))
+				var visible = layer_data.get("visible", true)
+				PaintballLayerManager.create_layer(name)
+				var layer = PaintballLayerManager.get_active_layer()
+				if layer:
+					layer.visible = visible
+		var active_id = config.get("active_layer_id", -1)
+		if active_id is int and active_id >= 0:
+			PaintballLayerManager.set_active_layer(active_id)
 		_refresh_layers_tree()

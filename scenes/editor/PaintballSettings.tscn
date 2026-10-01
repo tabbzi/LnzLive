@@ -1370,3 +1370,64 @@ custom_styles/disabled = SubResource( 9 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Close"
+
+[node name="DeleteLayerDialog" type="ConfirmationDialog" parent="."]
+title = "Delete Layer"
+custom_styles/panel = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DeleteLayerDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+custom_constants/separation = 10
+
+[node name="Label" type="Label" parent="DeleteLayerDialog/VBoxContainer"]
+margin_right = 380.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 3 )
+text = "Layer has paintballs. What would you like to do?"
+align = 1
+
+[node name="MergeButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_right = 190.0
+margin_bottom = 45.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Merge Down"
+
+[node name="DiscardButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_left = 194.0
+margin_right = 380.0
+margin_bottom = 45.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Discard Paintballs"
+
+[node name="CancelButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_left = 194.0
+margin_right = 380.0
+margin_bottom = 69.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Cancel"
