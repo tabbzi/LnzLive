@@ -1387,7 +1387,7 @@ func _count_section_entries(section_name: String) -> int:
 # _for_each_line_in_section
 
 func get_section_bounds(section_tag: String) -> Dictionary:
-	var sec = search(section_tag, 0, -1, 0)
+	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		return {}
 	
