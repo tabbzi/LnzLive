@@ -2515,7 +2515,7 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 	var new_layer_id: int = -1
 	var lines_to_remove: Dictionary = {}
 
-	for line_idx in range(bounds.start + 1, bounds.end):
+	for line_idx in range(bounds.start, bounds.end):
 		var line = get_line(line_idx).strip_edges()
 		if line.empty() or line.begins_with(";") or line.begins_with("["):
 			continue
