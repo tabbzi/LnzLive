@@ -64,7 +64,6 @@ onready var _brush_space_label: Label = find_node("BrushSpaceLabel")
 onready var _mirror_x: CheckBox = find_node("MirrorX")
 onready var _mirror_y: CheckBox = find_node("MirrorY")
 onready var _canvas_eraser: CheckBox = find_node("CanvasEraser")
-onready var _rotate_fixed: CheckBox = find_node("RotateFixed")
 onready var _rotate_jitter: SpinBox = find_node("RotateJitter")
 onready var _spread_jitter: SpinBox = find_node("SpreadJitter")
 onready var _slots_tree: Tree = find_node("SlotsTree")
@@ -781,13 +780,9 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var d_jitter: float = _design_jitter.value if jitter_enabled else 0.0
 	var r_jitter: float = _rotate_jitter.value if jitter_enabled else 0.0
 	var s_jitter: float = _spread_jitter.value if jitter_enabled else 0.0
-	var r_fixed: bool = _rotate_fixed.pressed if jitter_enabled else false
 
 	if jitter_enabled and r_jitter > 0:
-		if r_fixed:
-			design_rotation_angle += deg2rad(r_jitter)
-		else:
-			design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
+		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
 
 	var rotated_basis: Basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x: Vector3 = rotated_basis.x
@@ -902,7 +897,6 @@ func _connect_design_signals() -> void:
 	_design_total_diameter.connect("value_changed", self, "_on_setting_changed")
 	_design_total_diameter_max.connect("value_changed", self, "_on_setting_changed")
 	_design_rotation.connect("value_changed", self, "_on_setting_changed")
-	_rotate_fixed.connect("toggled", self, "_on_setting_changed")
 	_design_pixel_mode.connect("toggled", self, "_on_setting_changed")
 
 	_add_slot_button.connect("pressed", self, "_on_AddSlotButton_pressed")
@@ -1361,7 +1355,6 @@ func save_settings() -> void:
 	design_values["line_mode"] = _get_design_line_mode()
 	design_values["design_jitter"] = _design_jitter.value
 	design_values["rotate_jitter"] = _rotate_jitter.value
-	design_values["rotate_fixed"] = _rotate_fixed.pressed
 	design_values["design_rotation"] = _design_rotation.value
 	design_values["spread_jitter"] = _spread_jitter.value
 	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
@@ -1442,7 +1435,6 @@ func load_settings() -> void:
 	_sync_design_line_mode(design_data.get("line_mode", 0))
 	_design_jitter.value = design_data.get("design_jitter", 0.0)
 	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
-	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
 	_design_rotation.value = design_data.get("design_rotation", 0.0)
 	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
 
@@ -1494,7 +1486,7 @@ func _on_reset_defaults_pressed() -> void:
 	_mirror_y.pressed = false
 	_canvas_eraser.pressed = false
 	_design_jitter.value = 0.0
-	_rotate_fixed.pressed = false
+
 
 	_design_canvas.clear()
 	_brush_size_slider.value = 30.0

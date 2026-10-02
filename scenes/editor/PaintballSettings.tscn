@@ -948,13 +948,13 @@ margin_top = 4.0
 margin_right = 352.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 3 )
-text = "Rotation"
+text = "Stamp Rotation"
 
 [node name="DesignRotation" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 356.0
-margin_right = 430.0
+margin_left = 381.0
+margin_right = 455.0
 margin_bottom = 29.0
-hint_tooltip = "Fixed/starting rotation angle in degrees"
+hint_tooltip = "Starting rotation angle for the stamp pattern (degrees)"
 min_value = -360.0
 max_value = 360.0
 
@@ -1223,30 +1223,21 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_top = 32.0
-margin_right = 128.0
+margin_right = 118.0
 margin_bottom = 53.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
-text = "Rotate"
+text = "Rotate Jitter"
 
 [node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_left = 132.0
 margin_top = 28.0
 margin_right = 260.0
 margin_bottom = 57.0
-hint_tooltip = "Randomize rotation of the entire design"
+hint_tooltip = "Random rotation variance added to the stamp rotation (degrees)"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 max_value = 360.0
-
-[node name="RotateFixed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 264.0
-margin_top = 28.0
-margin_right = 406.0
-margin_bottom = 57.0
-hint_tooltip = "Use exact rotation instead of random +/- variance"
-custom_fonts/font = SubResource( 3 )
-text = "Fixed Rotation"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 450.0
