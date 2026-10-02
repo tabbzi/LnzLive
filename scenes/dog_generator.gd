@@ -2824,16 +2824,16 @@ func remove_last_pending_paintball():
 	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
 	if not active_layer or active_layer.get_paintball_count() == 0:
 		if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
+			var last_pb = _pending_paintballs_data[_pending_paintballs_data.size() - 1]
 			var last_visual_node = _pending_paintball_nodes.pop_back()
 			if is_instance_valid(last_visual_node):
 				last_visual_node.queue_free()
 				print("[STATUS] Node: remove_last_pending_paintball: visual node freed")
 			_pending_paintballs_data.pop_back()
-		else:
-			print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
-		return
+			return last_pb
+		print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
+		return null
 
-	var removed_count: int = active_layer.get_paintball_count()
 	var last_pb: Dictionary = active_layer.paintballs[active_layer.paintballs.size() - 1]
 	var uid: int = last_pb.get("_pb_uid", -1)
 	active_layer.paintballs.pop_back()
@@ -2860,6 +2860,40 @@ func remove_last_pending_paintball():
 	else:
 		print("[WARNING] Node: remove_last_pending_paintball: no visual node found for uid %d" % uid)
 	print("[STATUS] Node: remove_last_pending_paintball: removed paintball, %d remaining on layer" % active_layer.get_paintball_count())
+	return last_pb
+
+func remove_paintball_by_uid(uid: int):
+	if uid < 0:
+		return
+	if not is_instance_valid(PaintballLayerManager) or PaintballLayerManager.layers.empty():
+		return
+	for layer in PaintballLayerManager.layers:
+		var idx: int = -1
+		for i in range(layer.paintballs.size()):
+			if layer.paintballs[i].get("_pb_uid", -1) == uid:
+				idx = i
+				break
+		if idx >= 0:
+			layer.paintballs.remove(idx)
+			break
+
+	var node_to_remove: Spatial = null
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node) and node.has_meta("pb_uid") and node.get_meta("pb_uid") == uid:
+			node_to_remove = node
+			break
+
+	if is_instance_valid(node_to_remove):
+		var node_idx = _pending_paintball_nodes.find(node_to_remove)
+		if node_idx != -1:
+			_pending_paintball_nodes.remove(node_idx)
+			node_to_remove.queue_free()
+
+	for i in range(_pending_paintballs_data.size()):
+		if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
+			_pending_paintballs_data.remove(i)
+			break
+
 
 func remove_specific_pending_paintball(paintball_node):
 	print("[STATUS] Node: remove_specific_pending_paintball: called for node %s" % paintball_node)

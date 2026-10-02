@@ -3601,7 +3601,12 @@ func _undo_queued_paintball() -> void:
 	paint_redo_stack.append(last_action)
 
 	for i in range(last_action.size()):
-		pet_node.remove_last_pending_paintball()
+		var pb_data = last_action[i]
+		var uid: int = pb_data.get("_pb_uid", -1)
+		if uid >= 0:
+			pet_node.remove_paintball_by_uid(uid)
+		else:
+			pet_node.remove_last_pending_paintball()
 
 func _redo_queued_paintball() -> void:
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")
