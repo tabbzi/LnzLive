@@ -2899,6 +2899,9 @@ func remove_specific_pending_paintball(paintball_node):
 	if paintball_node.has_meta("pb_uid"):
 		uid = paintball_node.get_meta("pb_uid")
 	
+	if uid >= 0:
+		PaintballLayerManager.remove_paintball_by_uid(uid)
+	
 	var node_idx = _pending_paintball_nodes.find(paintball_node)
 	if node_idx != -1:
 		_pending_paintball_nodes.remove(node_idx)
@@ -2919,6 +2922,8 @@ func get_pending_paintballs_data():
 	if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 0:
 		var all_paintballs: Array = []
 		for layer in PaintballLayerManager.layers:
+			if not layer.visible:
+				continue
 			for pb in layer.paintballs:
 				all_paintballs.append(pb)
 		return all_paintballs
