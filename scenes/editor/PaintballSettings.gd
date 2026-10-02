@@ -801,7 +801,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 			continue
 		var slot_data: Dictionary = design_color_slots[pb.color_slot - 1]
 
-		var dx: float = pb.x * (footprint_lnz / 2.0)
+		var dx: float = -pb.x * (footprint_lnz / 2.0)
 		var dy: float = -pb.y * (footprint_lnz / 2.0)
 		if d_jitter > 0:
 			var j_amt: float = (d_jitter / 100.0) * (footprint_lnz / 2.0)
