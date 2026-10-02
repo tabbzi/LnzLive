@@ -485,8 +485,6 @@ func generate_pet(file_path):
 
 	if file_path != last_loaded_filepath:
 
-		_clear_pending_paintballs_on_pet_switch()
-
 		# TBD: May be helpful to clear caches when switching models (not on every reload)
 		# clear_texture_cache()
 		# _atlas_textures.clear()
@@ -3165,17 +3163,7 @@ func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int 
 	_pending_paintballs_data.append(paintball_info)
 	print("[STATUS] Node: add_pending_paintball_with_layer: added visual paintball to layer %d on base ball %d"
 		% [layer_id, paintball_info.base_ball_no])
-
-
-func _clear_pending_paintballs_on_pet_switch() -> void:
-	if is_instance_valid(PaintballLayerManager):
-		PaintballLayerManager.clear_all_paintballs()
-		PaintballLayerManager.clear_all_layers()
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_pending_paintball_nodes.clear()
-	_pending_paintballs_data.clear()
+		
 
 ### ADD BALLZ ###
 
