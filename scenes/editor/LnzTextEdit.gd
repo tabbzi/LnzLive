@@ -2466,27 +2466,48 @@ func apply_paintballz():
 				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
 				text_to_insert += filler_line + " ; chickenpox filler\n"
 
-		var paintball_lines_list = []
-		for i in range(pending_paintballs.size() - 1, -1, -1):
-			var paintball_info = pending_paintballs[i]
-			var relative_pos_lnz = paintball_info.relative_pos_lnz
+		if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 1:
+			for layer in PaintballLayerManager.layers:
+				if not layer.visible or not layer.has_paintballs():
+					continue
+				text_to_insert += "; Layer " + str(layer.layer_id) + "\n"
+				for pb in layer.paintballs:
+					var relative_pos_lnz = pb.relative_pos_lnz
+					var paintball_line = str(pb.base_ball_no) + delim
+					paintball_line += str(pb.diameter) + delim
+					paintball_line += str(round(relative_pos_lnz.x)) + delim
+					paintball_line += str(round(relative_pos_lnz.y)) + delim
+					paintball_line += str(round(relative_pos_lnz.z)) + delim
+					paintball_line += str(pb.color) + delim
+					paintball_line += str(pb.outline_color) + delim
+					paintball_line += str(pb.fuzz) + delim
+					paintball_line += str(pb.outline_type) + delim
+					paintball_line += str(pb.group) + delim
+					paintball_line += str(pb.texture) + delim
+					paintball_line += str(int(!pb.anchored))
+					text_to_insert += paintball_line + "\n"
+		else:
+			var paintball_lines_list = []
+			for i in range(pending_paintballs.size() - 1, -1, -1):
+				var paintball_info = pending_paintballs[i]
+				var relative_pos_lnz = paintball_info.relative_pos_lnz
 
-			var paintball_line = str(paintball_info.base_ball_no) + delim
-			paintball_line += str(paintball_info.diameter) + delim
-			paintball_line += str(round(relative_pos_lnz.x)) + delim
-			paintball_line += str(round(relative_pos_lnz.y)) + delim
-			paintball_line += str(round(relative_pos_lnz.z)) + delim
-			paintball_line += str(paintball_info.color) + delim
-			paintball_line += str(paintball_info.outline_color) + delim
-			paintball_line += str(paintball_info.fuzz) + delim
-			paintball_line += str(paintball_info.outline_type) + delim
-			paintball_line += str(paintball_info.group) + delim
-			paintball_line += str(paintball_info.texture) + delim
-			paintball_line += str(int(!paintball_info.anchored))
-			paintball_lines_list.append(paintball_line)
+				var paintball_line = str(paintball_info.base_ball_no) + delim
+				paintball_line += str(paintball_info.diameter) + delim
+				paintball_line += str(round(relative_pos_lnz.x)) + delim
+				paintball_line += str(round(relative_pos_lnz.y)) + delim
+				paintball_line += str(round(relative_pos_lnz.z)) + delim
+				paintball_line += str(paintball_info.color) + delim
+				paintball_line += str(paintball_info.outline_color) + delim
+				paintball_line += str(paintball_info.fuzz) + delim
+				paintball_line += str(paintball_info.outline_type) + delim
+				paintball_line += str(paintball_info.group) + delim
+				paintball_line += str(paintball_info.texture) + delim
+				paintball_line += str(int(!paintball_info.anchored))
+				paintball_lines_list.append(paintball_line)
 
-		for line in paintball_lines_list:
-			text_to_insert += line + "\n"
+			for line in paintball_lines_list:
+				text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
 
