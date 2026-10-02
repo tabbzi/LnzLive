@@ -1810,9 +1810,9 @@ func _delete_layer(layer_id: int) -> void:
 	
 	var pb_count: int = layer.get_paintball_count()
 	if pb_count == 0:
-		if PaintballLayerManager.delete_layer(layer_id, false):
-			_rebuild_3d_pending_visuals()
-			_refresh_layers_tree()
+		PaintballLayerManager.delete_layer(layer_id, false)
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
 		return
 	
 	if is_instance_valid(_delete_layer_dialog):
@@ -1820,23 +1820,23 @@ func _delete_layer(layer_id: int) -> void:
 		_delete_layer_dialog.popup_centered()
 		if not _delete_layer_dialog.is_connected("confirmed", self, "_on_delete_layer_confirmed"):
 			_delete_layer_dialog.connect("confirmed", self, "_on_delete_layer_confirmed")
-		if not _delete_layer_dialog.is_connected("canceled", self, "_on_delete_layer_confirmed"):
-			_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_confirmed")
+		if not _delete_layer_dialog.is_connected("canceled", self, "_on_delete_layer_cancelled"):
+			_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_cancelled")
 		var cancel_btn: Button = _delete_layer_dialog.find_node("CancelButton")
 		if is_instance_valid(cancel_btn):
-			if not cancel_btn.is_connected("pressed", self, "_on_delete_layer_confirmed"):
-				cancel_btn.connect("pressed", self, "_on_delete_layer_confirmed")
+			if not cancel_btn.is_connected("pressed", self, "_on_delete_layer_cancelled"):
+				cancel_btn.connect("pressed", self, "_on_delete_layer_cancelled")
 		var ok_btn: Button = _delete_layer_dialog.find_node("OKButton")
 		if is_instance_valid(ok_btn):
 			ok_btn.visible = false
 		var merge_btn: Button = _delete_layer_dialog.find_node("MergeButton")
 		var discard_btn: Button = _delete_layer_dialog.find_node("DiscardButton")
 		if is_instance_valid(merge_btn):
-			if not merge_btn.is_connected("pressed", self, "_on_delete_layer_confirmed"):
-				merge_btn.connect("pressed", self, "_on_delete_layer_confirmed")
+			if not merge_btn.is_connected("pressed", self, "_on_delete_layer_merge"):
+				merge_btn.connect("pressed", self, "_on_delete_layer_merge")
 		if is_instance_valid(discard_btn):
-			if not discard_btn.is_connected("pressed", self, "_on_delete_layer_confirmed"):
-				discard_btn.connect("pressed", self, "_on_delete_layer_confirmed")
+			if not discard_btn.is_connected("pressed", self, "_on_delete_layer_discard"):
+				discard_btn.connect("pressed", self, "_on_delete_layer_discard")
 	else:
 		if PaintballLayerManager.delete_layer(layer_id, true):
 			_rebuild_3d_pending_visuals()
@@ -1847,6 +1847,32 @@ func _on_delete_layer_confirmed() -> void:
 		_delete_layer_dialog.hide()
 	if _pending_delete_layer_id >= 0:
 		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+func _on_delete_layer_cancelled() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	_pending_delete_layer_id = -1
+
+func _on_delete_layer_merge() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+func _on_delete_layer_discard() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(_pending_delete_layer_id)
+		if layer:
+			layer.clear_paintballs()
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, false)
 		_pending_delete_layer_id = -1
 		_rebuild_3d_pending_visuals()
 		_refresh_layers_tree()
