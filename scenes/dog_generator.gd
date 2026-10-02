@@ -2973,6 +2973,9 @@ func _on_randomize_auto_paintballz(paintballz):
 func _on_apply_auto_paintballz():
 	print("[STATUS] Node: _on_apply_auto_paintballz: attempting to apply auto paintballs")
 	PaintballLayerManager.ensure_default_layer()
+	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
+	if active_layer and not active_layer.visible:
+		active_layer.visible = true
 	var processed_paintballs = {}
 	var processed_count = 0
 	var cap = 1000
@@ -3012,6 +3015,8 @@ func _on_apply_auto_paintballz():
 			"group": pb_data.group,
 			"anchored": pb_data.anchored == 1
 		}
+		if active_layer:
+			active_layer.add_paintball(paintball_info)
 		_pending_paintballs_data.append(paintball_info)
 
 		processed_count += 1

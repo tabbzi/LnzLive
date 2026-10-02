@@ -2514,6 +2514,7 @@ func apply_paintballz():
 	for l_id in layers_to_clear:
 		PaintballLayerManager.clear_layer(l_id)
 	
+	pet_node._pending_paintballs_data.clear()
 	pet_node.rebuild_pending_paintball_visuals()
 
 	save_file(true)
