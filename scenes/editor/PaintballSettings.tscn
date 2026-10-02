@@ -330,7 +330,7 @@ custom_styles/focus = SubResource( 5 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
-text = "Pull from LNK"
+text = "Pull from LNZ"
 
 [node name="ClearAllLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
 margin_left = 274.0
