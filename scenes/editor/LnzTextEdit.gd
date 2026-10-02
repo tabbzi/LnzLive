@@ -2510,7 +2510,6 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 		print("[WARNING] LnzTextEdit: no [Paint Ballz] section found to transfer from")
 		return 0
 
-	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var transferred_count: int = 0
 	var new_layer_id: int = -1
 	var lines_to_remove: Dictionary = {}

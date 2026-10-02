@@ -8,8 +8,6 @@ export var visible: bool = true
 export var layer_id: int = 0
 
 var paintballs: Array = []
-var _next_id: int = 0
-var _paintball_uid_counter: int = 0
 
 
 func _init(
@@ -34,13 +32,6 @@ func remove_paintball_by_uid(uid: int) -> bool:
 		if paintballs[i].get("_pb_uid", -1) == uid:
 			paintballs.remove(i)
 			return true
-	return false
-
-
-func remove_paintball(index: int) -> bool:
-	if index >= 0 and index < paintballs.size():
-		paintballs.remove(index)
-		return true
 	return false
 
 
