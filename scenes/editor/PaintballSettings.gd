@@ -87,6 +87,8 @@ onready var _export_pattern_button: Button = find_node("ExportPatternButton")
 onready var _add_layer_button: Button = find_node("AddLayerButton")
 onready var _transfer_lnz_button: Button = find_node("TransferLnzButton")
 onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
+onready var _export_layers_button: Button = find_node("ExportLayersButton")
+onready var _import_layers_button: Button = find_node("ImportLayersButton")
 onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
 onready var _layers_tree: Tree = find_node("LayersTree")
 onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
@@ -1660,6 +1662,10 @@ func _setup_layer_tree() -> void:
 		find_node("ClearLayerButton").connect("pressed", self, "_on_ClearLayerButton_pressed")
 	if is_instance_valid(find_node("DeleteLayerButton")):
 		find_node("DeleteLayerButton").connect("pressed", self, "_on_DeleteLayerButton_pressed")
+	if is_instance_valid(_export_layers_button):
+		_export_layers_button.connect("pressed", self, "export_layers_json")
+	if is_instance_valid(_import_layers_button):
+		_import_layers_button.connect("pressed", self, "_on_ImportLayersButton_pressed")
 	_refresh_layers_tree()
 
 func _refresh_layers_tree() -> void:
@@ -1876,3 +1882,357 @@ func _on_delete_layer_discard() -> void:
 		_pending_delete_layer_id = -1
 		_rebuild_3d_pending_visuals()
 		_refresh_layers_tree()
+
+
+### LAYER JSON EXPORT/IMPORT ###
+
+func export_layers_json() -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	LnzLiveUtils.export_json_preset(data, "LnzLive_paintball_layers", self, "_save_layers_file")
+
+func _save_layers_file(path: String) -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	var file: File = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
+		print("[STATUS] PaintballSettings: saved layers file to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for saving layers to %s" % path)
+
+func _get_layers_data_dict() -> Dictionary:
+	var data: Dictionary = {}
+	data["exporter"] = "LnzLive"
+	data["format_version"] = 1
+	data["species"] = "dog"
+	data["species_id"] = 2
+	data["species_ball_count"] = 67
+	if dog_generator and dog_generator.lnz:
+		data["species"] = KeyBallsData.species_to_string(dog_generator.lnz.species)
+		data["species_id"] = dog_generator.lnz.species
+		data["species_ball_count"] = dog_generator.lnz.balls.size()
+	var dt: Dictionary = OS.get_datetime()
+	data["exported_at"] = {
+		"year": dt["year"], "month": dt["month"], "day": dt["day"],
+		"hour": dt["hour"], "minute": dt["minute"], "second": dt["second"]
+	}
+	
+	var layers_array: Array = []
+	for layer in PaintballLayerManager.layers:
+		var layer_dict: Dictionary = {}
+		layer_dict["name"] = layer.name
+		layer_dict["visible"] = layer.visible
+		var pb_array: Array = []
+		for pb in layer.paintballs:
+			var pb_dict: Dictionary = {}
+			pb_dict["base_ball_no"] = pb.get("base_ball_no", -1)
+			pb_dict["base_ball_name"] = KeyBallsData.get_ball_name_by_species(
+				data["species_id"], pb_dict["base_ball_no"])
+			pb_dict["parent_base_ball_no"] = pb.get("parent_base_ball_no", -1)
+			pb_dict["diameter"] = pb.get("diameter", 20)
+			var rel_pos: Vector3 = pb.get("relative_pos_lnz", Vector3.ZERO)
+			pb_dict["relative_pos_lnz"] = [rel_pos.x, rel_pos.y, rel_pos.z]
+			var normal: Vector3 = pb.get("surface_normal", Vector3.ZERO)
+			if normal == Vector3.ZERO:
+				normal = rel_pos.normalized()
+			pb_dict["surface_normal"] = [normal.x, normal.y, normal.z]
+			pb_dict["color"] = pb.get("color", 1)
+			pb_dict["outline_color"] = pb.get("outline_color", 1)
+			pb_dict["fuzz"] = pb.get("fuzz", 0)
+			pb_dict["outline_type"] = pb.get("outline_type", -1)
+			pb_dict["texture"] = pb.get("texture", -1)
+			pb_dict["anchored"] = pb.get("anchored", false)
+			pb_dict["group"] = pb.get("group", 0)
+			pb_array.append(pb_dict)
+		layer_dict["paintballs"] = pb_array
+		layers_array.append(layer_dict)
+	data["layers"] = layers_array
+	return data
+
+func _on_ImportLayersButton_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		LnzLiveUtils.web_prompt_import_text(self, "_on_web_layers_import_completed")
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Import Paintball Layers"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Paintball Layers"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_layers_file")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_web_layers_import_completed(args: Array) -> void:
+	var json_res = JSON.parse(args[0])
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		_process_imported_layers_dict(json_res.result)
+
+func _load_layers_file(path: String) -> void:
+	var data: Dictionary = LnzLiveUtils.load_json_preset(path)
+	if typeof(data) == TYPE_DICTIONARY and not data.empty():
+		_process_imported_layers_dict(data)
+
+func _process_imported_layers_dict(data: Dictionary) -> void:
+	if not data.has("layers"):
+		print("[ERROR] PaintballSettings: imported JSON has no layers key")
+		return
+	
+	var src_species_id: int = data.get("species_id", 0)
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
+	
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	
+	# Collect unique base_ball_no values
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = pb.get("base_ball_no", -1)
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var all_exist: bool = true
+	for ball_no in unique_balls.keys():
+		var found: bool = false
+		if ball_no < dog_generator.ball_map.size():
+			found = true
+		if dog_generator.lnz and dog_generator.lnz.addballs.has(ball_no):
+			found = true
+		if not found:
+			all_exist = false
+			break
+	
+	if src_species_id == target_species_id and all_exist:
+		print("[STATUS] PaintballSettings: layers import compatible, applying directly")
+		_apply_imported_layers(data["layers"], {})
+		return
+	
+	print("[STATUS] PaintballSettings: cross-species or missing balls detected, showing remap dialog")
+	_show_layer_remap_dialog(data)
+
+func _show_layer_remap_dialog(data: Dictionary) -> void:
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Import Paintball Layers - Remap Balls"
+	dialog.rect_min_size = Vector2(540, 380)
+	
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.set_anchors_and_margins_preset(Control.PRESET_WIDE, Control.PRESET_MODE_MINSIZE, 10)
+	vbox.margin_bottom = -40
+	dialog.add_child(vbox)
+	
+	var label: Label = Label.new()
+	label.text = "Some balls need remapping. Select target balls for each source ball:"
+	vbox.add_child(label)
+	
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var scroll_vbox: VBoxContainer = VBoxContainer.new()
+	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(scroll_vbox)
+	
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
+	
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = int(pb.get("base_ball_no", -1))
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var remapping: Dictionary = {}
+	var option_buttons: Array = []
+	
+	for ball_no in unique_balls.keys():
+		var hb: HBoxContainer = HBoxContainer.new()
+		hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll_vbox.add_child(hb)
+		
+		var ball_label: Label = Label.new()
+		var ball_name: String = KeyBallsData.get_ball_name_by_species(src_species, ball_no)
+		ball_label.text = "Ball %d (%s)" % [ball_no, ball_name if ball_name != "" else "unknown"]
+		ball_label.rect_min_size = Vector2(150, 25)
+		hb.add_child(ball_label)
+		
+		var status_label: Label = Label.new()
+		status_label.rect_min_size = Vector2(130, 25)
+		hb.add_child(status_label)
+		
+		var option: OptionButton = OptionButton.new()
+		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		option.rect_min_size = Vector2(180, 25)
+		hb.add_child(option)
+		
+		var parent_ball: int = int(unique_balls[ball_no].get("parent_base_ball_no", -1))
+		var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+			src_species, ball_no, target_species_id, parent_ball)
+		var resolution: int = equiv.get("resolution", KeyBallsData.ResolutionResult.MANUAL_REMAP)
+		
+		status_label.text = ["AUTO_MAPPED", "COLLAPSED", "ADDBALL_FALLBACK", "MANUAL_REMAP"][resolution]
+		
+		var candidates: Array = equiv.get("candidates", [])
+		if candidates.empty():
+			for i in range(KeyBallsData.max_base_ball_num):
+				candidates.append(i)
+		
+		for cand in candidates:
+			var cand_name: String = KeyBallsData.get_ball_name_by_species(target_species_id, cand)
+			option.add_item("%d (%s)" % [cand, cand_name if cand_name != "" else "unknown"], int(cand))
+		option.add_item("Skip (-1)", -1)
+		
+		var target: int = int(equiv.get("target_ball", -1))
+		for i in range(option.get_item_count()):
+			if option.get_item_id(i) == target:
+				option.selected = i
+				break
+		
+		option_buttons.append({"option": option, "src_ball": ball_no, "status_label": status_label})
+		remapping[ball_no] = target
+	
+	dialog.set_meta("remapping", remapping)
+	dialog.set_meta("data", data)
+	dialog.set_meta("option_buttons", option_buttons)
+	
+	dialog.connect("confirmed", self, "_on_layer_remap_confirmed", [dialog])
+	dialog.connect("canceled", self, "_on_layer_remap_cancelled", [dialog])
+	
+	get_tree().root.add_child(dialog)
+	dialog.popup_centered(Vector2(540, 380))
+
+func _on_layer_remap_confirmed(dialog: ConfirmationDialog) -> void:
+	var option_buttons: Array = dialog.get_meta("option_buttons")
+	if option_buttons == null:
+		option_buttons = []
+	var remapping: Dictionary = dialog.get_meta("remapping")
+	if remapping == null:
+		remapping = {}
+	var data: Dictionary = dialog.get_meta("data")
+	if data == null:
+		data = {}
+	
+	for ob in option_buttons:
+		var option: OptionButton = ob["option"]
+		var src_ball: int = ob["src_ball"]
+		if option.selected >= 0:
+			remapping[src_ball] = option.get_item_id(option.selected)
+	
+	dialog.queue_free()
+	_apply_imported_layers(data["layers"], remapping)
+
+func _on_layer_remap_cancelled(dialog: ConfirmationDialog) -> void:
+	dialog.queue_free()
+
+func _apply_imported_layers(layers_array: Array, remapping: Dictionary) -> void:
+	print("[STATUS] PaintballSettings: applying layers with remapping")
+	
+	# Clear current active layer paintballs
+	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
+	if active_layer and active_layer.get_paintball_count() > 0:
+		active_layer.clear_paintballs()
+	
+	var src_species: int = KeyBallsData.string_to_species("dog")
+	var target_species: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species = dog_generator.lnz.species
+	
+	var pixel_world_size: float = 0.002
+	var engine_scale: float = 1.0
+	if dog_generator:
+		if "pixel_world_size" in dog_generator:
+			pixel_world_size = dog_generator.pixel_world_size
+		if "lnz" in dog_generator and is_instance_valid(dog_generator.lnz):
+			if "scales" in dog_generator.lnz:
+				engine_scale = dog_generator.lnz.scales.x
+	
+	for layer_data in layers_array:
+		var layer_name: String = layer_data.get("name", "Imported")
+		var layer_id: int = PaintballLayerManager.create_layer(layer_name)
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+		if not layer:
+			continue
+		layer.visible = layer_data.get("visible", true)
+		
+		for pb_data in layer_data.get("paintballs", []):
+			var base_ball_no: int = pb_data.get("base_ball_no", -1)
+			var target_ball_no: int = base_ball_no
+			var was_remapped: bool = false
+			
+			if remapping.has(base_ball_no):
+				target_ball_no = remapping[base_ball_no]
+				was_remapped = true
+			else:
+				var src_check: String = ""
+				if pb_data.has("base_ball_name"):
+					src_check = pb_data["base_ball_name"]
+				if src_check != "":
+					var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+						src_species, base_ball_no, target_species, -1)
+					if equiv.get("target_ball", -1) >= 0:
+						if equiv["resolution"] != KeyBallsData.ResolutionResult.MANUAL_REMAP:
+							target_ball_no = equiv["target_ball"]
+							was_remapped = true
+						else:
+							print("[WARNING] PaintballSettings: no valid mapping for ball %d, skipping" % base_ball_no)
+							continue
+					else:
+						print("[WARNING] PaintballSettings: no mapping found for ball %d, skipping" % base_ball_no)
+						continue
+			
+			if target_ball_no < 0:
+				print("[WARNING] PaintballSettings: invalid target ball %d for paintball, skipping" % target_ball_no)
+				continue
+			
+			var raw_lnz = pb_data.get("relative_pos_lnz", [0, 0, 0])
+			var rel_lnz_vec: Vector3
+			if raw_lnz is Vector3:
+				rel_lnz_vec = raw_lnz
+			else:
+				rel_lnz_vec = Vector3(float(raw_lnz[0]), float(raw_lnz[1]), float(raw_lnz[2]))
+			
+			var raw_norm = pb_data.get("surface_normal", [0, 0, 0])
+			var surface_normal: Vector3
+			if raw_norm is Vector3:
+				surface_normal = raw_norm
+			else:
+				surface_normal = Vector3(float(raw_norm[0]), float(raw_norm[1]), float(raw_norm[2]))
+			
+			if surface_normal == Vector3.ZERO and rel_lnz_vec != Vector3.ZERO:
+				surface_normal = rel_lnz_vec.normalized()
+			
+			var new_pb: Dictionary = pb_data.duplicate(true)
+			new_pb["base_ball_no"] = target_ball_no
+			new_pb["relative_pos_lnz"] = rel_lnz_vec
+			new_pb["surface_normal"] = surface_normal
+			new_pb["relative_pos_local"] = LnzLiveUtils.lnz_to_world_delta(rel_lnz_vec, pixel_world_size, engine_scale)
+			
+			if was_remapped:
+				var target_ball_size: float = 20.0
+				var ball_key: int = target_ball_no
+				if ball_key < dog_generator.ball_map.size():
+					var ball_node = dog_generator.ball_map[ball_key]
+					if is_instance_valid(ball_node) and "ball_size" in ball_node:
+						target_ball_size = float(ball_node.ball_size)
+					else:
+						target_ball_size = 20.0
+				elif dog_generator.lnz and dog_generator.lnz.addballs.has(ball_key):
+					target_ball_size = float(dog_generator.lnz.addballs[ball_key].size)
+				
+				var surface_normal_3d: Vector3 = surface_normal * Vector3(1, -1, 1)
+				var new_rel_local: Vector3 = surface_normal_3d * (target_ball_size / 2.0) * pixel_world_size
+				var new_rel_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(new_rel_local, pixel_world_size, engine_scale)
+				new_pb["relative_pos_local"] = new_rel_local
+				new_pb["relative_pos_lnz"] = new_rel_lnz
+			
+			layer.add_paintball(new_pb)
+	
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+	print("[STATUS] PaintballSettings: imported layers complete")

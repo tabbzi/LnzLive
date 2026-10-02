@@ -345,6 +345,32 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Clear All"
 
+[node name="ExportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+margin_left = 369.0
+margin_right = 483.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Export Layers"
+
+[node name="ImportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+margin_left = 486.0
+margin_right = 596.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Import Layers"
+
 [node name="ActiveLayerLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
 margin_left = 369.0
 margin_top = 2.0
