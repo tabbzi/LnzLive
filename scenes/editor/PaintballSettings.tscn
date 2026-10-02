@@ -227,7 +227,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 483.0
-margin_bottom = 827.0
+margin_bottom = 847.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -286,29 +286,31 @@ custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
 [node name="LayerSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-visible = false
-margin_left = 0.0
 margin_top = 61.0
 margin_right = 483.0
-margin_bottom = 317.0
+margin_bottom = 337.0
 custom_constants/separation = 3
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_right = 483.0
+margin_bottom = 4.0
 
 [node name="LayerHeaderHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
-margin_left = 0.0
+margin_top = 7.0
 margin_right = 483.0
-margin_bottom = 25.0
+margin_bottom = 32.0
 custom_constants/separation = 3
 
-[node name="LayerLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+[node name="ActiveLayerLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
 margin_top = 2.0
-margin_right = 56.0
+margin_right = 114.0
 margin_bottom = 23.0
 custom_fonts/font = SubResource( 3 )
-text = "Layers"
+text = "Active: Layer 1"
 
 [node name="AddLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 59.0
-margin_right = 151.0
+margin_left = 117.0
+margin_right = 298.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -319,22 +321,9 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "+ Layer"
 
-[node name="TransferLnzButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 154.0
-margin_right = 271.0
-margin_bottom = 25.0
-size_flags_horizontal = 3
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 3 )
-text = "Pull from LNZ"
-
 [node name="ClearAllLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 274.0
-margin_right = 366.0
+margin_left = 301.0
+margin_right = 483.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -345,9 +334,27 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Clear All"
 
-[node name="ExportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 369.0
+[node name="LayerHeaderHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 35.0
 margin_right = 483.0
+margin_bottom = 60.0
+custom_constants/separation = 3
+
+[node name="TransferLnzButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_right = 159.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Pull from LNZ"
+
+[node name="ExportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_left = 162.0
+margin_right = 321.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -358,9 +365,9 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Export Layers"
 
-[node name="ImportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 486.0
-margin_right = 596.0
+[node name="ImportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_left = 324.0
+margin_right = 483.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -371,36 +378,26 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Import Layers"
 
-[node name="ActiveLayerLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
-margin_left = 369.0
-margin_top = 2.0
-margin_right = 483.0
-margin_bottom = 23.0
-custom_fonts/font = SubResource( 3 )
-text = "Active: Layer 1"
-
 [node name="LayersTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
-margin_left = 0.0
-margin_top = 28.0
+margin_top = 63.0
 margin_right = 483.0
-margin_bottom = 190.0
+margin_bottom = 213.0
+rect_min_size = Vector2( 0, 150 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
-rect_min_size = Vector2( 0, 150 )
 columns = 3
 hide_root = true
 select_mode = 1
 
 [node name="LayerActionsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
-margin_left = 0.0
-margin_top = 195.0
+margin_top = 216.0
 margin_right = 483.0
-margin_bottom = 220.0
-alignment = 1
+margin_bottom = 241.0
 custom_constants/separation = 4
+alignment = 1
 
 [node name="MoveUpButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_right = 80.0
+margin_right = 158.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -413,8 +410,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Move Up"
 
 [node name="MoveDownButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_left = 84.0
-margin_right = 164.0
+margin_left = 162.0
+margin_right = 320.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -427,8 +424,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Move Down"
 
 [node name="MergeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_left = 168.0
-margin_right = 248.0
+margin_left = 324.0
+margin_right = 483.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -440,9 +437,15 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Merge Down"
 
-[node name="ClearLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_left = 252.0
-margin_right = 318.0
+[node name="LayerActionsHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 244.0
+margin_right = 483.0
+margin_bottom = 269.0
+custom_constants/separation = 4
+alignment = 1
+
+[node name="ClearLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox2"]
+margin_right = 239.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -455,9 +458,9 @@ custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.2, 0.5, 1, 1 )
 text = "Clear"
 
-[node name="DeleteLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
-margin_left = 322.0
-margin_right = 388.0
+[node name="DeleteLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox2"]
+margin_left = 243.0
+margin_right = 483.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -470,10 +473,15 @@ custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 1, 0.2, 0.2, 1 )
 text = "Delete"
 
-[node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 321.0
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 272.0
 margin_right = 483.0
-margin_bottom = 827.0
+margin_bottom = 276.0
+
+[node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 341.0
+margin_right = 483.0
+margin_bottom = 847.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 8 )
@@ -1466,8 +1474,6 @@ custom_fonts/font = SubResource( 3 )
 text = "Close"
 
 [node name="DeleteLayerDialog" type="ConfirmationDialog" parent="."]
-title = "Delete Layer"
-custom_styles/panel = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1475,22 +1481,23 @@ __meta__ = {
 [node name="VBoxContainer" type="VBoxContainer" parent="DeleteLayerDialog"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 10.0
-margin_top = 10.0
-margin_right = -10.0
-margin_bottom = -10.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -36.0
 custom_constants/separation = 10
 
 [node name="Label" type="Label" parent="DeleteLayerDialog/VBoxContainer"]
-margin_right = 380.0
+margin_right = 392.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 3 )
 text = "Layer has paintballs. What would you like to do?"
 align = 1
 
 [node name="MergeButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
-margin_right = 190.0
-margin_bottom = 45.0
+margin_top = 31.0
+margin_right = 392.0
+margin_bottom = 56.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
@@ -1501,9 +1508,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Merge Down"
 
 [node name="DiscardButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
-margin_left = 194.0
-margin_right = 380.0
-margin_bottom = 45.0
+margin_top = 66.0
+margin_right = 392.0
+margin_bottom = 91.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
@@ -1514,9 +1521,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Discard Paintballs"
 
 [node name="CancelButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
-margin_left = 194.0
-margin_right = 380.0
-margin_bottom = 69.0
+margin_top = 101.0
+margin_right = 392.0
+margin_bottom = 126.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
