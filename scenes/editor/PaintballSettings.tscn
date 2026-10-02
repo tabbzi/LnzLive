@@ -924,25 +924,27 @@ margin_right = 485.0
 margin_bottom = 55.0
 
 [node name="DesignTotalDiameter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_right = 74.0
+margin_right = 90.0
 margin_bottom = 29.0
 hint_tooltip = "Minimum random size"
+custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
 max_value = 200.0
 value = 20.0
 
 [node name="DesignTotalDiameterMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 78.0
-margin_right = 152.0
+margin_left = 94.0
+margin_right = 184.0
 margin_bottom = 29.0
 hint_tooltip = "Maximum random size"
+custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
 max_value = 200.0
 value = 30.0
 
 [node name="DesignPixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 156.0
-margin_right = 260.0
+margin_left = 188.0
+margin_right = 292.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 7 )
 text = "Pixel Size"
@@ -950,28 +952,28 @@ text = "Pixel Size"
 [node name="GridContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 60.0
 margin_right = 485.0
-margin_bottom = 326.0
+margin_bottom = 382.0
 
 [node name="DesignCanvasContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer"]
 margin_right = 266.0
-margin_bottom = 266.0
+margin_bottom = 322.0
 
 [node name="DesignCanvas" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_right = 200.0
-margin_bottom = 200.0
-rect_min_size = Vector2( 200, 200 )
+margin_right = 256.0
+margin_bottom = 256.0
+rect_min_size = Vector2( 256, 256 )
 size_flags_horizontal = 0
 script = ExtResource( 5 )
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_top = 204.0
+margin_top = 260.0
 margin_right = 266.0
-margin_bottom = 208.0
+margin_bottom = 264.0
 
 [node name="LineToolHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_top = 212.0
+margin_top = 268.0
 margin_right = 266.0
-margin_bottom = 237.0
+margin_bottom = 293.0
 size_flags_horizontal = 3
 
 [node name="BrushBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
@@ -1005,9 +1007,9 @@ toggle_mode = true
 text = "Line [Ctrl+L]"
 
 [node name="LineToolHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_top = 241.0
+margin_top = 297.0
 margin_right = 266.0
-margin_bottom = 266.0
+margin_bottom = 322.0
 size_flags_horizontal = 3
 
 [node name="HLineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox2"]
@@ -1040,9 +1042,9 @@ toggle_mode = true
 text = "V-Line [Ctrl+V]"
 
 [node name="DesignOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 331.0
+margin_top = 387.0
 margin_right = 485.0
-margin_bottom = 446.0
+margin_bottom = 502.0
 
 [node name="DesignSliderOptions" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions"]
 margin_right = 159.0
@@ -1176,9 +1178,9 @@ custom_fonts/font = SubResource( 7 )
 text = "Info"
 
 [node name="JitterContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 451.0
+margin_top = 507.0
 margin_right = 485.0
-margin_bottom = 503.0
+margin_bottom = 559.0
 columns = 2
 
 [node name="DesignRotationHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
@@ -1269,14 +1271,14 @@ custom_icons/updown = ExtResource( 4 )
 max_value = 360.0
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 508.0
+margin_top = 564.0
 margin_right = 485.0
-margin_bottom = 512.0
+margin_bottom = 568.0
 
 [node name="SlotActionContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 517.0
+margin_top = 573.0
 margin_right = 485.0
-margin_bottom = 542.0
+margin_bottom = 598.0
 
 [node name="SlotLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
 margin_top = 2.0
@@ -1313,7 +1315,7 @@ custom_fonts/font = SubResource( 7 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 547.0
+margin_top = 603.0
 margin_right = 485.0
 margin_bottom = 735.0
 size_flags_vertical = 3
