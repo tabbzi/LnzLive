@@ -2732,11 +2732,9 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 # get_pending_paintballs_data
 # get_pending_paintball_nodes
 # clear_pending_paintballz
-# _on_clear_pending_paintballz
 # clear_auto_paintballz
 # _on_clear_auto_paintballz
 # _on_randomize_auto_paintballz
-# _on_clear_auto_paintballz
 # _on_apply_auto_paintballz
 
 func _create_paintball_instance(base_ball_node):
@@ -3163,6 +3161,15 @@ func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int 
 		% [layer_id, paintball_info.base_ball_no])
 
 
+func _clear_pending_paintballs_on_pet_switch() -> void:
+	if is_instance_valid(PaintballLayerManager):
+		PaintballLayerManager.clear_all_paintballs()
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
+
 ### ADD BALLZ ###
 
 func _validate_addball_props(props: Dictionary) -> bool:
@@ -3341,12 +3348,3 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 	addball.position = addball.position * (lnz.scales[0] / 255.0)
 	
 	return addball
-
-func _clear_pending_paintballs_on_pet_switch() -> void:
-	if is_instance_valid(PaintballLayerManager):
-		PaintballLayerManager.clear_all_paintballs()
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_pending_paintball_nodes.clear()
-	_pending_paintballs_data.clear()
