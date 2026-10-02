@@ -1,7 +1,6 @@
 extends Node
 ## PaintballLayerManager.gd
 ## Autoload singleton that manages paintball layers for paintball mode
-## Provides layer CRUD, active layer tracking, and signals for UI updates
 
 signal layer_changed
 signal layer_added
