@@ -226,26 +226,26 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 483.0
-margin_bottom = 847.0
+margin_right = 495.0
+margin_bottom = 825.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_right = 483.0
+margin_right = 495.0
 margin_bottom = 24.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
 margin_top = 1.0
-margin_right = 158.0
+margin_right = 162.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Diameter"
 
 [node name="DiameterMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 162.0
-margin_right = 320.0
+margin_left = 166.0
+margin_right = 328.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum random size"
 size_flags_horizontal = 3
@@ -254,8 +254,8 @@ min_value = 1.0
 value = 10.0
 
 [node name="DiameterMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
-margin_left = 324.0
-margin_right = 483.0
+margin_left = 332.0
+margin_right = 495.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum random size"
 size_flags_horizontal = 3
@@ -265,11 +265,11 @@ value = 20.0
 
 [node name="HBoxContainerDiameterOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 28.0
-margin_right = 483.0
+margin_right = 495.0
 margin_bottom = 57.0
 
 [node name="Tapered" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerDiameterOptions"]
-margin_right = 239.0
+margin_right = 245.0
 margin_bottom = 29.0
 hint_tooltip = "Gradually decrease size at start and end of stroke"
 size_flags_horizontal = 3
@@ -277,8 +277,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Tapered"
 
 [node name="PixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainerDiameterOptions"]
-margin_left = 243.0
-margin_right = 483.0
+margin_left = 249.0
+margin_right = 495.0
 margin_bottom = 29.0
 hint_tooltip = "Use effective pixel size instead of diameter relative to ball size"
 size_flags_horizontal = 3
@@ -286,6 +286,7 @@ custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
 [node name="LayerSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
 margin_top = 61.0
 margin_right = 483.0
 margin_bottom = 337.0
@@ -479,9 +480,9 @@ margin_right = 483.0
 margin_bottom = 276.0
 
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 341.0
-margin_right = 483.0
-margin_bottom = 847.0
+margin_top = 61.0
+margin_right = 495.0
+margin_bottom = 825.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 8 )
@@ -492,6 +493,7 @@ custom_fonts/font = SubResource( 3 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -501,20 +503,20 @@ margin_bottom = -2.0
 custom_constants/separation = 5
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 31.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer2"]
 margin_top = 5.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Color"
 
 [node name="Color" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer2"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 31.0
 hint_tooltip = "Comma-separated color indices (e.g. 1,2,5-10)"
 size_flags_horizontal = 3
@@ -523,20 +525,20 @@ placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 36.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 67.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer6"]
 margin_top = 5.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Texture"
 
 [node name="Texture" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer6"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 31.0
 hint_tooltip = "Comma-separated texture indices (e.g. -1,1-2,4)"
 size_flags_horizontal = 3
@@ -546,20 +548,20 @@ placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainerInterp" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 72.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 97.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp"]
 margin_top = 2.0
-margin_right = 155.0
+margin_right = 159.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Interpolate"
 
 [node name="InterpolateStepsSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp"]
-margin_left = 159.0
-margin_right = 314.0
+margin_left = 163.0
+margin_right = 322.0
 margin_bottom = 25.0
 hint_tooltip = "Intermediate colors to generate between each index"
 size_flags_horizontal = 3
@@ -568,8 +570,8 @@ max_value = 10.0
 value = 1.0
 
 [node name="InterpolateButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp"]
-margin_left = 318.0
-margin_right = 473.0
+margin_left = 326.0
+margin_right = 485.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -582,11 +584,11 @@ text = "Add to Color List"
 
 [node name="HBoxContainerGenPalette" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 102.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 133.0
 
 [node name="GenPaletteBaseInput" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette"]
-margin_right = 93.0
+margin_right = 95.0
 margin_bottom = 31.0
 hint_tooltip = "Base color index (empty to use first color above)"
 size_flags_horizontal = 3
@@ -595,15 +597,15 @@ custom_fonts/font = SubResource( 3 )
 placeholder_text = "Base #"
 
 [node name="GenPaletteTypeSelect" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette"]
-margin_left = 97.0
-margin_right = 283.0
+margin_left = 99.0
+margin_right = 290.0
 margin_bottom = 31.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 
 [node name="GenPaletteButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette"]
-margin_left = 287.0
-margin_right = 473.0
+margin_left = 294.0
+margin_right = 485.0
 margin_bottom = 31.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -616,11 +618,11 @@ text = "Randomize Colors"
 
 [node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 138.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 167.0
 
 [node name="Ordered" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
-margin_right = 155.0
+margin_right = 159.0
 margin_bottom = 29.0
 hint_tooltip = "Cycle through colors/sizes in order instead of random"
 size_flags_horizontal = 3
@@ -628,8 +630,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Ordered"
 
 [node name="Repeat" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
-margin_left = 159.0
-margin_right = 314.0
+margin_left = 163.0
+margin_right = 322.0
 margin_bottom = 29.0
 hint_tooltip = "Repeat the sequence when ordered cycle ends"
 size_flags_horizontal = 3
@@ -637,8 +639,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Repeated"
 
 [node name="Shuffle" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
-margin_left = 318.0
-margin_right = 473.0
+margin_left = 326.0
+margin_right = 485.0
 margin_bottom = 29.0
 hint_tooltip = "Shuffle layer of paintballz in stroke"
 size_flags_horizontal = 3
@@ -647,25 +649,25 @@ text = "Shuffled"
 
 [node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 172.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 172.0
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 177.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 208.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer3"]
 margin_top = 5.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Outline Color"
 
 [node name="OutlineColor" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer3"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 31.0
 hint_tooltip = "Color index for outline"
 size_flags_horizontal = 3
@@ -675,12 +677,12 @@ placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 213.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 237.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4"]
 margin_top = 1.0
-margin_right = 155.0
+margin_right = 159.0
 margin_bottom = 22.0
 hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 mouse_filter = 0
@@ -689,8 +691,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Outline Type"
 
 [node name="OutlineTypeMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4"]
-margin_left = 159.0
-margin_right = 314.0
+margin_left = 163.0
+margin_right = 322.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum outline type index"
 size_flags_horizontal = 3
@@ -700,8 +702,8 @@ max_value = 10.0
 value = -1.0
 
 [node name="OutlineTypeMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4"]
-margin_left = 318.0
-margin_right = 473.0
+margin_left = 326.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum outline type index"
 size_flags_horizontal = 3
@@ -712,28 +714,28 @@ value = -1.0
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 242.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 266.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5"]
 margin_top = 1.0
-margin_right = 155.0
+margin_right = 159.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Fuzz"
 
 [node name="FuzzMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5"]
-margin_left = 159.0
-margin_right = 314.0
+margin_left = 163.0
+margin_right = 322.0
 margin_bottom = 24.0
 hint_tooltip = "Minimum surface fuzziness (0-100)"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="FuzzMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5"]
-margin_left = 318.0
-margin_right = 473.0
+margin_left = 326.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Maximum surface fuzziness (0-100)"
 size_flags_horizontal = 3
@@ -741,20 +743,20 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 271.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 295.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer7"]
 margin_top = 1.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Group"
 
 [node name="Group" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer7"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Add Group index"
 size_flags_horizontal = 3
@@ -762,20 +764,20 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 300.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 324.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer8"]
 margin_top = 1.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Anchored"
 
 [node name="Anchored" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer8"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Anchor Paintballz to not rotate over parent ball"
 size_flags_horizontal = 3
@@ -808,11 +810,11 @@ selected = 0
 
 [node name="FreelineContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 329.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 447.0
 
 [node name="FreelineCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 29.0
 hint_tooltip = "Draw continuous lines (hold SHIFT key)"
 custom_fonts/font = SubResource( 3 )
@@ -820,7 +822,7 @@ text = "Freeline"
 
 [node name="StraightLineCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_top = 33.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 62.0
 hint_tooltip = "Constrain stroke to a straight line. Hold X or Y to lock axis."
 custom_fonts/font = SubResource( 3 )
@@ -828,20 +830,20 @@ text = "Straight Line"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_top = 66.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer"]
 margin_top = 1.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Spacing"
 
 [node name="Spacing" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Distance between Paintballz in freeline mode"
 size_flags_horizontal = 3
@@ -851,20 +853,20 @@ value = 5.0
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_top = 94.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 118.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer2"]
 margin_top = 1.0
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Jitter"
 
 [node name="Jitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer2"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 24.0
 hint_tooltip = "Random position offset range"
 size_flags_horizontal = 3
@@ -872,12 +874,12 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="PresetContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_top = 452.0
-margin_right = 473.0
+margin_right = 485.0
 margin_bottom = 477.0
 alignment = 1
 
 [node name="ImportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PresetContainer"]
-margin_right = 234.0
+margin_right = 240.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -889,8 +891,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Import JSON"
 
 [node name="ExportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PresetContainer"]
-margin_left = 238.0
-margin_right = 473.0
+margin_left = 244.0
+margin_right = 485.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -912,7 +914,7 @@ margin_bottom = -2.0
 custom_constants/separation = 5
 
 [node name="DesignTopOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 29.0
 
 [node name="DesignTotalDiameterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
@@ -943,29 +945,29 @@ value = 30.0
 [node name="DesignRotationLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
 margin_left = 281.0
 margin_top = 4.0
-margin_right = 377.0
+margin_right = 352.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 3 )
 text = "Rotation"
 
 [node name="DesignRotation" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 381.0
-margin_right = 455.0
+margin_left = 356.0
+margin_right = 430.0
 margin_bottom = 29.0
 hint_tooltip = "Fixed/starting rotation angle in degrees"
 min_value = -360.0
 max_value = 360.0
 
 [node name="DesignPixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 281.0
-margin_right = 385.0
+margin_left = 434.0
+margin_right = 538.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
 [node name="GridContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 34.0
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 263.0
 
 [node name="DesignCanvasContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer"]
@@ -1046,7 +1048,7 @@ text = "Brush [Ctrl+B]"
 
 [node name="DesignOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 268.0
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 383.0
 
 [node name="DesignSliderOptions" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions"]
@@ -1182,38 +1184,38 @@ text = "Info"
 
 [node name="DesignJitterContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 388.0
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 445.0
 columns = 4
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_top = 1.0
-margin_right = 118.0
+margin_right = 128.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Jitter"
 
 [node name="DesignJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 122.0
-margin_right = 240.0
+margin_left = 132.0
+margin_right = 260.0
 margin_bottom = 24.0
 hint_tooltip = "Randomize position/size of individual paintballs"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="Label3" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 244.0
+margin_left = 264.0
 margin_top = 1.0
-margin_right = 386.0
+margin_right = 406.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Spread"
 
 [node name="SpreadJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 390.0
-margin_right = 508.0
+margin_left = 410.0
+margin_right = 538.0
 margin_bottom = 24.0
 hint_tooltip = "Randomly offset the center of the stamp"
 size_flags_horizontal = 3
@@ -1221,16 +1223,16 @@ custom_icons/updown = ExtResource( 4 )
 
 [node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_top = 32.0
-margin_right = 118.0
+margin_right = 128.0
 margin_bottom = 53.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Rotate"
 
 [node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 122.0
+margin_left = 132.0
 margin_top = 28.0
-margin_right = 240.0
+margin_right = 260.0
 margin_bottom = 57.0
 hint_tooltip = "Randomize rotation of the entire design"
 size_flags_horizontal = 3
@@ -1238,9 +1240,9 @@ custom_icons/updown = ExtResource( 4 )
 max_value = 360.0
 
 [node name="RotateFixed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 244.0
+margin_left = 264.0
 margin_top = 28.0
-margin_right = 386.0
+margin_right = 406.0
 margin_bottom = 57.0
 hint_tooltip = "Use exact rotation instead of random +/- variance"
 custom_fonts/font = SubResource( 3 )
@@ -1248,25 +1250,25 @@ text = "Fixed Rotation"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 450.0
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 454.0
 
 [node name="SlotActionContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 459.0
-margin_right = 509.0
+margin_right = 538.0
 margin_bottom = 484.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
 margin_top = 2.0
-margin_right = 167.0
+margin_right = 176.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Color Slots"
 
 [node name="AddSlotButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 171.0
-margin_right = 338.0
+margin_left = 180.0
+margin_right = 357.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1278,8 +1280,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Add Slot"
 
 [node name="RemoveSlotButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 342.0
-margin_right = 509.0
+margin_left = 361.0
+margin_right = 538.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1292,14 +1294,13 @@ text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 489.0
-margin_right = 509.0
-margin_bottom = 748.0
+margin_right = 538.0
+margin_bottom = 723.0
 size_flags_vertical = 3
 columns = 8
 hide_root = true
 
 [node name="Advanced" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -1377,7 +1378,7 @@ margin_right = 485.0
 margin_bottom = 155.0
 hint_tooltip = "Show layer management controls"
 custom_fonts/font = SubResource( 3 )
-text = "Use Layers"
+text = "Use Layers (EXPERIMENTAL)"
 
 [node name="PatternInfoDialog" type="WindowDialog" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_left = 35.0
