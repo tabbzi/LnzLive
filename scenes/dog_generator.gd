@@ -2809,7 +2809,7 @@ func add_pending_paintball(paintball_info):
 						paintball_map.get(paintball_info.base_ball_no, []).size(),
 						_pending_paintballs_data.size())
 	
-	if paintball_info.outline_type >= 0:
+	if paintball_info.outline_type >= 0 and paintball_info.outline_color <= 0:
 		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
 	
 	_pending_paintball_nodes.append(pb_visual_ball)
@@ -3120,7 +3120,7 @@ func rebuild_pending_paintball_visuals():
 				visual_index
 			)
 
-			if pb_data.outline_type >= 0:
+			if pb_data.outline_type >= 0 and pb_data.outline_color <= 0:
 				pb_visual.outline_color_index = get_layer_outline_color(layer.layer_id)
 
 			_pending_paintball_nodes.append(pb_visual)
@@ -3161,7 +3161,7 @@ func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int 
 		_pending_paintball_nodes.size()
 	)
 
-	if paintball_info.outline_type >= 0:
+	if paintball_info.outline_type >= 0 and paintball_info.outline_color <= 0:
 		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
 
 	_pending_paintball_nodes.append(pb_visual_ball)
