@@ -89,7 +89,6 @@ onready var _transfer_lnz_button: Button = find_node("TransferLnzButton")
 onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
 onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
 onready var _layers_tree: Tree = find_node("LayersTree")
-onready var _clear_all_paintballs_button: Button = find_node("ClearAllPaintballsButton")
 onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
 onready var _layer_section: Control = find_node("LayerSection")
 onready var _use_layers_checkbox: CheckBox = find_node("UseLayersCheckBox")
@@ -150,8 +149,6 @@ const DEFAULT_DESIGN_SLOTS: Array = [
 
 var design_color_slots: Array = []
 
-const LAYER_ARROW_ICON = preload("res://resources/icons/ico_arr_UD.png")
-
 var _pending_paintball_count: int = 0
 
 const DESIGN_CANVAS_SIZE: float = 200.0
@@ -182,8 +179,6 @@ func _ready() -> void:
 		
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
-
-	_load_layer_config()
 
 	_setup_color_previews()
 	_connect_settings_signals()
@@ -1718,11 +1713,6 @@ func _on_ClearAllLayersButton_pressed() -> void:
 	_rebuild_3d_pending_visuals()
 	_refresh_layers_tree()
 
-func _on_ClearAllPaintballsButton_pressed() -> void:
-	PaintballLayerManager.clear_all_paintballs()
-	_rebuild_3d_pending_visuals()
-	_refresh_layers_tree()
-
 func _on_LayersTree_item_selected() -> void:
 	if _is_refreshing_layer_tree:
 		return
@@ -1859,51 +1849,4 @@ func _on_delete_layer_confirmed() -> void:
 		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
 		_pending_delete_layer_id = -1
 		_rebuild_3d_pending_visuals()
-		_refresh_layers_tree()
-
-func save_layer_config() -> void:
-	var config: Dictionary = {}
-	var layer_names: Array = []
-	for layer in PaintballLayerManager.layers:
-		layer_names.append({
-			"name": layer.name,
-			"visible": layer.visible,
-			"paintball_count": layer.get_paintball_count()
-		})
-	config["layers"] = layer_names
-	config["active_layer_id"] = PaintballLayerManager.active_layer_id
-	var settings := ConfigFile.new()
-	settings.set_value("paintball", "layer_config", config)
-	settings.save("user://paintball_layer_config.cfg")
-
-func load_layer_config() -> void:
-	_load_layer_config()
-
-func _load_layer_config() -> void:
-	var settings := ConfigFile.new()
-	var err := settings.load("user://paintball_layer_config.cfg")
-	if err != OK:
-		return
-	if not settings.has_section("paintball"):
-		return
-	if not settings.has_value("paintball", "layer_config"):
-		return
-	var config = settings.get_value("paintball", "layer_config")
-	if not config is Dictionary:
-		return
-	var layer_names = config.get("layers", [])
-	if layer_names is Array and layer_names.size() > 0:
-		PaintballLayerManager.clear_all_paintballs()
-		for i in range(layer_names.size()):
-			var layer_data = layer_names[i]
-			if layer_data is Dictionary:
-				var name = layer_data.get("name", "Layer " + str(i + 1))
-				var visible = layer_data.get("visible", true)
-				PaintballLayerManager.create_layer(name)
-				var layer = PaintballLayerManager.get_active_layer()
-				if layer:
-					layer.visible = visible
-		var active_id = config.get("active_layer_id", -1)
-		if active_id is int and active_id >= 0:
-			PaintballLayerManager.set_active_layer(active_id)
 		_refresh_layers_tree()
