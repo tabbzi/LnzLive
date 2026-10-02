@@ -2936,6 +2936,7 @@ func clear_pending_paintballz():
 	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
 	_clear_paintball_list(_pending_paintball_nodes, _pending_paintballs_data)
 	PaintballLayerManager.clear_all_paintballs()
+	PaintballLayerManager.clear_all_layers()
 
 func clear_auto_paintballz():
 	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
@@ -3169,6 +3170,7 @@ func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int 
 func _clear_pending_paintballs_on_pet_switch() -> void:
 	if is_instance_valid(PaintballLayerManager):
 		PaintballLayerManager.clear_all_paintballs()
+		PaintballLayerManager.clear_all_layers()
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()

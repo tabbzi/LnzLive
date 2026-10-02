@@ -187,9 +187,11 @@ func get_active_layer_paintball_count() -> int:
 
 func clear_all_layers() -> void:
 	for layer in layers:
-		layer.clear_paintballs()
 		emit_signal("layer_cleared", layer.layer_id)
-	print("[STATUS] PaintballLayerManager: cleared paintballs from all layers")
+	layers.clear()
+	active_layer_id = -1
+	next_layer_id = 1
+	print("[STATUS] PaintballLayerManager: cleared all layers and layer structure")
 
 
 func clear_all_paintballs() -> void:
