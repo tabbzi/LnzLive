@@ -1627,7 +1627,7 @@ func _setup_layer_tree() -> void:
 		return
 	_layers_tree.columns = 3
 	_layers_tree.hide_root = true
-	_layers_tree.select_mode = Tree.SELECT_ROW
+	_layers_tree.select_mode = Tree.SELECT_SINGLE
 	_layers_tree.set_column_titles_visible(true)
 	_layers_tree.set_column_title(0, "Vis")
 	_layers_tree.set_column_title(1, "Layer")
@@ -1727,7 +1727,7 @@ func _on_LayersTree_item_edited() -> void:
 	var item: TreeItem = _layers_tree.get_edited()
 	if not is_instance_valid(item):
 		return
-	var col: int = _layers_tree.get_selected_column()
+	var col: int = _layers_tree.get_edited_column()
 	var layer_id: int = int(item.get_metadata(0))
 	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
 	if not layer:

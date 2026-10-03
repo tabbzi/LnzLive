@@ -2470,7 +2470,10 @@ func apply_paintballz():
 			for layer in PaintballLayerManager.layers:
 				if not layer.visible or not layer.has_paintballs():
 					continue
-				text_to_insert += "; Layer " + str(layer.layer_id) + "\n"
+				var header_name: String = layer.name.strip_edges()
+				if header_name == "":
+					header_name = "Layer " + str(layer.layer_id)
+				text_to_insert += "; " + header_name + "\n"
 				for pb in layer.paintballs:
 					var relative_pos_lnz = pb.relative_pos_lnz
 					var paintball_line = str(pb.base_ball_no) + delim
