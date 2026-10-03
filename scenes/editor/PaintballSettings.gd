@@ -1673,7 +1673,7 @@ func _refresh_layers_tree() -> void:
 		item.set_metadata(0, layer.layer_id)
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
 		item.set_checked(0, layer.visible)
-		item.set_editable(0, false)
+		item.set_editable(0, true)
 		item.set_cell_mode(1, TreeItem.CELL_MODE_STRING)
 		item.set_text(1, layer.name)
 		item.set_editable(1, true)
