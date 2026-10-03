@@ -3110,7 +3110,7 @@ func rebuild_pending_paintball_visuals():
 				var engine_scale: float = 1.0
 				if "lnz" in self and is_instance_valid(lnz):
 					if "scales" in lnz:
-						engine_scale = lnz.scales[0] / 255.0
+						engine_scale = lnz.scales[0]
 				local_pos = LnzLiveUtils.lnz_to_world_delta(pb_data["relative_pos_lnz"], pixel_world_size, engine_scale)
 				pb_data["relative_pos_local"] = local_pos
 
