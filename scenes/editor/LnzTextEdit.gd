@@ -2569,7 +2569,8 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 			"group": int(parts[9]) if parts.size() > 9 else 0,
 			"texture": int(parts[10]) if parts.size() > 10 else -1,
 			"anchored": bool(int(parts[11])) if parts.size() > 11 else false,
-			"lnz_line_index": line_idx
+			"lnz_line_index": line_idx,
+			"_pb_uid": PaintballLayerManager.allocate_paintball_uid()
 		}
 		print("[DEBUG] LnzTextEdit: transferred paintball line %d: base=%s diam=%s pos=(%s,%s,%s) color=%s outline=%s fuzz=%s outline_type=%s group=%s texture=%s anchored=%s"
 			% [line_idx, str(parts[0]), str(parts[1]), str(parts[2]), str(parts[3]), str(parts[4]), str(parts[5]), str(parts[6]), str(parts[7]), str(parts[8]), str(parts[9]), str(parts[10]), str(parts[11])])
@@ -2599,7 +2600,7 @@ func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -
 		PaintballLayerManager.set_active_layer(new_layer_id)
 		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNZ to layer '%s' (id %d)"
 			% [transferred_count, layer_name, new_layer_id])
-		save_file(true)
+		save_file(true, true)
 		commit_full_snapshot("Applied Transferred Paintballs")
 		if is_instance_valid(pet_node):
 			pet_node.recompose_model()

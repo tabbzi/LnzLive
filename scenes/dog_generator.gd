@@ -485,6 +485,8 @@ func generate_pet(file_path):
 
 	if file_path != last_loaded_filepath:
 
+		_clear_paintball_state_on_model_load()
+
 		# TBD: May be helpful to clear caches when switching models (not on every reload)
 		# clear_texture_cache()
 		# _atlas_textures.clear()
@@ -2730,6 +2732,7 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 # get_pending_paintballs_data
 # get_pending_paintball_nodes
 # clear_pending_paintballz
+# _clear_paintball_state_on_model_load
 # clear_auto_paintballz
 # _on_clear_auto_paintballz
 # _on_randomize_auto_paintballz
@@ -2934,7 +2937,22 @@ func clear_pending_paintballz():
 	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
 	_clear_paintball_list(_pending_paintball_nodes, _pending_paintballs_data)
 	PaintballLayerManager.clear_all_paintballs()
-	PaintballLayerManager.clear_all_layers()
+
+func _clear_paintball_state_on_model_load():
+	print("[STATUS] Node: _clear_paintball_state_on_model_load: clearing %d pending / %d auto"
+		% [_pending_paintball_nodes.size(), _auto_paintball_nodes.size()])
+	if is_instance_valid(PaintballLayerManager):
+		PaintballLayerManager.clear_all_layers()
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
+	for node in _auto_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_auto_paintball_nodes.clear()
+	_auto_paintballs_data.clear()
 
 func clear_auto_paintballz():
 	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
