@@ -155,7 +155,7 @@ var design_color_slots: Array = []
 
 var _pending_paintball_count: int = 0
 
-const DESIGN_CANVAS_SIZE: float = 200.0
+const DESIGN_CANVAS_SIZE: float = 256.0
 
 var _is_refreshing_layer_tree: bool = false
 var _pending_delete_layer_id: int = -1
