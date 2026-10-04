@@ -24,7 +24,7 @@ func create_layer(name: String = "") -> int:
 		name = "Layer " + str(new_id)
 
 	var layer: PaintballLayerData = PaintballLayerData.new(name, true, new_id)
-	layers.append(layer)
+	layers.insert(0, layer)
 
 	active_layer_id = new_id
 	print("[STATUS] PaintballLayerManager: created layer '%s' with id %d" % [name, new_id])

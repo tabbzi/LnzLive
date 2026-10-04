@@ -3098,8 +3098,16 @@ func rebuild_pending_paintball_visuals():
 			node.queue_free()
 	_pending_paintball_nodes.clear()
 
+	# Count total visible paintballs for inverted z_add assignment
+	var total_visible: int = 0
+	for layer in PaintballLayerManager.layers:
+		if layer.visible:
+			total_visible += layer.get_paintball_count()
+
 	var visual_index: int = 0
 	for layer in PaintballLayerManager.layers:
+		if not layer.visible:
+			continue
 		for pb_data in layer.paintballs:
 			var base_ball_node = ball_map.get(pb_data.base_ball_no)
 			if not is_instance_valid(base_ball_node):
@@ -3135,7 +3143,7 @@ func rebuild_pending_paintball_visuals():
 				pb_data.relative_pos_local,
 				pb_data.diameter,
 				paintball_map.get(pb_data.base_ball_no, []).size(),
-				visual_index
+				total_visible - visual_index
 			)
 
 			if pb_data.outline_type >= 0 and pb_data.outline_color <= 0:

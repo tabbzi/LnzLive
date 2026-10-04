@@ -1747,7 +1747,7 @@ func _on_MoveDownButton_pressed() -> void:
 	if not is_instance_valid(selected):
 		return
 	var layer_id: int = int(selected.get_metadata(0))
-	if PaintballLayerManager.move_layer_up(layer_id):
+	if PaintballLayerManager.move_layer_down(layer_id):
 		_rebuild_3d_pending_visuals()
 		_refresh_layers_tree()
 
@@ -1757,7 +1757,7 @@ func _on_MoveUpButton_pressed() -> void:
 	if not is_instance_valid(selected):
 		return
 	var layer_id: int = int(selected.get_metadata(0))
-	if PaintballLayerManager.move_layer_down(layer_id):
+	if PaintballLayerManager.move_layer_up(layer_id):
 		_rebuild_3d_pending_visuals()
 		_refresh_layers_tree()
 

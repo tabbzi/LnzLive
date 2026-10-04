@@ -2474,6 +2474,7 @@ func apply_paintballz():
 				if header_name == "":
 					header_name = "Layer " + str(layer.layer_id)
 				text_to_insert += "; " + header_name + "\n"
+				var pb_lines = []
 				for pb in layer.paintballs:
 					var relative_pos_lnz = pb.relative_pos_lnz
 					var paintball_line = str(pb.base_ball_no) + delim
@@ -2488,7 +2489,10 @@ func apply_paintballz():
 					paintball_line += str(pb.group) + delim
 					paintball_line += str(pb.texture) + delim
 					paintball_line += str(int(!pb.anchored))
-					text_to_insert += paintball_line + "\n"
+					pb_lines.append(paintball_line)
+				pb_lines.invert()
+				for line in pb_lines:
+					text_to_insert += line + "\n"
 		else:
 			var paintball_lines_list = []
 			for i in range(pending_paintballs.size() - 1, -1, -1):
