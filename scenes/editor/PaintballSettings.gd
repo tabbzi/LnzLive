@@ -64,7 +64,6 @@ onready var _brush_space_label: Label = find_node("BrushSpaceLabel")
 onready var _mirror_x: CheckBox = find_node("MirrorX")
 onready var _mirror_y: CheckBox = find_node("MirrorY")
 onready var _canvas_eraser: CheckBox = find_node("CanvasEraser")
-onready var _rotate_fixed: CheckBox = find_node("RotateFixed")
 onready var _rotate_jitter: SpinBox = find_node("RotateJitter")
 onready var _spread_jitter: SpinBox = find_node("SpreadJitter")
 onready var _slots_tree: Tree = find_node("SlotsTree")
@@ -83,6 +82,17 @@ onready var _pattern_info_button: Button = find_node("PatternInfoButton")
 onready var _pattern_info_dialog: WindowDialog = find_node("PatternInfoDialog")
 onready var _import_pattern_button: Button = find_node("ImportPatternButton")
 onready var _export_pattern_button: Button = find_node("ExportPatternButton")
+
+onready var _add_layer_button: Button = find_node("AddLayerButton")
+onready var _transfer_lnz_button: Button = find_node("TransferLnzButton")
+onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
+onready var _export_layers_button: Button = find_node("ExportLayersButton")
+onready var _import_layers_button: Button = find_node("ImportLayersButton")
+onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
+onready var _layers_tree: Tree = find_node("LayersTree")
+onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
+onready var _layer_section: Control = find_node("LayerSection")
+onready var _use_layers_checkbox: CheckBox = find_node("UseLayersCheckBox")
 
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
@@ -174,6 +184,8 @@ func _ready() -> void:
 	_setup_color_previews()
 	_connect_settings_signals()
 	_connect_design_signals()
+	_setup_layer_tree()
+	_connect_layer_manager_signals()
 
 	_brush_space_slider.connect("value_changed", self, "_on_brush_space_changed")
 
@@ -358,6 +370,18 @@ func _on_GeneratePaletteButton_pressed() -> void:
 func _process(delta: float) -> void:
 	if _is_loading_settings: return
 	
+	var total_count: int = 0
+	if is_instance_valid(PaintballLayerManager):
+		total_count = PaintballLayerManager.get_total_paintball_count()
+	else:
+		total_count = _pending_paintball_count
+	
+	if total_count != _pending_paintball_count:
+		_pending_paintball_count = total_count
+		_update_paintball_buttons()
+		if is_instance_valid(_layers_tree):
+			_refresh_layers_tree()
+	
 	var raw_array = null
 	if is_instance_valid(dog_generator) and "_pending_paintballs_data" in dog_generator:
 		raw_array = dog_generator.get("_pending_paintballs_data")
@@ -478,6 +502,8 @@ func get_closest_palette_index(target_color: Color) -> int:
 	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
 
 func get_pending_paintball_count() -> int:
+	if PaintballLayerManager:
+		return PaintballLayerManager.get_total_paintball_count()
 	if is_instance_valid(dog_generator):
 		if dog_generator.has_method("get_pending_paintball_nodes"):
 			return dog_generator.get_pending_paintball_nodes().size()
@@ -614,6 +640,7 @@ func get_properties() -> Dictionary:
 	properties["walk_steps"] = _walk_steps.value
 	properties["walk_spread"] = _walk_spread.value
 	properties["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	properties["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
 	return properties
 
 func export_paintball_json() -> void:
@@ -716,6 +743,9 @@ func _apply_settings_dict(data: Dictionary) -> void:
 	if data.has("walk_steps"): _walk_steps.value = data["walk_steps"]
 	if data.has("walk_spread"): _walk_spread.value = data["walk_spread"]
 	if data.has("exclude_eye_ballz"): _exclude_eye_ballz.pressed = data["exclude_eye_ballz"]
+	if data.has("use_layers"):
+		if _use_layers_checkbox: _use_layers_checkbox.pressed = data["use_layers"]
+		if _layer_section: _layer_section.visible = data["use_layers"]
 	_is_loading_settings = false
 	save_settings()
 	_refresh_all_previews()
@@ -750,13 +780,9 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var d_jitter: float = _design_jitter.value if jitter_enabled else 0.0
 	var r_jitter: float = _rotate_jitter.value if jitter_enabled else 0.0
 	var s_jitter: float = _spread_jitter.value if jitter_enabled else 0.0
-	var r_fixed: bool = _rotate_fixed.pressed if jitter_enabled else false
 
 	if jitter_enabled and r_jitter > 0:
-		if r_fixed:
-			design_rotation_angle += deg2rad(r_jitter)
-		else:
-			design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
+		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
 
 	var rotated_basis: Basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x: Vector3 = rotated_basis.x
@@ -775,7 +801,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 			continue
 		var slot_data: Dictionary = design_color_slots[pb.color_slot - 1]
 
-		var dx: float = pb.x * (footprint_lnz / 2.0)
+		var dx: float = -pb.x * (footprint_lnz / 2.0)
 		var dy: float = -pb.y * (footprint_lnz / 2.0)
 		if d_jitter > 0:
 			var j_amt: float = (d_jitter / 100.0) * (footprint_lnz / 2.0)
@@ -841,6 +867,9 @@ func _connect_settings_signals() -> void:
 	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
 	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
 	_line_btn.connect("toggled", self, "_on_line_btn_toggled")
+	
+	if _use_layers_checkbox:
+		_use_layers_checkbox.connect("toggled", self, "_on_use_layers_toggled")
 	_hline_btn.connect("toggled", self, "_on_hline_btn_toggled")
 	_vline_btn.connect("toggled", self, "_on_vline_btn_toggled")
 	_brush_btn.connect("toggled", self, "_on_brush_btn_toggled")
@@ -868,7 +897,6 @@ func _connect_design_signals() -> void:
 	_design_total_diameter.connect("value_changed", self, "_on_setting_changed")
 	_design_total_diameter_max.connect("value_changed", self, "_on_setting_changed")
 	_design_rotation.connect("value_changed", self, "_on_setting_changed")
-	_rotate_fixed.connect("toggled", self, "_on_setting_changed")
 	_design_pixel_mode.connect("toggled", self, "_on_setting_changed")
 
 	_add_slot_button.connect("pressed", self, "_on_AddSlotButton_pressed")
@@ -1311,6 +1339,7 @@ func save_settings() -> void:
 	values["walk_steps"] = _walk_steps.value
 	values["walk_spread"] = _walk_spread.value
 	values["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	values["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
 	LnzLiveUtils.save_config("PaintballProperties", values, "user://settings.cfg")
 	var design_values: Dictionary = {}
 	design_values["design_paintballs"] = _design_canvas.design_paintballs
@@ -1326,7 +1355,6 @@ func save_settings() -> void:
 	design_values["line_mode"] = _get_design_line_mode()
 	design_values["design_jitter"] = _design_jitter.value
 	design_values["rotate_jitter"] = _rotate_jitter.value
-	design_values["rotate_fixed"] = _rotate_fixed.pressed
 	design_values["design_rotation"] = _design_rotation.value
 	design_values["spread_jitter"] = _spread_jitter.value
 	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
@@ -1365,6 +1393,9 @@ func load_settings() -> void:
 	_walk_steps.value = data.get("walk_steps", 3.0)
 	_walk_spread.value = data.get("walk_spread", 5.0)
 	_exclude_eye_ballz.pressed = data.get("exclude_eye_ballz", true)
+	var use_layers: bool = data.get("use_layers", false)
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = use_layers
+	if _layer_section: _layer_section.visible = use_layers
 
 	var loaded_paintballs: Array = design_data.get("design_paintballs", [])
 	if loaded_paintballs.size() > 0:
@@ -1404,7 +1435,6 @@ func load_settings() -> void:
 	_sync_design_line_mode(design_data.get("line_mode", 0))
 	_design_jitter.value = design_data.get("design_jitter", 0.0)
 	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
-	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
 	_design_rotation.value = design_data.get("design_rotation", 0.0)
 	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
 
@@ -1456,7 +1486,7 @@ func _on_reset_defaults_pressed() -> void:
 	_mirror_y.pressed = false
 	_canvas_eraser.pressed = false
 	_design_jitter.value = 0.0
-	_rotate_fixed.pressed = false
+
 
 	_design_canvas.clear()
 	_brush_size_slider.value = 30.0
@@ -1476,6 +1506,9 @@ func _on_reset_defaults_pressed() -> void:
 	_on_palette_changed()
 	_refresh_all_previews()
 
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = false
+	if _layer_section: _layer_section.visible = false
+
 func _get_design_line_mode() -> int:
 	if _brush_btn.pressed:
 		return 0
@@ -1486,6 +1519,12 @@ func _get_design_line_mode() -> int:
 	elif _vline_btn.pressed:
 		return 3
 	return 0
+
+func _on_use_layers_toggled(is_on: bool) -> void:
+	print("[STATUS] PaintballSettings: use_layers toggled: %s" % is_on)
+	if is_instance_valid(_layer_section):
+		_layer_section.visible = is_on
+	_on_setting_changed()
 
 func _sync_design_line_mode(mode: int) -> void:
 	_brush_btn.set_block_signals(true)
@@ -1551,3 +1590,637 @@ func _on_brush_btn_toggled(pressed: bool) -> void:
 		_design_canvas.update()
 		save_settings()
 		call_deferred("_sync_design_line_mode", 0)
+
+
+### LAYER MANAGEMENT ###
+
+var _is_refreshing_layer_tree: bool = false
+var _pending_delete_layer_id: int = -1
+
+func _connect_layer_manager_signals() -> void:
+	if not is_instance_valid(PaintballLayerManager):
+		return
+	PaintballLayerManager.ensure_default_layer()
+	PaintballLayerManager.connect("layer_added", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_removed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_cleared", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_renamed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_visibility_toggled", self, "_on_layer_visibility_toggled")
+	PaintballLayerManager.connect("layer_reordered", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_changed", self, "_on_layer_visuals_dirty")
+
+func _on_layer_visuals_dirty(_arg1 = null, _arg2 = null) -> void:
+	call_deferred("_refresh_layers_tree")
+
+func _on_layer_visibility_toggled(layer_id: int, is_vis: bool) -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("get_pending_paintball_nodes_for_layer"):
+		var nodes: Array = dog_gen.get_pending_paintball_nodes_for_layer(layer_id)
+		for node in nodes:
+			if is_instance_valid(node):
+				node.visible = is_vis
+	_update_paintball_buttons()
+	call_deferred("_refresh_layers_tree")
+
+func _setup_layer_tree() -> void:
+	if not is_instance_valid(_layers_tree):
+		return
+	_layers_tree.columns = 3
+	_layers_tree.hide_root = true
+	_layers_tree.select_mode = Tree.SELECT_SINGLE
+	_layers_tree.set_column_titles_visible(true)
+	_layers_tree.set_column_title(0, "Vis")
+	_layers_tree.set_column_title(1, "Layer")
+	_layers_tree.set_column_title(2, "PB")
+	_layers_tree.set_column_expand(0, true)
+	_layers_tree.set_column_expand(1, true)
+	_layers_tree.set_column_expand(2, true)
+	_layers_tree.connect("item_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("cell_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("item_edited", self, "_on_LayersTree_item_edited")
+	if is_instance_valid(_add_layer_button):
+		_add_layer_button.connect("pressed", self, "_on_AddLayerButton_pressed")
+	if is_instance_valid(_transfer_lnz_button):
+		_transfer_lnz_button.connect("pressed", self, "_on_TransferLnzButton_pressed")
+	if is_instance_valid(_clear_all_layers_button):
+		_clear_all_layers_button.connect("pressed", self, "_on_ClearAllLayersButton_pressed")
+	if is_instance_valid(find_node("MoveUpButton")):
+		find_node("MoveUpButton").connect("pressed", self, "_on_MoveUpButton_pressed")
+	if is_instance_valid(find_node("MoveDownButton")):
+		find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
+	if is_instance_valid(find_node("MergeButton")):
+		find_node("MergeButton").connect("pressed", self, "_on_MergeButton_pressed")
+	if is_instance_valid(find_node("ClearLayerButton")):
+		find_node("ClearLayerButton").connect("pressed", self, "_on_ClearLayerButton_pressed")
+	if is_instance_valid(find_node("DeleteLayerButton")):
+		find_node("DeleteLayerButton").connect("pressed", self, "_on_DeleteLayerButton_pressed")
+	if is_instance_valid(_export_layers_button):
+		_export_layers_button.connect("pressed", self, "export_layers_json")
+	if is_instance_valid(_import_layers_button):
+		_import_layers_button.connect("pressed", self, "_on_ImportLayersButton_pressed")
+	_refresh_layers_tree()
+
+func _refresh_layers_tree() -> void:
+	if not is_instance_valid(_layers_tree) or _is_refreshing_layer_tree:
+		return
+	_is_refreshing_layer_tree = true
+	_layers_tree.clear()
+	var root_item: TreeItem = _layers_tree.create_item()
+	var layer_count: int = PaintballLayerManager.layers.size()
+	for i in range(layer_count):
+		var layer: PaintballLayerData = PaintballLayerManager.layers[i]
+		var item: TreeItem = _layers_tree.create_item(root_item)
+		item.set_metadata(0, layer.layer_id)
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		item.set_checked(0, layer.visible)
+		item.set_editable(0, true)
+		item.set_cell_mode(1, TreeItem.CELL_MODE_STRING)
+		item.set_text(1, layer.name)
+		item.set_editable(1, true)
+		item.set_cell_mode(2, TreeItem.CELL_MODE_STRING)
+		item.set_text(2, str(layer.get_paintball_count()))
+		item.set_editable(2, false)
+		if layer.layer_id == PaintballLayerManager.active_layer_id:
+			for col_idx in range(3):
+				item.set_custom_bg_color(col_idx, Color(0.25, 0.45, 0.45, 0.6))
+	if is_instance_valid(_active_layer_label):
+		var active: PaintballLayerData = PaintballLayerManager.get_active_layer()
+		_active_layer_label.text = "Active: " + (active.name if active else "None")
+	_update_paintball_buttons()
+	_is_refreshing_layer_tree = false
+
+func _rebuild_3d_pending_visuals() -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("rebuild_pending_paintball_visuals"):
+		dog_gen.rebuild_pending_paintball_visuals()
+
+func _on_AddLayerButton_pressed() -> void:
+	PaintballLayerManager.create_layer()
+	_refresh_layers_tree()
+
+func _on_TransferLnzButton_pressed() -> void:
+	var lnz_text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+	if lnz_text_edit and lnz_text_edit.has_method("transfer_paintballs_from_lnz_to_layer"):
+		var count: int = lnz_text_edit.transfer_paintballs_from_lnz_to_layer("Transferred")
+		if count > 0:
+			_refresh_layers_tree()
+
+func _on_ClearAllLayersButton_pressed() -> void:
+	PaintballLayerManager.clear_all_paintballs()
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+func _on_LayersTree_item_selected() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if layer_id >= 0 and layer_id != PaintballLayerManager.active_layer_id:
+		PaintballLayerManager.set_active_layer(layer_id)
+		call_deferred("_refresh_layers_tree")
+
+func _on_LayersTree_item_edited() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var item: TreeItem = _layers_tree.get_edited()
+	if not is_instance_valid(item):
+		return
+	var col: int = _layers_tree.get_edited_column()
+	var layer_id: int = int(item.get_metadata(0))
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
+	if col == 0:
+		var new_checked: bool = item.is_checked(0)
+		if new_checked != layer.visible:
+			PaintballLayerManager.toggle_layer_visibility(layer_id)
+	elif col == 1:
+		var new_name: String = item.get_text(1).strip_edges()
+		if new_name != "" and new_name != layer.name:
+			PaintballLayerManager.rename_layer(layer_id, new_name)
+
+
+func _on_MoveDownButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_down(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_MoveUpButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_up(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_MergeButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	var idx: int = -1
+	for i in range(PaintballLayerManager.layers.size()):
+		if PaintballLayerManager.layers[i].layer_id == layer_id:
+			idx = i
+			break
+	if idx <= 0:
+		print("[WARNING] PaintballSettings: cannot merge layer %d — it is already the top layer" % layer_id)
+		return
+	if PaintballLayerManager.merge_layer_to_below(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+func _on_ClearLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	PaintballLayerManager.clear_layer(layer_id)
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+
+func _on_DeleteLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	_delete_layer(layer_id)
+
+func _delete_layer(layer_id: int) -> void:
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
+	
+	var pb_count: int = layer.get_paintball_count()
+	if pb_count == 0:
+		PaintballLayerManager.delete_layer(layer_id, false)
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+		return
+	
+	if is_instance_valid(_delete_layer_dialog):
+		_pending_delete_layer_id = layer_id
+		_delete_layer_dialog.popup_centered()
+		if not _delete_layer_dialog.is_connected("confirmed", self, "_on_delete_layer_confirmed"):
+			_delete_layer_dialog.connect("confirmed", self, "_on_delete_layer_confirmed")
+		if not _delete_layer_dialog.is_connected("canceled", self, "_on_delete_layer_cancelled"):
+			_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_cancelled")
+		var cancel_btn: Button = _delete_layer_dialog.find_node("CancelButton")
+		if is_instance_valid(cancel_btn):
+			if not cancel_btn.is_connected("pressed", self, "_on_delete_layer_cancelled"):
+				cancel_btn.connect("pressed", self, "_on_delete_layer_cancelled")
+		var ok_btn: Button = _delete_layer_dialog.find_node("OKButton")
+		if is_instance_valid(ok_btn):
+			ok_btn.visible = false
+		var merge_btn: Button = _delete_layer_dialog.find_node("MergeButton")
+		var discard_btn: Button = _delete_layer_dialog.find_node("DiscardButton")
+		if is_instance_valid(merge_btn):
+			if not merge_btn.is_connected("pressed", self, "_on_delete_layer_merge"):
+				merge_btn.connect("pressed", self, "_on_delete_layer_merge")
+		if is_instance_valid(discard_btn):
+			if not discard_btn.is_connected("pressed", self, "_on_delete_layer_discard"):
+				discard_btn.connect("pressed", self, "_on_delete_layer_discard")
+	else:
+		if PaintballLayerManager.delete_layer(layer_id, true):
+			_rebuild_3d_pending_visuals()
+			_refresh_layers_tree()
+
+func _on_delete_layer_confirmed() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+func _on_delete_layer_cancelled() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	_pending_delete_layer_id = -1
+
+func _on_delete_layer_merge() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+func _on_delete_layer_discard() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(_pending_delete_layer_id)
+		if layer:
+			layer.clear_paintballs()
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, false)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+### LAYER JSON EXPORT/IMPORT ###
+
+func export_layers_json() -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	LnzLiveUtils.export_json_preset(data, "LnzLive_paintball_layers", self, "_save_layers_file")
+
+func _save_layers_file(path: String) -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	var file: File = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
+		print("[STATUS] PaintballSettings: saved layers file to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for saving layers to %s" % path)
+
+func _get_layers_data_dict() -> Dictionary:
+	var data: Dictionary = {}
+	data["exporter"] = "LnzLive"
+	data["format_version"] = 1
+	data["species"] = "dog"
+	data["species_id"] = 2
+	data["species_ball_count"] = 67
+	if dog_generator and dog_generator.lnz:
+		data["species"] = KeyBallsData.species_to_string(dog_generator.lnz.species)
+		data["species_id"] = dog_generator.lnz.species
+		data["species_ball_count"] = dog_generator.lnz.balls.size()
+	var dt: Dictionary = OS.get_datetime()
+	data["exported_at"] = {
+		"year": dt["year"], "month": dt["month"], "day": dt["day"],
+		"hour": dt["hour"], "minute": dt["minute"], "second": dt["second"]
+	}
+	
+	var layers_array: Array = []
+	for layer in PaintballLayerManager.layers:
+		var layer_dict: Dictionary = {}
+		layer_dict["name"] = layer.name
+		layer_dict["visible"] = layer.visible
+		var pb_array: Array = []
+		for pb in layer.paintballs:
+			var pb_dict: Dictionary = {}
+			pb_dict["base_ball_no"] = pb.get("base_ball_no", -1)
+			pb_dict["base_ball_name"] = KeyBallsData.get_ball_name_by_species(
+				data["species_id"], pb_dict["base_ball_no"])
+			pb_dict["parent_base_ball_no"] = pb.get("parent_base_ball_no", -1)
+			pb_dict["diameter"] = pb.get("diameter", 20)
+			var rel_pos: Vector3 = pb.get("relative_pos_lnz", Vector3.ZERO)
+			pb_dict["relative_pos_lnz"] = [rel_pos.x, rel_pos.y, rel_pos.z]
+			var normal: Vector3 = pb.get("surface_normal", Vector3.ZERO)
+			if normal == Vector3.ZERO:
+				normal = rel_pos.normalized()
+			pb_dict["surface_normal"] = [normal.x, normal.y, normal.z]
+			pb_dict["color"] = pb.get("color", 1)
+			pb_dict["outline_color"] = pb.get("outline_color", 1)
+			pb_dict["fuzz"] = pb.get("fuzz", 0)
+			pb_dict["outline_type"] = pb.get("outline_type", -1)
+			pb_dict["texture"] = pb.get("texture", -1)
+			pb_dict["anchored"] = pb.get("anchored", false)
+			pb_dict["group"] = pb.get("group", 0)
+			pb_array.append(pb_dict)
+		layer_dict["paintballs"] = pb_array
+		layers_array.append(layer_dict)
+	data["layers"] = layers_array
+	return data
+
+func _on_ImportLayersButton_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		LnzLiveUtils.web_prompt_import_text(self, "_on_web_layers_import_completed")
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Import Paintball Layers"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Paintball Layers"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_layers_file")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_web_layers_import_completed(args: Array) -> void:
+	var json_res = JSON.parse(args[0])
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		_process_imported_layers_dict(json_res.result)
+
+func _load_layers_file(path: String) -> void:
+	var data: Dictionary = LnzLiveUtils.load_json_preset(path)
+	if typeof(data) == TYPE_DICTIONARY and not data.empty():
+		_process_imported_layers_dict(data)
+
+func _process_imported_layers_dict(data: Dictionary) -> void:
+	if not data.has("layers"):
+		print("[ERROR] PaintballSettings: imported JSON has no layers key")
+		return
+	
+	var src_species_id: int = data.get("species_id", 0)
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
+	
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	
+	# Collect unique base_ball_no values
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = pb.get("base_ball_no", -1)
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var all_exist: bool = true
+	for ball_no in unique_balls.keys():
+		var found: bool = false
+		if ball_no < dog_generator.ball_map.size():
+			found = true
+		if dog_generator.lnz and dog_generator.lnz.addballs.has(ball_no):
+			found = true
+		if not found:
+			all_exist = false
+			break
+	
+	if src_species_id == target_species_id and all_exist:
+		print("[STATUS] PaintballSettings: layers import compatible, applying directly")
+		_apply_imported_layers(data["layers"], {})
+		return
+	
+	print("[STATUS] PaintballSettings: cross-species or missing balls detected, showing remap dialog")
+	_show_layer_remap_dialog(data)
+
+func _show_layer_remap_dialog(data: Dictionary) -> void:
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Import Paintball Layers - Remap Balls"
+	dialog.rect_min_size = Vector2(540, 380)
+	
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.set_anchors_and_margins_preset(Control.PRESET_WIDE, Control.PRESET_MODE_MINSIZE, 10)
+	vbox.margin_bottom = -40
+	dialog.add_child(vbox)
+	
+	var label: Label = Label.new()
+	label.text = "Some balls need remapping. Select target balls for each source ball:"
+	vbox.add_child(label)
+	
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var scroll_vbox: VBoxContainer = VBoxContainer.new()
+	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(scroll_vbox)
+	
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
+	
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = int(pb.get("base_ball_no", -1))
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var remapping: Dictionary = {}
+	var option_buttons: Array = []
+	
+	for ball_no in unique_balls.keys():
+		var hb: HBoxContainer = HBoxContainer.new()
+		hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll_vbox.add_child(hb)
+		
+		var ball_label: Label = Label.new()
+		var ball_name: String = KeyBallsData.get_ball_name_by_species(src_species, ball_no)
+		ball_label.text = "Ball %d (%s)" % [ball_no, ball_name if ball_name != "" else "unknown"]
+		ball_label.rect_min_size = Vector2(150, 25)
+		hb.add_child(ball_label)
+		
+		var status_label: Label = Label.new()
+		status_label.rect_min_size = Vector2(130, 25)
+		hb.add_child(status_label)
+		
+		var option: OptionButton = OptionButton.new()
+		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		option.rect_min_size = Vector2(180, 25)
+		hb.add_child(option)
+		
+		var parent_ball: int = int(unique_balls[ball_no].get("parent_base_ball_no", -1))
+		var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+			src_species, ball_no, target_species_id, parent_ball)
+		var resolution: int = equiv.get("resolution", KeyBallsData.ResolutionResult.MANUAL_REMAP)
+		
+		status_label.text = ["AUTO_MAPPED", "COLLAPSED", "ADDBALL_FALLBACK", "MANUAL_REMAP"][resolution]
+		
+		var candidates: Array = equiv.get("candidates", [])
+		if candidates.empty():
+			for i in range(KeyBallsData.max_base_ball_num):
+				candidates.append(i)
+		
+		for cand in candidates:
+			var cand_name: String = KeyBallsData.get_ball_name_by_species(target_species_id, cand)
+			option.add_item("%d (%s)" % [cand, cand_name if cand_name != "" else "unknown"], int(cand))
+		option.add_item("Skip (-1)", -1)
+		
+		var target: int = int(equiv.get("target_ball", -1))
+		for i in range(option.get_item_count()):
+			if option.get_item_id(i) == target:
+				option.selected = i
+				break
+		
+		option_buttons.append({"option": option, "src_ball": ball_no, "status_label": status_label})
+		remapping[ball_no] = target
+	
+	dialog.set_meta("remapping", remapping)
+	dialog.set_meta("data", data)
+	dialog.set_meta("option_buttons", option_buttons)
+	
+	dialog.connect("confirmed", self, "_on_layer_remap_confirmed", [dialog])
+	dialog.connect("canceled", self, "_on_layer_remap_cancelled", [dialog])
+	
+	get_tree().root.add_child(dialog)
+	dialog.popup_centered(Vector2(540, 380))
+
+func _on_layer_remap_confirmed(dialog: ConfirmationDialog) -> void:
+	var option_buttons: Array = dialog.get_meta("option_buttons")
+	if option_buttons == null:
+		option_buttons = []
+	var remapping: Dictionary = dialog.get_meta("remapping")
+	if remapping == null:
+		remapping = {}
+	var data: Dictionary = dialog.get_meta("data")
+	if data == null:
+		data = {}
+	
+	for ob in option_buttons:
+		var option: OptionButton = ob["option"]
+		var src_ball: int = ob["src_ball"]
+		if option.selected >= 0:
+			remapping[src_ball] = option.get_item_id(option.selected)
+	
+	dialog.queue_free()
+	_apply_imported_layers(data["layers"], remapping)
+
+func _on_layer_remap_cancelled(dialog: ConfirmationDialog) -> void:
+	dialog.queue_free()
+
+func _apply_imported_layers(layers_array: Array, remapping: Dictionary) -> void:
+	print("[STATUS] PaintballSettings: applying layers with remapping")
+	
+	# Clear current active layer paintballs
+	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
+	if active_layer and active_layer.get_paintball_count() > 0:
+		active_layer.clear_paintballs()
+	
+	var src_species: int = KeyBallsData.string_to_species("dog")
+	var target_species: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species = dog_generator.lnz.species
+	
+	var pixel_world_size: float = 0.002
+	var engine_scale: float = 1.0
+	if dog_generator:
+		if "pixel_world_size" in dog_generator:
+			pixel_world_size = dog_generator.pixel_world_size
+		if "lnz" in dog_generator and is_instance_valid(dog_generator.lnz):
+			if "scales" in dog_generator.lnz:
+				engine_scale = dog_generator.lnz.scales.x
+	
+	for layer_data in layers_array:
+		var layer_name: String = layer_data.get("name", "Imported")
+		var layer_id: int = PaintballLayerManager.create_layer(layer_name)
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+		if not layer:
+			continue
+		layer.visible = layer_data.get("visible", true)
+		
+		for pb_data in layer_data.get("paintballs", []):
+			var base_ball_no: int = pb_data.get("base_ball_no", -1)
+			var target_ball_no: int = base_ball_no
+			var was_remapped: bool = false
+			
+			if remapping.has(base_ball_no):
+				target_ball_no = remapping[base_ball_no]
+				was_remapped = true
+			else:
+				var src_check: String = ""
+				if pb_data.has("base_ball_name"):
+					src_check = pb_data["base_ball_name"]
+				if src_check != "":
+					var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+						src_species, base_ball_no, target_species, -1)
+					if equiv.get("target_ball", -1) >= 0:
+						if equiv["resolution"] != KeyBallsData.ResolutionResult.MANUAL_REMAP:
+							target_ball_no = equiv["target_ball"]
+							was_remapped = true
+						else:
+							print("[WARNING] PaintballSettings: no valid mapping for ball %d, skipping" % base_ball_no)
+							continue
+					else:
+						print("[WARNING] PaintballSettings: no mapping found for ball %d, skipping" % base_ball_no)
+						continue
+			
+			if target_ball_no < 0:
+				print("[WARNING] PaintballSettings: invalid target ball %d for paintball, skipping" % target_ball_no)
+				continue
+			
+			var raw_lnz = pb_data.get("relative_pos_lnz", [0, 0, 0])
+			var rel_lnz_vec: Vector3
+			if raw_lnz is Vector3:
+				rel_lnz_vec = raw_lnz
+			else:
+				rel_lnz_vec = Vector3(float(raw_lnz[0]), float(raw_lnz[1]), float(raw_lnz[2]))
+			
+			var raw_norm = pb_data.get("surface_normal", [0, 0, 0])
+			var surface_normal: Vector3
+			if raw_norm is Vector3:
+				surface_normal = raw_norm
+			else:
+				surface_normal = Vector3(float(raw_norm[0]), float(raw_norm[1]), float(raw_norm[2]))
+			
+			if surface_normal == Vector3.ZERO and rel_lnz_vec != Vector3.ZERO:
+				surface_normal = rel_lnz_vec.normalized()
+			
+			var new_pb: Dictionary = pb_data.duplicate(true)
+			new_pb["base_ball_no"] = target_ball_no
+			new_pb["relative_pos_lnz"] = rel_lnz_vec
+			new_pb["surface_normal"] = surface_normal
+			new_pb["relative_pos_local"] = LnzLiveUtils.lnz_to_world_delta(rel_lnz_vec, pixel_world_size, engine_scale)
+			
+			if was_remapped:
+				var target_ball_size: float = 20.0
+				var ball_key: int = target_ball_no
+				if ball_key < dog_generator.ball_map.size():
+					var ball_node = dog_generator.ball_map[ball_key]
+					if is_instance_valid(ball_node) and "ball_size" in ball_node:
+						target_ball_size = float(ball_node.ball_size)
+					else:
+						target_ball_size = 20.0
+				elif dog_generator.lnz and dog_generator.lnz.addballs.has(ball_key):
+					target_ball_size = float(dog_generator.lnz.addballs[ball_key].size)
+				
+				var surface_normal_3d: Vector3 = surface_normal * Vector3(1, -1, 1)
+				var new_rel_local: Vector3 = surface_normal_3d * (target_ball_size / 2.0) * pixel_world_size
+				var new_rel_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(new_rel_local, pixel_world_size, engine_scale)
+				new_pb["relative_pos_local"] = new_rel_local
+				new_pb["relative_pos_lnz"] = new_rel_lnz
+			
+			layer.add_paintball(new_pb)
+	
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+	print("[STATUS] PaintballSettings: imported layers complete")

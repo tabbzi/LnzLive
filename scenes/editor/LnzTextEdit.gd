@@ -2395,12 +2395,24 @@ func _on_apply_paintballz():
 func apply_paintballz():
 	save_backup()
 
-	var pending_paintballs = pet_node.get_pending_paintballs_data()
+	var pending_paintballs: Array = pet_node.get_pending_paintballs_data()
+	var layers_to_clear: Array = []
+	
+	if is_instance_valid(PaintballLayerManager):
+		for layer in PaintballLayerManager.layers:
+			if layer.visible and layer.has_paintballs():
+				layers_to_clear.append(layer.layer_id)
+
 	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _ensure_section_exists("[Paint Ballz]")
+		if bounds.empty():
+			print("[WARNING] LnzTextEdit: apply_paintballz: could not ensure [Paint Ballz] section exists")
+			save_file(true)
+			commit_full_snapshot("Commited Paintballz")
+			return
 
 		var insert_at_line = bounds.start
 		var need_fillers = false
@@ -2454,36 +2466,157 @@ func apply_paintballz():
 				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
 				text_to_insert += filler_line + " ; chickenpox filler\n"
 
-		var paintball_lines_list = []
-		for i in range(pending_paintballs.size() - 1, -1, -1):
-			var paintball_info = pending_paintballs[i]
-			var relative_pos_lnz = paintball_info.relative_pos_lnz
+		if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 1:
+			for layer in PaintballLayerManager.layers:
+				if not layer.visible or not layer.has_paintballs():
+					continue
+				var header_name: String = layer.name.strip_edges()
+				if header_name == "":
+					header_name = "Layer " + str(layer.layer_id)
+				text_to_insert += "; " + header_name + "\n"
+				var pb_lines = []
+				for pb in layer.paintballs:
+					var relative_pos_lnz = pb.relative_pos_lnz
+					var paintball_line = str(pb.base_ball_no) + delim
+					paintball_line += str(pb.diameter) + delim
+					paintball_line += str(round(relative_pos_lnz.x)) + delim
+					paintball_line += str(round(relative_pos_lnz.y)) + delim
+					paintball_line += str(round(relative_pos_lnz.z)) + delim
+					paintball_line += str(pb.color) + delim
+					paintball_line += str(pb.outline_color) + delim
+					paintball_line += str(pb.fuzz) + delim
+					paintball_line += str(pb.outline_type) + delim
+					paintball_line += str(pb.group) + delim
+					paintball_line += str(pb.texture) + delim
+					paintball_line += str(int(!pb.anchored))
+					pb_lines.append(paintball_line)
+				pb_lines.invert()
+				for line in pb_lines:
+					text_to_insert += line + "\n"
+		else:
+			var paintball_lines_list = []
+			for i in range(pending_paintballs.size() - 1, -1, -1):
+				var paintball_info = pending_paintballs[i]
+				var relative_pos_lnz = paintball_info.relative_pos_lnz
 
-			var paintball_line = str(paintball_info.base_ball_no) + delim
-			paintball_line += str(paintball_info.diameter) + delim
-			paintball_line += str(round(relative_pos_lnz.x)) + delim
-			paintball_line += str(round(relative_pos_lnz.y)) + delim
-			paintball_line += str(round(relative_pos_lnz.z)) + delim
-			paintball_line += str(paintball_info.color) + delim
-			paintball_line += str(paintball_info.outline_color) + delim
-			paintball_line += str(paintball_info.fuzz) + delim
-			paintball_line += str(paintball_info.outline_type) + delim
-			paintball_line += str(paintball_info.group) + delim
-			paintball_line += str(paintball_info.texture) + delim
-			paintball_line += str(int(!paintball_info.anchored))
-			paintball_lines_list.append(paintball_line)
+				var paintball_line = str(paintball_info.base_ball_no) + delim
+				paintball_line += str(paintball_info.diameter) + delim
+				paintball_line += str(round(relative_pos_lnz.x)) + delim
+				paintball_line += str(round(relative_pos_lnz.y)) + delim
+				paintball_line += str(round(relative_pos_lnz.z)) + delim
+				paintball_line += str(paintball_info.color) + delim
+				paintball_line += str(paintball_info.outline_color) + delim
+				paintball_line += str(paintball_info.fuzz) + delim
+				paintball_line += str(paintball_info.outline_type) + delim
+				paintball_line += str(paintball_info.group) + delim
+				paintball_line += str(paintball_info.texture) + delim
+				paintball_line += str(int(!paintball_info.anchored))
+				paintball_lines_list.append(paintball_line)
 
-		for line in paintball_lines_list:
-			text_to_insert += line + "\n"
+			for line in paintball_lines_list:
+				text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
-		pet_node.clear_pending_paintballz()
+
+	for l_id in layers_to_clear:
+		PaintballLayerManager.clear_layer(l_id)
+	
+	pet_node._pending_paintballs_data.clear()
+	pet_node.rebuild_pending_paintball_visuals()
 
 	save_file(true)
 	commit_full_snapshot("Commited Paintballz")
 
 	if pet_view.close_paintball_on_apply:
 		pet_view.close_paintball_mode()
+
+func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -> int:
+	save_backup()
+	commit_full_snapshot("Transfer Paintballs from LNZ")
+	
+	var bounds = get_section_bounds("[Paint Ballz]")
+	if bounds.empty():
+		print("[WARNING] LnzTextEdit: no [Paint Ballz] section found to transfer from")
+		return 0
+
+	var transferred_count: int = 0
+	var new_layer_id: int = -1
+	var lines_to_remove: Dictionary = {}
+
+	for line_idx in range(bounds.start, bounds.end):
+		var line = get_line(line_idx).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+
+		var parts: Array = split_line(line)
+		if parts.size() < 12:
+			if parts.size() < 5:
+				continue
+			while parts.size() < 12:
+				parts.append("0")
+
+		var rel_lnz: Vector3 = Vector3(float(parts[2]), float(parts[3]), float(parts[4]))
+		
+		var engine_scale: float = 1.0
+		if is_instance_valid(pet_node):
+			var pet_lnz = pet_node.get("lnz")
+			if pet_lnz and "scales" in pet_lnz:
+				engine_scale = pet_lnz.scales[0]
+		var local_pos: Vector3 = LnzLiveUtils.lnz_to_world_delta(rel_lnz, pet_node.pixel_world_size if is_instance_valid(pet_node) else 0.002, engine_scale)
+		
+		var pb_dict: Dictionary = {
+			"base_ball_no": int(parts[0]),
+			"diameter": int(parts[1]),
+			"relative_pos_lnz": rel_lnz,
+			"relative_pos_local": local_pos,
+			"color": int(parts[5]) if parts.size() > 5 else 0,
+			"outline_color": int(parts[6]) if parts.size() > 6 else 0,
+			"fuzz": int(parts[7]) if parts.size() > 7 else 0,
+			"outline_type": int(parts[8]) if parts.size() > 8 else -1,
+			"group": int(parts[9]) if parts.size() > 9 else 0,
+			"texture": int(parts[10]) if parts.size() > 10 else -1,
+			"anchored": bool(int(parts[11])) if parts.size() > 11 else false,
+			"lnz_line_index": line_idx,
+			"_pb_uid": PaintballLayerManager.allocate_paintball_uid()
+		}
+		print("[DEBUG] LnzTextEdit: transferred paintball line %d: base=%s diam=%s pos=(%s,%s,%s) color=%s outline=%s fuzz=%s outline_type=%s group=%s texture=%s anchored=%s"
+			% [line_idx, str(parts[0]), str(parts[1]), str(parts[2]), str(parts[3]), str(parts[4]), str(parts[5]), str(parts[6]), str(parts[7]), str(parts[8]), str(parts[9]), str(parts[10]), str(parts[11])])
+
+		if new_layer_id < 0:
+			new_layer_id = PaintballLayerManager.create_layer(layer_name)
+
+		var layer = PaintballLayerManager.get_layer(new_layer_id)
+		layer.paintballs.insert(0, pb_dict)
+		transferred_count += 1
+		lines_to_remove[line_idx] = true
+
+	if new_layer_id >= 0:
+		var all_text: String = get_text()
+		var text_lines: Array = all_text.split("\n")
+		var new_lines: Array = []
+		for i in range(text_lines.size()):
+			if not i in lines_to_remove:
+				new_lines.append(text_lines[i])
+		var new_text: String = ""
+		for i in range(new_lines.size()):
+			new_text += new_lines[i]
+			if i < new_lines.size() - 1:
+				new_text += "\n"
+		text = new_text
+		
+		PaintballLayerManager.set_active_layer(new_layer_id)
+		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNZ to layer '%s' (id %d)"
+			% [transferred_count, layer_name, new_layer_id])
+		save_file(true, true)
+		commit_full_snapshot("Applied Transferred Paintballs")
+		if is_instance_valid(pet_node):
+			pet_node.recompose_model()
+		if is_instance_valid(pet_node) and pet_node.has_method("rebuild_pending_paintball_visuals"):
+			pet_node.rebuild_pending_paintball_visuals()
+	else:
+		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNZ")
+
+	return transferred_count
 
 func _on_palette_selected(filename_without_extension):
 	save_backup()

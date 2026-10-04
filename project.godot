@@ -70,6 +70,11 @@ _global_script_classes=[ {
 "path": "res://data_classes/paintball_data.gd"
 }, {
 "base": "Reference",
+"class": "PaintballLayerData",
+"language": "GDScript",
+"path": "res://data_classes/paintball_layer.gd"
+}, {
+"base": "Reference",
 "class": "PaletteGrid",
 "language": "GDScript",
 "path": "res://data_classes/palette_grid.gd"
@@ -97,6 +102,7 @@ _global_script_class_icons={
 "LnzLiveUtils": "",
 "LnzParser": "",
 "PaintBallData": "",
+"PaintballLayerData": "",
 "PaletteGrid": "",
 "PolyData": "",
 "Section": ""
@@ -119,6 +125,7 @@ config/icon="res://LnzLiveIcon.png"
 KeyBallsData="*res://data_classes/key_balls_data.gd"
 PaletteCache="*res://data_classes/palette_cache.gd"
 HotkeyManager="*res://data_classes/hotkey_manager.gd"
+PaintballLayerManager="*res://data_classes/paintball_layer_manager.gd"
 
 [debug]
 

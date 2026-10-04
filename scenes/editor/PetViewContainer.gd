@@ -138,6 +138,7 @@ var close_paintball_on_apply: bool = false
 var freeline_active: bool = false
 var freeline_path: Array = []
 var last_freeline_point: Vector2 = Vector2()
+var freeline_start_pos: Vector2 = Vector2()
 
 var _ordered_color_index: int = 0
 var _ordered_outline_color_index: int = 0
@@ -1600,27 +1601,41 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				freeline_active = true
 				freeline_path.clear()
 				last_freeline_point = event.position
+				freeline_start_pos = event.position
 			else:
-				print("[STATUS] PetViewContainer: finished freeline path")
+				if freeline_active and freeline_path.size() <= 1:
+					var click_pos: Vector2 = _get_viewport_pos_from_screen_pos(freeline_start_pos)
+					var point_target_ball: Spatial = null
+					if paintball_target_ball and is_instance_valid(paintball_target_ball):
+						point_target_ball = paintball_target_ball
+					elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
+						point_target_ball = active_selected_ball
+					else:
+						point_target_ball = get_intended_ball(click_pos)
+					if point_target_ball:
+						var result = _create_paintball_at_position(click_pos, point_target_ball)
+						if result:
+							_record_paint_action([result])
+					print("[STATUS] PetViewContainer: SHIFT single-click placed paintball")
 				freeline_active = false
-
-				if is_straight_line:
-					var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
-					var end_pos: Vector2 = event.position
-
-					if Input.is_key_pressed(KEY_X):
-						end_pos.y = start_pos.y
-					elif Input.is_key_pressed(KEY_Y):
-						end_pos.x = start_pos.x
-
+				if freeline_path.size() > 1:
+					print("[STATUS] PetViewContainer: finished freeline path")
+					if is_straight_line:
+						var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
+						var end_pos: Vector2 = event.position
+						if Input.is_key_pressed(KEY_X):
+							end_pos.y = start_pos.y
+						elif Input.is_key_pressed(KEY_Y):
+							end_pos.x = start_pos.x
+						freeline_path.clear()
+						var dist: float = start_pos.distance_to(end_pos)
+						var steps: int = max(1, round(dist / max(1.0, props.spacing)))
+						for i in range(steps + 1):
+							var t: float = float(i) / float(steps)
+							freeline_path.append(start_pos.linear_interpolate(end_pos, t))
+					_finalize_freeline(event.position)
+				else:
 					freeline_path.clear()
-					var dist: float = start_pos.distance_to(end_pos)
-					var steps: int = max(1, round(dist / max(1.0, props.spacing)))
-					for i in range(steps + 1):
-						var t: float = float(i) / float(steps)
-						freeline_path.append(start_pos.linear_interpolate(end_pos, t))
-
-				_finalize_freeline(event.position)
 			return true
 		elif freeline_active and not event.pressed:
 			freeline_active = false
@@ -3601,7 +3616,12 @@ func _undo_queued_paintball() -> void:
 	paint_redo_stack.append(last_action)
 
 	for i in range(last_action.size()):
-		pet_node.remove_last_pending_paintball()
+		var pb_data = last_action[i]
+		var uid: int = pb_data.get("_pb_uid", -1)
+		if uid >= 0:
+			pet_node.remove_paintball_by_uid(uid)
+		else:
+			pet_node.remove_last_pending_paintball()
 
 func _redo_queued_paintball() -> void:
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")

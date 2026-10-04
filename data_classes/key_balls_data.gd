@@ -1153,8 +1153,8 @@ const dog_cat_ball_map: Dictionary = {
 	5: 9,    # earL2 → earL2
 	28: 10,  # earR1 → earR1
 	29: 11,  # earR2 → earR2
-	6: 11,   # earL3 → earR2 (cat has 2 ear balls per side)
-	30: 10,  # earR3 → earR1 (cat has 2 ear balls per side)
+	6: 9,    # earL3 → earL2 (cat has 2 ear balls per side)
+	30: 11,  # earR3 → earR2 (cat has 2 ear balls per side)
 	57: 43,  # tail1 → tail1
 	58: 44,  # tail2 → tail2
 	59: 45,  # tail3 → tail3
@@ -1194,3 +1194,78 @@ func get_ball_name_by_species(species: int, ball_no: int) -> String:
 	if defs.has(ball_no) and defs[ball_no].has("name"):
 		return defs[ball_no].name
 	return ""
+
+func species_to_string(s: int) -> String:
+	match s:
+		Species.CAT: return "cat"
+		Species.DOG: return "dog"
+		Species.BABY: return "baby"
+	return ""
+
+func string_to_species(name: String) -> int:
+	match name.to_lower():
+		"cat": return Species.CAT
+		"dog": return Species.DOG
+		"baby": return Species.BABY
+	return 0
+
+func get_ball_group_name(s: int, ball_no: int) -> String:
+	var groups: Dictionary = get_move_groups(s)
+	for group_name in groups:
+		var balls: Array = groups[group_name]
+		for b in balls:
+			if b == ball_no:
+				return group_name
+	return ""
+
+enum ResolutionResult { AUTO_MAPPED, COLLAPSED, ADDBALL_FALLBACK, MANUAL_REMAP }
+
+func find_equivalent_ball(src_species: int, src_ball: int,
+		dest_species: int, parent_base_ball: int = -1) -> Dictionary:
+	var result: Dictionary = {
+		"target_ball": -1,
+		"resolution": ResolutionResult.MANUAL_REMAP,
+		"candidates": []
+	}
+	
+	if src_species == dest_species:
+		result["target_ball"] = src_ball
+		result["resolution"] = ResolutionResult.AUTO_MAPPED
+		return result
+	
+	if (src_species == Species.DOG and dest_species == Species.CAT) or \
+	   (src_species == Species.CAT and dest_species == Species.DOG):
+		var mapped: int = convert_ball(src_species, src_ball, dest_species)
+		if mapped >= 0:
+			result["target_ball"] = mapped
+			result["resolution"] = ResolutionResult.AUTO_MAPPED
+			return result
+	
+	if src_ball >= max_base_ball_num:
+		if parent_base_ball >= 0:
+			var parent_mapped: Dictionary = find_equivalent_ball(
+				src_species, parent_base_ball, dest_species)
+			if parent_mapped["target_ball"] >= 0:
+				if parent_mapped["resolution"] != ResolutionResult.MANUAL_REMAP:
+					result["target_ball"] = parent_mapped["target_ball"]
+					result["resolution"] = ResolutionResult.ADDBALL_FALLBACK
+					return result
+	
+	var dest_groups: Dictionary = get_move_groups(dest_species)
+	var same_group_balls: Array = []
+	var other_balls: Array = []
+	for group_name in dest_groups:
+		var balls: Array = dest_groups[group_name]
+		for b in balls:
+			if b < KeyBallsData.max_base_ball_num:
+				if group_name == get_ball_group_name(dest_species, src_ball):
+					same_group_balls.append(b)
+				else:
+					other_balls.append(b)
+	
+	for i in range(0, KeyBallsData.max_base_ball_num):
+		if not other_balls.has(i):
+			other_balls.append(i)
+	
+	result["candidates"] = same_group_balls + other_balls
+	return result

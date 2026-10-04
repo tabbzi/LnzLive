@@ -253,35 +253,40 @@ void fragment() {
     // Offset x line by the final random amount
     st.x += floor(r);
 
+    // Determine if this paintball is actively textured
+    int texture_limit = is_babyz_mode ? 230 : 150;
+    bool is_textured = !render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit;
+
     // OUTLINING
     float pct2 = 0.0;
     vec2 st2 = st;
-    int modified_outline = outline;
+    int effective_outline = is_textured ? -1 : outline;
+    int modified_outline = effective_outline;
 
-    if(outline == -1) {
+    if (effective_outline == -1) {
         // no outline
         modified_outline = 0;
     }
-    else if(outline == 0) {
+    else if (effective_outline == 0) {
         // one sided outline
         st2.x -= 1.0;
         vec2 vec = st2 - c;
         pct2 = step(length(vec), float(ball_size) / 2.0);
         modified_outline = 0;
     }
-    else if (outline == -2) {
+    else if (effective_outline == -2) {
         // one sided outline
         st2.x += 1.0;
         vec2 vec = st2 - c;
         pct2 = step(length(vec), float(ball_size) / 2.0);
         modified_outline = 0;
     }
-    else if (outline > 1) {
+    else if (effective_outline > 1) {
         vec2 vec = st2 - c;
         pct2 = step(length(vec), float(ball_size) / 2.0);
         modified_outline -= 1;
     }
-    else if (outline == 1) {
+    else if (effective_outline == 1) {
         // dotted outline
         float side = sign(st2.x - c.x);
         st2.x -= 1.0 * side;
@@ -289,7 +294,7 @@ void fragment() {
         pct2 = step(length(vec), float(ball_size) / 2.0);
         modified_outline = 0;
     }
-    else if (outline < -1) {
+    else if (effective_outline < -1) {
         // use as debug for now
         float side = sign(st2.x - c.x);
         float side2 = sign(st2.y - c.y);
@@ -311,18 +316,16 @@ void fragment() {
 
     pct *= base_pct;
 
-    if(outline != -1)   
+    if (effective_outline != -1)   
         pct2 -= pct;
 
     pct2 *= base_pct;
 
     // TEXTURING & QUANTIZING
-    // Maps screen or object space to UVs, handling texture atlas rects and texture tiling
-    int texture_limit = is_babyz_mode ? 230 : 150;
     vec3 texture_color;
     bool is_transparent = false;
 
-    if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
+    if (is_textured) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
         vec2 tex_coords = calculate_uvs(offset, SCREEN_UV, VIEWPORT_SIZE);
 
