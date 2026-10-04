@@ -5331,7 +5331,6 @@ func _on_select_locked_balls_by_ids(ids: Array) -> void:
 	else:
 		locked_balls = ids.duplicate()
 	_sync_locked_balls_to_visuals()
-	update_locked_ballz_text(locked_balls)
 
 func update_locked_ballz_text(ball_ids: Array) -> void:
 	if not is_instance_valid(move_mode_settings_instance):
