@@ -71,6 +71,7 @@ onready var preset_mode_check_box: CheckBox = find_node("PresetModeCheckBox")
 
 onready var tools_menu: Node = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 onready var hidden_balls_label: Label = find_node("HiddenBallsLabel")
+onready var unapplied_changes_label: Label = find_node("UnappliedChangesLabel")
 
 var _auto_paint_affected_cache: Array = []
 
@@ -332,9 +333,14 @@ func _ready() -> void:
 		paintball_settings_instance.connect(
 			"apply_paintballz", lnz_text_edit, "_on_apply_paintballz"
 		)
+		paintball_settings_instance.connect("apply_paintballz", self, "_update_unapplied_changes_label")
 		lnz_text_edit.connect("create_polygon", self, "_on_LnzTextEdit_create_polygon")
+		lnz_text_edit.connect("file_saved", self, "_update_unapplied_changes_label")
+		lnz_text_edit.connect("text_changed", self, "_update_unapplied_changes_label")
 	if is_instance_valid(pet_node):
 		paintball_settings_instance.connect("clear_paintballz", pet_node, "clear_pending_paintballz")
+		paintball_settings_instance.connect("clear_paintballz", self, "_on_paintball_clear")
+		paintball_settings_instance.connect("clear_paintballz", self, "_update_unapplied_changes_label")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	if is_instance_valid(pet_node):
@@ -352,6 +358,7 @@ func _ready() -> void:
 	if is_instance_valid(pet_node):
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
 		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "clear_auto_paintballz")
+		auto_paintballer_settings_instance.connect("clear_auto_paintballz", self, "_on_auto_paintballer_clear")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
 		pet_node.connect("hidden_balls_changed", self, "_on_hidden_balls_changed")
 
@@ -379,6 +386,7 @@ func _ready() -> void:
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+		recolor_settings_instance.connect("apply_batch_bucket", self, "_update_unapplied_changes_label")
 
 	var shader_settings_btn: Button = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
 	if is_instance_valid(shader_settings_btn):
@@ -1235,6 +1243,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
+					_update_unapplied_changes_label()
 					_record_move_end_state("Drag Move")
 					return true
 
@@ -1706,6 +1715,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 			if closest_paintball and min_dist_sq < 25 * 25:  # 25px threshold
 				pet_node.remove_specific_pending_paintball(closest_paintball)
+				_update_unapplied_changes_label()
 				print("[STATUS] PetViewContainer: erased closest paintball node: %s" % closest_paintball.name)
 			else:
 				print("[WARNING] PetViewContainer: no paintball close enough to erase (threshold distance: 25px)")
@@ -2063,6 +2073,7 @@ func _gui_input(event: InputEvent) -> void:
 		var target_ball: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			recolor_settings_instance.queue_bucket_change(target_ball)
+			_update_unapplied_changes_label()
 			_reset_tab_state()
 			get_tree().set_input_as_handled()
 			return
@@ -2440,6 +2451,7 @@ func set_mode(new_mode: int) -> void:
 
 	_sync_mode_cursor()
 	mark_ui_dirty()
+	_update_unapplied_changes_label()
 
 func _get_mode_settings_instance(mode: int) -> Control:
 	match mode:
@@ -2506,6 +2518,7 @@ func _exit_mode(mode: int) -> void:
 				pet_node.clear_auto_paintballz()
 			_on_unselect_all()
 			_auto_paint_affected_cache.clear()
+			_update_unapplied_changes_label()
 			var all_balls: Array = _get_all_visual_balls()
 			for b in all_balls:
 				if is_instance_valid(b) and b.has_method("apply_outline_state"):
@@ -2828,6 +2841,27 @@ func _on_hidden_balls_changed(count: int) -> void:
 	else:
 		hidden_balls_label.visible = false
 
+func _update_unapplied_changes_label(_unused = null) -> void:
+	var total = 0
+	if is_instance_valid(lnz_text_edit):
+		if lnz_text_edit.has_unsaved_text_changes():
+			total += 1
+		if paintball_mode:
+			var pending_pb = pet_node.get_pending_paintballs_data()
+			total += pending_pb.size()
+		if move_mode:
+			total += pending_moves.size()
+		if auto_paintballer_mode:
+			total += _auto_paint_affected_cache.size()
+		if recolor_mode and is_instance_valid(recolor_settings_instance):
+			total += recolor_settings_instance.queued_bucket_changes.size()
+	print("[DEBUG] PetViewContainer: _update_unapplied_changes_label total=%d" % total)
+	if total > 0:
+		unapplied_changes_label.text = "%d unapplied changes" % total
+		unapplied_changes_label.visible = true
+	else:
+		unapplied_changes_label.visible = false
+
 func _on_texture_rotation_mode_changed(mode: int) -> void:
 	pet_node._shader_rotation_mode = mode
 	var all_balls: Array = _get_all_visual_balls()
@@ -3074,6 +3108,7 @@ func _on_affected_list_changed(ids: Array) -> void:
 		var ball: Spatial = find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			selected_balls.append(ball)
+	_update_unapplied_changes_label()
 
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
@@ -3359,6 +3394,7 @@ func _on_unselect_all() -> void:
 
 	if auto_paintballer_mode:
 		_auto_paint_affected_cache.clear()
+	_update_unapplied_changes_label()
 
 	for b in to_update:
 		if is_instance_valid(b) and "ball_no" in b:
@@ -3574,6 +3610,7 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
+	_update_unapplied_changes_label()
 
 func _cap_history_arrays() -> void:
 	if paint_history.size() > MAX_INTERACTION_HISTORY:
@@ -3609,6 +3646,7 @@ func _undo_queued_paintball() -> void:
 		var data = pet_node.remove_last_pending_paintball()
 		if data:
 			paint_redo_stack.append([data])
+		_update_unapplied_changes_label()
 		return
 
 	var last_action: Array = paint_history.pop_back()
@@ -3621,6 +3659,8 @@ func _undo_queued_paintball() -> void:
 			pet_node.remove_paintball_by_uid(uid)
 		else:
 			pet_node.remove_last_pending_paintball()
+	_update_unapplied_changes_label()
+	_update_unapplied_changes_label()
 
 func _redo_queued_paintball() -> void:
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")
@@ -3632,6 +3672,7 @@ func _redo_queued_paintball() -> void:
 
 	for pb_data in action_to_redo:
 		pet_node.add_pending_paintball(pb_data)
+	_update_unapplied_changes_label()
 
 func _record_move_start_state() -> void:
 	var t_start: int = OS.get_ticks_msec()
@@ -3899,12 +3940,14 @@ func _update_paintball_mode_ui() -> void:
 			target_option_button.disabled = true
 		else:
 			target_option_button.disabled = false
+		_update_unapplied_changes_label()
 	else:
 		_set_pending_paintballs_visible(false)
 
 		paintball_settings_instance.hide()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+		_update_unapplied_changes_label()
 
 func _on_delete_mode_toggled(is_on: bool) -> void:
 	if is_on:
@@ -3918,6 +3961,9 @@ func _set_pending_paintballs_visible(is_visible: bool) -> void:
 		for pb in pending:
 			if is_instance_valid(pb):
 				pb.visible = is_visible
+
+func _on_paintball_clear() -> void:
+	_update_unapplied_changes_label()
 
 func _on_paintball_mode_for_ball_toggled(ball: Spatial) -> void:
 	print("[STATUS] PetViewContainer: paintball mode specifically focused on ball #%d" % ball.ball_no)
@@ -4002,6 +4048,7 @@ func _finalize_freeline(end_position = null) -> void:
 
 	print("[STATUS] PetViewContainer: freeline generated %d valid paintballs" % added_paintballs.size())
 	_record_paint_action(added_paintballs)
+	_update_unapplied_changes_label()
 
 	# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
 	# var _perf_stat_end: int = OS.get_static_memory_usage()
@@ -4220,6 +4267,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
+		_update_unapplied_changes_label()
 		# print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
 		
 		# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
@@ -4246,6 +4294,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 
 	return null
 
+func _on_auto_paintballer_clear() -> void:
+	_auto_paint_affected_cache.clear()
+	_update_unapplied_changes_label()
+
 func _restore_auto_paintballer_selection() -> void:
 	# Double yield needed: dog_generator.generate_pet() calls init_visual_balls()
 	# which uses call_deferred("_finish_dependent_geometry"). 
@@ -4256,6 +4308,11 @@ func _restore_auto_paintballer_selection() -> void:
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	_on_affected_list_changed(_auto_paint_affected_cache)
+	var all_balls: Array = _get_all_visual_balls()
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+	_update_unapplied_changes_label()
 
 
 ### SHAPE MODE ###
@@ -4625,6 +4682,7 @@ func _on_move_mode_clear() -> void:
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
 	mark_ui_dirty()
+	_update_unapplied_changes_label()
 
 func _update_pivot_limit() -> void:
 	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
@@ -4697,6 +4755,7 @@ func _on_move_mode_apply() -> void:
 
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
+	_update_unapplied_changes_label()
 
 	selected_balls.clear()
 	for id in selected_ids:

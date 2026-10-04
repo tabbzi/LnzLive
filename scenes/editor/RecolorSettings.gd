@@ -375,6 +375,9 @@ func clear_buckets() -> void:
 	_saved_visual_states.clear()
 	_pending_bucket_count = 0
 	_update_bucket_buttons()
+	var pet_view = LnzLiveUtils.get_pet_view_container(get_tree().root)
+	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
+		pet_view._update_unapplied_changes_label()
 
 func _update_bucket_buttons() -> void:
 	if _pending_bucket_count > 0:
@@ -407,9 +410,10 @@ func _on_ApplyBucket_pressed() -> void:
 				lnz_text_edit.save_file(true)
 				lnz_text_edit.commit_full_snapshot("Updated No Texture Rotate entries")
 		
-		emit_signal("apply_batch_bucket", queued_bucket_changes.duplicate())
+		var changes = queued_bucket_changes.duplicate()
 		queued_bucket_changes.clear()
 		_saved_visual_states.clear()
+		emit_signal("apply_batch_bucket", changes)
 	
 	_pending_bucket_count = 0
 	_update_bucket_buttons()

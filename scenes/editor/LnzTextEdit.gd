@@ -51,6 +51,7 @@ onready var find_panel = get_node("../FindPanel")
 
 var is_user_file = false
 var filepath: String
+var _last_saved_text: String = ""
 
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
@@ -266,7 +267,10 @@ func _load_file(filepath: String, user_flag: bool):
 	is_user_file = user_flag
 
 	_set_text_preserve(contents)
+	_last_saved_text = self.text
 	initialize_history()
+	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
+		pet_view._update_unapplied_changes_label()
 
 	print("[TIME] LnzTextEdit: _load_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
@@ -406,13 +410,14 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 		printerr("Atomic save failed to rename temp file: ", tmp_path, " -> ", save_path, " error: ", rename_err)
 
 	if not silent:
+		_last_saved_text = self.text
 		var msg = "Saved LNZ and Applied Changes!"
 		print("[STATUS] LnzTextEdit: save_file: " + msg)
 		if console_log:
 			console_log.log_message(msg)
-
+ 
 		emit_signal("file_saved", save_path)
-		_set_text_preserve(get_text()) 
+		_set_text_preserve(get_text())
 
 	filepath = save_path
 
@@ -420,6 +425,9 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 
 func _on_Tree_backup_file():
 	save_backup()
+
+func has_unsaved_text_changes() -> bool:
+	return self.text != _last_saved_text
 
 func _on_ApplyChangesButton_pressed():
 	save_backup()
