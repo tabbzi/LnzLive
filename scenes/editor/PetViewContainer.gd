@@ -1702,7 +1702,6 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 				if dist_sq < min_dist_sq:
 					min_dist_sq = dist_sq
-					min_dist_sq = dist_sq
 					closest_paintball = pb_node
 
 			if closest_paintball and min_dist_sq < 25 * 25:  # 25px threshold
@@ -3723,7 +3722,6 @@ func _deactivate_other_modes(active_mode_name: String) -> void:
 	if active_mode_name != "Recolor Mode":
 		recolor_mode_check_box.pressed = false
 	if active_mode_name != "Texture Editor":
-		texture_editor_mode_check_box.pressed = false
 		texture_editor_mode_check_box.pressed = false
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool, switch_to_filetree_on_hide: bool = false) -> void:
