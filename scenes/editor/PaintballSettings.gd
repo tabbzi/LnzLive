@@ -799,6 +799,9 @@ func _on_reset_defaults_pressed() -> void:
 	_mirror_y.pressed = false
 	_canvas_eraser.pressed = false
 	_design_jitter.value = 0.0
+	_rotate_jitter.value = 0.0
+	_spread_jitter.value = 0.0
+	_exclude_eye_ballz.pressed = true
 
 
 	_design_canvas.clear()
@@ -815,12 +818,11 @@ func _on_reset_defaults_pressed() -> void:
 	_on_design_tool_toggled(null)
 
 	_is_loading_settings = false
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = false
+	if _layer_section: _layer_section.visible = false
 	save_settings()
 	_on_palette_changed()
 	_refresh_all_previews()
-
-	if _use_layers_checkbox: _use_layers_checkbox.pressed = false
-	if _layer_section: _layer_section.visible = false
 
 
 func export_paintball_json() -> void:
@@ -1504,7 +1506,6 @@ func _on_SlotsTree_item_edited() -> void:
 
 	if col == 1:
 		var new_icon: Texture = _create_color_icon(design_color_slots[idx].color)
-		item.set_icon(0, new_icon)
 		if new_icon:
 			var img_data: Image = new_icon.get_data()
 			if img_data != null:
