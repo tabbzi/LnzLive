@@ -830,7 +830,7 @@ margin_right = 483.0
 margin_bottom = 1125.0
 size_flags_horizontal = 3
 
-[node name="SpaceMinder" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="SpaceSaver" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 1129.0
 margin_right = 483.0
 margin_bottom = 1529.0

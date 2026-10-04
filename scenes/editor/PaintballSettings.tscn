@@ -99,8 +99,8 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="PaintballSettings" type="Panel"]
-margin_right = 500.0
-margin_bottom = 1000.0
+margin_right = 525.0
+margin_bottom = 1500.0
 rect_min_size = Vector2( 525, 1025 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
@@ -218,7 +218,7 @@ text = "Reset Defaults"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 170.0
 margin_right = 495.0
-margin_bottom = 995.0
+margin_bottom = 1470.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -227,7 +227,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 495.0
-margin_bottom = 825.0
+margin_bottom = 1300.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -482,7 +482,7 @@ margin_bottom = 276.0
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 61.0
 margin_right = 495.0
-margin_bottom = 825.0
+margin_bottom = 1300.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 8 )
@@ -493,6 +493,7 @@ custom_fonts/font = SubResource( 3 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -903,7 +904,6 @@ custom_fonts/font = SubResource( 3 )
 text = "Export JSON"
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -1180,8 +1180,7 @@ text = "Info"
 [node name="JitterContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 507.0
 margin_right = 485.0
-margin_bottom = 559.0
-columns = 2
+margin_bottom = 615.0
 
 [node name="DesignRotationHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
 margin_right = 216.0
@@ -1206,9 +1205,9 @@ min_value = -360.0
 max_value = 360.0
 
 [node name="JitterRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
-margin_left = 220.0
-margin_right = 436.0
-margin_bottom = 24.0
+margin_top = 28.0
+margin_right = 216.0
+margin_bottom = 52.0
 
 [node name="JitterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/JitterRow"]
 margin_top = 1.0
@@ -1227,9 +1226,9 @@ hint_tooltip = "Randomize position/size of individual paintballs"
 custom_icons/updown = ExtResource( 4 )
 
 [node name="SpreadRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
-margin_top = 28.0
+margin_top = 56.0
 margin_right = 216.0
-margin_bottom = 52.0
+margin_bottom = 80.0
 
 [node name="SpreadLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/SpreadRow"]
 margin_top = 1.0
@@ -1248,10 +1247,9 @@ hint_tooltip = "Randomly offset the center of the stamp"
 custom_icons/updown = ExtResource( 4 )
 
 [node name="RotateJitterRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
-margin_left = 220.0
-margin_top = 28.0
-margin_right = 436.0
-margin_bottom = 52.0
+margin_top = 84.0
+margin_right = 216.0
+margin_bottom = 108.0
 
 [node name="RotateJitterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/RotateJitterRow"]
 margin_top = 1.0
@@ -1271,14 +1269,14 @@ custom_icons/updown = ExtResource( 4 )
 max_value = 360.0
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 564.0
+margin_top = 620.0
 margin_right = 485.0
-margin_bottom = 568.0
+margin_bottom = 624.0
 
 [node name="SlotActionContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 573.0
+margin_top = 629.0
 margin_right = 485.0
-margin_bottom = 598.0
+margin_bottom = 654.0
 
 [node name="SlotLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
 margin_top = 2.0
@@ -1315,12 +1313,19 @@ custom_fonts/font = SubResource( 3 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 603.0
+margin_top = 659.0
 margin_right = 485.0
-margin_bottom = 735.0
+margin_bottom = 932.0
 size_flags_vertical = 3
 columns = 8
 hide_root = true
+
+[node name="DesignSpacer" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_top = 937.0
+margin_right = 485.0
+margin_bottom = 1210.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Advanced" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
 visible = false

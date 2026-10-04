@@ -415,5 +415,14 @@ custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = SubResource( 2 )
+custom_fonts/font = SubResource( 5 )
 text = "Reset Defaults"
+
+[node name="SpaceSaver" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 274.0
+margin_right = 495.0
+margin_bottom = 631.0
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
