@@ -7,14 +7,15 @@ extends Node
 
 # SECTIONS:
 #	SETUP & INITIALIZATION
-#   SIGNALS
+#	SIGNALS
 #	MODEL GENERATION
-#	TEXTURES & PALETTES
+#	TEXTURES, PALETTES & SHADERS
 #	RENDERING & GEOMETRY
-#	TRANSFORMATIONS
+#	TRANSFORMATIONS & MATH HELPERS
 #	ANIMATIONS
-#	VISIBILITY
-# 	PAINTBALLZ
+#	VISIBILITY & RENDERING
+#	PAINTBALLZ & LAYER MANAGEMENT
+#	ADD BALLZ
 
 export var pixel_world_size = 0.002
 
@@ -141,22 +142,12 @@ signal hidden_balls_changed(count)
 
 signal palette_changed(palette_name)
 
-func _on_shader_rotation_mode_changed(mode: int) -> void:
-	_shader_rotation_mode = mode
-
-func _on_shader_rotation_input_changed(input_vec: Vector2) -> void:
-	_shader_rotation_input = input_vec
-
-func _on_shader_affected_by_size_changed(is_affected: bool) -> void:
-	_shader_affected_by_size = is_affected
-
-func _on_shader_affected_by_rotation_changed(is_affected: bool) -> void:
-	_shader_affected_by_rotation = is_affected
-
 ### SETUP & INITIALIZATION ###
 # _ready
 # get_root
 # populate_bhd_list
+# _select_option_item
+
 
 func _ready():
 	var t_start = OS.get_ticks_msec()
@@ -224,6 +215,12 @@ func populate_bhd_list():
 	bhd_option_button.select(-1)
 	bhd_prompt_option.select(-1)
 
+func _select_option_item(option_button: OptionButton, name: String):
+	for i in range(option_button.get_item_count()):
+		if option_button.get_item_text(i) == name:
+			option_button.select(i)
+			break
+
 
 ### SIGNALS ###
 # _on_BhdSwitcher_item_selected
@@ -245,6 +242,7 @@ func populate_bhd_list():
 # _on_ToolsMenu_print_ball_colors
 # _on_OptionButton_file_selected
 # _on_OptionButton_file_saved
+
 
 func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
@@ -465,6 +463,10 @@ func _on_OptionButton_file_saved(file_name):
 # clear_lnz_data
 # recompose_model
 # init_visual_balls
+# _validate_lnz_file
+# _validate_parsed_lnz_data
+# _find_lowest_variation_id_in_data
+
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
@@ -1045,6 +1047,53 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		generate_whiskers(new_create)
 		_restore_hidden_states()
 
+func _validate_lnz_file(lnz_data) -> bool:
+	if lnz_data == null:
+		print("[ERROR] dog_generator: _validate_lnz_file: parser is null")
+		if console_log:
+			console_log.log_message("LNZ validation failed: parser is null")
+		return false
+
+	if lnz_data.sections_map.empty():
+		print("[ERROR] dog_generator: _validate_lnz_file: no sections parsed from LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no sections parsed from file")
+		return false
+		
+	if not lnz_data.sections_map.has("Ballz Info"):
+		print("[ERROR] dog_generator: _validate_lnz_file: no [Ballz Info] section in LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no [Ballz Info] section found")
+		return false
+	return true
+
+func _validate_parsed_lnz_data(lnz_data) -> bool:
+	if lnz_data == null:
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: parser is null")
+		if console_log:
+			console_log.log_message("LNZ validation failed: parser is null")
+		return false
+
+	if lnz_data.balls.empty() and lnz_data.addballs.empty():
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: no balls or addballs in parsed LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: no balls or addballs parsed")
+		return false
+		
+	if lnz_data.scales == null or lnz_data.scales.x == 0:
+		print("[ERROR] dog_generator: _validate_parsed_lnz_data: invalid scales in parsed LNZ data")
+		if console_log:
+			console_log.log_message("LNZ validation failed: invalid scales in parsed data")
+		return false
+	return true
+
+func _find_lowest_variation_id_in_data(section_data) -> int:
+	var lowest: int = 0
+	for id in section_data:
+		if id > 0 and (lowest == 0 or id < lowest):
+			lowest = id
+	return lowest
+
 
 ### TEXTURES & PALETTES ###
 # load_texture
@@ -1053,6 +1102,15 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 # clear_texture_cache
 # generate_color_icon
 # load_palette_resource
+# _resolve_custom_palette_for_lnz
+# _on_shader_rotation_mode_changed
+# _on_shader_rotation_input_changed
+# _on_shader_affected_by_size_changed
+# _on_shader_affected_by_rotation_changed
+# _apply_tile_texture_settings
+# apply_shader_settings
+# apply_visual_properties
+
 
 func _build_atlas_manifest_lookup():
 	_atlas_manifest_normalized.clear()
@@ -1247,6 +1305,55 @@ func _resolve_custom_palette_for_lnz() -> Array:
 
 	return LnzLiveUtils.extract_palette_from_rampimg(pal_texture)
 
+func _on_shader_rotation_mode_changed(mode: int) -> void:
+	_shader_rotation_mode = mode
+
+func _on_shader_rotation_input_changed(input_vec: Vector2) -> void:
+	_shader_rotation_input = input_vec
+
+func _on_shader_affected_by_size_changed(is_affected: bool) -> void:
+	_shader_affected_by_size = is_affected
+
+func _on_shader_affected_by_rotation_changed(is_affected: bool) -> void:
+	_shader_affected_by_rotation = is_affected
+
+func _apply_tile_texture_settings(node, key, tile_when_absent: bool):
+	if lnz.no_texture_rotate.has(key):
+		node.set_tile_texture(false)
+		if lnz.quadrant_balls.has(key):
+			node.use_quadrants = true
+	elif tile_when_absent:
+		node.set_tile_texture(true)
+
+func apply_shader_settings(node):
+	if node.has_node("MeshInstance") and is_instance_valid(node.get_node("MeshInstance")):
+		var mat = node.get_node("MeshInstance").material_override
+		if mat:
+			mat.set_shader_param("texture_rotation_mode", _shader_rotation_mode)
+			mat.set_shader_param("texture_rotation_input", _shader_rotation_input)
+			mat.set_shader_param("texture_affected_by_size", _shader_affected_by_size)
+			mat.set_shader_param("texture_affected_by_rotation", _shader_affected_by_rotation)
+			mat.set_shader_param("render_flat_colors", render_flat_colors_global)
+
+func apply_visual_properties(node, data, texture_list, palette, fallback_texture = null, custom_lnz_palette: Array = []):
+	apply_shader_settings(node)
+	node.color_index = data.color_index
+	node.outline_color_index = data.outline_color_index
+	node.outline = data.outline
+	node.ball_size = data.size
+	node.fuzz_amount = fuzz_to_amount(data.fuzz)
+	node.palette = palette
+	if data.texture_id >= 0 and data.texture_id < texture_list.size():
+		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette)
+		if tex:
+			node.texture = tex
+			var tex_info = texture_list[data.texture_id]
+			node.transparent_color = tex_info.transparent_color
+			if tex_info.has("texture_size") and tex_info.texture_size != null:
+				node.texture_size = tex_info.texture_size
+	elif fallback_texture != null:
+		node.texture = fallback_texture
+
 
 ### RENDERING & GEOMETRY ###
 # generate_balls
@@ -1258,6 +1365,8 @@ func _resolve_custom_palette_for_lnz() -> Array:
 # _update_whisker_position
 # _update_eyelids
 # restore_ball_visual_states
+# _index_ball_to_feature
+
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var t_start = OS.get_ticks_msec()
@@ -1537,7 +1646,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				if draw_omitted_balls: node.visible_override = true
 				else:
 					node.call_deferred("set_visible", false)
-					node.call_deferred("set_visible", false)
+					node.call_deferred("set_visible", false) # TBD: Check whether this is really needed but IIRC it was... but definitely hacky
 			elif !draw_paintballs:
 				node.call_deferred("set_visible", false)
 				
@@ -1855,41 +1964,6 @@ func generate_whiskers(new_create: bool):
 			_update_whisker_position(visual_line, start_node, end_node)
 		i += 1
 
-func _find_lowest_variation_id_in_data(section_data) -> int:
-	var lowest: int = 0
-	for id in section_data:
-		if id > 0 and (lowest == 0 or id < lowest):
-			lowest = id
-	return lowest
-
-func _config_to_active_ids(section: String) -> Array:
-	if not current_variation_config.has(section):
-		return [0]
-	var dict = current_variation_config[section]
-	if dict == null:
-		return [0]
-	if typeof(dict) != TYPE_DICTIONARY:
-		return [0]
-	var result = [0]
-	var seen_ids = {}
-	for sk in dict:
-		var val = dict[sk]
-		if typeof(val) == TYPE_INT:
-			if val != 0 and not seen_ids.has(val):
-				seen_ids[val] = true
-				result.append(val)
-		elif typeof(val) == TYPE_STRING:
-			if not seen_ids.has(val):
-				seen_ids[val] = true
-				result.append(val)
-			var parts: Array = (val as String).split(".")
-			if parts.size() == 2 and parts[0].is_valid_integer():
-				var bare_id = parts[0].to_int()
-				if not seen_ids.has(bare_id):
-					seen_ids[bare_id] = true
-					result.append(bare_id)
-	return result
-
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
 	_update_paintball_transforms()
@@ -1983,13 +2057,22 @@ func restore_ball_visual_states(ball_nos: Array):
 		if visual_node.has_method("update_ball"):
 			visual_node.update_ball()
 
+func _index_ball_to_feature(map: Dictionary, ball_no: int, index: int):
+	if not map.has(ball_no):
+		map[ball_no] = []
+	map[ball_no].append(index)
+
 ### TRANSFORMATIONS ###
-# apply_extensions
 # munge_balls
+# apply_extensions
 # apply_movement_with_rotation
 # apply_projections
 # apply_sizes
-# get_real_ball_size
+# fuzz_to_amount
+# snap_ball_size
+# base_z_offset
+# normalize_ball_size
+
 
 func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 	var base_ball_dict = all_ball_dict.balls
@@ -2254,131 +2337,17 @@ func normalize_ball_size(size: float, scale: float) -> float:
 	s -= 1 - fmod(s, 2)
 	return max(1, s)
 
-func _validate_lnz_file(lnz_data) -> bool:
-	if lnz_data == null:
-		print("[ERROR] dog_generator: _validate_lnz_file: parser is null")
-		if console_log:
-			console_log.log_message("LNZ validation failed: parser is null")
-		return false
-
-	if lnz_data.sections_map.empty():
-		print("[ERROR] dog_generator: _validate_lnz_file: no sections parsed from LNZ data")
-		if console_log:
-			console_log.log_message("LNZ validation failed: no sections parsed from file")
-		return false
-		
-	if not lnz_data.sections_map.has("Ballz Info"):
-		print("[ERROR] dog_generator: _validate_lnz_file: no [Ballz Info] section in LNZ data")
-		if console_log:
-			console_log.log_message("LNZ validation failed: no [Ballz Info] section found")
-		return false
-	return true
-
-func _validate_parsed_lnz_data(lnz_data) -> bool:
-	if lnz_data == null:
-		print("[ERROR] dog_generator: _validate_parsed_lnz_data: parser is null")
-		if console_log:
-			console_log.log_message("LNZ validation failed: parser is null")
-		return false
-
-	if lnz_data.balls.empty() and lnz_data.addballs.empty():
-		print("[ERROR] dog_generator: _validate_parsed_lnz_data: no balls or addballs in parsed LNZ data")
-		if console_log:
-			console_log.log_message("LNZ validation failed: no balls or addballs parsed")
-		return false
-		
-	if lnz_data.scales == null or lnz_data.scales.x == 0:
-		print("[ERROR] dog_generator: _validate_parsed_lnz_data: invalid scales in parsed LNZ data")
-		if console_log:
-			console_log.log_message("LNZ validation failed: invalid scales in parsed data")
-		return false
-	return true
-
-func _clear_hidden_state_lists():
-	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
-
-func _clear_paintball_list(node_list: Array, data_list: Array):
-	for node in node_list:
-		if is_instance_valid(node):
-			node.queue_free()
-	node_list.clear()
-	data_list.clear()
-
-func _select_option_item(option_button: OptionButton, name: String):
-	for i in range(option_button.get_item_count()):
-		if option_button.get_item_text(i) == name:
-			option_button.select(i)
-			break
-
-func _index_ball_to_feature(map: Dictionary, ball_no: int, index: int):
-	if not map.has(ball_no):
-		map[ball_no] = []
-	map[ball_no].append(index)
-
-func auto_paintball_world_offset(pb_data, base_node):
-	return pb_data.position * (base_node.ball_size / 2.0) * pixel_world_size
-
-func make_paintball_adapter(src):
-	return {
-		"color": src.color_index,
-		"outline_color": src.outline_color_index,
-		"outline": src.outline,
-		"fuzz": src.fuzz,
-		"texture": src.texture_id,
-		"group": src.group
-	}
-
-func _apply_tile_texture_settings(node, key, tile_when_absent: bool):
-	if lnz.no_texture_rotate.has(key):
-		node.set_tile_texture(false)
-		if lnz.quadrant_balls.has(key):
-			node.use_quadrants = true
-	elif tile_when_absent:
-		node.set_tile_texture(true)
-
-func apply_shader_settings(node):
-	if node.has_node("MeshInstance") and is_instance_valid(node.get_node("MeshInstance")):
-		var mat = node.get_node("MeshInstance").material_override
-		if mat:
-			mat.set_shader_param("texture_rotation_mode", _shader_rotation_mode)
-			mat.set_shader_param("texture_rotation_input", _shader_rotation_input)
-			mat.set_shader_param("texture_affected_by_size", _shader_affected_by_size)
-			mat.set_shader_param("texture_affected_by_rotation", _shader_affected_by_rotation)
-			mat.set_shader_param("render_flat_colors", render_flat_colors_global)
-
-func apply_visual_properties(node, data, texture_list, palette, fallback_texture = null, custom_lnz_palette: Array = []):
-	apply_shader_settings(node)
-	node.color_index = data.color_index
-	node.outline_color_index = data.outline_color_index
-	node.outline = data.outline
-	node.ball_size = get_real_ball_size(data.size)
-	node.fuzz_amount = fuzz_to_amount(data.fuzz)
-	node.palette = palette
-	if data.texture_id >= 0 and data.texture_id < texture_list.size():
-		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette)
-		if tex:
-			node.texture = tex
-			var tex_info = texture_list[data.texture_id]
-			node.transparent_color = tex_info.transparent_color
-			if tex_info.has("texture_size") and tex_info.texture_size != null:
-				node.texture_size = tex_info.texture_size
-	elif fallback_texture != null:
-		node.texture = fallback_texture
-
-func get_real_ball_size(ball_size):
-	return ball_size
 
 ### ANIMATIONS ###
 # set_animation
 # set_frame
 # symmetrize_skeleton
+# disable_tpose
 # _on_AnimPicker_text_entered
 # _on_PrevAnim_pressed
 # _on_NextAnim_pressed
 # _on_TPoseCheckBox_toggled
+
 
 func set_animation(anim_index: int):
 	if t_pose_active and not is_setting_tpose:
@@ -2521,6 +2490,7 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 # unhide_all_balls
 # _apply_hidden_state_to_visuals
 # _restore_hidden_states
+# _clear_hidden_state_lists
 # _on_EyeLidButton_pressed
 # _on_ToggleSpecialBalls_toggled
 # _on_TransparencyCheckBox_toggled
@@ -2722,21 +2692,34 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 						pb.visible = false
 	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: updated %d omitted balls" % count)
 
+func _clear_hidden_state_lists():
+	_hidden_balls.clear()
+	_hidden_lines.clear()
+	_hidden_polygons.clear()
+	_hidden_paintballs.clear()
+
 
 ### PAINTBALLZ ###
 # _create_paintball_instance
 # _setup_paintball_node
 # add_pending_paintball
 # remove_last_pending_paintball
+# remove_paintball_by_uid
 # remove_specific_pending_paintball
 # get_pending_paintballs_data
 # get_pending_paintball_nodes
+# get_pending_paintball_nodes_for_layer
+# get_layer_outline_color
+# rebuild_pending_paintball_visuals
 # clear_pending_paintballz
 # _clear_paintball_state_on_model_load
 # clear_auto_paintballz
-# _on_clear_auto_paintballz
+# _clear_paintball_list
+# auto_paintball_world_offset
+# make_paintball_adapter
 # _on_randomize_auto_paintballz
 # _on_apply_auto_paintballz
+
 
 func _create_paintball_instance(base_ball_node):
 	var pb = paintball_scene.instance()
@@ -3050,27 +3033,6 @@ func _on_apply_auto_paintballz():
 
 	clear_auto_paintballz()
 
-
-func get_pending_paintballs_for_layer(layer_id: int) -> Array:
-	var result: Array = []
-	for node in _pending_paintball_nodes:
-		if not is_instance_valid(node):
-			continue
-		if "paint_layer_id" in node and node.paint_layer_id == layer_id:
-			var pb_dict: Dictionary = {}
-			pb_dict["base_ball_no"] = node.base_ball_no
-			pb_dict["diameter"] = node.ball_size
-			pb_dict["color"] = node.color_index
-			pb_dict["outline_color"] = node.outline_color_index
-			pb_dict["outline_type"] = node.outline
-			pb_dict["fuzz"] = node.fuzz_amount
-			pb_dict["texture"] = node.texture_id if "texture_id" in node else -1
-			pb_dict["group"] = node.group if "group" in node else 0
-			pb_dict["anchored"] = true
-			result.append(pb_dict)
-	return result
-
-
 func get_pending_paintball_nodes_for_layer(layer_id: int) -> Array:
 	var result: Array = []
 	for node in _pending_paintball_nodes:
@@ -3079,11 +3041,6 @@ func get_pending_paintball_nodes_for_layer(layer_id: int) -> Array:
 		if "paint_layer_id" in node and node.paint_layer_id == layer_id:
 			result.append(node)
 	return result
-
-
-func get_pending_paintball_count_for_layer(layer_id: int) -> int:
-	return get_pending_paintball_nodes_for_layer(layer_id).size()
-
 
 func get_layer_outline_color(layer_id: int) -> int:
 	var layer_colors: Array = [1, 165, 100, 130, 170]
@@ -3171,47 +3128,31 @@ func rebuild_pending_paintball_visuals():
 		% [_pending_paintball_nodes.size(), PaintballLayerManager.layers.size()])
 
 
-func add_pending_paintball_with_layer(paintball_info: Dictionary, layer_id: int = -1):
-	if layer_id < 0:
-		layer_id = PaintballLayerManager.active_layer_id
+func _clear_paintball_list(node_list: Array, data_list: Array):
+	for node in node_list:
+		if is_instance_valid(node):
+			node.queue_free()
+	node_list.clear()
+	data_list.clear()
 
-	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
-	if active_layer:
-		active_layer.add_paintball(paintball_info)
+func auto_paintball_world_offset(pb_data, base_node):
+	return pb_data.position * (base_node.ball_size / 2.0) * pixel_world_size
 
-	var base_ball_node = ball_map[paintball_info.base_ball_no]
-	var pb_visual_ball = _create_paintball_instance(base_ball_node)
-	pb_visual_ball.paint_layer_id = layer_id
-
-	var pb_data = {
-		"color": paintball_info.color,
-		"outline_color": paintball_info.outline_color,
-		"outline": paintball_info.outline_type,
-		"fuzz": paintball_info.fuzz,
-		"texture": paintball_info.texture,
-		"group": paintball_info.group
+func make_paintball_adapter(src):
+	return {
+		"color": src.color_index,
+		"outline_color": src.outline_color_index,
+		"outline": src.outline,
+		"fuzz": src.fuzz,
+		"texture": src.texture_id,
+		"group": src.group
 	}
 
-	_setup_paintball_node(
-		pb_visual_ball,
-		pb_data,
-		base_ball_node,
-		paintball_info.relative_pos_local,
-		paintball_info.diameter,
-		paintball_map.get(paintball_info.base_ball_no, []).size(),
-		_pending_paintball_nodes.size()
-	)
-
-	if paintball_info.outline_type >= 0 and paintball_info.outline_color <= 0:
-		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
-
-	_pending_paintball_nodes.append(pb_visual_ball)
-	_pending_paintballs_data.append(paintball_info)
-	print("[STATUS] Node: add_pending_paintball_with_layer: added visual paintball to layer %d on base ball %d"
-		% [layer_id, paintball_info.base_ball_no])
-		
-
 ### ADD BALLZ ###
+# _validate_addball_props
+# inject_single_addball
+# apply_extensions_for_addball
+
 
 func _validate_addball_props(props: Dictionary) -> bool:
 	var required = [
