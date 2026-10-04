@@ -2227,7 +2227,7 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 				mod_v = mod_v * (lnz.foot_enlargement.x / 100.0)
 				mod_v += foot_pos
 				ball.position = Vector3(
-					floor(ball.position.x), floor(ball.position.y), floor(ball.position.z)
+					floor(mod_v.x), floor(mod_v.y), floor(mod_v.z)
 				)
 			ball.size = floor(ball.size * (lnz.foot_enlargement.x / 100.0))
 			ball.size += lnz.foot_enlargement.y
