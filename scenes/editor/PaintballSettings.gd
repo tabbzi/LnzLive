@@ -16,7 +16,6 @@ signal apply_paintballz
 signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
-onready var paintballz_tree: Tree = find_node("PaintballzTree")
 onready var _apply_button: Button = find_node("ApplyButton")
 onready var _clear_button: Button = find_node("ClearButton")
 onready var _eraser_checkbox: CheckBox = find_node("EraserCheckBox")
@@ -1145,7 +1144,6 @@ func _on_GeneratePaletteButton_pressed() -> void:
 # _refresh_slot_buttons
 # _on_SlotsTree_item_edited
 # _on_SlotsTree_cell_selected
-# _on_slot_display_color_changed
 # _on_AddSlotButton_pressed
 # _on_RemoveSlotButton_pressed
 
@@ -1382,20 +1380,6 @@ func _on_vline_btn_toggled(pressed: bool) -> void:
 		call_deferred("_sync_design_line_mode", 3)
 
 
-func _on_clear_design_pressed() -> void:
-	print("[STATUS] PaintballSettings: design canvas cleared")
-	_design_canvas.clear()
-	
-	design_color_slots.clear()
-	for s in DEFAULT_DESIGN_SLOTS:
-		design_color_slots.append(s.duplicate(true))
-
-	_refresh_slot_buttons()
-	_design_canvas.emit_signal("design_changed")
-	_on_palette_changed()
-	_sync_design_line_mode(0)
-
-
 func _setup_slots_tree() -> void:
 	var tree: Tree = _slots_tree
 	tree.set_column_titles_visible(true)
@@ -1539,19 +1523,10 @@ func _on_SlotsTree_cell_selected() -> void:
 	if not item: return
 
 	var idx: int = item.get_metadata(0)
-	var col: int = tree.get_selected_column()
 
 	var canvas: Control = _design_canvas
 	if canvas:
 		canvas.current_color_slot = idx + 1
-
-
-func _on_slot_display_color_changed(color: Color, idx: int, item: TreeItem) -> void:
-	if idx >= 0 and idx < design_color_slots.size():
-		design_color_slots[idx].display_color = color
-		item.set_icon(0, _create_color_icon(color))
-		_design_canvas.update()
-		save_settings()
 
 
 func _on_AddSlotButton_pressed() -> void:
