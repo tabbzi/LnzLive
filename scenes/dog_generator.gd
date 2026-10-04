@@ -2262,14 +2262,12 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		b.outline = v.outline
 		b.fuzz = v.fuzz
 
-		var q = Quat()
 		for m in lnz.moves:
 			if m.ball_no == k:
 				var move_base = b
 				var rot = move_base.rotation
 				if m.relative_to:
 					rot = base_ball_dict.get(m.relative_to).rotation
-				q.set_euler(Vector3(deg2rad(rot.x), deg2rad(rot.y), deg2rad(rot.z)))
 				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
 		b.texture_id = v.texture_id
 		b.color_index = v.color_index
