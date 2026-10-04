@@ -1,4 +1,4 @@
-[gd_scene load_steps=62 format=2]
+[gd_scene load_steps=61 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -1125,8 +1125,8 @@ align = 2
 [node name="UnappliedChangesLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
 visible = false
 margin_left = 10.0
-margin_right = 759.0
 margin_top = 38.0
+margin_right = 759.0
 margin_bottom = 58.0
 rect_min_size = Vector2( 0, 30 )
 custom_fonts/font = ExtResource( 35 )
@@ -1141,7 +1141,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-09"
+text = "PB-beta-v1.4.8-preview-10"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
