@@ -2175,7 +2175,7 @@ func _process_imported_layers_dict(data: Dictionary) -> void:
 	
 	if src_species_id == target_species_id and all_exist:
 		print("[STATUS] PaintballSettings: layers import compatible, applying directly")
-		_apply_imported_layers(data["layers"], {})
+		_apply_imported_layers(data["layers"], {}, src_species_id)
 		return
 	
 	print("[STATUS] PaintballSettings: cross-species or missing balls detected, showing remap dialog")
@@ -2295,14 +2295,14 @@ func _on_layer_remap_confirmed(dialog: ConfirmationDialog) -> void:
 			remapping[src_ball] = option.get_item_id(option.selected)
 	
 	dialog.queue_free()
-	_apply_imported_layers(data["layers"], remapping)
+	_apply_imported_layers(data["layers"], remapping, KeyBallsData.string_to_species(data.get("species", "dog")))
 
 
 func _on_layer_remap_cancelled(dialog: ConfirmationDialog) -> void:
 	dialog.queue_free()
 
 
-func _apply_imported_layers(layers_array: Array, remapping: Dictionary) -> void:
+func _apply_imported_layers(layers_array: Array, remapping: Dictionary, src_species: int = KeyBallsData.Species.DOG) -> void:
 	print("[STATUS] PaintballSettings: applying layers with remapping")
 	
 	# Clear current active layer paintballs
@@ -2310,7 +2310,6 @@ func _apply_imported_layers(layers_array: Array, remapping: Dictionary) -> void:
 	if active_layer and active_layer.get_paintball_count() > 0:
 		active_layer.clear_paintballs()
 	
-	var src_species: int = KeyBallsData.string_to_species("dog")
 	var target_species: int = KeyBallsData.Species.DOG
 	if dog_generator and dog_generator.lnz:
 		target_species = dog_generator.lnz.species
