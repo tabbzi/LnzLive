@@ -2,32 +2,11 @@
 
 [ext_resource path="res://scenes/editor/UserSettingsDialog.gd" type="Script" id=1]
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=2]
-[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFont" id=3]
-
-[sub_resource type="DynamicFont" id=1]
-size = 30
-font_data = ExtResource( 3 )
-
-[sub_resource type="StyleBoxFlat" id=1]
-bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-anti_aliasing = false
-
-[sub_resource type="StyleBoxFlat" id=2]
-bg_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-anti_aliasing = false
 
 [node name="UserSettingsDialog" type="WindowDialog"]
 visible = true
 margin_right = 450.0
-margin_bottom = 400.0
+margin_bottom = 438.0
 window_title = "User Settings"
 resizable = true
 script = ExtResource( 1 )
@@ -189,9 +168,9 @@ margin_right = 430.0
 margin_bottom = 254.0
 
 [node name="AppendDimsHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 258.0
+margin_top = 264.0
 margin_right = 430.0
-margin_bottom = 278.0
+margin_bottom = 288.0
 
 [node name="Label" type="Label" parent="VBoxContainer/AppendDimsHBox"]
 margin_top = 5.0
@@ -202,57 +181,44 @@ text = "Append Dimensions:"
 
 [node name="AppendDimsCheckBox" type="CheckBox" parent="VBoxContainer/AppendDimsHBox"]
 margin_left = 217.0
-margin_top = 5.0
 margin_right = 430.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-label = "Include width and height in inserted line"
 
 [node name="TexturePathLabel" type="Label" parent="VBoxContainer"]
-margin_top = 290.0
+margin_top = 298.0
 margin_right = 430.0
-margin_bottom = 304.0
+margin_bottom = 312.0
 text = "Default Texture Path"
 align = 1
 
 [node name="TexturePathHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 314.0
+margin_top = 322.0
 margin_right = 430.0
-margin_bottom = 338.0
+margin_bottom = 346.0
 
 [node name="TexturePathEdit" type="LineEdit" parent="VBoxContainer/TexturePathHBox"]
-	margin_right = 430.0
-	margin_bottom = 24.0
-	size_flags_horizontal = 3
-	text = "\\resource\\textures\\"
-
-[node name="TransparentColorLabel" type="Label" parent="VBoxContainer"]
-	margin_top = 358.0
-	margin_right = 430.0
-	margin_bottom = 372.0
-	custom_fonts/font = SubResource( 1 )
-	text = "Default Transparent Color"
-	align = 1
+margin_right = 430.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+text = "\\resource\\textures\\"
 
 [node name="TransparentColorHBox" type="HBoxContainer" parent="VBoxContainer"]
-	margin_top = 376.0
-	margin_right = 430.0
-	margin_bottom = 400.0
+margin_top = 356.0
+margin_right = 430.0
+margin_bottom = 380.0
 
 [node name="Label" type="Label" parent="VBoxContainer/TransparentColorHBox"]
-	margin_top = 5.0
-	margin_right = 213.0
-	margin_bottom = 19.0
-	size_flags_horizontal = 3
-	text = "Transparent Color Index:"
+margin_top = 5.0
+margin_right = 213.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+text = "Transparent Color Index:"
 
 [node name="TransparentColorSpin" type="SpinBox" parent="VBoxContainer/TransparentColorHBox"]
-	margin_left = 217.0
-	margin_right = 430.0
-	margin_bottom = 24.0
-	size_flags_horizontal = 3
-	custom_icons/updown = ExtResource( 2 )
-	min_value = 0.0
-	max_value = 255.0
-	step = 1.0
-	value = 0.0
+margin_left = 217.0
+margin_right = 430.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 2 )
+max_value = 255.0
