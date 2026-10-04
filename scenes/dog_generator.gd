@@ -3098,10 +3098,28 @@ func rebuild_pending_paintball_visuals():
 			node.queue_free()
 	_pending_paintball_nodes.clear()
 
-	var visual_index: int = 0
+	var total_visible: int = 0
+	for layer in PaintballLayerManager.layers:
+		if layer.visible:
+			total_visible += layer.get_paintball_count()
+
+	var layer_offsets: Array = []
+	var running_count: int = 0
+	for layer in PaintballLayerManager.layers:
+		if layer.visible:
+			layer_offsets.append(running_count)
+			running_count += layer.get_paintball_count()
+		else:
+			layer_offsets.append(-1)
+
 	for layer in PaintballLayerManager.layers:
 		if not layer.visible:
 			continue
+		var layer_idx: int = -1
+		for li in range(PaintballLayerManager.layers.size()):
+			if PaintballLayerManager.layers[li] == layer:
+				layer_idx = li
+				break
 		var layer_pb_count: int = layer.get_paintball_count()
 		for i in range(layer_pb_count):
 			var pb_data = layer.paintballs[i]
@@ -3132,6 +3150,8 @@ func rebuild_pending_paintball_visuals():
 				"group": pb_data.group
 			}
 
+			var commit_output_index: int = layer_offsets[layer_idx] + (layer_pb_count - 1 - i)
+			var z_add_value: int = total_visible - commit_output_index - 1
 			_setup_paintball_node(
 				pb_visual,
 				pb_info_data,
@@ -3139,14 +3159,13 @@ func rebuild_pending_paintball_visuals():
 				pb_data.relative_pos_local,
 				pb_data.diameter,
 				paintball_map.get(pb_data.base_ball_no, []).size(),
-				visual_index + (layer_pb_count - 1 - i)
+				z_add_value
 			)
 
 			if pb_data.outline_type >= 0 and pb_data.outline_color <= 0:
 				pb_visual.outline_color_index = get_layer_outline_color(layer.layer_id)
 
 			_pending_paintball_nodes.append(pb_visual)
-			visual_index += 1
 
 	print("[STATUS] Node: rebuild_pending_paintball_visuals: rebuilt %d visual nodes from %d layers"
 		% [_pending_paintball_nodes.size(), PaintballLayerManager.layers.size()])
