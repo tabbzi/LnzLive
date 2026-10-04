@@ -1,21 +1,21 @@
 extends Node
 
-# dog_generator.gd
-# - Generates and manages 3D model based on LNZ data (ballz, paintballz, linez, polygonz)
-# - Controls animations, textures, palettes, and geometry
-# NOTE: Could really use a rename and refactor, script is huge...
+## dog_generator.gd
+## - Generates and manages 3D model based on LNZ data (ballz, paintballz, linez, polygonz)
+## - Controls animations, textures, palettes, and geometry
+## NOTE: Could really use a rename and refactor, script is huge...
 
-# SECTIONS:
-#	SETUP & INITIALIZATION
-#	SIGNALS
-#	MODEL GENERATION
-#	TEXTURES, PALETTES & SHADERS
-#	RENDERING & GEOMETRY
-#	TRANSFORMATIONS & MATH HELPERS
-#	ANIMATIONS
-#	VISIBILITY & RENDERING
-#	PAINTBALLZ & LAYER MANAGEMENT
-#	ADD BALLZ
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	SIGNALS
+##	MODEL GENERATION
+##	TEXTURES, PALETTES & SHADERS
+##	RENDERING & GEOMETRY
+##	TRANSFORMATIONS & MATH HELPERS
+##	ANIMATIONS
+##	VISIBILITY & RENDERING
+##	PAINTBALLZ & LAYER MANAGEMENT
+##	ADD BALLZ
 
 export var pixel_world_size = 0.002
 

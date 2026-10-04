@@ -1,23 +1,23 @@
 extends Control
 
-# PetViewContainer.gd
-# - Translates 2D mouse input into 3D world interactions (raycasting/selection)
-# - Manages Modes (Move, Paint, Line, etc.)
-# - Handles coordinate conversion between spatial world and LNZ units
-# - Coordinates viewport visuals (gizmos, labels, and cursors)
+## PetViewContainer.gd
+## - Translates 2D mouse input into 3D world interactions (raycasting/selection)
+## - Manages Modes (Move, Paint, Line, etc.)
+## - Handles coordinate conversion between spatial world and LNZ units
+## - Coordinates viewport visuals (gizmos, labels, and cursors)
 
-# SECTIONS:
-#	SETUP & INITIALIZATION
-#	INPUT HANDLING
-#	MODE MANAGEMENT
-#	PALETTE VIEWER
-#	VARIATION VIEWER
-#	RECOLOR MODE
-#	PAINT MODE
-#	SHAPE MODE
-#	LINE MODE
-#	PRESET MODE
-#	MOVE MODE
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	INPUT HANDLING
+##	MODE MANAGEMENT
+##	PALETTE VIEWER
+##	VARIATION VIEWER
+##	RECOLOR MODE
+##	PAINT MODE
+##	SHAPE MODE
+##	LINE MODE
+##	PRESET MODE
+##	MOVE MODE
 
 var ui_is_dirty: bool = true
 
