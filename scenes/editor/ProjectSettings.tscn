@@ -97,14 +97,14 @@ __meta__ = {
 }
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Shape Mode"
 
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 79.0
 rect_min_size = Vector2( 0, 50 )
 __meta__ = {
@@ -112,13 +112,13 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -129,7 +129,7 @@ This is an advanced mode. Tutorial coming soon too!"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0
-margin_right = 470.0
+margin_right = 495.0
 margin_bottom = 970.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -138,18 +138,18 @@ __meta__ = {
 }
 
 [node name="HBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 1343.0
 size_flags_horizontal = 3
 custom_constants/separation = 20
 
 [node name="SettingsProjectBall" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 391.0
 size_flags_horizontal = 3
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 4 )
 text = "Projection Randomizer"
@@ -157,12 +157,12 @@ align = 1
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 29.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 33.0
 
 [node name="ProjectionsTree" type="Tree" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 37.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 287.0
 rect_min_size = Vector2( 0, 250 )
 size_flags_horizontal = 3
@@ -171,7 +171,7 @@ hide_root = true
 
 [node name="OrderNoteLabel" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 291.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 309.0
 custom_fonts/font = SubResource( 5 )
 text = "Note: The order of entries matters."
@@ -180,7 +180,7 @@ autowrap = true
 
 [node name="ButtonsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 313.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 335.0
 
 [node name="AddButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
@@ -249,7 +249,7 @@ text = "Clear All"
 
 [node name="RestoreDefaultsButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 345.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 6 )
@@ -262,7 +262,7 @@ text = "Reset Defaults"
 
 [node name="ActionButtonsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 339.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 361.0
 
 [node name="CopyFromLNZButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
@@ -294,7 +294,7 @@ hint_tooltip = "Generates random 'Value' numbers within the Min/Max range for ea
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_left = 312.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 6 )
@@ -308,7 +308,7 @@ hint_tooltip = "Sends the current Projection data to the LNZ file. \n\nIf 'Mirro
 
 [node name="IncludeProjCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 365.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 391.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
@@ -316,17 +316,17 @@ text = "Include in Randomize Shape"
 
 [node name="VSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 411.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 415.0
 
 [node name="SettingsExtensionScale" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 435.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 924.0
 size_flags_horizontal = 3
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 4 )
 text = "Extensions Randomizer"
@@ -334,12 +334,12 @@ align = 1
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 29.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 33.0
 
 [node name="GridContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 37.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 407.0
 custom_constants/vseparation = 8
 columns = 3
@@ -362,7 +362,7 @@ align = 1
 
 [node name="HeaderLabel3" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -391,7 +391,7 @@ value = -30.0
 [node name="LegExt1MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 26.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -421,7 +421,7 @@ value = -30.0
 [node name="LegExt2MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 58.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 82.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -451,7 +451,7 @@ value = 100.0
 [node name="HeadEnl1MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 90.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 114.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -480,7 +480,7 @@ max_value = 200.0
 [node name="HeadEnl2MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 122.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 146.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -509,7 +509,7 @@ value = 50.0
 [node name="FeetEnl1MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 154.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 178.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -538,7 +538,7 @@ max_value = 200.0
 [node name="FeetEnl2MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 186.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 210.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -568,7 +568,7 @@ value = 120.0
 [node name="Scales1MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 218.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 242.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -598,7 +598,7 @@ value = 100.0
 [node name="Scales2MaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 250.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 274.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -628,7 +628,7 @@ value = -20.0
 [node name="BodyExtMaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 282.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 306.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -658,7 +658,7 @@ value = -30.0
 [node name="FaceExtMaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 314.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 338.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -688,7 +688,7 @@ value = 50.0
 [node name="EarExtMaxSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 308.0
 margin_top = 346.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 370.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -698,7 +698,7 @@ value = 100.0
 
 [node name="RandomizeBodyButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 411.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 433.0
 size_flags_vertical = 10
 custom_styles/hover = SubResource( 6 )
@@ -712,7 +712,7 @@ hint_tooltip = "Randomizes the Min/Max values for Body Extensions (Legs, Head, e
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 437.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 459.0
 size_flags_vertical = 10
 custom_styles/hover = SubResource( 6 )
@@ -725,7 +725,7 @@ text = "Reset Defaults"
 
 [node name="IncludeBodyCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 463.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 489.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
@@ -733,17 +733,17 @@ text = "Include in Randomize Shape"
 
 [node name="VSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 944.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 948.0
 
 [node name="SettingsMove" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 968.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 1267.0
 size_flags_horizontal = 3
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 4 )
 text = "Move Randomizer"
@@ -751,12 +751,12 @@ align = 1
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 29.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 33.0
 
 [node name="MoveGroupsGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 37.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 93.0
 columns = 3
 
@@ -779,7 +779,7 @@ text = "Body"
 
 [node name="LegsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
 margin_left = 308.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 26.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -808,7 +808,7 @@ text = "Ears"
 [node name="EyesCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
 margin_left = 308.0
 margin_top = 30.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 56.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 5 )
@@ -817,7 +817,7 @@ text = "Eyes"
 
 [node name="MoveRangesGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 97.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 185.0
 custom_constants/vseparation = 8
 columns = 4
@@ -848,7 +848,7 @@ text = "X Max"
 
 [node name="MoveXMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
 margin_left = 272.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -883,7 +883,7 @@ text = "Y Max"
 [node name="MoveYMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
 margin_left = 272.0
 margin_top = 32.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 56.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -918,7 +918,7 @@ text = "Z Max"
 [node name="MoveZMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
 margin_left = 272.0
 margin_top = 64.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 88.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
@@ -927,7 +927,7 @@ value = 10.0
 
 [node name="JitterHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 189.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 213.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/JitterHBox"]
@@ -948,7 +948,7 @@ value = 10.0
 
 [node name="JitterButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove/JitterHBox"]
 margin_left = 260.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 6 )
@@ -962,7 +962,7 @@ hint_tooltip = "Applies a small random displacement to the current position of t
 
 [node name="MirrorXCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 217.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 243.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
@@ -970,7 +970,7 @@ text = "Mirror X"
 
 [node name="RandomizeMovesButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 247.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 269.0
 size_flags_vertical = 10
 custom_styles/hover = SubResource( 6 )
@@ -984,7 +984,7 @@ hint_tooltip = "Randomizes the position offsets (X/Y/Z) for the selected Body Gr
 
 [node name="IncludeMovesCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 273.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 299.0
 custom_fonts/font = SubResource( 5 )
 pressed = true
@@ -992,12 +992,12 @@ text = "Include in Randomize Shape"
 
 [node name="VSeparator3" type="HSeparator" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 1287.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 1291.0
 
 [node name="RandomizeShapeButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer"]
 margin_top = 1311.0
-margin_right = 458.0
+margin_right = 470.0
 margin_bottom = 1343.0
 rect_min_size = Vector2( 0, 32 )
 size_flags_vertical = 10
