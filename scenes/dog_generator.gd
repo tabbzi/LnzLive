@@ -1973,6 +1973,17 @@ func _finish_dependent_geometry(new_create: bool):
 	_restore_hidden_states()
 
 func _update_paintball_transforms():
+	var eyes = {}
+	if lnz != null and not lnz.custom_eyes.empty():
+		eyes = lnz.custom_eyes
+	else:
+		eyes = KeyBallsData.get_eyes(lnz.species)
+	for eye_key in eyes:
+		var eye_node = ball_map.get(eye_key)
+		var base_node = ball_map.get(eyes[eye_key])
+		if is_instance_valid(eye_node) and is_instance_valid(base_node):
+			eye_node.base_ball_position = base_node.global_transform.origin
+
 	for key in paintball_map:
 		var base_node = ball_map.get(key)
 		if not is_instance_valid(base_node): continue
