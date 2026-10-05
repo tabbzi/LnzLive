@@ -4157,6 +4157,8 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			
 			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [count, target_ball.ball_no])
 			
+			_update_unapplied_changes_label()
+			
 			pos_arr.resize(0)
 			diam_arr.resize(0)
 			col_arr.resize(0)
