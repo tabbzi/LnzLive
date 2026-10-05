@@ -405,8 +405,8 @@ void vertex() {
     vert_in_clip_space.z += 0.0001 + (z_add * 0.00005);
 
     float b = (float(ball_size) / 2.0 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
-    vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
-    vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
+    vert_in_clip_space.x = center_clip_space.x + b * sign(VERTEX.x);
+    vert_in_clip_space.y = center_clip_space.y + b * sign(VERTEX.y);
     
     VERTEX = vert_in_clip_space;
 }"
