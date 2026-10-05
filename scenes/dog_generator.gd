@@ -2302,16 +2302,53 @@ func apply_projections():
 	# important to process these in order too
 	var outputs = {}
 
+	var eyes_keys = []
+	if lnz != null and not lnz.custom_eyes.empty():
+		eyes_keys = lnz.custom_eyes.keys()
+	else:
+		eyes_keys = KeyBallsData.get_eyes(lnz.species).keys()
+
 	for project_ball_data in lnz.project_ball:
-		var visual_ball = ball_map.get(project_ball_data.project_ball) as Spatial
-		var static_ball = ball_map.get(project_ball_data.fixed_ball) as Spatial
+		var p_ball = project_ball_data.project_ball
+		var f_ball = project_ball_data.fixed_ball
+
+		# Skip either if ball is addballz, or if project ball is iris
+		if lnz.addballs.has(p_ball) or lnz.addballs.has(f_ball) or p_ball in eyes_keys:
+			continue
+
+		var visual_ball = ball_map.get(p_ball) as Spatial
+		var static_ball = ball_map.get(f_ball) as Spatial
 		
 		if not is_instance_valid(visual_ball) or not is_instance_valid(static_ball):
 			print("[WARNING] Skipping projection: missing visual_ball or static_ball.")
 			continue 
 
-		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
 		var base_pos = static_ball.global_transform.origin
+		var vec = visual_ball.global_transform.origin - base_pos
+		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
+		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
+
+	for project_ball_data in lnz.project_ball:
+		var p_ball = project_ball_data.project_ball
+		var f_ball = project_ball_data.fixed_ball
+
+		# Skip only when both are base ballz
+		if not lnz.addballs.has(p_ball) and not lnz.addballs.has(f_ball):
+			continue
+
+		# Skip iris ballz to prevent them from being projected off eyez
+		if p_ball in eyes_keys:
+			continue
+
+		var visual_ball = ball_map.get(p_ball) as Spatial
+		var static_ball = ball_map.get(f_ball) as Spatial
+		
+		if not is_instance_valid(visual_ball) or not is_instance_valid(static_ball):
+			print("[WARNING] Skipping projection: missing visual_ball or static_ball.")
+			continue 
+
+		var base_pos = static_ball.global_transform.origin
+		var vec = visual_ball.global_transform.origin - base_pos
 		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
 		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
 
