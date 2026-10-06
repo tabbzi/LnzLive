@@ -962,15 +962,10 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var addballs = {}
 	for k in lnz_info.addballs:
 		var a = lnz_info.addballs[k]
-		var final_size = a.size
-		if a.anchor_ball != -1 and base_balls_temp.has(a.anchor_ball):
-			var anchor_bhd_size = base_balls_temp[a.anchor_ball].size
-			final_size = anchor_bhd_size + a.size
-
 		addballs[k] = AddBallData.new(
 			a.base,
 			a.ball_no,
-			final_size,
+			a.size,
 			a.position,
 			a.color_index,
 			a.outline_color_index,
@@ -1010,6 +1005,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = munge_balls(collated_data, lnz_info)
 	collated_data = apply_extensions(collated_data, lnz_info)
 	collated_data = apply_sizes(collated_data, lnz_info)
+	collated_data = _apply_anchor_ball_sizes(collated_data)
 	collated_data.omissions = lnz_info.omissions
 
 	generate_balls(
@@ -2352,13 +2348,27 @@ func apply_projections():
 		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
 		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
 
+func _apply_anchor_ball_sizes(all_ball_dict: Dictionary) -> Dictionary:
+	var base_balls = all_ball_dict.balls
+	var addballs = all_ball_dict.addballs
+	for k in addballs:
+		var ab = addballs[k]
+		if ab.anchor_ball > -1 and base_balls.has(ab.anchor_ball):
+			ab.size = max(1, base_balls[ab.anchor_ball].size + ab.size)
+	return all_ball_dict
+
 func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 	var size_scale = lnz.scales[1]
 	var pos_scale = lnz.scales[0]
 	for dict in [all_ball_dict.balls, all_ball_dict.addballs]:
 		for k in dict:
 			var ball = dict[k]
-			ball.size = normalize_ball_size(ball.size, size_scale)
+			if dict == all_ball_dict.addballs and ball.anchor_ball > -1:
+				# FIX: Anchored addballs keep their raw LNZ delta size;
+				# _apply_anchor_ball_sizes() adds it to the anchor ball's post-scale size.
+				pass
+			else:
+				ball.size = normalize_ball_size(ball.size, size_scale)
 			ball.position = ball.position * (pos_scale / 255.0)
 			dict[k] = ball
 
@@ -3285,10 +3295,12 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	return true
 
 func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallData:
+	var anchor = props.get("anchor_ball", -1)
 	var addball = AddBallData.new(
 		props.target_base_ball, ball_no, props.size, Vector3(props.position),
 		props.color, props.outline_color, props.outline,
-		props.fuzz, 0.0, -1, props.bodyarea, props.texture_id
+		props.fuzz, 0.0, -1, props.bodyarea, props.texture_id,
+		0, anchor
 	)
 	
 	var base_positions = {}

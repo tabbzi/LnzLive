@@ -640,6 +640,7 @@ func get_balls(reader: VirtualFileLineReader) -> void:
 		i += 1
 
 func get_addballs(reader: VirtualFileLineReader) -> void:
+	# 15th column (anchor_ball): when > -1, defines which base ball's final rendered size (after BHD + Ballz Info + extension/enlargement + Default Scales) reference base size for addballz unscaled size delta
 	var parsed_lines: Array = get_parsed_lines(
 		reader,
 		[

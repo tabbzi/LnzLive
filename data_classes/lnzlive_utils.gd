@@ -281,7 +281,10 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 
 
 ### SIZE CONVERSIONS ###
-static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> int:
+static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> int:
+	if is_anchored:
+		return int(round(target_visual - bhd_size))
+	
 	var req_total: float = (target_visual / (engine_scale / 255.0)) + 2.0
 	
 	if not is_addball:
@@ -289,14 +292,21 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 		
 	return int(round(req_total - bhd_size))
 
-static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> float:
+static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	if is_anchored:
+		return max(1.0, float(bhd_size + lnz_size))
+	
 	var total: float = lnz_size + bhd_size
 	if not is_addball:
 		total = total * (enl_x / 100.0) + enl_y
 	return (total - 2.0) * (engine_scale / 255.0)
 
-static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> float:
-	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y)
+static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	if is_anchored:
+		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
+		return max(1.0, float(bhd_size + final_lnz))
+	
+	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, false)
 	var current_base_size: float = bhd_size + final_lnz
 	
 	if not is_addball:
