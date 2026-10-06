@@ -684,7 +684,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 pressed = true
-text = "Draw paintballs"
+text = "Draw paintballz"
 
 [node name="AddballCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
 margin_top = 69.0
@@ -699,7 +699,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 pressed = true
-text = "Draw addballs"
+text = "Draw addballz"
 
 [node name="BallCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
 margin_top = 92.0
@@ -714,7 +714,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 pressed = true
-text = "Draw balls"
+text = "Draw ballz"
 
 [node name="VisualToggleContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer"]
 margin_left = 131.0
@@ -750,9 +750,9 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 pressed = true
-text = "Show special balls"
+text = "Show special ballz"
 
-[node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
+[node name="ToggleNegativeBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
 margin_top = 46.0
 margin_right = 152.0
 margin_bottom = 65.0
@@ -764,12 +764,26 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 pressed = true
+text = "Show negative ballz"
+
+[node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
+margin_top = 69.0
+margin_right = 152.0
+margin_bottom = 88.0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+pressed = true
 text = "Transparency (253)"
 
 [node name="UnhideBallsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
-margin_top = 69.0
+margin_top = 92.0
 margin_right = 152.0
-margin_bottom = 99.0
+margin_bottom = 122.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -1564,7 +1578,7 @@ margin_bottom = 28.0
 margin_top = 7.0
 margin_right = 89.0
 margin_bottom = 21.0
-text = "Balls/addballs"
+text = "Ballz/addballz"
 
 [node name="BallzFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/BallzRow"]
 margin_left = 93.0
@@ -1590,7 +1604,7 @@ margin_bottom = 58.0
 margin_top = 7.0
 margin_right = 62.0
 margin_bottom = 21.0
-text = "Paintballs"
+text = "Paintballz"
 
 [node name="PaintballsFill" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/PaintballsRow"]
 margin_left = 66.0
@@ -2042,6 +2056,7 @@ __meta__ = {
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/BallCheckBox" to="PetRoot/Node" method="_on_draw_toggle_toggled" binds= [ "balls" ]]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox" to="PetRoot/Node" method="_on_OmittedBallCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls" to="PetRoot/Node" method="_on_ToggleSpecialBalls_toggled"]
+[connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleNegativeBalls" to="PetRoot/Node" method="_on_ToggleNegativeBalls_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox" to="PetRoot/Node" method="_on_TransparencyCheckBox_toggled"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/UnhideBallsButton" to="PetRoot/Node" method="unhide_all_balls"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToggleRefImageBtn" to="SceneRoot" method="_on_toggle_ref_image_btn_pressed"]

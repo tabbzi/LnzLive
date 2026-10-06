@@ -32,17 +32,19 @@ var _hidden_balls = []
 var _hidden_lines = []
 var _hidden_polygons = []
 var _hidden_paintballs = []
+var _negative_balls = {}
 
 var _ball_to_lines_map = {}
 var _ball_to_polygons_map = {}
 
 export var draw_balls = true
-export var draw_special_balls = false
+export var draw_special_balls = true
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
 export var draw_polygons = true
 export var draw_omitted_balls = false
+export var draw_negative_balls = true
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
@@ -923,6 +925,8 @@ func recompose_model():
 	emit_signal("palette_changed", lnz.palette)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
+	_negative_balls.clear()
+	
 	if new_create || lnz_info.species != KeyBallsData.species:
 		_ball_to_lines_map.clear()
 		_ball_to_polygons_map.clear()
@@ -1468,7 +1472,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		var node = ball_map[key]
 		var base_node = ball_map.get(data.base)
 		
-		if not base_node: continue 
+		if not base_node:
+			if is_instance_valid(node):
+				node.queue_free()
+			ball_map.erase(key)
+			continue
 
 		if new_create:
 			base_node.add_child(node)
@@ -1526,7 +1534,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if not base_data: 
 			base_data = addball_data.get(base_key)
 			
-		if not node or not base_node or not data or not base_data: continue 
+		if not node or not base_node or not data or not base_data:
+			if is_instance_valid(node):
+				node.queue_free()
+			ball_map.erase(key)
+			continue
 
 		var is_omitted = omissions.has(key)
 		if omissions.has(base_key): is_omitted = true 
@@ -1667,6 +1679,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					if is_instance_valid(pb_node):
 						pb_node.base_ball_position = global_pos
 	# print("[TIME] dog_generator: generate_balls took " + str(OS.get_ticks_msec() - t_start) + "ms")
+	
+	# Apply all visibility toggles to newly generated balls
+	_update_all_ball_visibility()
 
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	var t_start = OS.get_ticks_msec()
@@ -2354,23 +2369,32 @@ func _apply_anchor_ball_sizes(all_ball_dict: Dictionary) -> Dictionary:
 	for k in addballs:
 		var ab = addballs[k]
 		if ab.anchor_ball > -1 and base_balls.has(ab.anchor_ball):
-			ab.size = max(1, base_balls[ab.anchor_ball].size + ab.size)
+			var raw_anchored_size = base_balls[ab.anchor_ball].size + ab.size
+			if raw_anchored_size <= 0:
+				_negative_balls[k] = true
+			ab.size = max(1, raw_anchored_size)
 	return all_ball_dict
 
 func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 	var size_scale = lnz.scales[1]
 	var pos_scale = lnz.scales[0]
-	for dict in [all_ball_dict.balls, all_ball_dict.addballs]:
-		for k in dict:
-			var ball = dict[k]
-			if dict == all_ball_dict.addballs and ball.anchor_ball > -1:
-				# FIX: Anchored addballs keep their raw LNZ delta size;
-				# _apply_anchor_ball_sizes() adds it to the anchor ball's post-scale size.
-				pass
-			else:
-				ball.size = normalize_ball_size(ball.size, size_scale)
-			ball.position = ball.position * (pos_scale / 255.0)
-			dict[k] = ball
+	
+	# 1. Base balls: detect negative effective size before scaling
+	for k in all_ball_dict.balls:
+		var ball = all_ball_dict.balls[k]
+		if ball.size <= 0:
+			_negative_balls[k] = true
+		ball.size = normalize_ball_size(ball.size, size_scale)
+		ball.position = ball.position * (pos_scale / 255.0)
+	
+	# 2. Addballs (unanchored): raw LNZ size <= 0
+	for k in all_ball_dict.addballs:
+		var ball = all_ball_dict.addballs[k]
+		if ball.anchor_ball == -1:
+			if ball.size <= 0:
+				_negative_balls[k] = true
+			ball.size = normalize_ball_size(ball.size, size_scale)
+		ball.position = ball.position * (pos_scale / 255.0)
 
 	return {
 		balls = all_ball_dict.balls,
@@ -2555,6 +2579,29 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 # _on_OmittedBallCheckBox_toggled
 
 
+func _should_ball_be_visible(ball_no: int, node: Spatial) -> bool:
+	if _hidden_balls.has(ball_no):
+		return false
+	if node.get("omitted") == true:
+		return draw_omitted_balls
+	if _negative_balls.has(ball_no) and not draw_negative_balls:
+		return false
+	if node.is_in_group("special_balls") and not draw_special_balls:
+		return false
+	if node.is_in_group("addballs") and not draw_addballs:
+		return false
+	if node.is_in_group("balls") and not draw_balls:
+		return false
+	return true
+
+func _update_all_ball_visibility():
+	for ball_no in ball_map:
+		var node = ball_map[ball_no]
+		if is_instance_valid(node) and node.is_inside_tree():
+			var vis = _should_ball_be_visible(ball_no, node)
+			node.visible_override = vis
+			node.set_visible(vis)
+
 func is_special_ball(species: int, ball_no: int) -> bool:
 	if lnz != null and lnz.addballs.has(ball_no):
 		if lnz.addballs[ball_no].add_group != 0:
@@ -2674,6 +2721,11 @@ func _on_ToggleSpecialBalls_toggled(button_pressed):
 	draw_special_balls = button_pressed
 	set_visibility_for_group("special_balls", button_pressed)
 
+func _on_ToggleNegativeBalls_toggled(button_pressed):
+	print("[STATUS] Node: _on_ToggleNegativeBalls_toggled: setting negative balls visibility to %s" % button_pressed)
+	draw_negative_balls = button_pressed
+	_update_all_ball_visibility()
+
 func _on_TransparencyCheckBox_toggled(button_pressed):
 	var balls = get_tree().get_nodes_in_group("balls")
 	for ball in balls:
@@ -2699,6 +2751,8 @@ func set_visibility_for_group(group_name: String, is_visible: bool):
 	for node in nodes:
 		if node is Spatial:
 			if is_visible and node.get("omitted") and not draw_omitted_balls:
+				node.set_visible(false)
+			elif is_visible and "ball_no" in node and _negative_balls.has(node.ball_no) and not draw_negative_balls:
 				node.set_visible(false)
 			elif is_visible and node.is_in_group("special_balls") and not draw_special_balls:
 				node.set_visible(false)
@@ -2753,6 +2807,7 @@ func _clear_hidden_state_lists():
 	_hidden_lines.clear()
 	_hidden_polygons.clear()
 	_hidden_paintballs.clear()
+	_negative_balls.clear()
 
 
 ### PAINTBALLZ ###
