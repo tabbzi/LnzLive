@@ -38,13 +38,13 @@ var _ball_to_lines_map = {}
 var _ball_to_polygons_map = {}
 
 export var draw_balls = true
-export var draw_special_balls = true
+export var draw_special_balls = false
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
 export var draw_polygons = true
 export var draw_omitted_balls = false
-export var draw_negative_balls = true
+export var draw_negative_balls = false
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
