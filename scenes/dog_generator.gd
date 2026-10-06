@@ -1792,9 +1792,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		)
 		if special_poly:
 			visual_polygon.add_to_group("special_balls")
-			visual_polygon.visible = draw_special_balls
-		else:
-			visual_polygon.visible = draw_polygons
+		visual_polygon.visible = _should_polygon_be_visible(i, visual_polygon)
 
 		apply_shader_settings(visual_polygon)
 
@@ -1824,10 +1822,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		var end = ball_map.get(line.end)
 		if not is_instance_valid(start) or not is_instance_valid(end):
 			print("[WARNING] dog_generator: generate_lines: could not make a line between " + str(line.start) + " and " + str(line.end))
-			continue
-
-		var omissions = lnz.omissions as Dictionary
-		if omissions.has(line.start) or omissions.has(line.end):
+			i += 1
 			continue
 
 		var visual_line
@@ -1903,9 +1898,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		)
 		if special_line:
 			visual_line.add_to_group("special_balls")
-			visual_line.visible = draw_special_balls
-		else:
-			visual_line.visible = draw_lines
+		visual_line.visible = _should_line_be_visible(i, visual_line)
 
 		if new_create:
 			parent.add_child(visual_line)
@@ -2594,6 +2587,34 @@ func _should_ball_be_visible(ball_no: int, node: Spatial) -> bool:
 		return false
 	return true
 
+func _should_line_be_visible(line_idx: int, node: Spatial) -> bool:
+	if _hidden_lines.has(line_idx):
+		return false
+	if node.is_in_group("special_balls") and not draw_special_balls:
+		return false
+	if not draw_lines:
+		return false
+	if lnz and line_idx < lnz.lines.size():
+		var line_data = lnz.lines[line_idx]
+		for b_no in [line_data.start, line_data.end]:
+			if ball_map.has(b_no) and not _should_ball_be_visible(b_no, ball_map[b_no]):
+				return false
+	return true
+
+func _should_polygon_be_visible(poly_idx: int, node: Spatial) -> bool:
+	if _hidden_polygons.has(poly_idx):
+		return false
+	if node.is_in_group("special_balls") and not draw_special_balls:
+		return false
+	if not draw_polygons:
+		return false
+	if lnz and poly_idx < lnz.polygons.size():
+		var poly = lnz.polygons[poly_idx]
+		for b_no in [poly.ball1, poly.ball2, poly.ball3, poly.ball4]:
+			if ball_map.has(b_no) and not _should_ball_be_visible(b_no, ball_map[b_no]):
+				return false
+	return true
+
 func _update_all_ball_visibility():
 	for ball_no in ball_map:
 		var node = ball_map[ball_no]
@@ -2601,6 +2622,23 @@ func _update_all_ball_visibility():
 			var vis = _should_ball_be_visible(ball_no, node)
 			node.visible_override = vis
 			node.set_visible(vis)
+			
+			if paintball_map.has(ball_no):
+				for pb in paintball_map[ball_no]:
+					if is_instance_valid(pb):
+						var pb_vis = vis and draw_paintballs and not _hidden_paintballs.has(pb)
+						pb.visible_override = pb_vis
+						pb.set_visible(pb_vis)
+
+	for line_idx in lines_map:
+		var line = lines_map[line_idx]
+		if is_instance_valid(line):
+			line.set_visible(_should_line_be_visible(line_idx, line))
+
+	for poly_idx in polygons_map:
+		var poly = polygons_map[poly_idx]
+		if is_instance_valid(poly):
+			poly.set_visible(_should_polygon_be_visible(poly_idx, poly))
 
 func is_special_ball(species: int, ball_no: int) -> bool:
 	if lnz != null and lnz.addballs.has(ball_no):
@@ -2719,7 +2757,7 @@ func _on_EyeLidButton_pressed():
 
 func _on_ToggleSpecialBalls_toggled(button_pressed):
 	draw_special_balls = button_pressed
-	set_visibility_for_group("special_balls", button_pressed)
+	_update_all_ball_visibility()
 
 func _on_ToggleNegativeBalls_toggled(button_pressed):
 	print("[STATUS] Node: _on_ToggleNegativeBalls_toggled: setting negative balls visibility to %s" % button_pressed)
@@ -2766,41 +2804,12 @@ func set_visibility_for_group(group_name: String, is_visible: bool):
 func _on_draw_toggle_toggled(button_pressed, group_name):
 	print("[STATUS] Node: _on_draw_toggle_toggled: setting %s visibility to %s" % [group_name, button_pressed])
 	set("draw_" + group_name, button_pressed)
-	set_visibility_for_group(group_name, button_pressed)
+	_update_all_ball_visibility()
 
 func _on_OmittedBallCheckBox_toggled(button_pressed):
 	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: setting omitted balls visibility to %s" % button_pressed)
 	draw_omitted_balls = button_pressed
-	var count = 0
-
-	for ball_no in ball_map:
-		var node = ball_map[ball_no]
-
-		if node.get("omitted") == true:
-			count += 1
-			if draw_omitted_balls:
-				node.visible_override = true
-
-				if node.is_in_group("balls"):
-					node.visible = draw_balls
-				elif node.is_in_group("addballs"):
-					node.visible = draw_addballs
-
-				if paintball_map.has(ball_no):
-					for pb in paintball_map[ball_no]:
-						pb.visible_override = true
-						pb.visible = draw_paintballs
-			else:
-				node.visible_override = false
-
-				if not node.is_in_group("balls"):
-					node.call_deferred("set_visible", false)
-
-				if paintball_map.has(ball_no):
-					for pb in paintball_map[ball_no]:
-						pb.visible_override = false
-						pb.visible = false
-	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: updated %d omitted balls" % count)
+	_update_all_ball_visibility()
 
 func _clear_hidden_state_lists():
 	_hidden_balls.clear()
