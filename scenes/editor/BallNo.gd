@@ -14,7 +14,7 @@ func _update_ball_label(ball_no: int) -> void:
 	var current_section: String = lnz_edit.get_current_section_name()
 	
 	# Handle specific sections where line context is relevant
-	if current_section == "[Linez]" or current_section == "[Project Ball]":
+	if current_section == "[Linez]":
 		var line_idx: int = lnz_edit.cursor_get_line()
 		var line_text: String = lnz_edit.get_line(line_idx).strip_edges()
 		var parts: Array = lnz_edit.split_line(line_text)
@@ -68,6 +68,25 @@ func _update_ball_label(ball_no: int) -> void:
 				ball_label.add_color_override("font_color", Color.white)
 			
 			ball_label.text = display_text
+			ball_label.visible = true
+			return
+
+	if current_section == "[Project Ball]":
+		var proj_idx: int = lnz_edit.cursor_get_line()
+		var proj_text: String = lnz_edit.get_line(proj_idx).strip_edges()
+		var proj_parts: Array = lnz_edit.split_line(proj_text)
+		
+		if proj_parts.size() >= 2:
+			var pb1: int = int(proj_parts[0])
+			var pb2: int = int(proj_parts[1])
+			var pname1: String = lnz_edit.get_ball_name(pb1)
+			var pname2: String = lnz_edit.get_ball_name(pb2)
+			
+			var display_text: String = "#(" + str(pb1) + "): " + str(pname1)
+			display_text += " to #(" + str(pb2) + "): " + str(pname2)
+			
+			ball_label.text = display_text
+			ball_label.add_color_override("font_color", Color.white)
 			ball_label.visible = true
 			return
 
