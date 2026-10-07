@@ -754,13 +754,15 @@ func _on_LnzTextEdit_gui_input(event):
 					clean_section = line.split(";")[0].strip_edges()
 					break
 
+			var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+			var total_valid_balls = max_base + _count_section_entries("[Add Ball]")
+
 			if console_log:
-				console_log.log_message("[JUMP] ball_no=%d section='%s' line=%d" % [ball_no, clean_section, current_line_idx])
+				console_log.log_message("[JUMP] ball_no=%d section='%s' line=%d (max=%d)" % [ball_no, clean_section, current_line_idx, total_valid_balls - 1])
 
 			if ball_no != -1:
 				if clean_section == "[Ballz Info]" or clean_section == "[Add Ball]" or clean_section == "[Ball Size Override]" or clean_section == "[Fuzz Override]" or "Override" in clean_section:
-					var max_ball = KeyBallsData.max_base_ball_num if KeyBallsData else 67
-					if ball_no >= 0 and ball_no < max_ball + 100:
+					if ball_no >= 0 and ball_no < total_valid_balls:
 						emit_signal("find_ball", ball_no)
 						var b_name = get_ball_name(ball_no)
 						var prefix = "[HELPER] Ballz"
@@ -769,8 +771,9 @@ func _on_LnzTextEdit_gui_input(event):
 						if b_name != "":
 							console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
 					else:
+						print("[WARNING] LnzTextEdit: Jump ball #%d out of valid range (0-%d)" % [ball_no, total_valid_balls - 1])
 						if console_log:
-							console_log.log_message("[JUMP] Ball #%d out of valid range (0-%d)" % [ball_no, max_ball - 1])
+							console_log.log_message("[JUMP] Ball #%d out of valid range (0-%d)" % [ball_no, total_valid_balls - 1])
 			
 			var data_line_idx = _get_line_no_from_line_index(current_line_idx, clean_section)
 			if data_line_idx != -1 and data_line_idx >= 0:
@@ -785,14 +788,16 @@ func _on_LnzTextEdit_gui_input(event):
 				var word = get_word_under_cursor()
 				if word.is_valid_integer():
 					var fallback_no = int(word)
-					if KeyBallsData and fallback_no >= 0 and fallback_no < KeyBallsData.max_base_ball_num:
+					if fallback_no >= 0 and fallback_no < total_valid_balls:
 						emit_signal("find_ball", fallback_no)
 						var b_name = get_ball_name(fallback_no)
+						var prefix = "[HELPER] Addballz" if fallback_no >= max_base else "[HELPER] Ballz"
 						if b_name != "":
-							console_log.log_message("[HELPER] Ballz #%d (%s)" % [fallback_no, b_name])
+							console_log.log_message("%s #%d (%s)" % [prefix, fallback_no, b_name])
 					else:
+						print("[WARNING] LnzTextEdit: Word under cursor '%s' out of valid range (0-%d)" % [word, total_valid_balls - 1])
 						if console_log:
-							console_log.log_message("[JUMP] Word under cursor '%s' is not a valid ball index" % word)
+							console_log.log_message("[JUMP] Word under cursor '%s' is not a valid ball index (0-%d)" % [word, total_valid_balls - 1])
 
 func _get_user_preferred_delimiter() -> String:
 	var settings = get_tree().root.get_node_or_null("Root/SceneRoot")
@@ -1914,14 +1919,28 @@ func get_current_ball_index() -> int:
 	if parts.size() == 0:
 		return -1
 
+	var cursor_word = get_word_under_cursor()
+	var cursor_ball = -1
+	if cursor_word.is_valid_integer():
+		cursor_ball = int(cursor_word)
+
 	match nearest_section:
+		"[Polygons]":
+			if cursor_ball >= 0:
+				return cursor_ball
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+			
+		"[Linez]", \
+		"[Paint Ballz]":
+			if cursor_ball >= 0:
+				return cursor_ball
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+			
 		"[Move]", \
-		"[Paint Ballz]", \
 		"[Ball Size Override]", \
 		"[Fuzz Override]", \
 		"[Color Info Override]", \
 		"[Outline Color Override]", \
-		"[Linez]", \
 		"[Omissions]", \
 		"[Thin/Fat]":
 			return int(parts[0]) if parts[0].is_valid_integer() else -1
