@@ -755,7 +755,8 @@ func _on_LnzTextEdit_gui_input(event):
 					break
 
 			var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
-			var total_valid_balls = max_base + _count_section_entries("[Add Ball]")
+			var addball_count = _get_addball_count_from_parser()
+			var total_valid_balls = max_base + addball_count
 
 			if console_log:
 				console_log.log_message("[JUMP] ball_no=%d section='%s' line=%d (max=%d)" % [ball_no, clean_section, current_line_idx, total_valid_balls - 1])
@@ -1365,29 +1366,41 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 		
 	return last_true_data_line + 1
 
-func _count_section_entries(section_name: String) -> int:
-	var section_find = search(section_name, 0, 0, 0)
-	if section_find.empty():
-		return 0
-		
-	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var entry_count = 0
-	var current_line_num = start_line
+func _get_addball_count_from_parser() -> int:
+	if is_instance_valid(pet_node) and pet_node.lnz:
+		return pet_node.lnz.addballs.size()
+	return 0
+
+func _resolve_addball_ball_no_from_raw_line(raw_line_idx: int) -> int:
+	if raw_line_idx < 0 or raw_line_idx >= get_line_count():
+		return -1
+	if is_instance_valid(pet_node) and pet_node.lnz:
+		var lnz = pet_node.lnz
+		if lnz.addball_raw_to_ball_map.has(raw_line_idx):
+			return lnz.addball_raw_to_ball_map[raw_line_idx]
+	return -1
+
+## Check if a Linez start/end reference is valid for the current variation.
+## Returns true if both balls exist in the current compiled output.
+func _is_linez_reference_valid(start_ball: int, end_ball: int) -> bool:
+	if not is_instance_valid(pet_node) or not is_instance_valid(pet_node.lnz):
+		return true
 	
-	while current_line_num < get_line_count():
-		var line = get_line(current_line_num).strip_edges()
-		
-		if line.begins_with("["):
-			break
-		
-		if line == "" or line.begins_with(";") or line.begins_with("#"):
-			current_line_num += 1
-			continue
-		
-		entry_count += 1
-		current_line_num += 1
-		
-	return entry_count
+	var lnz = pet_node.lnz
+	
+	if lnz.addballs.has(start_ball) or lnz.balls.has(start_ball):
+		pass
+	else:
+		# start_ball doesn't exist in compiled output
+		return false
+	
+	if lnz.addballs.has(end_ball) or lnz.balls.has(end_ball):
+		pass
+	else:
+		# end_ball doesn't exist in compiled output
+		return false
+	
+	return true
 
 
 ### LNZ TEXT PARSING ###
@@ -3694,7 +3707,7 @@ func create_addball(reference_ball, also_connect_line := false):
 
 	# save_file(false,true)
 
-	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
+	var addball_no = KeyBallsData.max_base_ball_num + _get_addball_count_from_parser() - 1
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
 	var success = pet_node.inject_single_addball(props, addball_no, reference_ball)
@@ -4888,7 +4901,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	var addball_bounds = get_section_bounds("[Add Ball]")
 	if !addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
-		var max_ball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]")
+		var max_ball_no = KeyBallsData.max_base_ball_num + _get_addball_count_from_parser()
 		var new_addball_no = max_ball_no
 		
 		var addball_lines = []

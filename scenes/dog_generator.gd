@@ -3341,8 +3341,9 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 		node.get_node("MeshInstance").material_override.set_shader_param("ball_size", addball_data.size)
 	
 	var world_pos = base_node.global_transform.origin
-	world_pos += LnzLiveUtils.lnz_to_world_delta(addball_data.position, pixel_world_size, lnz.scales[0])
-	node.global_transform.origin = world_pos
+	var local_pos = addball_data.position
+	local_pos.y *= -1.0
+	node.transform.origin = local_pos * pixel_world_size
 	
 	node.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 	node.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
