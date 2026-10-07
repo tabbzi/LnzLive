@@ -884,9 +884,9 @@ func flatten_section(section_name: String, active_config: Dictionary) -> Array:
 	if typeof(section_data) != TYPE_DICTIONARY:
 		return result
 	
-	result.append("[" + section_name + "]")
+	var temp_lines = []
 	
-	_flatten_append_block(result, section_data, 0)
+	_flatten_append_block(temp_lines, section_data, 0)
 	
 	for subblock_key in active_config:
 		var val = active_config[subblock_key]
@@ -908,32 +908,43 @@ func flatten_section(section_name: String, active_config: Dictionary) -> Array:
 				target_block = id_data[0]
 			
 			if typeof(target_block) == TYPE_OBJECT:
-				_flatten_append_lines(result, target_block.lines)
+				_flatten_append_lines(temp_lines, target_block.lines)
 		elif typeof(id_data) == TYPE_OBJECT:
 			# Bare variation block (no subblocks)
-			_flatten_append_lines(result, id_data.lines)
+			_flatten_append_lines(temp_lines, id_data.lines)
 	
+	temp_lines.sort_custom(self, "_sort_by_raw_idx")
+	
+	# Build the final array of text strings
+	result.append("[" + section_name + "]")
+	for entry in temp_lines:
+		result.append(entry["text"])
+		
 	return result
 
-func _flatten_append_block(result: Array, section_data: Dictionary, id: int) -> void:
+func _flatten_append_block(temp_lines: Array, section_data: Dictionary, id: int) -> void:
 	if not section_data.has(id):
 		return
 	var block = section_data[id]
 	if typeof(block) == TYPE_OBJECT:
-		_flatten_append_lines(result, block.lines)
+		_flatten_append_lines(temp_lines, block.lines)
 	elif typeof(block) == TYPE_DICTIONARY:
 		for sk in block:
 			var sub = block[sk]
 			if typeof(sub) == TYPE_OBJECT:
-				_flatten_append_lines(result, sub.lines)
+				_flatten_append_lines(temp_lines, sub.lines)
 
-func _flatten_append_lines(result: Array, lines: Array) -> void:
+func _flatten_append_lines(temp_lines: Array, lines: Array) -> void:
 	for line in lines:
 		var text: String
+		var raw_idx: int = -1
+		
 		if typeof(line) == TYPE_DICTIONARY:
 			text = line["text"]
+			raw_idx = line["raw_idx"]
 		else:
 			text = line
+			
 		var stripped = text.strip_edges()
 		if stripped == "":
 			continue
@@ -944,7 +955,7 @@ func _flatten_append_lines(result: Array, lines: Array) -> void:
 			# Skip ## subblock separators
 			continue
 		else:
-			result.append(text)
+			temp_lines.append({"text": text, "raw_idx": raw_idx})
 
 func _flatten_resolve_id(val) -> int:
 	if typeof(val) == TYPE_INT:
