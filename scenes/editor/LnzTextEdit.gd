@@ -1375,7 +1375,7 @@ func _count_section_entries(section_name: String) -> int:
 		if line.begins_with("["):
 			break
 		
-		if line == "" or line.begins_with(";"):
+		if line == "" or line.begins_with(";") or line.begins_with("#"):
 			current_line_num += 1
 			continue
 		
@@ -4879,7 +4879,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		var data_idx = 0
 		for i in range(addball_lines.size()):
 			var line = addball_lines[i].strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";") or line.begins_with("#"): continue
 
 			var current_addball_no = KeyBallsData.max_base_ball_num + data_idx
 			var parts = split_line(line)
