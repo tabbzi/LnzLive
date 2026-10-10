@@ -1228,11 +1228,19 @@ func find_line_in_ball_section(ball_no):
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
-func find_line_in_addball_section(ball_no):
+func find_line_in_addball_section(addball_idx):
+	var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+	var target_ball_no = addball_idx + max_base
+	if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+		var map = pet_node.lnz.addball_raw_to_ball_map
+		for raw_idx in map:
+			if map[raw_idx] == target_ball_no:
+				return raw_idx
+				
 	var section_find = search('[Add Ball]', 0, 0, 0)
 	if section_find.empty(): return -1
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
-	return find_line_in_ball_or_addball_section(ball_no, start_point)
+	return find_line_in_ball_or_addball_section(addball_idx, start_point)
 	
 func find_line_in_move_section(ball_no, start_from = -1):
 	return _find_line_in_section_with_match("[Move]", ball_no, "_linez_match_fn", start_from)
@@ -1302,7 +1310,7 @@ func _find_line_in_section_with_match(section_name: String, ball_no, match_fn_na
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
 	while true:
-		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
+		if !line.lstrip(" ").begins_with(";") and !line.lstrip(" ").begins_with("#") and line.strip_edges() != "":
 			break
 		start_point += 1
 		if start_point >= get_line_count(): return -1
@@ -1315,9 +1323,10 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 		if check_idx >= get_line_count(): return -1
 		
 		line = get_line(check_idx)
-		if line.strip_edges().begins_with("["): return -1
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["): return -1
 		
-		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
+		if !stripped.begins_with(";") and !stripped.begins_with("#") and stripped != "":
 			j += 1
 		if j == ball_no:
 			return check_idx
@@ -1325,6 +1334,13 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return -1
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
+	if section_tag == "[Add Ball]":
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			if pet_node.lnz.addball_raw_to_ball_map.has(target_line_index):
+				return pet_node.lnz.addball_raw_to_ball_map[target_line_index] - (KeyBallsData.max_base_ball_num if KeyBallsData else 67)
+			if not pet_node.lnz.addball_raw_to_ball_map.empty():
+				return -1 # Line belongs to an inactive variation or comment/marker
+				
 	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		return -1
@@ -1338,7 +1354,7 @@ func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -
 		if line.begins_with("["):
 			break
 			
-		if line.begins_with(";") or line.empty(): continue
+		if line.begins_with(";") or line.empty() or line.begins_with("#"): continue
 		
 		line_counter += 1
 		
@@ -1816,7 +1832,7 @@ func get_ball_name(ball_no: int) -> String:
 						if ball_name != "":
 							break
 					
-					elif raw_line.begins_with("["):
+					elif raw_line.begins_with("[") or raw_line.begins_with("#"):
 						break
 					
 					search_idx -= 1
@@ -3417,34 +3433,45 @@ func resize_ball(ball_no: int, size_dif: int):
 	var end_line = bounds.end
 
 	if is_addball:
+		var target_line = -1
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == ball_no:
+					target_line = raw_idx
+					break
+		
+		if target_line != -1:
+			var old_line = get_line(target_line)
+			_modify_line_parts(target_line, start_line, end_line, {size_field_index: str(size_dif)})
+			save_file(true)
+			_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(target_line), target_line)
+			return
+
 		var addball_index = ball_no - max_base_ball_no
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			if count == addball_index:
 				var old_line = get_line(i)
 				_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
 				save_file(true)
-
 				_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
-
 				return
 			count += 1
 	else:
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			if count == ball_no:
 				var old_line = get_line(i)
 				var parts = split_line(raw)
 				if parts.size() > size_field_index:
 					_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
 					save_file(true)
-
 					_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
-
 					return
 				else:
 					return
@@ -3473,26 +3500,40 @@ func move_ball(ball_no: int, new_pos: Vector3):
 	var end_line = bounds["end"]
 
 	if is_addball:
+		var target_line = -1
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == ball_no:
+					target_line = raw_idx
+					break
+
 		moved_ball_node = pet_node.ball_map.get(ball_no)
 		if moved_ball_node:
 			var base_ball_no = moved_ball_node.base_ball_no
-			var base_ball_node = pet_node.ball_map.get(base_ball_no)
-			if base_ball_node:
-				var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
+			var base_ball_node_ref = pet_node.ball_map.get(base_ball_no)
+			if base_ball_node_ref:
+				var world_rel = moved_ball_node.global_transform.origin - base_ball_node_ref.global_transform.origin
 				var new_relative_pos = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 
+				if target_line != -1:
+					var old_line = get_line(target_line)
+					_modify_line_parts(target_line, start_line, end_line, {1: str(round(new_relative_pos.x)), 2: str(round(new_relative_pos.y)), 3: str(round(new_relative_pos.z))})
+					save_file(true)
+					_safe_commit_logical("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(target_line), target_line)
+					return
+					
 				var idx = ball_no - KeyBallsData.max_base_ball_num
 				var count = 0
 				for i in range(start_line, end_line):
 					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
+					if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 					if count == idx:
 						var old_line = get_line(i)
 						var parts = split_line(raw)
 						if parts.size() >= 4:
 							_modify_line_parts(i, start_line, end_line, {1: str(round(new_relative_pos.x)), 2: str(round(new_relative_pos.y)), 3: str(round(new_relative_pos.z))})
 							save_file(true)
-
 							_safe_commit_logical("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 						break
 					count += 1
@@ -3502,7 +3543,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 		
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			
 			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
@@ -4069,7 +4110,7 @@ func _expand_exclusion_list_with_addballs(base_list: Array) -> Array:
 
 func _get_valid_line_parts(line_index: int) -> Array:
 	var line = get_line(line_index).strip_edges()
-	if line.empty() or line.begins_with(";") or line.begins_with("["):
+	if line.empty() or line.begins_with(";") or line.begins_with("[") or line.begins_with("#"):
 		return []
 	return split_line(line)
 
@@ -5419,23 +5460,39 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 				matched = true
 
 	elif section_name == "[Add Ball]":
-		var idx = ball_no - KeyBallsData.max_base_ball_num
-		var count = 0
-		for i in range(bounds.start, bounds.end):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
-			if count == idx:
-				var parts = split_line(raw)
-				if not parts.empty():
-					callback.call(i, parts, delim)
-					matched = true
-				break
-			count += 1
+		var target_ball_no = ball_no
+		var map_matched = false
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == target_ball_no:
+					var raw_line = get_line(raw_idx).strip_edges()
+					if raw_line != "" and not raw_line.begins_with(";") and not raw_line.begins_with("#"):
+						var parts = split_line(raw_line)
+						if not parts.empty():
+							callback.call(raw_idx, parts, delim)
+							matched = true
+							map_matched = true
+					break
+		
+		if not map_matched:
+			var idx = ball_no - KeyBallsData.max_base_ball_num
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var raw = get_line(i).strip_edges()
+				if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
+				if count == idx:
+					var parts = split_line(raw)
+					if not parts.empty():
+						callback.call(i, parts, delim)
+						matched = true
+					break
+				count += 1
 
 	elif section_name == "[Move]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5444,7 +5501,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Paint Ballz]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5453,7 +5510,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Linez]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() >= 2 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
 				callback.call(i, parts, delim)
@@ -5462,7 +5519,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Polygons]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() >= 4 and (ball_no in [parts[0].to_int(), parts[1].to_int(), parts[2].to_int(), parts[3].to_int()]):
 				callback.call(i, parts, delim)
@@ -5471,7 +5528,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Omissions]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with("["): continue
+			if raw == "" or raw.begins_with("[") or raw.begins_with("#"): continue
 			if raw.to_int() == ball_no:
 				var parts = Array([str(ball_no)])
 				callback.call(i, parts, delim)
@@ -5480,7 +5537,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Ball Size Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5489,7 +5546,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Fuzz Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5498,7 +5555,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Color Info Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5507,7 +5564,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Outline Color Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5516,7 +5573,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Add Ball Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			var rel = parts[0].to_int()
 			if rel + KeyBallsData.max_base_ball_num == ball_no:
@@ -5526,7 +5583,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Project Ball]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 1 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
 				callback.call(i, parts, delim)

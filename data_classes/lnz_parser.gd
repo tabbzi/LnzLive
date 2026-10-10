@@ -379,6 +379,7 @@ func _append_compiled_lines(temp_lines: Array, lines: Array) -> void:
 func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
+		var current_pos = reader.get_position()
 		var line: String = reader.get_line().dedent()
 		if line.empty() and reader.eof_reached():
 			break
@@ -396,6 +397,8 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 		for i in range(keys.size()):
 			if i < parsed.size():
 				dict[keys[i]] = int(parsed[i].get_string())
+				
+		dict["_raw_idx"] = reader.get_raw_line_index(current_pos)
 		return_array.append(dict)
 	return return_array
 
@@ -690,7 +693,6 @@ func get_addballs(reader: VirtualFileLineReader) -> void:
 		max_ball_num = balls.keys().max() + 1
 
 	addball_raw_to_ball_map.clear()
-	var raw_idx = 0
 	
 	for line in parsed_lines:
 		var pos: Vector3 = Vector3(line.x, line.y, line.z)
@@ -711,12 +713,11 @@ func get_addballs(reader: VirtualFileLineReader) -> void:
 			line.get("anchor_ball", -1)
 		)
 		addballs[max_ball_num] = ball
-		# Map the raw text line index to the compiled ball_no
-		var raw_line_idx: int = reader.get_raw_line_index(raw_idx)
-		if raw_line_idx != -1:
-			addball_raw_to_ball_map[raw_line_idx] = max_ball_num
+		
+		if line.has("_raw_idx") and line["_raw_idx"] != -1:
+			addball_raw_to_ball_map[line["_raw_idx"]] = max_ball_num
+			
 		max_ball_num += 1
-		raw_idx += 1
 
 func get_default_scales(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["scale"])
