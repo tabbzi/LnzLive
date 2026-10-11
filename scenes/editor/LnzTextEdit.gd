@@ -3679,10 +3679,11 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 			props.position = addball_data.position
 
 	# Preserve anchor_ball from the reference addball_data if available
-	if addball_data != null and typeof(addball_data) == TYPE_OBJECT and "anchor_ball" in addball_data:
-		props.anchor_ball = addball_data.anchor_ball
-	elif ball_data != null and typeof(ball_data) == TYPE_OBJECT and "anchor_ball" in ball_data:
-		props.anchor_ball = ball_data.anchor_ball
+	# NVM this causes more problems than it solves...
+	# if addball_data != null and typeof(addball_data) == TYPE_OBJECT and "anchor_ball" in addball_data:
+	# 	props.anchor_ball = addball_data.anchor_ball
+	# elif ball_data != null and typeof(ball_data) == TYPE_OBJECT and "anchor_ball" in ball_data:
+	# 	props.anchor_ball = ball_data.anchor_ball
 
 	# 6. Bodyarea
 	if KeyBallsData.bodyarea_map.has(props.target_base_ball):
@@ -3707,8 +3708,8 @@ func _construct_addball_line(props: Dictionary, delim: String) -> String:
 		str(props.size),
 		str(props.bodyarea),
 		"0",
-		str(props.texture_id),
-		str(props.get("anchor_ball", -1))
+		str(props.texture_id)
+		#str(props.get("anchor_ball", -1))
 	]
 	return _join_array(fields, delim) + "\n"
 
