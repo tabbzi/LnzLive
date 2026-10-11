@@ -1873,7 +1873,7 @@ func _gui_input(event: InputEvent) -> void:
 
 	# Update ball position or scale during moving or resizing:
 	if event is InputEventMouseMotion and is_dragging and drag_ball:
-		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT) and not drag_started_via_code:
 			if is_resizing:
 				var delta: Vector2 = event.position - drag_start_pos
 				var change: float = delta.dot(Vector2(1, -1).normalized()) * 0.5
