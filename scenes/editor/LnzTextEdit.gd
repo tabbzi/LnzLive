@@ -2513,8 +2513,14 @@ func apply_paintballz():
 					runner += 1
 				else:
 					break
-					
-			insert_at_line = runner
+			
+			if runner > bounds.start:
+				select(bounds.start, 0, runner, 0)
+				cut()
+				insert_at_line = bounds.start
+			else:
+				insert_at_line = runner
+				
 		var text_to_insert = ""
 		
 		if need_fillers:
