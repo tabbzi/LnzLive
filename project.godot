@@ -9,7 +9,7 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Node",
+"base": "Reference",
 "class": "AddBallData",
 "language": "GDScript",
 "path": "res://data_classes/addball_data.gd"
