@@ -196,8 +196,8 @@ func _setup_tool_menu() -> void:
 	popup.add_item("Capture Head Shot", ToolMenu.CAPTURE_HEADSHOT)
 	popup.set_item_tooltip(popup.get_item_index(ToolMenu.CAPTURE_HEADSHOT), "Hotkey K to capture [Head Shot]")
 	
-	popup.add_item("Rebase Addballz", ToolMenu.REBASE_ADDBALLZ)
-	popup.set_item_tooltip(popup.get_item_index(ToolMenu.REBASE_ADDBALLZ), "Resolves addballz based on addballz to basal-most parent base ballz")
+	#popup.add_item("Rebase Addballz", ToolMenu.REBASE_ADDBALLZ)
+	#popup.set_item_tooltip(popup.get_item_index(ToolMenu.REBASE_ADDBALLZ), "Resolves addballz based on addballz to basal-most parent base ballz")
 	
 	popup.connect("id_pressed", self, "_on_tool_menu_id_pressed")
 
