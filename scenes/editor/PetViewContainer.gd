@@ -1269,6 +1269,14 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				mark_ui_dirty()
 
 	elif event is InputEventMouseMotion and is_dragging and drag_ball:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+			is_dragging = false
+			is_resizing = false
+			drag_ball = null
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mark_ui_dirty()
+			return true
+
 		if is_resizing:
 			var mouse_delta: Vector2 = event.position - drag_start_pos
 			var change_amount: float = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
@@ -1688,6 +1696,11 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			return true
 
 	if event is InputEventMouseMotion and freeline_active:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+			freeline_active = false
+			_finalize_freeline(event.position)
+			return false
+
 		var current_pos: Vector2 = event.position
 		if current_pos.distance_to(last_freeline_point) > props.spacing:
 			freeline_path.append(current_pos)
@@ -1858,6 +1871,25 @@ func _gui_input(event: InputEvent) -> void:
 
 	# Update ball position or scale during moving or resizing:
 	if event is InputEventMouseMotion and is_dragging and drag_ball:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+			if is_resizing:
+				var delta: Vector2 = event.position - drag_start_pos
+				var change: float = delta.dot(Vector2(1, -1).normalized()) * 0.5
+				var raw_target_visual: float = clamp(original_scale + change, 1.0, 500.0)
+				var final_size: float = get_absolute_lnz_size(raw_target_visual, drag_ball, pet_node)
+				pet_node.emit_ball_resize(drag_ball.ball_no, final_size)
+			else:
+				print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+				var lnz_pos: Vector3 = get_lnz_position_from_visual(drag_ball, pet_node)
+				print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+				pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
+
+			is_dragging = false
+			is_resizing = false
+			drag_started_via_code = false
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			drag_ball = null
+			return
 		if is_resizing:
 			var delta: Vector2 = event.position - drag_start_pos
 			var change: float = delta.dot(Vector2(1, -1).normalized()) * 0.5
@@ -2428,6 +2460,12 @@ func _exit_all_modes() -> void:
 	view_palette_check_box.pressed = false
 	view_variations_check_box.pressed = false
 
+	freeline_active = false
+	freeline_path.clear()
+	is_dragging = false
+	is_resizing = false
+	drag_started_via_code = false
+
 	# Return to FileTree tab when explicitly exiting all modes (ESC)
 	if sidebar_controller:
 		var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
@@ -2504,6 +2542,10 @@ func _exit_mode(mode: int) -> void:
 			var should_switch_tab = close_paintball_on_apply
 			paintball_target_ball = null
 			close_paintball_on_apply = false
+
+			freeline_active = false
+			freeline_path.clear()
+
 			_restore_all_balls()
 			_set_pending_paintballs_visible(false)
 			if should_switch_tab and sidebar_controller:
