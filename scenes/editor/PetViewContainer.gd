@@ -1742,7 +1742,20 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				var dist_sq: float = click_pos_local.distance_squared_to(paintball_screen_pos)
 
 				if dist_sq < 25 * 25:
-					var depth: float = camera.global_transform.origin.distance_squared_to(pb_node.global_transform.origin)
+					# var depth: float = camera.global_transform.origin.distance_squared_to(pb_node.global_transform.origin)
+					var local_pos = camera.global_transform.affine_inverse().xform(pb_node.global_transform.origin)
+					var depth: float = -local_pos.z
+					
+					var z_add_val = 0.0
+					var mi = pb_node.get_node_or_null("MeshInstance")
+					if mi and mi.material_override and mi.material_override is ShaderMaterial:
+						var param = mi.material_override.get_shader_param("z_add")
+						if param != null: z_add_val = float(param)
+					elif "z_add" in pb_node: 
+						z_add_val = float(pb_node.z_add)
+					
+					depth -= z_add_val * 0.001
+					
 					if depth < min_depth:
 						min_depth = depth
 						closest_paintball = pb_node
@@ -3211,7 +3224,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var exclude_list = []
 	var hit_balls = []
 
-	for i in range(10):
+	for i in range(30):
 		var result: Dictionary = space_state.intersect_ray(from, to, exclude_list, 1, false, true)
 		if result and result.collider:
 			var parent: Node = result.collider.get_parent()
@@ -3231,10 +3244,18 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var min_depth: float = INF
 
 	for ball in hit_balls:
-		var depth: float = camera.global_transform.origin.distance_to(ball.global_transform.origin)
+		var local_pos = camera.global_transform.affine_inverse().xform(ball.global_transform.origin)
+		var depth: float = -local_pos.z
 		
-		if "z_add" in ball:
-			depth -= float(ball.z_add) * 0.001
+		var z_add_val = 0.0
+		var mi = ball.get_node_or_null("MeshInstance")
+		if mi and mi.material_override and mi.material_override is ShaderMaterial:
+			var param = mi.material_override.get_shader_param("z_add")
+			if param != null: z_add_val = float(param)
+		elif "z_add" in ball: 
+			z_add_val = float(ball.z_add)
+			
+		depth -= z_add_val * 0.001
 
 		if depth < min_depth:
 			min_depth = depth
