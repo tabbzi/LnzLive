@@ -3740,6 +3740,17 @@ func create_addball(reference_ball, also_connect_line := false):
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 	var delim = _detect_delimiter(start_line, end_line)
 	var insert_line = _find_insertion_line(start_line, end_line)
+	var addball_count = 0
+	var current_line_num = start_line
+	while current_line_num < get_line_count():
+		var line = get_line(current_line_num).strip_edges()
+		if line.begins_with("["):
+			break
+		if line == "" or line.begins_with(";") or line.begins_with("#"):
+			current_line_num += 1
+			continue
+		addball_count += 1
+		current_line_num += 1
 
 	var line_text = _construct_addball_line(props, delim)
 	_insert_text_at_cursor_at_line(insert_line, line_text)
@@ -3749,7 +3760,7 @@ func create_addball(reference_ball, also_connect_line := false):
 
 	# save_file(false,true)
 
-	var addball_no = KeyBallsData.max_base_ball_num + _get_addball_count_from_parser() - 1
+	var addball_no = KeyBallsData.max_base_ball_num + addball_count
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
 	var success = pet_node.inject_single_addball(props, addball_no, reference_ball)
