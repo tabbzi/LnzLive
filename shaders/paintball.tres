@@ -235,7 +235,7 @@ void fragment() {
     // Discard paintballz going in vectors from ballz centers away from camera 
     vec3 view_normal = (INV_CAMERA_MATRIX * vec4(pb_normal, 0.0)).xyz;
 
-    if (view_normal.z < 0.0) {
+    if (view_normal.z < -0.05) {
         discard;
     }
 
