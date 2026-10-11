@@ -5697,3 +5697,96 @@ func _idx_in_list(idx: int, list: Array) -> bool:
 		if v == idx:
 			return true
 	return false
+
+func rebase_addballz() -> void:
+	save_backup()
+	
+	var bounds = get_section_bounds("[Add Ball]")
+	if bounds.empty():
+		var msg = "No [Add Ball] section found to rebase."
+		print("[WARNING] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)
+		return
+		
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+	
+	var addball_map = {}
+	var addball_id = max_base
+	
+	for i in range(bounds.start, bounds.end):
+		var raw_line = get_line(i)
+		var line = raw_line.strip_edges()
+		
+		if line.empty() or line.begins_with(";") or line.begins_with("[") or line.begins_with("#"):
+			continue
+			
+		var parts = split_line(raw_line)
+		if parts.size() >= 5:
+			addball_map[addball_id] = {
+				"base": parts[0].to_int(),
+				"x": parts[1].to_float(),
+				"y": parts[2].to_float(),
+				"z": parts[3].to_float(),
+				"line_idx": i,
+				"parts": parts,
+				"raw_line": raw_line
+			}
+		addball_id += 1
+		
+	var changed_any = false
+	var lines_to_update = {}
+	
+	for a_id in addball_map.keys():
+		var data = addball_map[a_id]
+		
+		if data.base >= max_base:
+			var current_base = data.base
+			var acc_x = data.x
+			var acc_y = data.y
+			var acc_z = data.z
+			
+			var safe_counter = 0
+			while current_base >= max_base and safe_counter < 1000:
+				if not addball_map.has(current_base):
+					break
+				var parent = addball_map[current_base]
+				acc_x += parent.x
+				acc_y += parent.y
+				acc_z += parent.z
+				current_base = parent.base
+				safe_counter += 1
+				
+			if current_base < max_base:
+				var parts = data.parts.duplicate()
+				var comment_part = parts.pop_back()
+				
+				parts[0] = str(current_base)
+				parts[1] = str(int(round(acc_x)))
+				parts[2] = str(int(round(acc_y)))
+				parts[3] = str(int(round(acc_z)))
+				
+				var indent_len = data.raw_line.length() - data.raw_line.lstrip(" \t").length()
+				var indent = data.raw_line.substr(0, indent_len)
+				
+				var new_line = indent + _join_array(parts, delim)
+				if not comment_part.empty():
+					new_line += " " + comment_part
+					
+				lines_to_update[data.line_idx] = new_line
+				changed_any = true
+				
+	if changed_any:
+		for line_idx in lines_to_update.keys():
+			set_line(line_idx, lines_to_update[line_idx])
+			
+		save_file(true)
+		commit_full_snapshot("Rebased Addballz")
+		
+		var msg = "Rebased addballz to basal-most parent base ballz."
+		print("[STATUS] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)
+	else:
+		var msg = "No addballz needing rebase."
+		print("[STATUS] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)

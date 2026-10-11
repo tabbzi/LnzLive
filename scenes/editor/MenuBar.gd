@@ -18,7 +18,8 @@ enum ToolMenu {
 	VIEW_PALETTE,
 	VIEW_VARIATIONS,
 	COLOR_SWAP,
-	CAPTURE_HEADSHOT
+	CAPTURE_HEADSHOT,
+	REBASE_ADDBALLZ
 }
 
 enum ModeMenu {
@@ -195,6 +196,9 @@ func _setup_tool_menu() -> void:
 	popup.add_item("Capture Head Shot", ToolMenu.CAPTURE_HEADSHOT)
 	popup.set_item_tooltip(popup.get_item_index(ToolMenu.CAPTURE_HEADSHOT), "Hotkey K to capture [Head Shot]")
 	
+	popup.add_item("Rebase Addballz", ToolMenu.REBASE_ADDBALLZ)
+	popup.set_item_tooltip(popup.get_item_index(ToolMenu.REBASE_ADDBALLZ), "Resolves addballz based on addballz to basal-most parent base ballz")
+	
 	popup.connect("id_pressed", self, "_on_tool_menu_id_pressed")
 
 func _setup_mode_menu() -> void:
@@ -323,6 +327,9 @@ func _on_tool_menu_id_pressed(id: int) -> void:
 		ToolMenu.CAPTURE_HEADSHOT:
 			if lnz_text_edit.has_method("_on_HeadShotButton_pressed"):
 				lnz_text_edit._on_HeadShotButton_pressed()
+		ToolMenu.REBASE_ADDBALLZ:
+			if lnz_text_edit.has_method("rebase_addballz"):
+				lnz_text_edit.rebase_addballz()
 
 func _on_mode_menu_id_pressed(id: int) -> void:
 	match id:
