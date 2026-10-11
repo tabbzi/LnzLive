@@ -1729,7 +1729,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				return true
 
 			var closest_paintball = null
-			var min_dist_sq: float = INF
+			var min_depth: float = INF
 			var click_pos_local: Vector2 = event.position  # Use local mouse position
 
 			for pb_node in pending_paintballs:
@@ -1741,11 +1741,13 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				
 				var dist_sq: float = click_pos_local.distance_squared_to(paintball_screen_pos)
 
-				if dist_sq < min_dist_sq:
-					min_dist_sq = dist_sq
-					closest_paintball = pb_node
+				if dist_sq < 25 * 25:
+					var depth: float = camera.global_transform.origin.distance_squared_to(pb_node.global_transform.origin)
+					if depth < min_depth:
+						min_depth = depth
+						closest_paintball = pb_node
 
-			if closest_paintball and min_dist_sq < 25 * 25:  # 25px threshold
+			if closest_paintball:
 				pet_node.remove_specific_pending_paintball(closest_paintball)
 				_update_unapplied_changes_label()
 				print("[STATUS] PetViewContainer: erased closest paintball node: %s" % closest_paintball.name)
@@ -3206,15 +3208,39 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 
 	var space_state = camera.get_world().direct_space_state
-	var result: Dictionary = space_state.intersect_ray(from, to, [], 1, false, true)
+	var exclude_list = []
+	var hit_balls = []
 
-	if result and result.collider:
-		var parent: Node = result.collider.get_parent()
-		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
-			if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
-				return null
-			return parent
-	return null
+	for i in range(10):
+		var result: Dictionary = space_state.intersect_ray(from, to, exclude_list, 1, false, true)
+		if result and result.collider:
+			var parent: Node = result.collider.get_parent()
+			exclude_list.append(result.collider)
+			
+			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
+					continue
+				hit_balls.append(parent)
+		else:
+			break
+
+	if hit_balls.empty():
+		return null
+
+	var closest_ball = null
+	var min_depth: float = INF
+
+	for ball in hit_balls:
+		var depth: float = camera.global_transform.origin.distance_to(ball.global_transform.origin)
+		
+		if "z_add" in ball:
+			depth -= float(ball.z_add) * 0.001
+
+		if depth < min_depth:
+			min_depth = depth
+			closest_ball = ball
+
+	return closest_ball
 
 func get_intended_ball(mouse_pos: Vector2) -> Spatial:
 	if is_instance_valid(_last_selected_by_tab):
@@ -4134,11 +4160,25 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 	var space_state = camera.get_world().direct_space_state
-	var result: Dictionary = space_state.intersect_ray(from, to, [self], 1, true, true)
+	
+	var intersection_point: Vector3 = Vector3.ZERO
+	var hit_success: bool = false
+	var exclude_list = [self]
+	
+	for i in range(10):
+		var result: Dictionary = space_state.intersect_ray(from, to, exclude_list, 1, true, true)
+		if result and result.collider:
+			if result.collider.get_parent() == target_ball:
+				intersection_point = result.position
+				hit_success = true
+				break
+			else:
+				exclude_list.append(result.collider)
+		else:
+			break
 
-	if result and result.collider and result.collider.get_parent() == target_ball:
+	if hit_success:
 		# print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
-		var intersection_point: Vector3 = result.position
 
 		if paintball_settings_instance.is_design_mode_active():
 			var visual_radius: float = (intersection_point - target_ball.global_transform.origin).length()
