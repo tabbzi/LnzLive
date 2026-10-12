@@ -1,8 +1,10 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://scenes/editor/VariationTree.gd" type="Script" id=1]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=3]
+[ext_resource path="res://resources/icons/ico_tree_arr_open_2x.png" type="Texture" id=4]
+[ext_resource path="res://resources/icons/ico_tree_arr_closed_2x.png" type="Texture" id=5]
 
 [sub_resource type="DynamicFont" id=1]
 size = 36
@@ -158,6 +160,11 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_icons/arrow = ExtResource( 4 )
+custom_icons/arrow_collapsed = ExtResource( 5 )
+custom_constants/item_margin = 48
+custom_constants/draw_relationship_lines = 0
+custom_constants/button_margin = 48
 __meta__ = {
 "_edit_use_anchors_": false
 }

@@ -584,8 +584,8 @@ void vertex() {
     vert_in_clip_space.z = center_clip_space.z;
     vert_in_clip_space.z += z_add * 0.001;
 
-    vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
-    vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
+    vert_in_clip_space.x = center_clip_space.x + b * sign(mesh_pos.x);
+    vert_in_clip_space.y = center_clip_space.y + b * sign(mesh_pos.y);
     
     VERTEX = vert_in_clip_space;
 }"

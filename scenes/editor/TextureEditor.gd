@@ -1385,20 +1385,22 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	
 	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
 	var append_dims: bool = false
+	var default_transparent_color: int = 0
 	if is_instance_valid(user_settings):
-		append_dims = user_settings.get("append_dimensions")
-	
-	var tex_entry: String
-	if append_dims:
-		tex_entry = display_path + " 0 " + str(width) + " " + str(height)
-	else:
-		tex_entry = display_path + " 0"
+		append_dims = user_settings.append_dimensions
+		default_transparent_color = user_settings.default_transparent_color
 	
 	lnz.texture_list.append({
 		"filename": clean_path.get_file(),
-		"transparent_color": 0,
+		"transparent_color": default_transparent_color,
 		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
 	})
+	
+	var tex_entry: String
+	if append_dims:
+		tex_entry = display_path + " " + str(default_transparent_color) + " " + str(width) + " " + str(height)
+	else:
+		tex_entry = display_path + " " + str(default_transparent_color)
 	
 	if is_instance_valid(LnzLiveUtils.get_lnz_text_edit(get_tree().root)):
 		var lte = LnzLiveUtils.get_lnz_text_edit(get_tree().root)

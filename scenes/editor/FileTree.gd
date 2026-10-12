@@ -291,7 +291,7 @@ func _on_ImportLNZ_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".lnz,.txt,text/plain")
+		LnzLiveUtils.web_file_picker(".lnz,.txt,text/plain", "fileUploadData")
 
 func _on_ImportTexture_pressed() -> void:
 	current_import_type = ImportType.TEXTURE
@@ -302,7 +302,7 @@ func _on_ImportTexture_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".bmp,image/bmp")
+		LnzLiveUtils.web_file_picker(".bmp,image/bmp", "fileUploadData")
 
 func _on_ImportPalette_pressed() -> void:
 	current_import_type = ImportType.PALETTE
@@ -315,7 +315,7 @@ func _on_ImportPalette_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".png,.bmp,image/png,image/bmp")
+		LnzLiveUtils.web_file_picker(".png,.bmp,image/png,image/bmp", "fileUploadData")
 
 func _on_OpenUserFolder_pressed() -> void:
 	var path: String = ProjectSettings.globalize_path("user://")
@@ -421,36 +421,13 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 		
 	return ""
 		
-func web_file_dialog(accept_extensions: String) -> void:
-	JavaScript.eval("""
-	window.fileUploadData = {}
-
-	let el = document.createElement("input");
-	el.type = "file"
-	el.accept = '""" + accept_extensions + """'
-	el.addEventListener("change", (e) => {
-	  if (e.target.files.length > 0) {
-		let file = e.target.files[0]
-		window.fileUploadData.name = file.name
-
-		let reader = new FileReader()
-		reader.readAsArrayBuffer(file)
-		reader.onloadend = (ev) => {
-		  window.fileUploadData.blob = ev.target.result
-		}
-	  }
-	})
-	el.click()
-	""")
-	upload_popup.visible = true
-	
 func _on_web_file_upload_popup_confirmed() -> void:
-	var file_blob = JavaScript.eval("window.fileUploadData.blob")
+	var file_blob = LnzLiveUtils.get_web_file_blob("fileUploadData")
 	if (file_blob == null):
 		print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: File is empty.")
 		return
 		
-	var file_name: String = JavaScript.eval("window.fileUploadData.name")
+	var file_name: String = LnzLiveUtils.get_web_file_name("fileUploadData")
 	var file_extension: String = file_name.get_extension().to_lower()
 	
 
@@ -607,7 +584,7 @@ func rescan_textures(reload_model: bool = false) -> void:
 			if pet_node.lnz:
 				pet_node.recompose_model()
 
-func rescan_palettes() -> void:
+func rescan_palettes(allow_bmp_conversion: bool = false) -> void:
 	var was_collapsed: bool = true
 	if is_instance_valid(local_storage_palettes):
 		was_collapsed = local_storage_palettes.collapsed
@@ -615,7 +592,7 @@ func rescan_palettes() -> void:
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
-	scan_local_palettes()
+	scan_local_palettes(allow_bmp_conversion)
 
 func rescan_bases() -> void:
 	var was_collapsed: bool = true
@@ -888,7 +865,7 @@ func scan_res_textures() -> void:
 	print("[STATUS] FileTree: scan_res_textures: complete")
 	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-func scan_local_palettes() -> void:
+func scan_local_palettes(allow_bmp_conversion: bool = false) -> void:
 	print("[STATUS] FileTree: scan_local_palettes: running")
 	var t_start: int = OS.get_ticks_msec()
 	var dir2: Directory = Directory.new()
@@ -903,81 +880,94 @@ func scan_local_palettes() -> void:
 	while(!filename.empty()):
 		if filename.ends_with(".png"):
 			var full_path: String = user_file_location + "/palettes/" + filename
+			_process_palette_item(filename, full_path)
+		
+		elif allow_bmp_conversion and filename.ends_with(".bmp"):
+			var bmp_path: String = user_file_location + "/palettes/" + filename
+			var png_filename: String = filename.get_basename() + ".png"
+			var png_path: String = user_file_location + "/palettes/" + png_filename
 			
-			var new_item: TreeItem = create_item(local_storage_palettes)
-			new_item.set_text(0, filename)
-			new_item.set_metadata(0, full_path)
-			
-			var img: Image = Image.new()
-			var err: int = img.load(full_path, true, true)
-			
-			if err == OK:
-				var tex: ImageTexture = ImageTexture.new()
-				tex.create_from_image(img, 0)
-				var clean_key: String = "palette_" + filename.strip_edges().to_lower()
-				preloader.add_resource(clean_key, tex)
-				
-				if img.get_format() != Image.FORMAT_RGBA8:
-					img.convert(Image.FORMAT_RGBA8)
-				
-				var w: int = img.get_width()
-				var h: int = img.get_height()
-				
-				if w >= 200:
-					img.lock()
-					
-					var preview_img: Image = Image.new()
-					preview_img.create(32, 20, false, Image.FORMAT_RGBA8)
-					preview_img.lock()
-					
-					var color_index: int = 0
-					
-					for i in range(10, 200, 10):
-						var pos_start: Vector2 = Vector2(0, i) if h > w else Vector2(i, 0)
-						var pos_end: Vector2 = Vector2(0, i + 8) if h > w else Vector2(i + 8, 0)
-						
-						var c1: Color = img.get_pixel(pos_start.x, pos_start.y)
-						var c2: Color = img.get_pixel(pos_end.x, pos_end.y)
-						
-						var row: int = color_index / 8
-						var col: int = color_index % 8
-						var x_base: int = col * 4
-						var y_base: int = row * 4
-
-						for y in range(4):
-							for x in range(4):
-								if x_base + x < 32 and y_base + y < 20:
-									preview_img.set_pixel(x_base + x, y_base + y, c1)
-						color_index += 1
-						
-						row = color_index / 8
-						col = color_index % 8
-						x_base = col * 4
-						y_base = row * 4
-						for y in range(4):
-							for x in range(4):
-								if x_base + x < 32 and y_base + y < 20:
-									preview_img.set_pixel(x_base + x, y_base + y, c2)
-						color_index += 1
-					
-					preview_img.unlock()
-					img.unlock()
-					
-					var icon_tex: ImageTexture = ImageTexture.new()
-					icon_tex.create_from_image(preview_img, 0)
-					new_item.set_icon(0, icon_tex)
-					
-				else:
-					var fallback: Image = img.duplicate()
-					fallback.resize(32, 32, Image.INTERPOLATE_NEAREST)
-					var icon_tex: ImageTexture = ImageTexture.new()
-					icon_tex.create_from_image(fallback, 0)
-					new_item.set_icon(0, icon_tex)
+			if not ResourceLoader.exists(png_path):
+				convert_bmp_to_palette_png(bmp_path, user_file_location + "/palettes/", png_filename)
 
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 	print("[STATUS] FileTree: scan_local_palettes: complete")
 	print("[TIME] FileTree: scan_local_palettes took " + str(OS.get_ticks_msec() - t_start) + "ms")
+
+func _process_palette_item(display_filename: String, full_path: String) -> void:
+	var new_item: TreeItem = create_item(local_storage_palettes)
+	new_item.set_text(0, display_filename)
+	new_item.set_metadata(0, full_path)
+	
+	var img: Image = Image.new()
+	var err: int = img.load(full_path, true, true)
+	
+	if err != OK:
+		new_item.set_text(0, display_filename + " (LOAD FAILED)")
+		return
+	
+	var tex: ImageTexture = ImageTexture.new()
+	tex.create_from_image(img, 0)
+	var clean_key: String = "palette_" + display_filename.strip_edges().to_lower()
+	preloader.add_resource(clean_key, tex)
+	
+	if img.get_format() != Image.FORMAT_RGBA8:
+		img.convert(Image.FORMAT_RGBA8)
+	
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	
+	if w >= 200:
+		img.lock()
+		
+		var preview_img: Image = Image.new()
+		preview_img.create(32, 20, false, Image.FORMAT_RGBA8)
+		preview_img.lock()
+		
+		var color_index: int = 0
+		
+		for i in range(10, 200, 10):
+			var pos_start: Vector2 = Vector2(0, i) if h > w else Vector2(i, 0)
+			var pos_end: Vector2 = Vector2(0, i + 8) if h > w else Vector2(i + 8, 0)
+			
+			var c1: Color = img.get_pixel(pos_start.x, pos_start.y)
+			var c2: Color = img.get_pixel(pos_end.x, pos_end.y)
+			
+			var row: int = color_index / 8
+			var col: int = color_index % 8
+			var x_base: int = col * 4
+			var y_base: int = row * 4
+
+			for y in range(4):
+				for x in range(4):
+					if x_base + x < 32 and y_base + y < 20:
+						preview_img.set_pixel(x_base + x, y_base + y, c1)
+			color_index += 1
+			
+			row = color_index / 8
+			col = color_index % 8
+			x_base = col * 4
+			y_base = row * 4
+			for y in range(4):
+				for x in range(4):
+					if x_base + x < 32 and y_base + y < 20:
+						preview_img.set_pixel(x_base + x, y_base + y, c2)
+			color_index += 1
+		
+		preview_img.unlock()
+		img.unlock()
+		
+		var icon_tex: ImageTexture = ImageTexture.new()
+		icon_tex.create_from_image(preview_img, 0)
+		new_item.set_icon(0, icon_tex)
+		
+	else:
+		var fallback: Image = img.duplicate()
+		fallback.resize(32, 32, Image.INTERPOLATE_NEAREST)
+		var icon_tex: ImageTexture = ImageTexture.new()
+		icon_tex.create_from_image(fallback, 0)
+		new_item.set_icon(0, icon_tex)
 
 func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_dest_filename: String = "") -> bool:
 	print("[STATUS] FileTree: convert_bmp_to_palette_png: converting BMP palette to PNG: " + source_path)
@@ -1342,23 +1332,25 @@ func _add_to_texture_list(source_path: String, is_user_texture: bool = false) ->
 	var width: int = bmp_info.get("width", 0)
 	var height: int = bmp_info.get("height", 0)
 	
-	lnz.texture_list.append({
-		"filename": tex_filename,
-		"transparent_color": 0,
-		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
-	})
-	
 	var display_path: String = _get_display_path(source_path, is_user_texture)
 	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
 	var append_dims: bool = false
+	var default_transparent_color: int = 0
 	if is_instance_valid(user_settings):
-		append_dims = user_settings.get("append_dimensions")
+		append_dims = user_settings.append_dimensions
+		default_transparent_color = user_settings.default_transparent_color
+	
+	lnz.texture_list.append({
+		"filename": tex_filename,
+		"transparent_color": default_transparent_color,
+		"texture_size": Vector2(width, height) if width > 0 and height > 0 else null
+	})
 	
 	var tex_line: String
 	if append_dims:
-		tex_line = display_path + " 0 " + str(width) + " " + str(height)
+		tex_line = display_path + " " + str(default_transparent_color) + " " + str(width) + " " + str(height)
 	else:
-		tex_line = display_path + " 0"
+		tex_line = display_path + " " + str(default_transparent_color)
 	
 	print("[STATUS] FileTree: Added '%s' as texture index %d to Texture List (size: %dx%d, transparency: 0)" % [tex_filename, tex_index, width, height])
 	
@@ -1673,5 +1665,5 @@ func _sort_by_time(a: Dictionary, b: Dictionary) -> bool:
 func _on_RescanButton_pressed() -> void:
 	rescan(null)
 	rescan_textures(true) 
-	rescan_palettes()
+	rescan_palettes(true)
 	rescan_bases()

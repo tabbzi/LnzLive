@@ -99,8 +99,8 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="PaintballSettings" type="Panel"]
-margin_right = 500.0
-margin_bottom = 1000.0
+margin_right = 525.0
+margin_bottom = 1500.0
 rect_min_size = Vector2( 525, 1025 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
@@ -218,7 +218,7 @@ text = "Reset Defaults"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 170.0
 margin_right = 495.0
-margin_bottom = 995.0
+margin_bottom = 1470.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -227,7 +227,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 495.0
-margin_bottom = 825.0
+margin_bottom = 1300.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -285,10 +285,204 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
+[node name="LayerSection" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+visible = false
+margin_top = 61.0
+margin_right = 483.0
+margin_bottom = 337.0
+custom_constants/separation = 3
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_right = 483.0
+margin_bottom = 4.0
+
+[node name="LayerHeaderHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 7.0
+margin_right = 483.0
+margin_bottom = 32.0
+custom_constants/separation = 3
+
+[node name="ActiveLayerLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+margin_top = 2.0
+margin_right = 114.0
+margin_bottom = 23.0
+custom_fonts/font = SubResource( 3 )
+text = "Active: Layer 1"
+
+[node name="AddLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+margin_left = 117.0
+margin_right = 298.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "+ Layer"
+
+[node name="ClearAllLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox"]
+margin_left = 301.0
+margin_right = 483.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Clear All"
+
+[node name="LayerHeaderHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 35.0
+margin_right = 483.0
+margin_bottom = 60.0
+custom_constants/separation = 3
+
+[node name="TransferLnzButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_right = 159.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Pull from LNZ"
+
+[node name="ExportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_left = 162.0
+margin_right = 321.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Export Layers"
+
+[node name="ImportLayersButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerHeaderHBox2"]
+margin_left = 324.0
+margin_right = 483.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Import Layers"
+
+[node name="LayersTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 63.0
+margin_right = 483.0
+margin_bottom = 213.0
+rect_min_size = Vector2( 0, 150 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
+hide_root = true
+select_mode = 1
+
+[node name="LayerActionsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 216.0
+margin_right = 483.0
+margin_bottom = 241.0
+custom_constants/separation = 4
+alignment = 1
+
+[node name="MoveUpButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_right = 158.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Move Up"
+
+[node name="MoveDownButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 162.0
+margin_right = 320.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Move Down"
+
+[node name="MergeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox"]
+margin_left = 324.0
+margin_right = 483.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Merge Down"
+
+[node name="LayerActionsHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 244.0
+margin_right = 483.0
+margin_bottom = 269.0
+custom_constants/separation = 4
+alignment = 1
+
+[node name="ClearLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox2"]
+margin_right = 239.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 0.2, 0.5, 1, 1 )
+text = "Clear"
+
+[node name="DeleteLayerButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection/LayerActionsHBox2"]
+margin_left = 243.0
+margin_right = 483.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 1, 0.2, 0.2, 1 )
+text = "Delete"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/LayerSection"]
+margin_top = 272.0
+margin_right = 483.0
+margin_bottom = 276.0
+
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 61.0
 margin_right = 495.0
-margin_bottom = 825.0
+margin_bottom = 1300.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 8 )
@@ -299,6 +493,7 @@ custom_fonts/font = SubResource( 3 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -709,7 +904,6 @@ custom_fonts/font = SubResource( 3 )
 text = "Export JSON"
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -718,128 +912,72 @@ margin_right = -5.0
 margin_bottom = -2.0
 custom_constants/separation = 5
 
-[node name="DesignTopOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_right = 509.0
-margin_bottom = 29.0
-
-[node name="DesignTotalDiameterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_top = 4.0
-margin_right = 121.0
-margin_bottom = 25.0
+[node name="DesignTotalDiameterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_right = 485.0
+margin_bottom = 21.0
 custom_fonts/font = SubResource( 3 )
 text = "Total Diameter"
 
+[node name="DesignTopOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_top = 26.0
+margin_right = 485.0
+margin_bottom = 55.0
+
 [node name="DesignTotalDiameter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 125.0
-margin_right = 199.0
+margin_right = 90.0
 margin_bottom = 29.0
 hint_tooltip = "Minimum random size"
+custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
 max_value = 200.0
 value = 20.0
 
 [node name="DesignTotalDiameterMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 203.0
-margin_right = 277.0
+margin_left = 94.0
+margin_right = 184.0
 margin_bottom = 29.0
 hint_tooltip = "Maximum random size"
+custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
 max_value = 200.0
 value = 30.0
 
-[node name="DesignRotationLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 281.0
-margin_top = 4.0
-margin_right = 377.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
-text = "Rotation"
-
-[node name="DesignRotation" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 381.0
-margin_right = 455.0
-margin_bottom = 29.0
-hint_tooltip = "Fixed/starting rotation angle in degrees"
-min_value = -360.0
-max_value = 360.0
-step = 1.0
-value = 0.0
-
 [node name="DesignPixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
-margin_left = 281.0
-margin_right = 385.0
+margin_left = 188.0
+margin_right = 292.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 3 )
 text = "Pixel Size"
 
 [node name="GridContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 34.0
-margin_right = 509.0
-margin_bottom = 263.0
+margin_top = 60.0
+margin_right = 485.0
+margin_bottom = 382.0
 
 [node name="DesignCanvasContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer"]
-margin_right = 509.0
-margin_bottom = 229.0
+margin_right = 266.0
+margin_bottom = 322.0
 
 [node name="DesignCanvas" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_right = 200.0
-margin_bottom = 200.0
-rect_min_size = Vector2( 200, 200 )
+margin_right = 256.0
+margin_bottom = 256.0
+rect_min_size = Vector2( 256, 256 )
 size_flags_horizontal = 0
 script = ExtResource( 5 )
 
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
+margin_top = 260.0
+margin_right = 266.0
+margin_bottom = 264.0
+
 [node name="LineToolHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
-margin_top = 204.0
-margin_right = 509.0
-margin_bottom = 229.0
-
-[node name="LineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
-margin_right = 107.0
-margin_bottom = 25.0
-hint_tooltip = "Draw diagonal straight line [Ctrl+L]"
+margin_top = 268.0
+margin_right = 266.0
+margin_bottom = 293.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 4 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 3 )
-toggle_mode = true
-text = "Line [Ctrl+L]"
-
-[node name="HLineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
-margin_left = 111.0
-margin_right = 241.0
-margin_bottom = 25.0
-hint_tooltip = "Draw horizontal straight line [Ctrl+H]"
-size_flags_horizontal = 3
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 4 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 3 )
-toggle_mode = true
-text = "H-Line [Ctrl+H]"
-
-[node name="VLineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
-margin_left = 245.0
-margin_right = 377.0
-margin_bottom = 25.0
-hint_tooltip = "Draw vertical straight line [Ctrl+V]"
-size_flags_horizontal = 3
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 4 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 3 )
-toggle_mode = true
-text = "V-Line [Ctrl+V]"
 
 [node name="BrushBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
-margin_left = 381.0
-margin_right = 509.0
+margin_right = 131.0
 margin_bottom = 25.0
 hint_tooltip = "Freehand brush [Ctrl+B]"
 size_flags_horizontal = 3
@@ -853,10 +991,60 @@ toggle_mode = true
 pressed = true
 text = "Brush [Ctrl+B]"
 
+[node name="LineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox"]
+margin_left = 135.0
+margin_right = 266.0
+margin_bottom = 25.0
+hint_tooltip = "Draw diagonal straight line [Ctrl+L]"
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+toggle_mode = true
+text = "Line [Ctrl+L]"
+
+[node name="LineToolHBox2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
+margin_top = 297.0
+margin_right = 266.0
+margin_bottom = 322.0
+size_flags_horizontal = 3
+
+[node name="HLineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox2"]
+margin_right = 130.0
+margin_bottom = 25.0
+hint_tooltip = "Draw horizontal straight line [Ctrl+H]"
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+toggle_mode = true
+text = "H-Line [Ctrl+H]"
+
+[node name="VLineBtn" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer/LineToolHBox2"]
+margin_left = 134.0
+margin_right = 266.0
+margin_bottom = 25.0
+hint_tooltip = "Draw vertical straight line [Ctrl+V]"
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+toggle_mode = true
+text = "V-Line [Ctrl+V]"
+
 [node name="DesignOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 268.0
-margin_right = 509.0
-margin_bottom = 383.0
+margin_top = 387.0
+margin_right = 485.0
+margin_bottom = 502.0
 
 [node name="DesignSliderOptions" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions"]
 margin_right = 159.0
@@ -989,93 +1177,118 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Info"
 
-[node name="DesignJitterContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 388.0
-margin_right = 509.0
-margin_bottom = 445.0
-columns = 4
+[node name="JitterContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_top = 507.0
+margin_right = 485.0
+margin_bottom = 615.0
 
-[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
+[node name="DesignRotationHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
+margin_right = 216.0
+margin_bottom = 24.0
+
+[node name="DesignRotationLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/DesignRotationHBox"]
 margin_top = 1.0
-margin_right = 118.0
+margin_right = 122.0
 margin_bottom = 22.0
-size_flags_horizontal = 3
+rect_min_size = Vector2( 122, 0 )
 custom_fonts/font = SubResource( 3 )
-text = "Jitter"
+text = "Set Angle:"
+align = 2
 
-[node name="DesignJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 122.0
-margin_right = 240.0
+[node name="DesignRotation" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/DesignRotationHBox"]
+margin_left = 126.0
+margin_right = 216.0
+margin_bottom = 24.0
+hint_tooltip = "Starting angle for the stamp pattern (degrees)"
+custom_icons/updown = ExtResource( 4 )
+min_value = -360.0
+max_value = 360.0
+
+[node name="JitterRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
+margin_top = 28.0
+margin_right = 216.0
+margin_bottom = 52.0
+
+[node name="JitterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/JitterRow"]
+margin_top = 1.0
+margin_right = 122.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 122, 0 )
+custom_fonts/font = SubResource( 3 )
+text = "Design Jitter:"
+align = 2
+
+[node name="DesignJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/JitterRow"]
+margin_left = 126.0
+margin_right = 216.0
 margin_bottom = 24.0
 hint_tooltip = "Randomize position/size of individual paintballs"
-size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
-[node name="Label3" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 244.0
-margin_top = 1.0
-margin_right = 386.0
-margin_bottom = 22.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
-text = "Spread"
+[node name="SpreadRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
+margin_top = 56.0
+margin_right = 216.0
+margin_bottom = 80.0
 
-[node name="SpreadJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 390.0
-margin_right = 508.0
+[node name="SpreadLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/SpreadRow"]
+margin_top = 1.0
+margin_right = 122.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 122, 0 )
+custom_fonts/font = SubResource( 3 )
+text = "Spread Jitter:"
+align = 2
+
+[node name="SpreadJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/SpreadRow"]
+margin_left = 126.0
+margin_right = 216.0
 margin_bottom = 24.0
 hint_tooltip = "Randomly offset the center of the stamp"
-size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
-[node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_top = 32.0
-margin_right = 118.0
-margin_bottom = 53.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
-text = "Rotate"
+[node name="RotateJitterRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer"]
+margin_top = 84.0
+margin_right = 216.0
+margin_bottom = 108.0
 
-[node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 122.0
-margin_top = 28.0
-margin_right = 240.0
-margin_bottom = 57.0
-hint_tooltip = "Randomize rotation of the entire design"
-size_flags_horizontal = 3
+[node name="RotateJitterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/RotateJitterRow"]
+margin_top = 1.0
+margin_right = 122.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 122, 0 )
+custom_fonts/font = SubResource( 3 )
+text = "Rotate Jitter:"
+align = 2
+
+[node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/JitterContainer/RotateJitterRow"]
+margin_left = 126.0
+margin_right = 216.0
+margin_bottom = 24.0
+hint_tooltip = "Random rotation variance added to the stamp rotation (degrees)"
 custom_icons/updown = ExtResource( 4 )
 max_value = 360.0
 
-[node name="RotateFixed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 244.0
-margin_top = 28.0
-margin_right = 386.0
-margin_bottom = 57.0
-hint_tooltip = "Use exact rotation instead of random +/- variance"
-custom_fonts/font = SubResource( 3 )
-text = "Fixed Rotation"
-
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 450.0
-margin_right = 509.0
-margin_bottom = 454.0
+margin_top = 620.0
+margin_right = 485.0
+margin_bottom = 624.0
 
 [node name="SlotActionContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 459.0
-margin_right = 509.0
-margin_bottom = 484.0
+margin_top = 629.0
+margin_right = 485.0
+margin_bottom = 654.0
 
-[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
+[node name="SlotLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
 margin_top = 2.0
-margin_right = 167.0
+margin_right = 159.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Color Slots"
 
 [node name="AddSlotButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 171.0
-margin_right = 338.0
+margin_left = 163.0
+margin_right = 322.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1087,8 +1300,8 @@ custom_fonts/font = SubResource( 3 )
 text = "Add Slot"
 
 [node name="RemoveSlotButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 342.0
-margin_right = 509.0
+margin_left = 326.0
+margin_right = 485.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 4 )
@@ -1100,12 +1313,20 @@ custom_fonts/font = SubResource( 3 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
-margin_top = 489.0
-margin_right = 509.0
-margin_bottom = 748.0
+margin_top = 659.0
+margin_right = 485.0
+margin_bottom = 1159.0
+rect_min_size = Vector2( 0, 500 )
 size_flags_vertical = 3
 columns = 8
 hide_root = true
+
+[node name="DesignSpacer" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_top = 1164.0
+margin_right = 485.0
+margin_bottom = 1210.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Advanced" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
 visible = false
@@ -1179,6 +1400,14 @@ hint_tooltip = "Exclude eye ballz (eyes and irises) from paintball generation"
 custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Exclude Eye Ballz"
+
+[node name="UseLayersCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Advanced"]
+margin_top = 126.0
+margin_right = 485.0
+margin_bottom = 155.0
+hint_tooltip = "Show layer management controls"
+custom_fonts/font = SubResource( 3 )
+text = "Use Layers (EXPERIMENTAL)"
 
 [node name="PatternInfoDialog" type="WindowDialog" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_left = 35.0
@@ -1273,3 +1502,63 @@ custom_styles/disabled = SubResource( 9 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Close"
+
+[node name="DeleteLayerDialog" type="ConfirmationDialog" parent="."]
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DeleteLayerDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -36.0
+custom_constants/separation = 10
+
+[node name="Label" type="Label" parent="DeleteLayerDialog/VBoxContainer"]
+margin_right = 392.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 3 )
+text = "Layer has paintballs. What would you like to do?"
+align = 1
+
+[node name="MergeButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_top = 31.0
+margin_right = 392.0
+margin_bottom = 56.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Merge Down"
+
+[node name="DiscardButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_top = 66.0
+margin_right = 392.0
+margin_bottom = 91.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Discard Paintballs"
+
+[node name="CancelButton" type="Button" parent="DeleteLayerDialog/VBoxContainer"]
+margin_top = 101.0
+margin_right = 392.0
+margin_bottom = 126.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Cancel"

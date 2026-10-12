@@ -1,32 +1,32 @@
 extends TextEdit
 
-# LnzTextEdit.gd
-# - Loads and saves .lnz files
-# - Creates automatic backups before overwriting
-# - Preserves scroll and cursor positions across edits
-# - Listens for visual editor events
-# - Finds and updates the corresponding LNZ sections
-# - Handles batch recolor and mirror‐copy operations
-# - Emits signals for file_saved, file_backed_up, and find_ball actions
+## LnzTextEdit.gd
+## - Loads and saves .lnz files
+## - Creates automatic backups before overwriting
+## - Preserves scroll and cursor positions across edits
+## - Listens for visual editor events
+## - Finds and updates the corresponding LNZ sections
+## - Handles batch recolor and mirror‐copy operations
+## - Emits signals for file_saved, file_backed_up, and find_ball actions
 
-# SECTIONS:
-#	SETUP & INITIALIZATION
-#	SIGNAL CALLBACKS
-#	FILE SAVING & LOADING
-#	UNDO / REDO HISTORY
-#	TEXT EDITOR
-#	FIND & REPLACE
-#	LNZ TEXT FINDING
-#	LNZ TEXT PARSING
-#	LNZ TEXT EDITING
-#	LNZ DATA GETTERS
-#	LNZ DATA SETTERS
-#	LNZ DATA SECTIONS
-#	VISUAL NODE SIGNALS
-#	TOOLS MENU SIGNALS
-#	MIRRORING & SYMMETRY
-#	BATCH OPERATIONS
-#	HELPER FUNCTIONS
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	SIGNAL CALLBACKS
+##	FILE SAVING & LOADING
+##	UNDO / REDO HISTORY
+##	TEXT EDITOR
+##	FIND & REPLACE
+##	LNZ TEXT FINDING
+##	LNZ TEXT PARSING
+##	LNZ TEXT EDITING
+##	LNZ DATA GETTERS
+##	LNZ DATA SETTERS
+##	LNZ DATA SECTIONS
+##	VISUAL NODE SIGNALS
+##	TOOLS MENU SIGNALS
+##	MIRRORING & SYMMETRY
+##	BATCH OPERATIONS
+##	HELPER FUNCTIONS
 
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = self
@@ -51,6 +51,7 @@ onready var find_panel = get_node("../FindPanel")
 
 var is_user_file = false
 var filepath: String
+var _last_saved_text: String = ""
 
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
@@ -266,7 +267,10 @@ func _load_file(filepath: String, user_flag: bool):
 	is_user_file = user_flag
 
 	_set_text_preserve(contents)
+	_last_saved_text = self.text
 	initialize_history()
+	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
+		pet_view._update_unapplied_changes_label()
 
 	print("[TIME] LnzTextEdit: _load_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
@@ -406,13 +410,14 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 		printerr("Atomic save failed to rename temp file: ", tmp_path, " -> ", save_path, " error: ", rename_err)
 
 	if not silent:
+		_last_saved_text = self.text
 		var msg = "Saved LNZ and Applied Changes!"
 		print("[STATUS] LnzTextEdit: save_file: " + msg)
 		if console_log:
 			console_log.log_message(msg)
-
+ 
 		emit_signal("file_saved", save_path)
-		_set_text_preserve(get_text()) 
+		_set_text_preserve(get_text())
 
 	filepath = save_path
 
@@ -420,6 +425,9 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 
 func _on_Tree_backup_file():
 	save_backup()
+
+func has_unsaved_text_changes() -> bool:
+	return self.text != _last_saved_text
 
 func _on_ApplyChangesButton_pressed():
 	save_backup()
@@ -746,16 +754,30 @@ func _on_LnzTextEdit_gui_input(event):
 					clean_section = line.split(";")[0].strip_edges()
 					break
 
+			var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+			var addball_count = _get_addball_count_from_parser()
+			var total_valid_balls = max_base + addball_count
+
+			if console_log:
+				console_log.log_message("[JUMP] ball_no=%d section='%s' line=%d (max=%d)" % [ball_no, clean_section, current_line_idx, total_valid_balls - 1])
+
 			if ball_no != -1:
-				emit_signal("find_ball", ball_no)
-				var b_name = get_ball_name(ball_no)
-				var prefix = "[HELPER] Ballz"
-				if "Override" in clean_section: prefix = "[HELPER] Override Ballz"
-				if clean_section == "[Add Ball]": prefix = "[HELPER] Addballz"
-				console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
+				if clean_section == "[Ballz Info]" or clean_section == "[Add Ball]" or clean_section == "[Ball Size Override]" or clean_section == "[Fuzz Override]" or "Override" in clean_section:
+					if ball_no >= 0 and ball_no < total_valid_balls:
+						emit_signal("find_ball", ball_no)
+						var b_name = get_ball_name(ball_no)
+						var prefix = "[HELPER] Ballz"
+						if "Override" in clean_section: prefix = "[HELPER] Override Ballz"
+						if clean_section == "[Add Ball]": prefix = "[HELPER] Addballz"
+						if b_name != "":
+							console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
+					else:
+						print("[WARNING] LnzTextEdit: Jump ball #%d out of valid range (0-%d)" % [ball_no, total_valid_balls - 1])
+						if console_log:
+							console_log.log_message("[JUMP] Ball #%d out of valid range (0-%d)" % [ball_no, total_valid_balls - 1])
 			
 			var data_line_idx = _get_line_no_from_line_index(current_line_idx, clean_section)
-			if data_line_idx != -1:
+			if data_line_idx != -1 and data_line_idx >= 0:
 				match clean_section:
 					"[Linez]": emit_signal("find_line", data_line_idx)
 					"[Paint Ballz]": emit_signal("find_paintball", data_line_idx)
@@ -767,10 +789,16 @@ func _on_LnzTextEdit_gui_input(event):
 				var word = get_word_under_cursor()
 				if word.is_valid_integer():
 					var fallback_no = int(word)
-					emit_signal("find_ball", fallback_no)
-					var b_name = get_ball_name(fallback_no)
-					if b_name != "":
-						console_log.log_message("[HELPER] Ballz #%d (%s)" % [fallback_no, b_name])
+					if fallback_no >= 0 and fallback_no < total_valid_balls:
+						emit_signal("find_ball", fallback_no)
+						var b_name = get_ball_name(fallback_no)
+						var prefix = "[HELPER] Addballz" if fallback_no >= max_base else "[HELPER] Ballz"
+						if b_name != "":
+							console_log.log_message("%s #%d (%s)" % [prefix, fallback_no, b_name])
+					else:
+						print("[WARNING] LnzTextEdit: Word under cursor '%s' out of valid range (0-%d)" % [word, total_valid_balls - 1])
+						if console_log:
+							console_log.log_message("[JUMP] Word under cursor '%s' is not a valid ball index (0-%d)" % [word, total_valid_balls - 1])
 
 func _get_user_preferred_delimiter() -> String:
 	var settings = get_tree().root.get_node_or_null("Root/SceneRoot")
@@ -849,6 +877,17 @@ func _build_search_pattern(search_text: String, whole_words: bool, match_case: b
 	if not match_case:
 		pattern = "(?i)" + pattern
 	return pattern
+
+func _get_compiled_search_regex(search_text: String, whole_words: bool, match_case: bool) -> RegEx:
+	var pattern = _build_search_pattern(search_text, whole_words, match_case)
+	var cache_key = pattern + "|" + str(whole_words) + "|" + str(match_case)
+	if cache_key == _last_compiled_pattern:
+		return _search_regex
+	var error = _search_regex.compile(pattern)
+	if error != OK:
+		return null
+	_last_compiled_pattern = cache_key
+	return _search_regex
 
 func _ensure_section_exists(section_name: String) -> Dictionary:
 	var bounds = get_section_bounds(section_name)
@@ -941,16 +980,13 @@ func _find_text(forward):
 
 	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
 	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
-	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-	if pattern != _last_compiled_pattern:
-		var error = _search_regex.compile(pattern)
-		if error != OK:
-			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
-			return
-		_last_compiled_pattern = pattern
-		
-	var all_matches = _search_regex.search_all(all_text)
+	var regex = _get_compiled_search_regex(search_text, whole_words, match_case)
+	if regex == null:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+
+	var all_matches = regex.search_all(all_text)
 
 	if all_matches.size() == 0:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Not found
@@ -1051,9 +1087,9 @@ func _on_ReplaceButton_pressed():
 		var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
 		var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-		# Anchor the pattern to ensure the whole selection matches
+		# Anchor the pattern to ensure the whole selection matches exactly.
+		# Must use a separate RegEx -- never reuse _search_regex which has the un-anchored pattern.
 		var anchored_pattern = "^" + pattern + "$"
-
 		var regex = RegEx.new()
 		var err = regex.compile(anchored_pattern)
 		if err != OK:
@@ -1079,21 +1115,13 @@ func _on_ReplaceAllButton_pressed():
 
 	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
 	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
-	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-	var regex: RegEx = _search_regex
-	if _last_replace_pattern != pattern:
-		var err = regex.compile(pattern)
-		if err != OK:
-			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
-			return
-		_last_replace_pattern = pattern
-	var error = OK 
-	if error != OK:
+	var regex = _get_compiled_search_regex(search_text, whole_words, match_case)
+	if regex == null:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
-	else:
-		find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
 
 	self.readonly = false
 
@@ -1200,11 +1228,19 @@ func find_line_in_ball_section(ball_no):
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
-func find_line_in_addball_section(ball_no):
+func find_line_in_addball_section(addball_idx):
+	var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+	var target_ball_no = addball_idx + max_base
+	if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+		var map = pet_node.lnz.addball_raw_to_ball_map
+		for raw_idx in map:
+			if map[raw_idx] == target_ball_no:
+				return raw_idx
+				
 	var section_find = search('[Add Ball]', 0, 0, 0)
 	if section_find.empty(): return -1
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
-	return find_line_in_ball_or_addball_section(ball_no, start_point)
+	return find_line_in_ball_or_addball_section(addball_idx, start_point)
 	
 func find_line_in_move_section(ball_no, start_from = -1):
 	return _find_line_in_section_with_match("[Move]", ball_no, "_linez_match_fn", start_from)
@@ -1274,7 +1310,7 @@ func _find_line_in_section_with_match(section_name: String, ball_no, match_fn_na
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
 	while true:
-		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
+		if !line.lstrip(" ").begins_with(";") and !line.lstrip(" ").begins_with("#") and line.strip_edges() != "":
 			break
 		start_point += 1
 		if start_point >= get_line_count(): return -1
@@ -1287,9 +1323,10 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 		if check_idx >= get_line_count(): return -1
 		
 		line = get_line(check_idx)
-		if line.strip_edges().begins_with("["): return -1
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["): return -1
 		
-		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
+		if !stripped.begins_with(";") and !stripped.begins_with("#") and stripped != "":
 			j += 1
 		if j == ball_no:
 			return check_idx
@@ -1297,6 +1334,13 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return -1
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
+	if section_tag == "[Add Ball]":
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			if pet_node.lnz.addball_raw_to_ball_map.has(target_line_index):
+				return pet_node.lnz.addball_raw_to_ball_map[target_line_index] - (KeyBallsData.max_base_ball_num if KeyBallsData else 67)
+			if not pet_node.lnz.addball_raw_to_ball_map.empty():
+				return -1 # Line belongs to an inactive variation or comment/marker
+				
 	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		return -1
@@ -1310,7 +1354,7 @@ func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -
 		if line.begins_with("["):
 			break
 			
-		if line.begins_with(";") or line.empty(): continue
+		if line.begins_with(";") or line.empty() or line.begins_with("#"): continue
 		
 		line_counter += 1
 		
@@ -1338,29 +1382,41 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 		
 	return last_true_data_line + 1
 
-func _count_section_entries(section_name: String) -> int:
-	var section_find = search(section_name, 0, 0, 0)
-	if section_find.empty():
-		return 0
-		
-	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var entry_count = 0
-	var current_line_num = start_line
+func _get_addball_count_from_parser() -> int:
+	if is_instance_valid(pet_node) and pet_node.lnz:
+		return pet_node.lnz.addballs.size()
+	return 0
+
+func _resolve_addball_ball_no_from_raw_line(raw_line_idx: int) -> int:
+	if raw_line_idx < 0 or raw_line_idx >= get_line_count():
+		return -1
+	if is_instance_valid(pet_node) and pet_node.lnz:
+		var lnz = pet_node.lnz
+		if lnz.addball_raw_to_ball_map.has(raw_line_idx):
+			return lnz.addball_raw_to_ball_map[raw_line_idx]
+	return -1
+
+## Check if a Linez start/end reference is valid for the current variation.
+## Returns true if both balls exist in the current compiled output.
+func _is_linez_reference_valid(start_ball: int, end_ball: int) -> bool:
+	if not is_instance_valid(pet_node) or not is_instance_valid(pet_node.lnz):
+		return true
 	
-	while current_line_num < get_line_count():
-		var line = get_line(current_line_num).strip_edges()
-		
-		if line.begins_with("["):
-			break
-		
-		if line == "" or line.begins_with(";"):
-			current_line_num += 1
-			continue
-		
-		entry_count += 1
-		current_line_num += 1
-		
-	return entry_count
+	var lnz = pet_node.lnz
+	
+	if lnz.addballs.has(start_ball) or lnz.balls.has(start_ball):
+		pass
+	else:
+		# start_ball doesn't exist in compiled output
+		return false
+	
+	if lnz.addballs.has(end_ball) or lnz.balls.has(end_ball):
+		pass
+	else:
+		# end_ball doesn't exist in compiled output
+		return false
+	
+	return true
 
 
 ### LNZ TEXT PARSING ###
@@ -1531,6 +1587,29 @@ func _for_each_line_in_section(tag: String, callback):
 		var line = get_line(i)
 		if line.strip_edges() == "" or line.begins_with(";"): continue
 		callback.call(i, line)
+
+func _process_section_lines(section_name: String, line_callback) -> Array:
+	var bounds = get_section_bounds(section_name)
+	if bounds.empty():
+		return []
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var results = []
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+		
+		var parts = split_line(line)
+		if parts.empty():
+			continue
+		
+		var result = line_callback.call_func(i, parts, delim)
+		if result != null:
+			results.append(result)
+	
+	return results
 
 
 ### LNZ TEXT EDITING ###
@@ -1776,7 +1855,7 @@ func get_ball_name(ball_no: int) -> String:
 						if ball_name != "":
 							break
 					
-					elif raw_line.begins_with("["):
+					elif raw_line.begins_with("[") or raw_line.begins_with("#"):
 						break
 					
 					search_idx -= 1
@@ -1892,14 +1971,28 @@ func get_current_ball_index() -> int:
 	if parts.size() == 0:
 		return -1
 
+	var cursor_word = get_word_under_cursor()
+	var cursor_ball = -1
+	if cursor_word.is_valid_integer():
+		cursor_ball = int(cursor_word)
+
 	match nearest_section:
+		"[Polygons]":
+			if cursor_ball >= 0:
+				return cursor_ball
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+			
+		"[Linez]", \
+		"[Paint Ballz]":
+			if cursor_ball >= 0:
+				return cursor_ball
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+			
 		"[Move]", \
-		"[Paint Ballz]", \
 		"[Ball Size Override]", \
 		"[Fuzz Override]", \
 		"[Color Info Override]", \
 		"[Outline Color Override]", \
-		"[Linez]", \
 		"[Omissions]", \
 		"[Thin/Fat]":
 			return int(parts[0]) if parts[0].is_valid_integer() else -1
@@ -2381,12 +2474,24 @@ func _on_apply_paintballz():
 func apply_paintballz():
 	save_backup()
 
-	var pending_paintballs = pet_node.get_pending_paintballs_data()
+	var pending_paintballs: Array = pet_node.get_pending_paintballs_data()
+	var layers_to_clear: Array = []
+	
+	if is_instance_valid(PaintballLayerManager):
+		for layer in PaintballLayerManager.layers:
+			if layer.visible and layer.has_paintballs():
+				layers_to_clear.append(layer.layer_id)
+
 	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _ensure_section_exists("[Paint Ballz]")
+		if bounds.empty():
+			print("[WARNING] LnzTextEdit: apply_paintballz: could not ensure [Paint Ballz] section exists")
+			save_file(true)
+			commit_full_snapshot("Commited Paintballz")
+			return
 
 		var insert_at_line = bounds.start
 		var need_fillers = false
@@ -2431,8 +2536,14 @@ func apply_paintballz():
 					runner += 1
 				else:
 					break
-					
-			insert_at_line = runner
+			
+			if runner > bounds.start:
+				select(bounds.start, 0, runner, 0)
+				cut()
+				insert_at_line = bounds.start
+			else:
+				insert_at_line = runner
+				
 		var text_to_insert = ""
 		
 		if need_fillers:
@@ -2440,36 +2551,157 @@ func apply_paintballz():
 				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
 				text_to_insert += filler_line + " ; chickenpox filler\n"
 
-		var paintball_lines_list = []
-		for i in range(pending_paintballs.size() - 1, -1, -1):
-			var paintball_info = pending_paintballs[i]
-			var relative_pos_lnz = paintball_info.relative_pos_lnz
+		if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 1:
+			for layer in PaintballLayerManager.layers:
+				if not layer.visible or not layer.has_paintballs():
+					continue
+				var header_name: String = layer.name.strip_edges()
+				if header_name == "":
+					header_name = "Layer " + str(layer.layer_id)
+				text_to_insert += "; " + header_name + "\n"
+				var pb_lines = []
+				for pb in layer.paintballs:
+					var relative_pos_lnz = pb.relative_pos_lnz
+					var paintball_line = str(pb.base_ball_no) + delim
+					paintball_line += str(pb.diameter) + delim
+					paintball_line += str(round(relative_pos_lnz.x)) + delim
+					paintball_line += str(round(relative_pos_lnz.y)) + delim
+					paintball_line += str(round(relative_pos_lnz.z)) + delim
+					paintball_line += str(pb.color) + delim
+					paintball_line += str(pb.outline_color) + delim
+					paintball_line += str(pb.fuzz) + delim
+					paintball_line += str(pb.outline_type) + delim
+					paintball_line += str(pb.group) + delim
+					paintball_line += str(pb.texture) + delim
+					paintball_line += str(int(!pb.anchored))
+					pb_lines.append(paintball_line)
+				pb_lines.invert()
+				for line in pb_lines:
+					text_to_insert += line + "\n"
+		else:
+			var paintball_lines_list = []
+			for i in range(pending_paintballs.size() - 1, -1, -1):
+				var paintball_info = pending_paintballs[i]
+				var relative_pos_lnz = paintball_info.relative_pos_lnz
 
-			var paintball_line = str(paintball_info.base_ball_no) + delim
-			paintball_line += str(paintball_info.diameter) + delim
-			paintball_line += str(round(relative_pos_lnz.x)) + delim
-			paintball_line += str(round(relative_pos_lnz.y)) + delim
-			paintball_line += str(round(relative_pos_lnz.z)) + delim
-			paintball_line += str(paintball_info.color) + delim
-			paintball_line += str(paintball_info.outline_color) + delim
-			paintball_line += str(paintball_info.fuzz) + delim
-			paintball_line += str(paintball_info.outline_type) + delim
-			paintball_line += str(paintball_info.group) + delim
-			paintball_line += str(paintball_info.texture) + delim
-			paintball_line += str(int(!paintball_info.anchored))
-			paintball_lines_list.append(paintball_line)
+				var paintball_line = str(paintball_info.base_ball_no) + delim
+				paintball_line += str(paintball_info.diameter) + delim
+				paintball_line += str(round(relative_pos_lnz.x)) + delim
+				paintball_line += str(round(relative_pos_lnz.y)) + delim
+				paintball_line += str(round(relative_pos_lnz.z)) + delim
+				paintball_line += str(paintball_info.color) + delim
+				paintball_line += str(paintball_info.outline_color) + delim
+				paintball_line += str(paintball_info.fuzz) + delim
+				paintball_line += str(paintball_info.outline_type) + delim
+				paintball_line += str(paintball_info.group) + delim
+				paintball_line += str(paintball_info.texture) + delim
+				paintball_line += str(int(!paintball_info.anchored))
+				paintball_lines_list.append(paintball_line)
 
-		for line in paintball_lines_list:
-			text_to_insert += line + "\n"
+			for line in paintball_lines_list:
+				text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
-		pet_node.clear_pending_paintballz()
+
+	for l_id in layers_to_clear:
+		PaintballLayerManager.clear_layer(l_id)
+	
+	pet_node._pending_paintballs_data.clear()
+	pet_node.rebuild_pending_paintball_visuals()
 
 	save_file(true)
 	commit_full_snapshot("Commited Paintballz")
 
 	if pet_view.close_paintball_on_apply:
 		pet_view.close_paintball_mode()
+
+func transfer_paintballs_from_lnz_to_layer(layer_name: String = "Transferred") -> int:
+	save_backup()
+	commit_full_snapshot("Transfer Paintballs from LNZ")
+	
+	var bounds = get_section_bounds("[Paint Ballz]")
+	if bounds.empty():
+		print("[WARNING] LnzTextEdit: no [Paint Ballz] section found to transfer from")
+		return 0
+
+	var transferred_count: int = 0
+	var new_layer_id: int = -1
+	var lines_to_remove: Dictionary = {}
+
+	for line_idx in range(bounds.start, bounds.end):
+		var line = get_line(line_idx).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+
+		var parts: Array = split_line(line)
+		if parts.size() < 12:
+			if parts.size() < 5:
+				continue
+			while parts.size() < 12:
+				parts.append("0")
+
+		var rel_lnz: Vector3 = Vector3(float(parts[2]), float(parts[3]), float(parts[4]))
+		
+		var engine_scale: float = 1.0
+		if is_instance_valid(pet_node):
+			var pet_lnz = pet_node.get("lnz")
+			if pet_lnz and "scales" in pet_lnz:
+				engine_scale = pet_lnz.scales[0]
+		var local_pos: Vector3 = LnzLiveUtils.lnz_to_world_delta(rel_lnz, pet_node.pixel_world_size if is_instance_valid(pet_node) else 0.002, engine_scale)
+		
+		var pb_dict: Dictionary = {
+			"base_ball_no": int(parts[0]),
+			"diameter": int(parts[1]),
+			"relative_pos_lnz": rel_lnz,
+			"relative_pos_local": local_pos,
+			"color": int(parts[5]) if parts.size() > 5 else 0,
+			"outline_color": int(parts[6]) if parts.size() > 6 else 0,
+			"fuzz": int(parts[7]) if parts.size() > 7 else 0,
+			"outline_type": int(parts[8]) if parts.size() > 8 else -1,
+			"group": int(parts[9]) if parts.size() > 9 else 0,
+			"texture": int(parts[10]) if parts.size() > 10 else -1,
+			"anchored": bool(int(parts[11])) if parts.size() > 11 else false,
+			"lnz_line_index": line_idx,
+			"_pb_uid": PaintballLayerManager.allocate_paintball_uid()
+		}
+		print("[DEBUG] LnzTextEdit: transferred paintball line %d: base=%s diam=%s pos=(%s,%s,%s) color=%s outline=%s fuzz=%s outline_type=%s group=%s texture=%s anchored=%s"
+			% [line_idx, str(parts[0]), str(parts[1]), str(parts[2]), str(parts[3]), str(parts[4]), str(parts[5]), str(parts[6]), str(parts[7]), str(parts[8]), str(parts[9]), str(parts[10]), str(parts[11])])
+
+		if new_layer_id < 0:
+			new_layer_id = PaintballLayerManager.create_layer(layer_name)
+
+		var layer = PaintballLayerManager.get_layer(new_layer_id)
+		layer.paintballs.insert(0, pb_dict)
+		transferred_count += 1
+		lines_to_remove[line_idx] = true
+
+	if new_layer_id >= 0:
+		var all_text: String = get_text()
+		var text_lines: Array = all_text.split("\n")
+		var new_lines: Array = []
+		for i in range(text_lines.size()):
+			if not i in lines_to_remove:
+				new_lines.append(text_lines[i])
+		var new_text: String = ""
+		for i in range(new_lines.size()):
+			new_text += new_lines[i]
+			if i < new_lines.size() - 1:
+				new_text += "\n"
+		text = new_text
+		
+		PaintballLayerManager.set_active_layer(new_layer_id)
+		print("[STATUS] LnzTextEdit: transferred %d paintballs from LNZ to layer '%s' (id %d)"
+			% [transferred_count, layer_name, new_layer_id])
+		save_file(true, true)
+		commit_full_snapshot("Applied Transferred Paintballs")
+		if is_instance_valid(pet_node):
+			pet_node.recompose_model()
+		if is_instance_valid(pet_node) and pet_node.has_method("rebuild_pending_paintball_visuals"):
+			pet_node.rebuild_pending_paintball_visuals()
+	else:
+		print("[WARNING] LnzTextEdit: no paintballs found to transfer from LNZ")
+
+	return transferred_count
 
 func _on_palette_selected(filename_without_extension):
 	save_backup()
@@ -3230,34 +3462,45 @@ func resize_ball(ball_no: int, size_dif: int):
 	var end_line = bounds.end
 
 	if is_addball:
+		var target_line = -1
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == ball_no:
+					target_line = raw_idx
+					break
+		
+		if target_line != -1:
+			var old_line = get_line(target_line)
+			_modify_line_parts(target_line, start_line, end_line, {size_field_index: str(size_dif)})
+			save_file(true)
+			_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(target_line), target_line)
+			return
+
 		var addball_index = ball_no - max_base_ball_no
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			if count == addball_index:
 				var old_line = get_line(i)
 				_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
 				save_file(true)
-
 				_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
-
 				return
 			count += 1
 	else:
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			if count == ball_no:
 				var old_line = get_line(i)
 				var parts = split_line(raw)
 				if parts.size() > size_field_index:
 					_modify_line_parts(i, start_line, end_line, {size_field_index: str(size_dif)})
 					save_file(true)
-
 					_safe_commit_logical("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
-
 					return
 				else:
 					return
@@ -3286,26 +3529,40 @@ func move_ball(ball_no: int, new_pos: Vector3):
 	var end_line = bounds["end"]
 
 	if is_addball:
+		var target_line = -1
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == ball_no:
+					target_line = raw_idx
+					break
+
 		moved_ball_node = pet_node.ball_map.get(ball_no)
 		if moved_ball_node:
 			var base_ball_no = moved_ball_node.base_ball_no
-			var base_ball_node = pet_node.ball_map.get(base_ball_no)
-			if base_ball_node:
-				var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
+			var base_ball_node_ref = pet_node.ball_map.get(base_ball_no)
+			if base_ball_node_ref:
+				var world_rel = moved_ball_node.global_transform.origin - base_ball_node_ref.global_transform.origin
 				var new_relative_pos = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 
+				if target_line != -1:
+					var old_line = get_line(target_line)
+					_modify_line_parts(target_line, start_line, end_line, {1: str(round(new_relative_pos.x)), 2: str(round(new_relative_pos.y)), 3: str(round(new_relative_pos.z))})
+					save_file(true)
+					_safe_commit_logical("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(target_line), target_line)
+					return
+					
 				var idx = ball_no - KeyBallsData.max_base_ball_num
 				var count = 0
 				for i in range(start_line, end_line):
 					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
+					if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 					if count == idx:
 						var old_line = get_line(i)
 						var parts = split_line(raw)
 						if parts.size() >= 4:
 							_modify_line_parts(i, start_line, end_line, {1: str(round(new_relative_pos.x)), 2: str(round(new_relative_pos.y)), 3: str(round(new_relative_pos.z))})
 							save_file(true)
-
 							_safe_commit_logical("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, get_line(i), i)
 						break
 					count += 1
@@ -3315,7 +3572,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 		
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			
 			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
@@ -3390,7 +3647,8 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		"outline_color": reference_ball.outline_color_index,
 		"outline": reference_ball.outline,
 		"bodyarea": 1,
-		"position": Vector3(0, 0, 0)
+		"position": Vector3(0, 0, 0),
+		"anchor_ball": -1
 	}
 
 	# Size: addball_data, or ball_data fallback
@@ -3449,6 +3707,13 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		if addball_data != null:
 			props.position = addball_data.position
 
+	# Preserve anchor_ball from the reference addball_data if available
+	# NVM this causes more problems than it solves...
+	# if addball_data != null and typeof(addball_data) == TYPE_OBJECT and "anchor_ball" in addball_data:
+	# 	props.anchor_ball = addball_data.anchor_ball
+	# elif ball_data != null and typeof(ball_data) == TYPE_OBJECT and "anchor_ball" in ball_data:
+	# 	props.anchor_ball = ball_data.anchor_ball
+
 	# 6. Bodyarea
 	if KeyBallsData.bodyarea_map.has(props.target_base_ball):
 		props.bodyarea = KeyBallsData.bodyarea_map[props.target_base_ball]
@@ -3473,6 +3738,7 @@ func _construct_addball_line(props: Dictionary, delim: String) -> String:
 		str(props.bodyarea),
 		"0",
 		str(props.texture_id)
+		#str(props.get("anchor_ball", -1))
 	]
 	return _join_array(fields, delim) + "\n"
 
@@ -3503,6 +3769,17 @@ func create_addball(reference_ball, also_connect_line := false):
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 	var delim = _detect_delimiter(start_line, end_line)
 	var insert_line = _find_insertion_line(start_line, end_line)
+	var addball_count = 0
+	var current_line_num = start_line
+	while current_line_num < get_line_count():
+		var line = get_line(current_line_num).strip_edges()
+		if line.begins_with("["):
+			break
+		if line == "" or line.begins_with(";") or line.begins_with("#"):
+			current_line_num += 1
+			continue
+		addball_count += 1
+		current_line_num += 1
 
 	var line_text = _construct_addball_line(props, delim)
 	_insert_text_at_cursor_at_line(insert_line, line_text)
@@ -3512,7 +3789,7 @@ func create_addball(reference_ball, also_connect_line := false):
 
 	# save_file(false,true)
 
-	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
+	var addball_no = KeyBallsData.max_base_ball_num + addball_count
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
 	var success = pet_node.inject_single_addball(props, addball_no, reference_ball)
@@ -3622,6 +3899,169 @@ func unomit_ball(ball_no: int):
 		
 		i += 1
 
+func batch_omit_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var count = 0
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var section = search("[Omissions]", 0, 0, 0)
+		if section.empty():
+			if count == 0:
+				cursor_set_line(get_line_count())
+				insert_text_at_cursor("\n[Omissions]\n" + str(ball_no))
+				count += 1
+				continue
+		else:
+			var line_idx = section[SEARCH_RESULT_LINE] + 1
+			cursor_set_line(line_idx)
+			cursor_set_column(0)
+			insert_text_at_cursor(str(ball_no) + "\n")
+			count += 1
+	
+	if count > 0:
+		var bounds = get_section_bounds("[Linez]")
+		if not bounds.empty():
+			var lines_to_comment = []
+			for i in range(bounds.start, bounds.end):
+				var line = get_line(i).strip_edges()
+				if line.empty() or line.begins_with("[") or line.begins_with(";"): continue
+				var parts = split_line(line)
+				if parts.size() >= 2:
+					for bid in ball_ids:
+						if bid < 0:
+							continue
+						if parts[0] == str(bid) or parts[1] == str(bid):
+							lines_to_comment.append(i)
+							break
+			if not lines_to_comment.empty():
+				_apply_comments(lines_to_comment, "; ")
+		save_file(true)
+		commit_full_snapshot("Omitted Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_unomit_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var section = search("[Omissions]", 0, 0, 0)
+		if section.empty():
+			continue
+		var start = section[SEARCH_RESULT_LINE] + 1
+		var i = 0
+		while true:
+			var line_idx = start + i
+			if line_idx >= get_line_count(): break
+			var line = get_line(line_idx).strip_edges()
+			if line.begins_with("["): break
+			if line == str(ball_no):
+				select(line_idx, 0, line_idx + 1, 0)
+				cut()
+				var bounds = get_section_bounds("[Linez]")
+				if not bounds.empty():
+					var lines_to_uncomment = []
+					for j in range(bounds.start, bounds.end):
+						var l = get_line(j).strip_edges()
+						if not l.begins_with("; "): continue
+						if not " ; commented out by Omit Ballz action" in l: continue
+						var parts = split_line(l)
+						if parts.size() < 2: continue
+						if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
+						lines_to_uncomment.append(j)
+					if not lines_to_uncomment.empty():
+						_remove_comments(lines_to_uncomment, "; ")
+				save_file(true)
+				break
+			i += 1
+	commit_full_snapshot("Unomitted Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_delete_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var deleted = []
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var is_addball = ball_no > KeyBallsData.max_base_ball_num
+		if is_addball:
+			var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+			if line_no != -1:
+				select(line_no, 0, line_no + 1, 0)
+				cut()
+				deleted.append(ball_no)
+	_update_all_references(0) if not deleted.empty() else null
+	if not deleted.empty():
+		save_file(true)
+		commit_full_snapshot("Deleted Addballz %s" % LnzLiveUtils.format_ball_ranges(deleted))
+
+func batch_delete_base_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	save_backup()
+	var deleted = []
+	for ball_no in ball_ids:
+		if ball_no < 0 or ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		var line_no = find_line_in_ball_section(ball_no)
+		if line_no != -1:
+			select(line_no, 0, line_no + 1, 0)
+			cut()
+			deleted.append(ball_no)
+	if not deleted.empty():
+		save_file(true)
+		commit_full_snapshot("Deleted Ballz %s" % LnzLiveUtils.format_ball_ranges(deleted))
+
+func batch_comment_linez_for_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	var bounds = get_section_bounds("[Linez]")
+	if bounds.empty():
+		return
+	var lines_to_comment = []
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with("[") or line.begins_with(";"): continue
+		var parts = split_line(line)
+		if parts.size() >= 2:
+			for bid in ball_ids:
+				if bid < 0:
+					continue
+				if parts[0] == str(bid) or parts[1] == str(bid):
+					lines_to_comment.append(i)
+					break
+	if not lines_to_comment.empty():
+		_apply_comments(lines_to_comment, "; ")
+		save_file(true)
+		commit_full_snapshot("Commented Linez for Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
+func batch_uncomment_linez_for_balls(ball_ids: Array) -> void:
+	if ball_ids.empty():
+		return
+	var bounds = get_section_bounds("[Linez]")
+	if bounds.empty():
+		return
+	for ball_no in ball_ids:
+		if ball_no < 0:
+			continue
+		var lines_to_uncomment = []
+		for j in range(bounds.start, bounds.end):
+			var l = get_line(j).strip_edges()
+			if not l.begins_with("; "): continue
+			if not " ; commented out by Omit Ballz action" in l: continue
+			var parts = split_line(l)
+			if parts.size() < 2: continue
+			if parts[0] != str(ball_no) and parts[1] != str(ball_no): continue
+			lines_to_uncomment.append(j)
+		if not lines_to_uncomment.empty():
+			_remove_comments(lines_to_uncomment, "; ")
+	save_file(true)
+	commit_full_snapshot("Uncommented Linez for Ballz %s" % LnzLiveUtils.format_ball_ranges(ball_ids))
+
 func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 	save_backup()
 	print("[STATUS] LnzTextEdit: _on_ToolsMenu_clear_ball_paintballz: Commenting out paintballz for ball_no %d" % ball_no)
@@ -3711,7 +4151,7 @@ func _expand_exclusion_list_with_addballs(base_list: Array) -> Array:
 
 func _get_valid_line_parts(line_index: int) -> Array:
 	var line = get_line(line_index).strip_edges()
-	if line.empty() or line.begins_with(";") or line.begins_with("["):
+	if line.empty() or line.begins_with(";") or line.begins_with("[") or line.begins_with("#"):
 		return []
 	return split_line(line)
 
@@ -4469,10 +4909,10 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				var m2 = _resolve_mirror_id(b2, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				var m3 = _resolve_mirror_id(b3, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				
-				if m0 == -1: m0 = find_mirrored_ball(b0)
-				if m1 == -1: m1 = find_mirrored_ball(b1)
-				if m2 == -1: m2 = find_mirrored_ball(b2)
-				if m3 == -1: m3 = find_mirrored_ball(b3)
+				if m0 == -1: m0 = _resolve_mirror_id(b0, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m1 == -1: m1 = _resolve_mirror_id(b1, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m2 == -1: m2 = _resolve_mirror_id(b2, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m3 == -1: m3 = _resolve_mirror_id(b3, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				
 				if m0 == b0 and m1 == b1 and m2 == b2 and m3 == b3: continue
 				
@@ -4543,7 +4983,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	var addball_bounds = get_section_bounds("[Add Ball]")
 	if !addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
-		var max_ball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]")
+		var max_ball_no = KeyBallsData.max_base_ball_num + _get_addball_count_from_parser()
 		var new_addball_no = max_ball_no
 		
 		var addball_lines = []
@@ -4553,7 +4993,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		var data_idx = 0
 		for i in range(addball_lines.size()):
 			var line = addball_lines[i].strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";") or line.begins_with("#"): continue
 
 			var current_addball_no = KeyBallsData.max_base_ball_num + data_idx
 			var parts = split_line(line)
@@ -5061,23 +5501,39 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 				matched = true
 
 	elif section_name == "[Add Ball]":
-		var idx = ball_no - KeyBallsData.max_base_ball_num
-		var count = 0
-		for i in range(bounds.start, bounds.end):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
-			if count == idx:
-				var parts = split_line(raw)
-				if not parts.empty():
-					callback.call(i, parts, delim)
-					matched = true
-				break
-			count += 1
+		var target_ball_no = ball_no
+		var map_matched = false
+		if is_instance_valid(pet_node) and pet_node.get("lnz") != null and pet_node.lnz.get("addball_raw_to_ball_map") != null:
+			var map = pet_node.lnz.addball_raw_to_ball_map
+			for raw_idx in map:
+				if map[raw_idx] == target_ball_no:
+					var raw_line = get_line(raw_idx).strip_edges()
+					if raw_line != "" and not raw_line.begins_with(";") and not raw_line.begins_with("#"):
+						var parts = split_line(raw_line)
+						if not parts.empty():
+							callback.call(raw_idx, parts, delim)
+							matched = true
+							map_matched = true
+					break
+		
+		if not map_matched:
+			var idx = ball_no - KeyBallsData.max_base_ball_num
+			var count = 0
+			for i in range(bounds.start, bounds.end):
+				var raw = get_line(i).strip_edges()
+				if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
+				if count == idx:
+					var parts = split_line(raw)
+					if not parts.empty():
+						callback.call(i, parts, delim)
+						matched = true
+					break
+				count += 1
 
 	elif section_name == "[Move]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5086,7 +5542,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Paint Ballz]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5095,7 +5551,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Linez]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() >= 2 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
 				callback.call(i, parts, delim)
@@ -5104,7 +5560,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Polygons]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() >= 4 and (ball_no in [parts[0].to_int(), parts[1].to_int(), parts[2].to_int(), parts[3].to_int()]):
 				callback.call(i, parts, delim)
@@ -5113,7 +5569,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Omissions]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with("["): continue
+			if raw == "" or raw.begins_with("[") or raw.begins_with("#"): continue
 			if raw.to_int() == ball_no:
 				var parts = Array([str(ball_no)])
 				callback.call(i, parts, delim)
@@ -5122,7 +5578,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Ball Size Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5131,7 +5587,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Fuzz Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5140,7 +5596,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Color Info Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5149,7 +5605,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Outline Color Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 0 and parts[0].to_int() == ball_no:
 				callback.call(i, parts, delim)
@@ -5158,7 +5614,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Add Ball Override]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			var rel = parts[0].to_int()
 			if rel + KeyBallsData.max_base_ball_num == ball_no:
@@ -5168,7 +5624,7 @@ func _for_each_matching_line_in_section(section_name: String, ball_no: int, call
 	elif section_name == "[Project Ball]":
 		for i in range(bounds.start, bounds.end):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
+			if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 			var parts = split_line(raw)
 			if parts.size() > 1 and (parts[0].to_int() == ball_no or parts[1].to_int() == ball_no):
 				callback.call(i, parts, delim)
@@ -5302,3 +5758,95 @@ func apply_struct_strings(addballz_str: String, linez_str: String) -> void:
 	save_file(true)
 	commit_full_snapshot("Applied Struct Mode Nodes")
 
+func rebase_addballz() -> void:
+	save_backup()
+	
+	var bounds = get_section_bounds("[Add Ball]")
+	if bounds.empty():
+		var msg = "No [Add Ball] section found to rebase."
+		print("[WARNING] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)
+		return
+		
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var max_base = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+	
+	var addball_map = {}
+	var addball_id = max_base
+	
+	for i in range(bounds.start, bounds.end):
+		var raw_line = get_line(i)
+		var line = raw_line.strip_edges()
+		
+		if line.empty() or line.begins_with(";") or line.begins_with("[") or line.begins_with("#"):
+			continue
+			
+		var parts = split_line(raw_line)
+		if parts.size() >= 5:
+			addball_map[addball_id] = {
+				"base": parts[0].to_int(),
+				"x": parts[1].to_float(),
+				"y": parts[2].to_float(),
+				"z": parts[3].to_float(),
+				"line_idx": i,
+				"parts": parts,
+				"raw_line": raw_line
+			}
+		addball_id += 1
+		
+	var changed_any = false
+	var lines_to_update = {}
+	
+	for a_id in addball_map.keys():
+		var data = addball_map[a_id]
+		
+		if data.base >= max_base:
+			var current_base = data.base
+			var acc_x = data.x
+			var acc_y = data.y
+			var acc_z = data.z
+			
+			var safe_counter = 0
+			while current_base >= max_base and safe_counter < 1000:
+				if not addball_map.has(current_base):
+					break
+				var parent = addball_map[current_base]
+				acc_x += parent.x
+				acc_y += parent.y
+				acc_z += parent.z
+				current_base = parent.base
+				safe_counter += 1
+				
+			if current_base < max_base:
+				var parts = data.parts.duplicate()
+				var comment_part = parts.pop_back()
+				
+				parts[0] = str(current_base)
+				parts[1] = str(int(round(acc_x)))
+				parts[2] = str(int(round(acc_y)))
+				parts[3] = str(int(round(acc_z)))
+				
+				var indent_len = data.raw_line.length() - data.raw_line.lstrip(" \t").length()
+				var indent = data.raw_line.substr(0, indent_len)
+				
+				var new_line = indent + _join_array(parts, delim)
+				if not comment_part.empty():
+					new_line += " " + comment_part
+					
+				lines_to_update[data.line_idx] = new_line
+				changed_any = true
+				
+	if changed_any:
+		for line_idx in lines_to_update.keys():
+			set_line(line_idx, lines_to_update[line_idx])
+			
+		save_file(true)
+		commit_full_snapshot("Rebased Addballz")
+		
+		var msg = "Rebased addballz to basal-most parent base ballz."
+		print("[STATUS] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)
+	else:
+		var msg = "No addballz needing rebase."
+		print("[STATUS] LnzTextEdit: " + msg)
+		if console_log: console_log.log_message(msg)

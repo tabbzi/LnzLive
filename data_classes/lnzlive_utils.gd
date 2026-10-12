@@ -281,7 +281,11 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 
 
 ### SIZE CONVERSIONS ###
-static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> int:
+static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> int:
+	# Converts a visual float size back to a raw LNZ integer size
+	if is_anchored:
+		return int(round(target_visual - bhd_size))
+	
 	var req_total: float = (target_visual / (engine_scale / 255.0)) + 2.0
 	
 	if not is_addball:
@@ -289,8 +293,23 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 		
 	return int(round(req_total - bhd_size))
 
-static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> float:
-	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y)
+static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	# Converts a raw LNZ integer size to a visual float size
+	if is_anchored:
+		return max(1.0, float(bhd_size + lnz_size))
+	
+	var total: float = lnz_size + bhd_size
+	if not is_addball:
+		total = total * (enl_x / 100.0) + enl_y
+	return (total - 2.0) * (engine_scale / 255.0)
+
+static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	# Takes a visual size, converts to LNZ, snaps to even, converts back to visual size, and returns snapped value
+	if is_anchored:
+		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
+		return max(1.0, float(bhd_size + final_lnz))
+	
+	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, false)
 	var current_base_size: float = bhd_size + final_lnz
 	
 	if not is_addball:
@@ -300,6 +319,12 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	var snapped: float = round((current_base_size - offset) * (engine_scale / 255.0))
 	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
 	return snapped
+
+static func lnz_to_visual_size_snapped(lnz_size: float, engine_scale: float) -> float:
+	# Converts raw LNZ size to visual float size with even-snapping
+	var s = max(1, round((lnz_size - 2.0) * (engine_scale / 255.0)))
+	s -= 1.0 - fmod(s, 2.0)
+	return max(1.0, s)
 
 
 ### PATTERN & PAINTBALL UTILITIES ###
@@ -796,7 +821,7 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 
 ### COLOR UTILITIES ###
 static func get_luminance(color: Color) -> float:
-	return color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+	return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
 
 static func get_saturation(color: Color) -> float:
 	var max_c: float = max(color.r, max(color.g, color.b))
@@ -881,33 +906,39 @@ static func load_config(section: String, path: String) -> Dictionary:
 	return result
 
 ### WEB UTILITIES ###
-static func web_file_dialog(accept_extensions: String) -> void:
-	JavaScript.eval("""
-	window.fileUploadData = {}
+static func web_file_picker(accept_extensions: String, data_key: String, callback = null) -> void:
+	JavaScript.eval("window." + data_key + " = {}")
 
+	var js_code = """
 	let el = document.createElement("input");
 	el.type = "file"
 	el.accept = '""" + accept_extensions + """'
 	el.addEventListener("change", (e) => {
 	  if (e.target.files.length > 0) {
 		let file = e.target.files[0]
-		window.fileUploadData.name = file.name
+		window.""" + data_key + """.name = file.name
 
 		let reader = new FileReader()
 		reader.readAsArrayBuffer(file)
 		reader.onloadend = (ev) => {
-		  window.fileUploadData.blob = ev.target.result
+		  window.""" + data_key + """.blob = ev.target.result
 		}
 	  }
 	})
 	el.click()
-	""")
+	"""
 
-static func get_web_file_blob() -> Object:
-	return JavaScript.eval("window.fileUploadData.blob")
+	if callback != null:
+		var cb = JavaScript.create_callback(callback[0], callback[1])
+		JavaScript.get_interface("window").godotFilePickerCallback = cb
+		js_code += "window.godotFilePickerCallback();"
+	JavaScript.eval(js_code)
 
-static func get_web_file_name() -> String:
-	var name = JavaScript.eval("window.fileUploadData.name")
+static func get_web_file_blob(data_key: String = "fileUploadData") -> Object:
+	return JavaScript.eval("window." + data_key + ".blob")
+
+static func get_web_file_name(data_key: String = "fileUploadData") -> String:
+	var name = JavaScript.eval("window." + data_key + ".name")
 	return name if name != null else ""
 
 static func web_download_text(filename: String, content: String) -> void:
@@ -1025,41 +1056,6 @@ static func load_json_preset(file_path: String) -> Dictionary:
 			result = json_res.result
 	return result
 
-static func ensure_web_ref_dir() -> void:
-	JavaScript.eval("""
-	if (!window.fileUploadData) window.fileUploadData = {}
-	""")
-
-static func web_upload_image(dest_dir: String, callback_target: Object, callback_method: String) -> void:
-	var js_code = """
-	window.refUploadData = {}
-	var el = document.createElement("input");
-	el.type = "file"
-	el.accept = '.png,.jpg,.jpeg,.gif'
-	el.addEventListener("change", (e) => {
-	  if (e.target.files.length > 0) {
-		let file = e.target.files[0]
-		window.refUploadData.name = file.name
-		let reader = new FileReader()
-		reader.readAsArrayBuffer(file)
-		reader.onloadend = (ev) => {
-		  window.refUploadData.blob = ev.target.result
-		}
-	  }
-	})
-	el.click()
-	"""
-	var cb = JavaScript.create_callback(callback_target, callback_method)
-	JavaScript.get_interface("window").godotRefUpload = cb
-	JavaScript.eval(js_code)
-
-static func get_web_ref_blob() -> Object:
-	return JavaScript.eval("window.refUploadData.blob")
-
-static func get_web_ref_name() -> String:
-	var name = JavaScript.eval("window.refUploadData.name")
-	return name if name != null else ""
-
 static func save_web_ref_to_disk(file_name: String, file_blob) -> int:
 	var dir: Directory = Directory.new()
 	var dest_dir: String = "user://resources/references/"
@@ -1108,3 +1104,101 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 
 	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):
 		le.connect("text_changed", parent_script, "_on_color_list_text_changed", [preview_container])
+
+static func color_to_hsv(color: Color) -> Vector3:
+	var h: float = 0.0
+	var s: float = 0.0
+	var v: float = 0.0
+	var min_c: float = min(color.r, min(color.g, color.b))
+	var max_c: float = max(color.r, max(color.g, color.b))
+	var delta: float = max_c - min_c
+	v = max_c
+	if delta != 0.0:
+		if max_c == color.r:
+			h = fmod((color.g - color.b) / delta, 6.0)
+		elif max_c == color.g:
+			h = fmod((color.b - color.r) / delta + 2.0, 6.0)
+		else:
+			h = fmod((color.r - color.g) / delta + 4.0, 6.0)
+		h = fmod(h, 6.0)
+		if h < 0.0:
+			h += 6.0
+		h = h / 6.0
+		s = delta / max_c
+	else:
+		s = 0.0
+	return Vector3(h, s, v)
+
+static func hsv_to_color(h: float, s: float, v: float) -> Color:
+	var r: float = 0.0
+	var g: float = 0.0
+	var b: float = 0.0
+	var hi: int = int(floor(h * 6.0)) % 6
+	var f: float = (h * 6.0) - floor(h * 6.0)
+	var p: float = v * (1.0 - s)
+	var q: float = v * (1.0 - f * s)
+	var t: float = v * (1.0 - (1.0 - f) * s)
+	if hi == 0:
+		r = v; g = t; b = p
+	elif hi == 1:
+		r = q; g = v; b = p
+	elif hi == 2:
+		r = p; g = v; b = t
+	elif hi == 3:
+		r = p; g = q; b = v
+	elif hi == 4:
+		r = t; g = p; b = v
+	else:
+		r = v; g = p; b = q
+	return Color(r, g, b, 1.0)
+
+static func color_distance_rgb(a: Color, b: Color) -> float:
+	var dr: float = a.r - b.r
+	var dg: float = a.g - b.g
+	var db: float = a.b - b.b
+	return sqrt(dr * dr + dg * dg + db * db)
+
+class ColorSorter:
+	static func cmp_hue(a: Color, b: Color) -> bool:
+		return a.h < b.h
+
+	static func cmp_sat(a: Color, b: Color) -> bool:
+		return a.s < b.s
+
+	static func cmp_val(a: Color, b: Color) -> bool:
+		return a.v < b.v
+
+	static func cmp_lum(a: Color, b: Color) -> bool:
+		return 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b < 0.2126 * b.r + 0.7152 * b.g + 0.0722 * b.b
+
+static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
+	var sorted: Array = colors.duplicate()
+	var sorter = ColorSorter.new()
+
+	if sort_mode.begins_with("hue"):
+		sorted.sort_custom(sorter, "cmp_hue")
+	elif sort_mode.begins_with("saturation"):
+		sorted.sort_custom(sorter, "cmp_sat")
+	elif sort_mode.begins_with("value"):
+		sorted.sort_custom(sorter, "cmp_val")
+	elif sort_mode.begins_with("luminance"):
+		sorted.sort_custom(sorter, "cmp_lum")
+
+	if sort_mode.ends_with("_desc"):
+		sorted.invert()
+
+	return sorted
+
+static func find_closest_color_index(colors: Array, target: Color) -> int:
+	var best_idx: int = 0
+	var best_dist: float = color_distance_rgb(colors[0], target)
+	for i in range(1, colors.size()):
+		var d = color_distance_rgb(colors[i], target)
+		if d < best_dist:
+			best_dist = d
+			best_idx = i
+	return best_idx
+
+static func find_closest_color(colors: Array, target: Color) -> Color:
+	var idx = find_closest_color_index(colors, target)
+	return colors[idx]

@@ -178,7 +178,7 @@ func _draw() -> void:
 	if mirror_x:
 		draw_line(Vector2(center.x, 0), Vector2(center.x, rect_size.y), Color(1, 0.5, 0.5, 0.5), 2.0)
 	if mirror_y:
-		draw_line(Vector2(0, center.y), Vector2(center.x, center.y), Color(0.5, 0.5, 1, 0.5), 2.0)
+		draw_line(Vector2(0, center.y), Vector2(rect_size.x, center.y), Color(0.5, 0.5, 1, 0.5), 2.0)
 
 	if _line_mode != LineMode.OFF and _line_start_pos != Vector2(-1, -1) and _line_end_pos != Vector2(-1, -1):
 		var preview_color: Color = Color(1, 1, 0, 0.7)

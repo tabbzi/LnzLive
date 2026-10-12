@@ -1,0 +1,16 @@
+{
+  "disable": [
+    "trailing-whitespace",
+    "max-line-length",
+    "max-file-lines",
+    "class-definitions-order",
+    "no-elif-return",
+    "no-else-return",
+    "unnecessary-pass"
+  ],
+  "max-public-methods": 30,
+  "function-arguments-number": 15,
+  "function-variable-name": "(_?[a-z][a-z0-9_]*|[a-z]+)",
+  "class-variable-name": "(_?[a-z][a-z0-9_]*)",
+  "excluded_directories": [".git", "addons", "export"]
+}

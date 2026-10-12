@@ -24,10 +24,12 @@ class VariationBlock:
 
 class VirtualFileLineReader:
 	var _lines: Array
+	var _raw_line_indices: Array = []
 	var _cursor: int = 0
 
-	func _init(lines: Array) -> void:
+	func _init(lines: Array, raw_line_indices: Array = []) -> void:
 		_lines = lines
+		_raw_line_indices = raw_line_indices
 
 	func get_line() -> String:
 		if _cursor < _lines.size():
@@ -50,6 +52,11 @@ class VirtualFileLineReader:
 
 	func get_len() -> int:
 		return _lines.size()
+
+	func get_raw_line_index(cursor_pos: int) -> int:
+		if cursor_pos >= 0 and cursor_pos < _raw_line_indices.size():
+			return _raw_line_indices[cursor_pos]
+		return -1
 
 var species: int = 0
 var scales: Vector2 = Vector2(255, 255)
@@ -78,6 +85,8 @@ var sections_map: Dictionary = {}
 var excluded_subblocks: Dictionary = {}
 
 var whisker_connections: Array = []
+
+var addball_raw_to_ball_map: Dictionary = {}
 
 var custom_eyes: Dictionary = {}
 
@@ -150,9 +159,9 @@ func _scan_file(file: File) -> void:
 				current_var_id = parsed_id
 				current_subblock_key = new_subblock_key
 			else:
-				_append_line(current_section, current_var_id, line, current_subblock_key)
+				_append_line(current_section, current_var_id, line, line_number, current_subblock_key)
 		else:
-			_append_line(current_section, current_var_id, line, current_subblock_key)
+			_append_line(current_section, current_var_id, line, line_number, current_subblock_key)
 
 		line_number += 1
 
@@ -223,7 +232,7 @@ func _ensure_subblock(section: String, parsed_id: int, suffix: String, custom_na
 	block_dict[subblock_key] = block
 	return subblock_key
 
-func _append_line(section: String, id: int, line: String, subblock_key = 0):
+func _append_line(section: String, id: int, line: String, line_number: int, subblock_key = 0):
 	if sections_map.has(section):
 		var section_data = sections_map[section]
 		if typeof(section_data) != TYPE_DICTIONARY:
@@ -232,15 +241,15 @@ func _append_line(section: String, id: int, line: String, subblock_key = 0):
 			var block_or_dict = section_data[id]
 			if typeof(block_or_dict) == TYPE_DICTIONARY:
 				if block_or_dict.has(subblock_key):
-					block_or_dict[subblock_key].lines.append(line)
+					block_or_dict[subblock_key].lines.append({"text": line, "raw_idx": line_number})
 				else:
 					var new_block = VariationBlock.new(id, "Variation " + str(id), section, 0)
 					new_block.base_id = id
 					new_block.subblock_key = subblock_key
 					block_or_dict[subblock_key] = new_block
-					block_or_dict[subblock_key].lines.append(line)
+					block_or_dict[subblock_key].lines.append({"text": line, "raw_idx": line_number})
 			else:
-				block_or_dict.lines.append(line)
+				block_or_dict.lines.append({"text": line, "raw_idx": line_number})
 
 func get_next_section(file: File, section_name: String) -> bool:
 	file.seek(0)
@@ -255,14 +264,14 @@ func set_excluded_subblocks(p_data: Dictionary) -> void:
 	excluded_subblocks = p_data
 
 func compile_section(section_name: String, active_config) -> VirtualFileLineReader:
-	var compiled_lines: Array = []
+	var temp_lines: Array = []
 
 	if not sections_map.has(section_name):
-		return VirtualFileLineReader.new(compiled_lines)
+		return VirtualFileLineReader.new([], [])
 
 	var section_dict = sections_map[section_name]
 	if typeof(section_dict) != TYPE_DICTIONARY:
-		return VirtualFileLineReader.new(compiled_lines)
+		return VirtualFileLineReader.new([], [])
 
 	if section_dict.has(0):
 		var base_block = section_dict[0]
@@ -270,9 +279,9 @@ func compile_section(section_name: String, active_config) -> VirtualFileLineRead
 			for key in base_block:
 				var subblock = base_block[key]
 				if typeof(subblock) == TYPE_OBJECT:
-					compiled_lines.append_array(subblock.lines)
+					_append_compiled_lines(temp_lines, subblock.lines)
 		elif typeof(base_block) == TYPE_OBJECT:
-			compiled_lines.append_array(base_block.lines)
+			_append_compiled_lines(temp_lines, base_block.lines)
 
 	if typeof(active_config) == TYPE_DICTIONARY:
 		# active_config is {subblock_key: id_or_suffix_string}
@@ -295,67 +304,82 @@ func compile_section(section_name: String, active_config) -> VirtualFileLineRead
 
 			var block_or_dict = section_dict[parsed_id]
 			if typeof(block_or_dict) == TYPE_OBJECT:
-				compiled_lines.append_array(block_or_dict.lines)
+				_append_compiled_lines(temp_lines, block_or_dict.lines)
 			elif typeof(block_or_dict) == TYPE_DICTIONARY:
-				# Check direct key match (int subblock index)
 				if block_or_dict.has(subblock_key):
 					var sub = block_or_dict[subblock_key]
 					if typeof(sub) == TYPE_OBJECT:
-						compiled_lines.append_array(sub.lines)
-				# Check suffix match (string key)
+						_append_compiled_lines(temp_lines, sub.lines)
 				elif parsed_suffix != "" and block_or_dict.has(parsed_suffix):
 					var sub = block_or_dict[parsed_suffix]
 					if typeof(sub) == TYPE_OBJECT:
-						compiled_lines.append_array(sub.lines)
-				# Fallback to key 0
+						_append_compiled_lines(temp_lines, sub.lines)
 				elif block_or_dict.has(0):
 					var sub = block_or_dict[0]
 					if typeof(sub) == TYPE_OBJECT:
-						compiled_lines.append_array(sub.lines)
+						_append_compiled_lines(temp_lines, sub.lines)
+	else:
+		var active_ids: Array = active_config if typeof(active_config) == TYPE_ARRAY else [0]
+		var active_int_ids: Array = []
+		var active_suffixes = {}
 
-		return VirtualFileLineReader.new(compiled_lines)
-
-	var active_ids: Array = active_config if typeof(active_config) == TYPE_ARRAY else [0]
-	var active_int_ids: Array = []
-	var active_suffixes = {}
-
-	for entry in active_ids:
-		if typeof(entry) == TYPE_INT:
-			if entry == 0:
-				continue
-			active_int_ids.append(entry)
-		elif typeof(entry) == TYPE_STRING:
-			var parts: Array = (entry as String).split(".")
-			if parts.size() == 2 and parts[0].is_valid_integer():
-				var entry_id: int = parts[0].to_int()
-				if entry_id == 0:
+		for entry in active_ids:
+			if typeof(entry) == TYPE_INT:
+				if entry == 0:
 					continue
-				if not active_suffixes.has(entry_id):
-					active_suffixes[entry_id] = []
-				active_suffixes[entry_id].append(parts[1])
+				active_int_ids.append(entry)
+			elif typeof(entry) == TYPE_STRING:
+				var parts: Array = (entry as String).split(".")
+				if parts.size() == 2 and parts[0].is_valid_integer():
+					var entry_id: int = parts[0].to_int()
+					if entry_id == 0:
+						continue
+					if not active_suffixes.has(entry_id):
+						active_suffixes[entry_id] = []
+					active_suffixes[entry_id].append(parts[1])
 
-	for id in active_int_ids:
-		if not section_dict.has(id):
-			continue
-		var block_or_dict = section_dict[id]
+		for id in active_int_ids:
+			if not section_dict.has(id):
+				continue
+			var block_or_dict = section_dict[id]
 
-		if typeof(block_or_dict) == TYPE_OBJECT:
-			compiled_lines.append_array(block_or_dict.lines)
-			continue
+			if typeof(block_or_dict) == TYPE_OBJECT:
+				_append_compiled_lines(temp_lines, block_or_dict.lines)
+				continue
 
-		if typeof(block_or_dict) != TYPE_DICTIONARY:
-			continue
+			if typeof(block_or_dict) != TYPE_DICTIONARY:
+				continue
 
-		for key in block_or_dict:
-			var sub = block_or_dict[key]
-			if typeof(sub) == TYPE_OBJECT:
-				compiled_lines.append_array(sub.lines)
+			for key in block_or_dict:
+				var sub = block_or_dict[key]
+				if typeof(sub) == TYPE_OBJECT:
+					_append_compiled_lines(temp_lines, sub.lines)
 
-	return VirtualFileLineReader.new(compiled_lines)
+	temp_lines.sort_custom(self, "_sort_by_raw_idx")
+
+	# 4. Extract into final parsed arrays
+	var compiled_lines: Array = []
+	var raw_line_indices: Array = []
+	for entry in temp_lines:
+		compiled_lines.append(entry["text"])
+		raw_line_indices.append(entry["raw_idx"])
+
+	return VirtualFileLineReader.new(compiled_lines, raw_line_indices)
+
+func _sort_by_raw_idx(a: Dictionary, b: Dictionary) -> bool:
+	return a["raw_idx"] < b["raw_idx"]
+
+func _append_compiled_lines(temp_lines: Array, lines: Array) -> void:
+	for entry in lines:
+		if typeof(entry) == TYPE_DICTIONARY:
+			temp_lines.append(entry)
+		else:
+			temp_lines.append({"text": entry, "raw_idx": -1})
 
 func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
+		var current_pos = reader.get_position()
 		var line: String = reader.get_line().dedent()
 		if line.empty() and reader.eof_reached():
 			break
@@ -373,6 +397,8 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 		for i in range(keys.size()):
 			if i < parsed.size():
 				dict[keys[i]] = int(parsed[i].get_string())
+				
+		dict["_raw_idx"] = reader.get_raw_line_index(current_pos)
 		return_array.append(dict)
 	return return_array
 
@@ -640,6 +666,7 @@ func get_balls(reader: VirtualFileLineReader) -> void:
 		i += 1
 
 func get_addballs(reader: VirtualFileLineReader) -> void:
+	# 15th column (anchor_ball): when > -1, defines which base ball's final rendered size (after BHD + Ballz Info + extension/enlargement + Default Scales) reference base size for addballz unscaled size delta
 	var parsed_lines: Array = get_parsed_lines(
 		reader,
 		[
@@ -665,6 +692,8 @@ func get_addballs(reader: VirtualFileLineReader) -> void:
 	if balls.size() > 0:
 		max_ball_num = balls.keys().max() + 1
 
+	addball_raw_to_ball_map.clear()
+	
 	for line in parsed_lines:
 		var pos: Vector3 = Vector3(line.x, line.y, line.z)
 		var ball: AddBallData = AddBallData.new(
@@ -684,6 +713,10 @@ func get_addballs(reader: VirtualFileLineReader) -> void:
 			line.get("anchor_ball", -1)
 		)
 		addballs[max_ball_num] = ball
+		
+		if line.has("_raw_idx") and line["_raw_idx"] != -1:
+			addball_raw_to_ball_map[line["_raw_idx"]] = max_ball_num
+			
 		max_ball_num += 1
 
 func get_default_scales(reader: VirtualFileLineReader) -> void:
@@ -852,9 +885,9 @@ func flatten_section(section_name: String, active_config: Dictionary) -> Array:
 	if typeof(section_data) != TYPE_DICTIONARY:
 		return result
 	
-	result.append("[" + section_name + "]")
+	var temp_lines = []
 	
-	_flatten_append_block(result, section_data, 0)
+	_flatten_append_block(temp_lines, section_data, 0)
 	
 	for subblock_key in active_config:
 		var val = active_config[subblock_key]
@@ -876,28 +909,44 @@ func flatten_section(section_name: String, active_config: Dictionary) -> Array:
 				target_block = id_data[0]
 			
 			if typeof(target_block) == TYPE_OBJECT:
-				_flatten_append_lines(result, target_block.lines)
+				_flatten_append_lines(temp_lines, target_block.lines)
 		elif typeof(id_data) == TYPE_OBJECT:
 			# Bare variation block (no subblocks)
-			_flatten_append_lines(result, id_data.lines)
+			_flatten_append_lines(temp_lines, id_data.lines)
 	
+	temp_lines.sort_custom(self, "_sort_by_raw_idx")
+	
+	# Build the final array of text strings
+	result.append("[" + section_name + "]")
+	for entry in temp_lines:
+		result.append(entry["text"])
+		
 	return result
 
-func _flatten_append_block(result: Array, section_data: Dictionary, id: int) -> void:
+func _flatten_append_block(temp_lines: Array, section_data: Dictionary, id: int) -> void:
 	if not section_data.has(id):
 		return
 	var block = section_data[id]
 	if typeof(block) == TYPE_OBJECT:
-		_flatten_append_lines(result, block.lines)
+		_flatten_append_lines(temp_lines, block.lines)
 	elif typeof(block) == TYPE_DICTIONARY:
 		for sk in block:
 			var sub = block[sk]
 			if typeof(sub) == TYPE_OBJECT:
-				_flatten_append_lines(result, sub.lines)
+				_flatten_append_lines(temp_lines, sub.lines)
 
-func _flatten_append_lines(result: Array, lines: Array) -> void:
+func _flatten_append_lines(temp_lines: Array, lines: Array) -> void:
 	for line in lines:
-		var stripped = line.strip_edges()
+		var text: String
+		var raw_idx: int = -1
+		
+		if typeof(line) == TYPE_DICTIONARY:
+			text = line["text"]
+			raw_idx = line["raw_idx"]
+		else:
+			text = line
+			
+		var stripped = text.strip_edges()
 		if stripped == "":
 			continue
 		elif stripped.begins_with("#") and stripped.length() > 1 and stripped[1].is_valid_integer():
@@ -907,7 +956,7 @@ func _flatten_append_lines(result: Array, lines: Array) -> void:
 			# Skip ## subblock separators
 			continue
 		else:
-			result.append(line)
+			temp_lines.append({"text": text, "raw_idx": raw_idx})
 
 func _flatten_resolve_id(val) -> int:
 	if typeof(val) == TYPE_INT:

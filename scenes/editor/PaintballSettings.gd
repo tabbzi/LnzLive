@@ -1,18 +1,21 @@
 extends DraggablePanel
 ## PaintballSettings.gd
 ## Manages the UI panel and logic for the Paintball Mode settings
-## This script controls the visibility of the settings panel and provides methods to:
-## 1. Initialize the panel to the bottom center of the viewport and connect UI signals
-## 2. Show and hide the panel
-## 3. Retrieve all current paintball properties (e.g., diameter, color, fuzz)
-## 4. Emit the `apply_paintballz` signal when the "Apply" button is pressed
-## 5. Emit the `delete_mode_toggled(is_on)` signal when the checkbox is toggled
+
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	PAINTBALL ACTIONS
+##	SETTINGS MANAGEMENT
+##	PALETTE, COLOR PREVIEWS & COLOR GENERATORS
+##	DESIGN MODE: CANVAS, TOOLS & SLOTS TREE
+##	PATTERN JSON EXPORT/IMPORT
+##	LAYER MANAGEMENT
+##	LAYER JSON EXPORT/IMPORT
 
 signal apply_paintballz
 signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
-onready var paintballz_tree: Tree = find_node("PaintballzTree")
 onready var _apply_button: Button = find_node("ApplyButton")
 onready var _clear_button: Button = find_node("ClearButton")
 onready var _eraser_checkbox: CheckBox = find_node("EraserCheckBox")
@@ -64,7 +67,6 @@ onready var _brush_space_label: Label = find_node("BrushSpaceLabel")
 onready var _mirror_x: CheckBox = find_node("MirrorX")
 onready var _mirror_y: CheckBox = find_node("MirrorY")
 onready var _canvas_eraser: CheckBox = find_node("CanvasEraser")
-onready var _rotate_fixed: CheckBox = find_node("RotateFixed")
 onready var _rotate_jitter: SpinBox = find_node("RotateJitter")
 onready var _spread_jitter: SpinBox = find_node("SpreadJitter")
 onready var _slots_tree: Tree = find_node("SlotsTree")
@@ -83,6 +85,17 @@ onready var _pattern_info_button: Button = find_node("PatternInfoButton")
 onready var _pattern_info_dialog: WindowDialog = find_node("PatternInfoDialog")
 onready var _import_pattern_button: Button = find_node("ImportPatternButton")
 onready var _export_pattern_button: Button = find_node("ExportPatternButton")
+
+onready var _add_layer_button: Button = find_node("AddLayerButton")
+onready var _transfer_lnz_button: Button = find_node("TransferLnzButton")
+onready var _clear_all_layers_button: Button = find_node("ClearAllLayersButton")
+onready var _export_layers_button: Button = find_node("ExportLayersButton")
+onready var _import_layers_button: Button = find_node("ImportLayersButton")
+onready var _active_layer_label: Label = find_node("ActiveLayerLabel")
+onready var _layers_tree: Tree = find_node("LayersTree")
+onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDialog")
+onready var _layer_section: Control = find_node("LayerSection")
+onready var _use_layers_checkbox: CheckBox = find_node("UseLayersCheckBox")
 
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
@@ -142,7 +155,17 @@ var design_color_slots: Array = []
 
 var _pending_paintball_count: int = 0
 
-const DESIGN_CANVAS_SIZE: float = 200.0
+const DESIGN_CANVAS_SIZE: float = 256.0
+
+var _is_refreshing_layer_tree: bool = false
+var _pending_delete_layer_id: int = -1
+
+### SETUP & INITIALIZATION ###
+# _ready
+# _input
+# _connect_settings_signals
+# _connect_design_signals
+# _connect_layer_manager_signals
 
 func _ready() -> void:
 	_apply_button.connect("pressed", self, "_on_ApplyButton_pressed")
@@ -174,12 +197,15 @@ func _ready() -> void:
 	_setup_color_previews()
 	_connect_settings_signals()
 	_connect_design_signals()
+	_setup_layer_tree()
+	_connect_layer_manager_signals()
 
 	_brush_space_slider.connect("value_changed", self, "_on_brush_space_changed")
 
 	_setup_slots_tree()
 	load_settings()
 	set_process(true)
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.control:
@@ -209,154 +235,117 @@ func _input(event: InputEvent) -> void:
 			_design_canvas.update()
 			save_settings()
 
-func _setup_color_previews() -> void:
-	LnzLiveUtils.setup_preview_wrapper(self, _color, "Color")
-	LnzLiveUtils.setup_preview_wrapper(self, _outline_color, "OutlineColor")
+
+func _connect_settings_signals() -> void:
+	_diameter_min.connect("value_changed", self, "_on_setting_changed")
+	_diameter_max.connect("value_changed", self, "_on_setting_changed")
+	_tapered.connect("toggled", self, "_on_setting_changed")
+	_pixel_mode.connect("toggled", self, "_on_setting_changed")
 	
-	_color_preview = find_node("Color_Preview", true, false)
-	_outline_color_preview = find_node("OutlineColor_Preview", true, false)
-
-func _on_color_list_text_changed(new_text: String, container: Container) -> void:
-	_update_previews_inner(new_text, container)
-
-func _refresh_all_previews() -> void:
-	if _color and _color_preview:
-		_update_previews_inner(_color.text, _color_preview)
-		
-	if _outline_color and _outline_color_preview:
-		_update_previews_inner(_outline_color.text, _outline_color_preview)
-
-func _update_previews_inner(text: String, container: Container) -> void:
-	LnzLiveUtils.update_color_list_previews(container, text, cached_palette_colors)
-
-func _get_ball_node(ball_no: int) -> Spatial:
-	if ball_no < 0: return null
-	var all_balls: Array = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if "ball_no" in b and b.ball_no == ball_no:
-			return b
-	return null
-
-func _get_pb_world_radius(dict: Dictionary, node: Node, base_ball: Spatial) -> float:
-	if is_instance_valid(node):
-		var mi: MeshInstance = node if node is MeshInstance else node.get_node_or_null("MeshInstance")
-		if mi: return mi.scale.x * 0.5
-	if is_instance_valid(base_ball):
-		var diam_pct: float = float(dict.get("diameter", dict.get("size", dict.get("diam", 20.0))))
-		return base_ball.scale.x * (diam_pct / 100.0) * 0.5
-	return 0.05
-
-func _on_InterpolateColors_pressed() -> void:
-	if not is_instance_valid(_interpolate_steps): return
-	var steps: int = int(_interpolate_steps.value)
-	if steps <= 0: return
+	if _color: _color.connect("text_changed", self, "_on_setting_changed")
+	if _outline_color: _outline_color.connect("text_changed", self, "_on_setting_changed")
 	
-	var color_lineedit = _color
-	if not is_instance_valid(color_lineedit): return
-	var color_str: String = color_lineedit.text
-	var color_list: Array = LnzLiveUtils.parse_number_list(color_str)
-	if color_list.size() < 2: return
+	_outline_type_min.connect("value_changed", self, "_on_setting_changed")
+	_outline_type_max.connect("value_changed", self, "_on_setting_changed")
+	_fuzz_min.connect("value_changed", self, "_on_setting_changed")
+	_fuzz_max.connect("value_changed", self, "_on_setting_changed")
+	if _texture: _texture.connect("text_changed", self, "_on_setting_changed")
+	_group.connect("value_changed", self, "_on_setting_changed")
+	_anchored.connect("toggled", self, "_on_setting_changed")
+	_target.connect("item_selected", self, "_on_setting_changed")
+	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
+	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
+	_line_btn.connect("toggled", self, "_on_line_btn_toggled")
 	
-	var new_list: Array = []
-	for i in range(color_list.size() - 1):
-		var c1_idx: int = color_list[i]
-		var c2_idx: int = color_list[i+1]
-		
-		new_list.append(c1_idx)
-		
-		var in_same_ramp: bool = false
-		if c1_idx >= 10 and c1_idx <= 199 and c2_idx >= 10 and c2_idx <= 199:
-			if int(c1_idx / 10) == int(c2_idx / 10):
-				in_same_ramp = true
-				
-		if in_same_ramp:
-			for step in range(1, steps + 1):
-				var t: float = float(step) / float(steps + 1)
-				var interp_idx: int = int(round(lerp(c1_idx, c2_idx, t)))
-				new_list.append(interp_idx)
-		else:
-			var col1: Color = LnzLiveUtils.color_from_index(c1_idx, cached_palette_colors)
-			var col2: Color = LnzLiveUtils.color_from_index(c2_idx, cached_palette_colors)
-			for step in range(1, steps + 1):
-				var t: float = float(step) / float(steps + 1)
-				var interp_col: Color = col1.linear_interpolate(col2, t)
-				var closest_idx: int = get_closest_palette_index(interp_col)
-				new_list.append(closest_idx)
-			
-	new_list.append(color_list[color_list.size() - 1])
-	
-	var res_str: PoolStringArray = PoolStringArray()
-	for idx in new_list:
-		res_str.append(str(idx))
-	color_lineedit.text = res_str.join(",")
-	res_str.resize(0)
-	save_settings()
-	_refresh_all_previews()
+	if _use_layers_checkbox:
+		_use_layers_checkbox.connect("toggled", self, "_on_use_layers_toggled")
+	_hline_btn.connect("toggled", self, "_on_hline_btn_toggled")
+	_vline_btn.connect("toggled", self, "_on_vline_btn_toggled")
+	_brush_btn.connect("toggled", self, "_on_brush_btn_toggled")
+	_spacing.connect("value_changed", self, "_on_setting_changed")
+	_jitter.connect("value_changed", self, "_on_setting_changed")
+	_ordered.connect("toggled", self, "_on_setting_changed")
+	_repeat.connect("toggled", self, "_on_setting_changed")
+	_shuffle.connect("toggled", self, "_on_setting_changed")
+	_eraser_checkbox.connect("toggled", self, "_on_setting_changed")
+	_exclude_eye_ballz.connect("toggled", self, "_on_setting_changed")
+	_random_walk_checkbox.connect("toggled", self, "_on_setting_changed")
+	_walk_steps.connect("value_changed", self, "_on_setting_changed")
+	_walk_spread.connect("value_changed", self, "_on_setting_changed")
 
-func _on_GeneratePaletteButton_pressed() -> void:
-	randomize()
-	
-	var base_input: Control = _gen_palette_base_input
-	var type_select: OptionButton = _gen_palette_type_select
-	var color_lineedit = _color
-	
-	if not is_instance_valid(color_lineedit): 
+	if _export_settings_btn: _export_settings_btn.connect("pressed", self, "export_paintball_json")
+	if _import_settings_btn: _import_settings_btn.connect("pressed", self, "_on_ImportPresetButton_pressed")
+
+	if _reset_defaults_btn:
+		_reset_defaults_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+
+
+func _connect_design_signals() -> void:
+	_design_canvas.connect("design_changed", self, "_on_setting_changed")
+	_clear_grid_button.connect("pressed", _design_canvas, "clear")
+	_brush_size_slider.connect("value_changed", self, "_on_brush_size_changed")
+	_design_total_diameter.connect("value_changed", self, "_on_setting_changed")
+	_design_total_diameter_max.connect("value_changed", self, "_on_setting_changed")
+	_design_rotation.connect("value_changed", self, "_on_setting_changed")
+	_design_pixel_mode.connect("toggled", self, "_on_setting_changed")
+
+	_add_slot_button.connect("pressed", self, "_on_AddSlotButton_pressed")
+	_remove_slot_button.connect("pressed", self, "_on_RemoveSlotButton_pressed")
+
+	_mirror_x.connect("toggled", self, "_on_design_tool_toggled")
+	_mirror_y.connect("toggled", self, "_on_design_tool_toggled")
+	_canvas_eraser.connect("toggled", self, "_on_design_tool_toggled")
+	_import_pattern_button.connect("pressed", self, "_on_import_pattern_pressed")
+	_export_pattern_button.connect("pressed", self, "_on_export_pattern_pressed")
+	_design_jitter.connect("value_changed", self, "_on_setting_changed")
+	_rotate_jitter.connect("value_changed", self, "_on_setting_changed")
+	_spread_jitter.connect("value_changed", self, "_on_setting_changed")
+
+	_pattern_info_button.connect("pressed", self, "_on_pattern_info_pressed")
+	_pattern_info_dialog.find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
+
+	_slots_tree.connect("item_edited", self, "_on_SlotsTree_item_edited")
+	_slots_tree.connect("cell_selected", self, "_on_SlotsTree_cell_selected")
+	_slots_tree.connect("item_selected", self, "_on_SlotsTree_cell_selected")
+
+
+func _connect_layer_manager_signals() -> void:
+	if not is_instance_valid(PaintballLayerManager):
 		return
-	
-	var base_index: int = 0
-	
-	var has_valid_input: bool = false
-	if is_instance_valid(base_input):
-		if base_input is LineEdit and base_input.text.strip_edges() != "":
-			var parsed: Array = LnzLiveUtils.parse_number_list(base_input.text)
-			if parsed.size() > 0: 
-				base_index = parsed[0]
-				has_valid_input = true
-		elif base_input is SpinBox:
-			base_index = int(base_input.value)
-			has_valid_input = true
+	PaintballLayerManager.ensure_default_layer()
+	PaintballLayerManager.connect("layer_added", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_removed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_cleared", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_renamed", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_visibility_toggled", self, "_on_layer_visibility_toggled")
+	PaintballLayerManager.connect("layer_reordered", self, "_on_layer_visuals_dirty")
+	PaintballLayerManager.connect("layer_changed", self, "_on_layer_visuals_dirty")
 
-	if not has_valid_input:
-		var parsed: Array = LnzLiveUtils.parse_number_list(color_lineedit.text)
-		if parsed.size() > 0: 
-			base_index = parsed[randi() % parsed.size()]
-		else:
-			base_index = randi() % 255 + 1
-		
-	var base_color: Color = LnzLiveUtils.color_from_index(base_index, cached_palette_colors)
-	
-	var p_type: int = 0
-	if is_instance_valid(type_select):
-		p_type = type_select.selected
-	
-	var generated_colors: Array = LnzLiveUtils.generate_theory_colors(base_color, p_type, 4)
-	
-	var new_indices: Array = []
-	
-	if generated_colors.empty():
-		new_indices.append(get_closest_palette_index(base_color))
-	else:
-		for c in generated_colors:
-			var idx: int = get_closest_palette_index(c)
-			if not new_indices.has(idx):
-				new_indices.append(idx)
-			
-	var res_str: PoolStringArray = PoolStringArray()
-	for idx in new_indices:
-		res_str.append(str(idx))
-		
-	color_lineedit.text = res_str.join(",")
-	res_str.resize(0)
-	save_settings()
-	_refresh_all_previews()
-	
-	var gen_btn: Button = _gen_palette_button
-	if is_instance_valid(gen_btn): gen_btn.release_focus()
-	if is_instance_valid(base_input) and base_input is Control: base_input.release_focus()
-	color_lineedit.release_focus()
+
+### PAINTBALL ACTIONS ###
+# _process
+# _get_ball_node
+# _get_pb_world_radius
+# get_pending_paintball_count
+# _update_paintball_buttons
+# _on_ApplyButton_pressed
+# _on_ClearButton_pressed
+# _on_DeleteModeCheckBox_toggled
 
 func _process(delta: float) -> void:
 	if _is_loading_settings: return
+	
+	var total_count: int = 0
+	if is_instance_valid(PaintballLayerManager):
+		total_count = PaintballLayerManager.get_total_paintball_count()
+	else:
+		total_count = _pending_paintball_count
+	
+	if total_count != _pending_paintball_count:
+		_pending_paintball_count = total_count
+		_update_paintball_buttons()
+		if is_instance_valid(_layers_tree):
+			_refresh_layers_tree()
 	
 	var raw_array = null
 	if is_instance_valid(dog_generator) and "_pending_paintballs_data" in dog_generator:
@@ -474,10 +463,29 @@ func _process(delta: float) -> void:
 	
 	_update_paintball_buttons()
 
-func get_closest_palette_index(target_color: Color) -> int:
-	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
+
+func _get_ball_node(ball_no: int) -> Spatial:
+	if ball_no < 0: return null
+	var all_balls: Array = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if "ball_no" in b and b.ball_no == ball_no:
+			return b
+	return null
+
+
+func _get_pb_world_radius(dict: Dictionary, node: Node, base_ball: Spatial) -> float:
+	if is_instance_valid(node):
+		var mi: MeshInstance = node if node is MeshInstance else node.get_node_or_null("MeshInstance")
+		if mi: return mi.scale.x * 0.5
+	if is_instance_valid(base_ball):
+		var diam_pct: float = float(dict.get("diameter", dict.get("size", dict.get("diam", 20.0))))
+		return base_ball.scale.x * (diam_pct / 100.0) * 0.5
+	return 0.05
+
 
 func get_pending_paintball_count() -> int:
+	if PaintballLayerManager:
+		return PaintballLayerManager.get_total_paintball_count()
 	if is_instance_valid(dog_generator):
 		if dog_generator.has_method("get_pending_paintball_nodes"):
 			return dog_generator.get_pending_paintball_nodes().size()
@@ -490,6 +498,7 @@ func get_pending_paintball_count() -> int:
 			return arr.size()
 	return 0
 
+
 func _update_paintball_buttons() -> void:
 	_pending_paintball_count = get_pending_paintball_count()
 	
@@ -501,12 +510,14 @@ func _update_paintball_buttons() -> void:
 	if _clear_button:
 		_clear_button.disabled = _pending_paintball_count == 0
 
+
 func _on_ApplyButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: apply_paintballz signal emitted")
 	emit_signal("apply_paintballz")
 	_pending_paintball_count = 0
 	_apply_button.text = "Apply"
 	_clear_button.disabled = true
+
 
 func _on_ClearButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: clear_paintballz signal emitted")
@@ -515,9 +526,401 @@ func _on_ClearButton_pressed() -> void:
 	_apply_button.text = "Apply"
 	_clear_button.disabled = true
 
+
 func _on_DeleteModeCheckBox_toggled(is_on: bool) -> void:
 	print("[STATUS] PaintballSettings: delete_mode_toggled signal emitted, is_on: %s" % is_on)
 	emit_signal("delete_mode_toggled", is_on)
+
+
+### SETTINGS MANAGEMENT ###
+# get_properties
+# _on_setting_changed
+# save_settings
+# load_settings
+# _apply_settings_dict
+# _on_reset_defaults_pressed
+# export_paintball_json
+# _save_settings_file
+# _on_ImportPresetButton_pressed
+# _on_web_import_completed
+# _load_preset_file
+# _on_file_dialog_closed
+
+func get_properties() -> Dictionary:
+	var properties: Dictionary = {}
+	properties["diameter_min"] = _diameter_min.value
+	properties["diameter_max"] = _diameter_max.value
+	properties["tapered"] = _tapered.pressed
+	properties["pixel_mode"] = _pixel_mode.pressed
+	properties["color"] = _color.text if _color else ""
+	properties["outline_color"] = _outline_color.text if _outline_color else ""
+	properties["outline_type_min"] = _outline_type_min.value
+	properties["outline_type_max"] = _outline_type_max.value
+	properties["fuzz_min"] = _fuzz_min.value
+	properties["fuzz_max"] = _fuzz_max.value
+	properties["texture"] = _texture.text if _texture else ""
+	properties["group"] = _group.value
+	properties["anchored"] = _anchored.pressed
+	properties["target_mode"] = _target.selected
+	properties["freeline"] = _freeline_checkbox.pressed
+	properties["straight_line"] = _straight_line_checkbox.pressed
+	properties["line_mode"] = _get_design_line_mode()
+	properties["spacing"] = _spacing.value
+	properties["jitter"] = _jitter.value
+	properties["ordered"] = _ordered.pressed
+	properties["repeat"] = _repeat.pressed
+	properties["shuffle"] = _shuffle.pressed
+	properties["random_walk"] = _random_walk_checkbox.pressed
+	properties["walk_steps"] = _walk_steps.value
+	properties["walk_spread"] = _walk_spread.value
+	properties["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	properties["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
+	return properties
+
+
+func _on_setting_changed(_arg = null) -> void:
+	if _is_loading_settings:
+		return
+
+	save_settings()
+
+
+func save_settings() -> void:
+	var values: Dictionary = {}
+	values["diameter_min"] = _diameter_min.value
+	values["diameter_max"] = _diameter_max.value
+	values["tapered"] = _tapered.pressed
+	values["pixel_mode"] = _pixel_mode.pressed
+	if _color: values["color"] = _color.text
+	if _outline_color: values["outline_color"] = _outline_color.text
+	values["outline_type_min"] = _outline_type_min.value
+	values["outline_type_max"] = _outline_type_max.value
+	values["fuzz_min"] = _fuzz_min.value
+	values["fuzz_max"] = _fuzz_max.value
+	if _texture: values["texture"] = _texture.text
+	values["group"] = _group.value
+	values["anchored"] = _anchored.pressed
+	values["target"] = _target.selected
+	values["freeline"] = _freeline_checkbox.pressed
+	values["straight_line"] = _straight_line_checkbox.pressed
+	values["line_mode"] = _get_design_line_mode()
+	values["spacing"] = _spacing.value
+	values["jitter"] = _jitter.value
+	values["ordered"] = _ordered.pressed
+	values["repeat"] = _repeat.pressed
+	values["shuffle"] = _shuffle.pressed
+	values["random_walk"] = _random_walk_checkbox.pressed
+	values["walk_steps"] = _walk_steps.value
+	values["walk_spread"] = _walk_spread.value
+	values["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
+	values["use_layers"] = _use_layers_checkbox.pressed if _use_layers_checkbox else false
+	LnzLiveUtils.save_config("PaintballProperties", values, "user://settings.cfg")
+	var design_values: Dictionary = {}
+	design_values["design_paintballs"] = _design_canvas.design_paintballs
+	design_values["brush_size"] = _brush_size_slider.value
+	design_values["design_total_diameter"] = _design_total_diameter.value
+	design_values["design_total_diameter_max"] = _design_total_diameter_max.value
+	design_values["design_pixel_mode"] = _design_pixel_mode.pressed
+	design_values["color_slots_v2"] = design_color_slots
+	design_values["mirror_x"] = _mirror_x.pressed
+	design_values["mirror_y"] = _mirror_y.pressed
+	design_values["canvas_eraser"] = _canvas_eraser.pressed
+	design_values["straight_line"] = _straight_line_checkbox.pressed
+	design_values["line_mode"] = _get_design_line_mode()
+	design_values["design_jitter"] = _design_jitter.value
+	design_values["rotate_jitter"] = _rotate_jitter.value
+	design_values["design_rotation"] = _design_rotation.value
+	design_values["spread_jitter"] = _spread_jitter.value
+	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
+
+
+func load_settings() -> void:
+	var data: Dictionary = LnzLiveUtils.load_config("PaintballProperties", "user://settings.cfg")
+	var design_data: Dictionary = LnzLiveUtils.load_config("DesignMode", "user://settings.cfg")
+	if data.empty() and design_data.empty():
+		return
+
+	print("[STATUS] PaintballSettings: loading settings configuration")
+	_is_loading_settings = true
+
+	_diameter_min.value = data.get("diameter_min", 10.0)
+	_diameter_max.value = data.get("diameter_max", 20.0)
+	_tapered.pressed = data.get("tapered", false)
+	_pixel_mode.pressed = data.get("pixel_mode", false)
+	if _color: _color.text = data.get("color", "")
+	if _outline_color: _outline_color.text = data.get("outline_color", "244")
+	_outline_type_min.value = data.get("outline_type_min", -1.0)
+	_outline_type_max.value = data.get("outline_type_max", -1.0)
+	_fuzz_min.value = data.get("fuzz_min", 0.0)
+	_fuzz_max.value = data.get("fuzz_max", 0.0)
+	if _texture: _texture.text = data.get("texture", "0")
+	_group.value = data.get("group", 0.0)
+	_anchored.pressed = data.get("anchored", true)
+	_target.selected = data.get("target", 0)
+	_freeline_checkbox.pressed = data.get("freeline", false)
+	_straight_line_checkbox.pressed = data.get("straight_line", false)
+	_spacing.value = data.get("spacing", 5.0)
+	_jitter.value = data.get("jitter", 0.0)
+	_ordered.pressed = data.get("ordered", false)
+	_repeat.pressed = data.get("repeat", false)
+	_shuffle.pressed = data.get("shuffle", false)
+	_random_walk_checkbox.pressed = data.get("random_walk", false)
+	_walk_steps.value = data.get("walk_steps", 3.0)
+	_walk_spread.value = data.get("walk_spread", 5.0)
+	_exclude_eye_ballz.pressed = data.get("exclude_eye_ballz", true)
+	var use_layers: bool = data.get("use_layers", false)
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = use_layers
+	if _layer_section: _layer_section.visible = use_layers
+
+	var loaded_paintballs: Array = design_data.get("design_paintballs", [])
+	if loaded_paintballs.size() > 0:
+		_design_canvas.design_paintballs = loaded_paintballs
+		_design_canvas.update()
+		_design_canvas.emit_signal("design_changed")
+
+	_brush_size_slider.value = design_data.get("brush_size", 30.0)
+	_design_total_diameter.value = design_data.get("design_total_diameter", 20.0)
+	_design_total_diameter_max.value = design_data.get("design_total_diameter_max", 30.0)
+	_design_pixel_mode.pressed = design_data.get("design_pixel_mode", false)
+	_design_canvas.brush_size = _brush_size_slider.value
+	_brush_size_label.text = "Brush Size (" + str(_brush_size_slider.value) + "%)"
+	_brush_space_label.text = "Brush Spacing (" + str(_brush_space_slider.value) + "%)"
+
+	var loaded_slots_v2: Array = design_data.get("color_slots_v2", [])
+	if loaded_slots_v2.size() > 0:
+		design_color_slots = loaded_slots_v2
+	else:
+		var loaded_slots: Array = design_data.get("color_slots", [])
+		if loaded_slots.size() == 4:
+			for i in range(4):
+				var old_slot: Dictionary = loaded_slots[i]
+				design_color_slots[i].color = old_slot.color
+				design_color_slots[i].outline_color = old_slot.outline_color
+				design_color_slots[i].texture = old_slot.texture
+				design_color_slots[i].outline_type = old_slot.outline_type
+		else:
+			design_color_slots.clear()
+			for s in DEFAULT_DESIGN_SLOTS:
+				design_color_slots.append(s.duplicate(true))
+
+	_mirror_x.pressed = design_data.get("mirror_x", false)
+	_mirror_y.pressed = design_data.get("mirror_y", false)
+	_canvas_eraser.pressed = design_data.get("canvas_eraser", false)
+	_straight_line_checkbox.pressed = design_data.get("straight_line", false)
+	_sync_design_line_mode(design_data.get("line_mode", 0))
+	_design_jitter.value = design_data.get("design_jitter", 0.0)
+	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
+	_design_rotation.value = design_data.get("design_rotation", 0.0)
+	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
+
+	_on_design_tool_toggled(null)
+
+	_refresh_slot_buttons()
+	_is_loading_settings = false
+	_on_palette_changed()
+	_refresh_all_previews()
+
+
+func _apply_settings_dict(data: Dictionary) -> void:
+	print("[STATUS] PaintballSettings: applying settings dictionary")
+	_is_loading_settings = true
+	if data.has("diameter_min"): _diameter_min.value = data["diameter_min"]
+	if data.has("diameter_max"): _diameter_max.value = data["diameter_max"]
+	if data.has("tapered"): _tapered.pressed = data["tapered"]
+	if data.has("pixel_mode"): _pixel_mode.pressed = data["pixel_mode"]
+	if data.has("color"): _color.text = str(data["color"])
+	if data.has("outline_color"): _outline_color.text = str(data["outline_color"])
+	if data.has("outline_type_min"): _outline_type_min.value = data["outline_type_min"]
+	if data.has("outline_type_max"): _outline_type_max.value = data["outline_type_max"]
+	if data.has("fuzz_min"): _fuzz_min.value = data["fuzz_min"]
+	if data.has("fuzz_max"): _fuzz_max.value = data["fuzz_max"]
+	if data.has("texture"): _texture.text = str(data["texture"])
+	if data.has("group"): _group.value = data["group"]
+	if data.has("anchored"): _anchored.pressed = data["anchored"]
+	if data.has("target_mode"): _target.selected = data["target_mode"]
+	if data.has("freeline"): _freeline_checkbox.pressed = data["freeline"]
+	if data.has("straight_line"): _straight_line_checkbox.pressed = data["straight_line"]
+	if data.has("line_mode"): _sync_design_line_mode(data["line_mode"])
+	if data.has("spacing"): _spacing.value = data["spacing"]
+	if data.has("jitter"): _jitter.value = data["jitter"]
+	if data.has("ordered"): _ordered.pressed = data["ordered"]
+	if data.has("repeat"): _repeat.pressed = data["repeat"]
+	if data.has("shuffle"): _shuffle.pressed = data["shuffle"]
+	if data.has("random_walk"): _random_walk_checkbox.pressed = data["random_walk"]
+	if data.has("walk_steps"): _walk_steps.value = data["walk_steps"]
+	if data.has("walk_spread"): _walk_spread.value = data["walk_spread"]
+	if data.has("exclude_eye_ballz"): _exclude_eye_ballz.pressed = data["exclude_eye_ballz"]
+	if data.has("use_layers"):
+		if _use_layers_checkbox: _use_layers_checkbox.pressed = data["use_layers"]
+		if _layer_section: _layer_section.visible = data["use_layers"]
+	_is_loading_settings = false
+	save_settings()
+	_refresh_all_previews()
+
+
+func _on_reset_defaults_pressed() -> void:
+	print("[STATUS] PaintballSettings: resetting to default settings")
+	_is_loading_settings = true
+
+	_diameter_min.value = 10.0
+	_diameter_max.value = 20.0
+	_tapered.pressed = false
+	_pixel_mode.pressed = false
+	
+	if _color: _color.text = ""
+	if _outline_color: _outline_color.text = "244"
+	
+	_outline_type_min.value = -1.0
+	_outline_type_max.value = -1.0
+	_fuzz_min.value = 0.0
+	_fuzz_max.value = 0.0
+	if _texture: _texture.text = "0"
+	_group.value = 0.0
+	_anchored.pressed = true
+	_target.selected = 0
+	_freeline_checkbox.pressed = false
+	_straight_line_checkbox.pressed = false
+	_line_btn.pressed = false
+	_hline_btn.pressed = false
+	_vline_btn.pressed = false
+	_brush_btn.pressed = true
+	_spacing.value = 5.0
+	_jitter.value = 0.0
+	_ordered.pressed = false
+	_repeat.pressed = false
+	_shuffle.pressed = false
+	_eraser_checkbox.pressed = false
+
+	_random_walk_checkbox.pressed = false
+	_walk_steps.value = 3.0
+	_walk_spread.value = 5.0
+
+	_mirror_x.pressed = false
+	_mirror_y.pressed = false
+	_canvas_eraser.pressed = false
+	_design_jitter.value = 0.0
+	_rotate_jitter.value = 0.0
+	_spread_jitter.value = 0.0
+	_exclude_eye_ballz.pressed = true
+
+
+	_design_canvas.clear()
+	_brush_size_slider.value = 30.0
+	_design_total_diameter.value = 20.0
+	_design_total_diameter_max.value = 30.0
+	_design_rotation.value = 0.0
+	_design_pixel_mode.pressed = false
+
+	design_color_slots.clear()
+	for s in DEFAULT_DESIGN_SLOTS:
+		design_color_slots.append(s.duplicate(true))
+	_refresh_slot_buttons()
+	_on_design_tool_toggled(null)
+
+	_is_loading_settings = false
+	if _use_layers_checkbox: _use_layers_checkbox.pressed = false
+	if _layer_section: _layer_section.visible = false
+	save_settings()
+	_on_palette_changed()
+	_refresh_all_previews()
+
+
+func export_paintball_json() -> void:
+	print("[STATUS] PaintballSettings: started exporting paintball JSON (HTML5 feature: %s)" % OS.has_feature("HTML5"))
+	var settings_dict: Dictionary = get_properties()
+	LnzLiveUtils.export_json_preset(settings_dict, "LnzLive_paintball_preset", self, "_save_settings_file")
+
+
+func _save_settings_file(path: String) -> void:
+	var settings_dict: Dictionary = get_properties()
+	settings_dict["exporter"] = "LnzLive"
+	var json_string: String = JSON.print(settings_dict, "  ")
+	var file: File = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(json_string)
+		file.close()
+		print("[STATUS] PaintballSettings: exported settings to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for writing settings export: %s" % path)
+
+
+func _on_ImportPresetButton_pressed() -> void:
+	print("[STATUS] PaintballSettings: import preset button pressed")
+	if OS.has_feature("HTML5"):
+		var js_code: String = """
+		var input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+		input.onchange = e => { 
+		   var file = e.target.files[0]; 
+		   var reader = new FileReader();
+		   reader.readAsText(file,'UTF-8');
+		   reader.onload = readerEvent => {
+			   var content = readerEvent.target.result;
+			   window.godotPaintballImport(content);
+		   }
+		}
+		input.click();
+		"""
+		var callback = JavaScript.create_callback(self, "_on_web_import_completed")
+		JavaScript.get_interface("window").godotPaintballImport = callback
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Import Paintball Preset"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_preset_file")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+
+func _on_web_import_completed(args: Array) -> void:
+	var content: String = args[0]
+	var json_res = JSON.parse(content)
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		print("[STATUS] PaintballSettings: web import parsed successfully, applying dictionary")
+		_apply_settings_dict(json_res.result)
+	else:
+		print("[ERROR] PaintballSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
+
+
+func _load_preset_file(path: String) -> void:
+	print("[STATUS] PaintballSettings: attempting to load preset from %s" % path)
+	var json_res = LnzLiveUtils.load_json_preset(path)
+	if typeof(json_res) == TYPE_DICTIONARY and not json_res.empty():
+		print("[STATUS] PaintballSettings: successfully loaded and parsed preset file")
+		_apply_settings_dict(json_res)
+	else:
+		print("[ERROR] PaintballSettings: failed to parse JSON preset from %s" % path)
+
+
+func _on_file_dialog_closed(dialog: FileDialog) -> void:
+	LnzLiveUtils.queue_free_safe(dialog)
+
+
+### PALETTE, COLOR PREVIEWS & COLOR GENERATORS ###
+# _setup_color_previews
+# _on_palette_changed
+# _on_color_list_text_changed
+# _refresh_all_previews
+# _update_previews_inner
+# get_closest_palette_index
+# get_color_preview_icon
+# _create_color_icon
+# _on_InterpolateColors_pressed
+# _on_GeneratePaletteButton_pressed
+
+func _setup_color_previews() -> void:
+	LnzLiveUtils.setup_preview_wrapper(self, _color, "Color")
+	LnzLiveUtils.setup_preview_wrapper(self, _outline_color, "OutlineColor")
+	
+	_color_preview = find_node("Color_Preview", true, false)
+	_outline_color_preview = find_node("OutlineColor_Preview", true, false)
+
 
 func _on_palette_changed(palette_name = "") -> void:
 	if not dog_generator or not dog_generator.current_palette_texture:
@@ -558,167 +961,197 @@ func _on_palette_changed(palette_name = "") -> void:
 	_design_canvas.update()
 	_refresh_all_previews()
 
+
+func _on_color_list_text_changed(new_text: String, container: Container) -> void:
+	_update_previews_inner(new_text, container)
+
+
+func _refresh_all_previews() -> void:
+	if _color and _color_preview:
+		_update_previews_inner(_color.text, _color_preview)
+		
+	if _outline_color and _outline_color_preview:
+		_update_previews_inner(_outline_color.text, _outline_color_preview)
+
+
+func _update_previews_inner(text: String, container: Container) -> void:
+	LnzLiveUtils.update_color_list_previews(container, text, cached_palette_colors)
+
+
+func get_closest_palette_index(target_color: Color) -> int:
+	return PaletteCache.get_palette_index_fast(cached_palette_colors, target_color)
+
+
+func get_color_preview_icon(color_index: int) -> ImageTexture:
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
+	if not pet_node: return null
+	if pet_node.has_method("generate_color_icon"):
+		return pet_node.generate_color_icon(color_index)
+	return null
+
+
+func _create_color_icon(color_str) -> Texture:
+	if typeof(color_str) == TYPE_COLOR:
+		var img: Image = Image.new()
+		img.create(16, 16, false, Image.FORMAT_RGBA8)
+		img.fill(color_str)
+		var tex: ImageTexture = ImageTexture.new()
+		tex.create_from_image(img)
+		return tex
+
+	var color_list: Array = LnzLiveUtils.parse_number_list(str(color_str))
+	if color_list and color_list.size() > 0:
+		var icon: Texture = get_color_preview_icon(color_list[0])
+		if icon:
+			return icon
+
+	var img: Image = Image.new()
+	img.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color.white)
+	var tex: ImageTexture = ImageTexture.new()
+	tex.create_from_image(img)
+	return tex
+
+
+func _on_InterpolateColors_pressed() -> void:
+	if not is_instance_valid(_interpolate_steps): return
+	var steps: int = int(_interpolate_steps.value)
+	if steps <= 0: return
+	
+	var color_lineedit = _color
+	if not is_instance_valid(color_lineedit): return
+	var color_str: String = color_lineedit.text
+	var color_list: Array = LnzLiveUtils.parse_number_list(color_str)
+	if color_list.size() < 2: return
+	
+	var new_list: Array = []
+	for i in range(color_list.size() - 1):
+		var c1_idx: int = color_list[i]
+		var c2_idx: int = color_list[i+1]
+		
+		new_list.append(c1_idx)
+		
+		var in_same_ramp: bool = false
+		if c1_idx >= 10 and c1_idx <= 199 and c2_idx >= 10 and c2_idx <= 199:
+			if int(c1_idx / 10) == int(c2_idx / 10):
+				in_same_ramp = true
+				
+		if in_same_ramp:
+			for step in range(1, steps + 1):
+				var t: float = float(step) / float(steps + 1)
+				var interp_idx: int = int(round(lerp(c1_idx, c2_idx, t)))
+				new_list.append(interp_idx)
+		else:
+			var col1: Color = LnzLiveUtils.color_from_index(c1_idx, cached_palette_colors)
+			var col2: Color = LnzLiveUtils.color_from_index(c2_idx, cached_palette_colors)
+			for step in range(1, steps + 1):
+				var t: float = float(step) / float(steps + 1)
+				var interp_col: Color = col1.linear_interpolate(col2, t)
+				var closest_idx: int = get_closest_palette_index(interp_col)
+				new_list.append(closest_idx)
+			
+	new_list.append(color_list[color_list.size() - 1])
+	
+	var res_str: PoolStringArray = PoolStringArray()
+	for idx in new_list:
+		res_str.append(str(idx))
+	color_lineedit.text = res_str.join(",")
+	res_str.resize(0)
+	save_settings()
+	_refresh_all_previews()
+
+
+func _on_GeneratePaletteButton_pressed() -> void:
+	randomize()
+	
+	var base_input: Control = _gen_palette_base_input
+	var type_select: OptionButton = _gen_palette_type_select
+	var color_lineedit = _color
+	
+	if not is_instance_valid(color_lineedit): 
+		return
+	
+	var base_index: int = 0
+	
+	var has_valid_input: bool = false
+	if is_instance_valid(base_input):
+		if base_input is LineEdit and base_input.text.strip_edges() != "":
+			var parsed: Array = LnzLiveUtils.parse_number_list(base_input.text)
+			if parsed.size() > 0: 
+				base_index = parsed[0]
+				has_valid_input = true
+		elif base_input is SpinBox:
+			base_index = int(base_input.value)
+			has_valid_input = true
+
+	if not has_valid_input:
+		var parsed: Array = LnzLiveUtils.parse_number_list(color_lineedit.text)
+		if parsed.size() > 0: 
+			base_index = parsed[randi() % parsed.size()]
+		else:
+			base_index = randi() % 255 + 1
+		
+	var base_color: Color = LnzLiveUtils.color_from_index(base_index, cached_palette_colors)
+	
+	var p_type: int = 0
+	if is_instance_valid(type_select):
+		p_type = type_select.selected
+	
+	var generated_colors: Array = LnzLiveUtils.generate_theory_colors(base_color, p_type, 4)
+	
+	var new_indices: Array = []
+	
+	if generated_colors.empty():
+		new_indices.append(get_closest_palette_index(base_color))
+	else:
+		for c in generated_colors:
+			var idx: int = get_closest_palette_index(c)
+			if not new_indices.has(idx):
+				new_indices.append(idx)
+			
+	var res_str: PoolStringArray = PoolStringArray()
+	for idx in new_indices:
+		res_str.append(str(idx))
+		
+	color_lineedit.text = res_str.join(",")
+	res_str.resize(0)
+	save_settings()
+	_refresh_all_previews()
+	
+	var gen_btn: Button = _gen_palette_button
+	if is_instance_valid(gen_btn): gen_btn.release_focus()
+	if is_instance_valid(base_input) and base_input is Control: base_input.release_focus()
+	color_lineedit.release_focus()
+
+
+### DESIGN MODE: CANVAS, TOOLS & SLOTS TREE ###
+# is_design_mode_active
+# paste_paintball_design
+# update_design_scale
+# reset_design_scale_base
+# update_design_rotation
+# get_design_rotation
+# _on_brush_size_changed
+# _on_brush_space_changed
+# _on_design_tool_toggled
+# _get_design_line_mode
+# _sync_design_line_mode
+# _on_brush_btn_toggled
+# _on_line_btn_toggled
+# _on_hline_btn_toggled
+# _on_vline_btn_toggled
+# _on_clear_design_pressed
+# _setup_slots_tree
+# _populate_slots_tree
+# _refresh_slot_buttons
+# _on_SlotsTree_item_edited
+# _on_SlotsTree_cell_selected
+# _on_AddSlotButton_pressed
+# _on_RemoveSlotButton_pressed
+
 func is_design_mode_active() -> bool:
 	return _tab_container.current_tab == 1
 
-func update_design_scale(delta: float) -> void:
-	if is_instance_valid(_design_total_diameter):
-		_design_total_diameter.set_block_signals(true)
-		_design_total_diameter.value = clamp(_design_total_diameter.value + delta, _design_total_diameter.min_value, _design_total_diameter.max_value)
-		_design_total_diameter.set_block_signals(false)
-	if is_instance_valid(_design_total_diameter_max):
-		_design_total_diameter_max.set_block_signals(true)
-		_design_total_diameter_max.value = clamp(_design_total_diameter_max.value + delta, _design_total_diameter_max.min_value, _design_total_diameter_max.max_value)
-		_design_total_diameter_max.set_block_signals(false)
-
-func reset_design_scale_base() -> void:
-	_design_total_diameter.value = 20.0
-	_design_total_diameter_max.value = 30.0
-
-func update_design_rotation(delta: float) -> void:
-	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
-		_design_rotation.set_block_signals(true)
-		_design_rotation.value = clamp(int(_design_rotation.value + delta), -360, 360)
-		_design_rotation.set_block_signals(false)
-
-func get_design_rotation() -> float:
-	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
-		return deg2rad(_design_rotation.value)
-	return 0.0
-
-func get_properties() -> Dictionary:
-	var properties: Dictionary = {}
-	properties["diameter_min"] = _diameter_min.value
-	properties["diameter_max"] = _diameter_max.value
-	properties["tapered"] = _tapered.pressed
-	properties["pixel_mode"] = _pixel_mode.pressed
-	properties["color"] = _color.text if _color else ""
-	properties["outline_color"] = _outline_color.text if _outline_color else ""
-	properties["outline_type_min"] = _outline_type_min.value
-	properties["outline_type_max"] = _outline_type_max.value
-	properties["fuzz_min"] = _fuzz_min.value
-	properties["fuzz_max"] = _fuzz_max.value
-	properties["texture"] = _texture.text if _texture else ""
-	properties["group"] = _group.value
-	properties["anchored"] = _anchored.pressed
-	properties["target_mode"] = _target.selected
-	properties["freeline"] = _freeline_checkbox.pressed
-	properties["straight_line"] = _straight_line_checkbox.pressed
-	properties["line_mode"] = _get_design_line_mode()
-	properties["spacing"] = _spacing.value
-	properties["jitter"] = _jitter.value
-	properties["ordered"] = _ordered.pressed
-	properties["repeat"] = _repeat.pressed
-	properties["shuffle"] = _shuffle.pressed
-	properties["random_walk"] = _random_walk_checkbox.pressed
-	properties["walk_steps"] = _walk_steps.value
-	properties["walk_spread"] = _walk_spread.value
-	properties["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
-	return properties
-
-func export_paintball_json() -> void:
-	print("[STATUS] PaintballSettings: started exporting paintball JSON (HTML5 feature: %s)" % OS.has_feature("HTML5"))
-	var settings_dict: Dictionary = get_properties()
-	LnzLiveUtils.export_json_preset(settings_dict, "LnzLive_paintball_preset", self, "_save_settings_file")
-
-func _on_file_dialog_closed(dialog: FileDialog) -> void:
-	LnzLiveUtils.queue_free_safe(dialog)
-
-func _save_settings_file(path: String) -> void:
-	var settings_dict: Dictionary = get_properties()
-	settings_dict["exporter"] = "LnzLive"
-	var json_string: String = JSON.print(settings_dict, "  ")
-	var file: File = File.new()
-	if file.open(path, File.WRITE) == OK:
-		file.store_string(json_string)
-		file.close()
-		print("[STATUS] PaintballSettings: exported settings to %s" % path)
-	else:
-		print("[ERROR] PaintballSettings: failed to open file for writing settings export: %s" % path)
-
-func _on_ImportPresetButton_pressed() -> void:
-	print("[STATUS] PaintballSettings: import preset button pressed")
-	if OS.has_feature("HTML5"):
-		var js_code: String = """
-		var input = document.createElement('input');
-		input.type = 'file';
-		input.accept = '.json';
-		input.onchange = e => { 
-		   var file = e.target.files[0]; 
-		   var reader = new FileReader();
-		   reader.readAsText(file,'UTF-8');
-		   reader.onload = readerEvent => {
-			   var content = readerEvent.target.result;
-			   window.godotPaintballImport(content);
-		   }
-		}
-		input.click();
-		"""
-		var callback = JavaScript.create_callback(self, "_on_web_import_completed")
-		JavaScript.get_interface("window").godotPaintballImport = callback
-		JavaScript.eval(js_code)
-	else:
-		var file_dialog: FileDialog = FileDialog.new()
-		file_dialog.window_title = "Import Paintball Preset"
-		file_dialog.mode = FileDialog.MODE_OPEN_FILE
-		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-		file_dialog.filters = ["*.json ; JSON Preset"]
-		file_dialog.rect_min_size = Vector2(400, 400)
-		file_dialog.connect("file_selected", self, "_load_preset_file")
-		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-		get_tree().root.add_child(file_dialog)
-		file_dialog.popup_centered_ratio(0.6)
-
-func _on_web_import_completed(args: Array) -> void:
-	var content: String = args[0]
-	var json_res = JSON.parse(content)
-	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
-		print("[STATUS] PaintballSettings: web import parsed successfully, applying dictionary")
-		_apply_settings_dict(json_res.result)
-	else:
-		print("[ERROR] PaintballSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
-
-func _load_preset_file(path: String) -> void:
-	print("[STATUS] PaintballSettings: attempting to load preset from %s" % path)
-	var json_res = LnzLiveUtils.load_json_preset(path)
-	if typeof(json_res) == TYPE_DICTIONARY and not json_res.empty():
-		print("[STATUS] PaintballSettings: successfully loaded and parsed preset file")
-		_apply_settings_dict(json_res)
-	else:
-		print("[ERROR] PaintballSettings: failed to parse JSON preset from %s" % path)
-
-func _apply_settings_dict(data: Dictionary) -> void:
-	print("[STATUS] PaintballSettings: applying settings dictionary")
-	_is_loading_settings = true
-	if data.has("diameter_min"): _diameter_min.value = data["diameter_min"]
-	if data.has("diameter_max"): _diameter_max.value = data["diameter_max"]
-	if data.has("tapered"): _tapered.pressed = data["tapered"]
-	if data.has("pixel_mode"): _pixel_mode.pressed = data["pixel_mode"]
-	if data.has("color"): _color.text = str(data["color"])
-	if data.has("outline_color"): _outline_color.text = str(data["outline_color"])
-	if data.has("outline_type_min"): _outline_type_min.value = data["outline_type_min"]
-	if data.has("outline_type_max"): _outline_type_max.value = data["outline_type_max"]
-	if data.has("fuzz_min"): _fuzz_min.value = data["fuzz_min"]
-	if data.has("fuzz_max"): _fuzz_max.value = data["fuzz_max"]
-	if data.has("texture"): _texture.text = str(data["texture"])
-	if data.has("group"): _group.value = data["group"]
-	if data.has("anchored"): _anchored.pressed = data["anchored"]
-	if data.has("target_mode"): _target.selected = data["target_mode"]
-	if data.has("freeline"): _freeline_checkbox.pressed = data["freeline"]
-	if data.has("straight_line"): _straight_line_checkbox.pressed = data["straight_line"]
-	if data.has("line_mode"): _sync_design_line_mode(data["line_mode"])
-	if data.has("spacing"): _spacing.value = data["spacing"]
-	if data.has("jitter"): _jitter.value = data["jitter"]
-	if data.has("ordered"): _ordered.pressed = data["ordered"]
-	if data.has("repeat"): _repeat.pressed = data["repeat"]
-	if data.has("shuffle"): _shuffle.pressed = data["shuffle"]
-	if data.has("random_walk"): _random_walk_checkbox.pressed = data["random_walk"]
-	if data.has("walk_steps"): _walk_steps.value = data["walk_steps"]
-	if data.has("walk_spread"): _walk_spread.value = data["walk_spread"]
-	if data.has("exclude_eye_ballz"): _exclude_eye_ballz.pressed = data["exclude_eye_ballz"]
-	_is_loading_settings = false
-	save_settings()
-	_refresh_all_previews()
 
 func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
 	print("[STATUS] PaintballSettings: paste_paintball_design started on ball_no: %d" % ball_no)
@@ -750,13 +1183,9 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var d_jitter: float = _design_jitter.value if jitter_enabled else 0.0
 	var r_jitter: float = _rotate_jitter.value if jitter_enabled else 0.0
 	var s_jitter: float = _spread_jitter.value if jitter_enabled else 0.0
-	var r_fixed: bool = _rotate_fixed.pressed if jitter_enabled else false
 
 	if jitter_enabled and r_jitter > 0:
-		if r_fixed:
-			design_rotation_angle += deg2rad(r_jitter)
-		else:
-			design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
+		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
 
 	var rotated_basis: Basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x: Vector3 = rotated_basis.x
@@ -775,7 +1204,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 			continue
 		var slot_data: Dictionary = design_color_slots[pb.color_slot - 1]
 
-		var dx: float = pb.x * (footprint_lnz / 2.0)
+		var dx: float = -pb.x * (footprint_lnz / 2.0)
 		var dy: float = -pb.y * (footprint_lnz / 2.0)
 		if d_jitter > 0:
 			var j_amt: float = (d_jitter / 100.0) * (footprint_lnz / 2.0)
@@ -821,74 +1250,45 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		"anchored": out_anchored
 	}
 
-func _connect_settings_signals() -> void:
-	_diameter_min.connect("value_changed", self, "_on_setting_changed")
-	_diameter_max.connect("value_changed", self, "_on_setting_changed")
-	_tapered.connect("toggled", self, "_on_setting_changed")
-	_pixel_mode.connect("toggled", self, "_on_setting_changed")
-	
-	if _color: _color.connect("text_changed", self, "_on_setting_changed")
-	if _outline_color: _outline_color.connect("text_changed", self, "_on_setting_changed")
-	
-	_outline_type_min.connect("value_changed", self, "_on_setting_changed")
-	_outline_type_max.connect("value_changed", self, "_on_setting_changed")
-	_fuzz_min.connect("value_changed", self, "_on_setting_changed")
-	_fuzz_max.connect("value_changed", self, "_on_setting_changed")
-	if _texture: _texture.connect("text_changed", self, "_on_setting_changed")
-	_group.connect("value_changed", self, "_on_setting_changed")
-	_anchored.connect("toggled", self, "_on_setting_changed")
-	_target.connect("item_selected", self, "_on_setting_changed")
-	_freeline_checkbox.connect("toggled", self, "_on_setting_changed")
-	_straight_line_checkbox.connect("toggled", self, "_on_setting_changed")
-	_line_btn.connect("toggled", self, "_on_line_btn_toggled")
-	_hline_btn.connect("toggled", self, "_on_hline_btn_toggled")
-	_vline_btn.connect("toggled", self, "_on_vline_btn_toggled")
-	_brush_btn.connect("toggled", self, "_on_brush_btn_toggled")
-	_spacing.connect("value_changed", self, "_on_setting_changed")
-	_jitter.connect("value_changed", self, "_on_setting_changed")
-	_ordered.connect("toggled", self, "_on_setting_changed")
-	_repeat.connect("toggled", self, "_on_setting_changed")
-	_shuffle.connect("toggled", self, "_on_setting_changed")
-	_eraser_checkbox.connect("toggled", self, "_on_setting_changed")
-	_exclude_eye_ballz.connect("toggled", self, "_on_setting_changed")
-	_random_walk_checkbox.connect("toggled", self, "_on_setting_changed")
-	_walk_steps.connect("value_changed", self, "_on_setting_changed")
-	_walk_spread.connect("value_changed", self, "_on_setting_changed")
 
-	if _export_settings_btn: _export_settings_btn.connect("pressed", self, "export_paintball_json")
-	if _import_settings_btn: _import_settings_btn.connect("pressed", self, "_on_ImportPresetButton_pressed")
+func update_design_scale(delta: float) -> void:
+	if is_instance_valid(_design_total_diameter):
+		_design_total_diameter.set_block_signals(true)
+		_design_total_diameter.value = clamp(_design_total_diameter.value + delta, _design_total_diameter.min_value, _design_total_diameter.max_value)
+		_design_total_diameter.set_block_signals(false)
+	if is_instance_valid(_design_total_diameter_max):
+		_design_total_diameter_max.set_block_signals(true)
+		_design_total_diameter_max.value = clamp(_design_total_diameter_max.value + delta, _design_total_diameter_max.min_value, _design_total_diameter_max.max_value)
+		_design_total_diameter_max.set_block_signals(false)
 
-	if _reset_defaults_btn:
-		_reset_defaults_btn.connect("pressed", self, "_on_reset_defaults_pressed")
 
-func _connect_design_signals() -> void:
-	_design_canvas.connect("design_changed", self, "_on_setting_changed")
-	_clear_grid_button.connect("pressed", _design_canvas, "clear")
-	_brush_size_slider.connect("value_changed", self, "_on_brush_size_changed")
-	_design_total_diameter.connect("value_changed", self, "_on_setting_changed")
-	_design_total_diameter_max.connect("value_changed", self, "_on_setting_changed")
-	_design_rotation.connect("value_changed", self, "_on_setting_changed")
-	_rotate_fixed.connect("toggled", self, "_on_setting_changed")
-	_design_pixel_mode.connect("toggled", self, "_on_setting_changed")
+func reset_design_scale_base() -> void:
+	_design_total_diameter.value = 20.0
+	_design_total_diameter_max.value = 30.0
 
-	_add_slot_button.connect("pressed", self, "_on_AddSlotButton_pressed")
-	_remove_slot_button.connect("pressed", self, "_on_RemoveSlotButton_pressed")
 
-	_mirror_x.connect("toggled", self, "_on_design_tool_toggled")
-	_mirror_y.connect("toggled", self, "_on_design_tool_toggled")
-	_canvas_eraser.connect("toggled", self, "_on_design_tool_toggled")
-	_import_pattern_button.connect("pressed", self, "_on_import_pattern_pressed")
-	_export_pattern_button.connect("pressed", self, "_on_export_pattern_pressed")
-	_design_jitter.connect("value_changed", self, "_on_setting_changed")
-	_rotate_jitter.connect("value_changed", self, "_on_setting_changed")
-	_spread_jitter.connect("value_changed", self, "_on_setting_changed")
+func update_design_rotation(delta: float) -> void:
+	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
+		_design_rotation.set_block_signals(true)
+		_design_rotation.value = clamp(int(_design_rotation.value + delta), -360, 360)
+		_design_rotation.set_block_signals(false)
 
-	_pattern_info_button.connect("pressed", self, "_on_pattern_info_pressed")
-	_pattern_info_dialog.find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
 
-	_slots_tree.connect("item_edited", self, "_on_SlotsTree_item_edited")
-	_slots_tree.connect("cell_selected", self, "_on_SlotsTree_cell_selected")
-	_slots_tree.connect("item_selected", self, "_on_SlotsTree_cell_selected")
+func get_design_rotation() -> float:
+	if is_instance_valid(_design_rotation) and _design_rotation is SpinBox:
+		return deg2rad(_design_rotation.value)
+	return 0.0
+
+
+func _on_brush_size_changed(value: float) -> void:
+	_design_canvas.brush_size = value
+	_brush_size_label.text = "Brush Size (" + str(value) + "%)"
+
+
+func _on_brush_space_changed(value: float) -> void:
+	_design_canvas.brush_spacing = value
+	_brush_space_label.text = "Brush Spacing (" + str(value) + "%)"
+
 
 func _on_design_tool_toggled(_arg = null) -> void:
 	_design_canvas.mirror_x = _mirror_x.pressed
@@ -899,160 +1299,88 @@ func _on_design_tool_toggled(_arg = null) -> void:
 	_design_canvas.update()
 	save_settings()
 
-func _on_pattern_info_pressed() -> void:
-	_pattern_info_dialog.popup_centered()
 
-func _on_info_close_pressed() -> void:
-	_pattern_info_dialog.hide()
+func _get_design_line_mode() -> int:
+	if _brush_btn.pressed:
+		return 0
+	elif _line_btn.pressed:
+		return 1
+	elif _hline_btn.pressed:
+		return 2
+	elif _vline_btn.pressed:
+		return 3
+	return 0
 
-func _on_import_pattern_pressed() -> void:
-	if OS.has_feature("HTML5"):
-		print("[WARNING] PaintballSettings: importing patterns is not yet supported in web version")
-		JavaScript.eval("window.alert('Importing patterns is not yet supported in web version.');")
-		return
 
-	var file_dialog: FileDialog = FileDialog.new()
-	file_dialog.mode = FileDialog.MODE_OPEN_FILE
-	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.filters = ["*.json ; JSON Pattern"]
-	file_dialog.connect("file_selected", self, "_load_pattern_file")
-	file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-	add_child(file_dialog)
-	file_dialog.popup_centered_ratio(0.6)
-
-func _load_pattern_file(path: String) -> void:
-	print("[STATUS] PaintballSettings: attempting to load pattern from %s" % path)
-	var file: File = File.new()
-	if file.open(path, File.READ) == OK:
-		var text: String = file.get_as_text()
-		var json_res = JSON.parse(text)
-		if json_res.error == OK:
-			var data: Dictionary = json_res.result
-			if data.has("paintballs") and data.has("slots"):
-				_design_canvas.design_paintballs = data.paintballs
-
-				if data.slots is Array:
-					design_color_slots.clear()
-					for s in data.slots:
-						if s.has("display_color_r"):
-							s["display_color"] = Color(s["display_color_r"], s["display_color_g"], s["display_color_b"])
-							s.erase("display_color_r")
-							s.erase("display_color_g")
-							s.erase("display_color_b")
-						design_color_slots.append(s)
-
-				if data.has("info") and data["info"] is Dictionary:
-					var info: Dictionary = data["info"]
-					_pattern_info_dialog.find_node("AuthorEdit").text = info.get("author", "")
-					_pattern_info_dialog.find_node("WebsiteEdit").text = info.get("website", "")
-					_pattern_info_dialog.find_node("DescEdit").text = info.get("description", "")
-
-				_refresh_slot_buttons()
-				_design_canvas.update()
-				_design_canvas.emit_signal("design_changed")
-				print("[STATUS] PaintballSettings: loaded and applied pattern from %s" % path)
-		else:
-			print("[ERROR] PaintballSettings: failed to parse JSON pattern from %s" % path)
-		file.close()
-	else:
-		print("[ERROR] PaintballSettings: failed to open pattern file for reading: %s" % path)
+func _sync_design_line_mode(mode: int) -> void:
+	_brush_btn.set_block_signals(true)
+	_line_btn.set_block_signals(true)
+	_hline_btn.set_block_signals(true)
+	_vline_btn.set_block_signals(true)
 	
-	_on_palette_changed()
-
-func _on_clear_design_pressed() -> void:
-	print("[STATUS] PaintballSettings: design canvas cleared")
-	_design_canvas.clear()
+	if mode == 0:
+		_brush_btn.pressed = true
+		_line_btn.pressed = false
+		_hline_btn.pressed = false
+		_vline_btn.pressed = false
+	elif mode == 1:
+		_brush_btn.pressed = false
+		_line_btn.pressed = true
+		_hline_btn.pressed = false
+		_vline_btn.pressed = false
+	elif mode == 2:
+		_brush_btn.pressed = false
+		_line_btn.pressed = false
+		_hline_btn.pressed = true
+		_vline_btn.pressed = false
+	elif mode == 3:
+		_brush_btn.pressed = false
+		_line_btn.pressed = false
+		_hline_btn.pressed = false
+		_vline_btn.pressed = true
 	
-	design_color_slots.clear()
-	for s in DEFAULT_DESIGN_SLOTS:
-		design_color_slots.append(s.duplicate(true))
+	_brush_btn.set_block_signals(false)
+	_line_btn.set_block_signals(false)
+	_hline_btn.set_block_signals(false)
+	_vline_btn.set_block_signals(false)
+	
+	_brush_btn.release_focus()
+	_line_btn.release_focus()
+	_hline_btn.release_focus()
+	_vline_btn.release_focus()
 
-	_refresh_slot_buttons()
-	_design_canvas.emit_signal("design_changed")
-	_on_palette_changed()
-	_sync_design_line_mode(0)
 
-func _on_export_pattern_pressed() -> void:
-	var author: String = _pattern_info_dialog.find_node("AuthorEdit").text.strip_edges()
-	var filename: String = "LnzLive_paintball_pattern_"
-	if not author.empty():
-		filename = str(filename, author.replace(" ", "_"), "_")
-	filename = str(filename, OS.get_unix_time(), ".json")
+func _on_brush_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 0
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 0)
 
-	print("[STATUS] PaintballSettings: generating export for pattern, filename: %s" % filename)
-	if OS.has_feature("HTML5"):
-		var data: Dictionary = _get_pattern_data_dict()
-		var json_string: String = JSON.print(data, "\t")
-		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
-		var js_code: String = """
-		var element = document.createElement('a');
-		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
-		element.style.display = 'none';
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		"""
-		JavaScript.eval(js_code)
-		print("[STATUS] PaintballSettings: pattern download triggered via web bridge")
-	else:
-		var file_dialog: FileDialog = FileDialog.new()
-		file_dialog.window_title = "Export Stamp Pattern"
-		file_dialog.mode = FileDialog.MODE_SAVE_FILE
-		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-		file_dialog.filters = ["*.json ; JSON Pattern"]
-		file_dialog.current_file = filename
-		file_dialog.connect("file_selected", self, "_save_pattern_file")
-		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
-		get_tree().root.add_child(file_dialog)
-		file_dialog.popup_centered_ratio(0.6)
 
-func _get_pattern_data_dict() -> Dictionary:
-	var data: Dictionary = {
-		"exporter": "LnzLive",
-		"info": {
-			"time_generated": OS.get_datetime(),
-			"author": _pattern_info_dialog.find_node("AuthorEdit").text,
-			"website": _pattern_info_dialog.find_node("WebsiteEdit").text,
-			"description": _pattern_info_dialog.find_node("DescEdit").text
-		},
-		"paintballs": _design_canvas.design_paintballs,
-		"slots": []
-	}
+func _on_line_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 1
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 1)
 
-	for s in design_color_slots:
-		var slot_copy: Dictionary = s.duplicate()
-		if slot_copy.has("display_color") and slot_copy["display_color"] is Color:
-			var col: Color = slot_copy["display_color"]
-			slot_copy["display_color_r"] = col.r
-			slot_copy["display_color_g"] = col.g
-			slot_copy["display_color_b"] = col.b
-			slot_copy.erase("display_color")
-		data.slots.append(slot_copy)
-	return data
 
-func _save_pattern_file(path: String) -> void:
-	var data: Dictionary = _get_pattern_data_dict()
-	var file: File = File.new()
-	if file.open(path, File.WRITE) == OK:
-		file.store_string(JSON.print(data, "\t"))
-		file.close()
-		print("[STATUS] PaintballSettings: saved pattern file to %s" % path)
-	else:
-		print("[ERROR] PaintballSettings: failed to open file for saving pattern to %s" % path)
+func _on_hline_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 2
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 2)
 
-func _on_brush_size_changed(value: float) -> void:
-	_design_canvas.brush_size = value
-	_brush_size_label.text = "Brush Size (" + str(value) + "%)"
 
-func _on_brush_space_changed(value: float) -> void:
-	_design_canvas.brush_spacing = value
-	_brush_space_label.text = "Brush Spacing (" + str(value) + "%)"
+func _on_vline_btn_toggled(pressed: bool) -> void:
+	if pressed:
+		_design_canvas._line_mode = 3
+		_design_canvas.update()
+		save_settings()
+		call_deferred("_sync_design_line_mode", 3)
 
-func _refresh_slot_buttons() -> void:
-	_populate_slots_tree()
-	_design_canvas.slot_data_ref = design_color_slots
-	_design_canvas.update()
 
 func _setup_slots_tree() -> void:
 	var tree: Tree = _slots_tree
@@ -1076,6 +1404,7 @@ func _setup_slots_tree() -> void:
 
 	tree.set_column_expand(8, false)
 	tree.set_column_min_width(8, 60)
+
 
 func _populate_slots_tree() -> void:
 	var tree: Tree = _slots_tree
@@ -1147,34 +1476,12 @@ func _populate_slots_tree() -> void:
 
 		item.set_metadata(0, i)
 
-func get_color_preview_icon(color_index: int) -> ImageTexture:
-	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
-	if not pet_node: return null
-	if pet_node.has_method("generate_color_icon"):
-		return pet_node.generate_color_icon(color_index)
-	return null
 
-func _create_color_icon(color_str) -> Texture:
-	if typeof(color_str) == TYPE_COLOR:
-		var img: Image = Image.new()
-		img.create(16, 16, false, Image.FORMAT_RGBA8)
-		img.fill(color_str)
-		var tex: ImageTexture = ImageTexture.new()
-		tex.create_from_image(img)
-		return tex
+func _refresh_slot_buttons() -> void:
+	_populate_slots_tree()
+	_design_canvas.slot_data_ref = design_color_slots
+	_design_canvas.update()
 
-	var color_list: Array = LnzLiveUtils.parse_number_list(str(color_str))
-	if color_list and color_list.size() > 0:
-		var icon: Texture = get_color_preview_icon(color_list[0])
-		if icon:
-			return icon
-
-	var img: Image = Image.new()
-	img.create(16, 16, false, Image.FORMAT_RGBA8)
-	img.fill(Color.white)
-	var tex: ImageTexture = ImageTexture.new()
-	tex.create_from_image(img)
-	return tex
 
 func _on_SlotsTree_item_edited() -> void:
 	if _is_loading_settings: return
@@ -1199,7 +1506,6 @@ func _on_SlotsTree_item_edited() -> void:
 
 	if col == 1:
 		var new_icon: Texture = _create_color_icon(design_color_slots[idx].color)
-		item.set_icon(0, new_icon)
 		if new_icon:
 			var img_data: Image = new_icon.get_data()
 			if img_data != null:
@@ -1211,24 +1517,18 @@ func _on_SlotsTree_item_edited() -> void:
 	save_settings()
 	call_deferred("_on_palette_changed")
 
+
 func _on_SlotsTree_cell_selected() -> void:
 	var tree: Tree = _slots_tree
 	var item: TreeItem = tree.get_selected()
 	if not item: return
 
 	var idx: int = item.get_metadata(0)
-	var col: int = tree.get_selected_column()
 
 	var canvas: Control = _design_canvas
 	if canvas:
 		canvas.current_color_slot = idx + 1
 
-func _on_slot_display_color_changed(color: Color, idx: int, item: TreeItem) -> void:
-	if idx >= 0 and idx < design_color_slots.size():
-		design_color_slots[idx].display_color = color
-		item.set_icon(0, _create_color_icon(color))
-		_design_canvas.update()
-		save_settings()
 
 func _on_AddSlotButton_pressed() -> void:
 	print("[STATUS] PaintballSettings: adding new color slot")
@@ -1246,6 +1546,7 @@ func _on_AddSlotButton_pressed() -> void:
 	design_color_slots.append(new_slot)
 	_refresh_slot_buttons()
 	save_settings()
+
 
 func _on_RemoveSlotButton_pressed() -> void:
 	var tree: Tree = _slots_tree
@@ -1277,277 +1578,834 @@ func _on_RemoveSlotButton_pressed() -> void:
 	_design_canvas.update()
 	save_settings()
 
-func _on_setting_changed(_arg = null) -> void:
-	if _is_loading_settings:
+
+### PATTERN JSON EXPORT/IMPORT ###
+# _on_pattern_info_pressed
+# _on_info_close_pressed
+# _on_import_pattern_pressed
+# _load_pattern_file
+# _on_export_pattern_pressed
+# _get_pattern_data_dict
+# _save_pattern_file
+
+func _on_pattern_info_pressed() -> void:
+	_pattern_info_dialog.popup_centered()
+
+
+func _on_info_close_pressed() -> void:
+	_pattern_info_dialog.hide()
+
+
+func _on_import_pattern_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		print("[WARNING] PaintballSettings: importing patterns is not yet supported in web version")
+		JavaScript.eval("window.alert('Importing patterns is not yet supported in web version.');")
 		return
 
-	save_settings()
+	var file_dialog: FileDialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.json ; JSON Pattern"]
+	file_dialog.connect("file_selected", self, "_load_pattern_file")
+	file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
 
-func save_settings() -> void:
-	var values: Dictionary = {}
-	values["diameter_min"] = _diameter_min.value
-	values["diameter_max"] = _diameter_max.value
-	values["tapered"] = _tapered.pressed
-	values["pixel_mode"] = _pixel_mode.pressed
-	if _color: values["color"] = _color.text
-	if _outline_color: values["outline_color"] = _outline_color.text
-	values["outline_type_min"] = _outline_type_min.value
-	values["outline_type_max"] = _outline_type_max.value
-	values["fuzz_min"] = _fuzz_min.value
-	values["fuzz_max"] = _fuzz_max.value
-	if _texture: values["texture"] = _texture.text
-	values["group"] = _group.value
-	values["anchored"] = _anchored.pressed
-	values["target"] = _target.selected
-	values["freeline"] = _freeline_checkbox.pressed
-	values["straight_line"] = _straight_line_checkbox.pressed
-	values["line_mode"] = _get_design_line_mode()
-	values["spacing"] = _spacing.value
-	values["jitter"] = _jitter.value
-	values["ordered"] = _ordered.pressed
-	values["repeat"] = _repeat.pressed
-	values["shuffle"] = _shuffle.pressed
-	values["random_walk"] = _random_walk_checkbox.pressed
-	values["walk_steps"] = _walk_steps.value
-	values["walk_spread"] = _walk_spread.value
-	values["exclude_eye_ballz"] = _exclude_eye_ballz.pressed
-	LnzLiveUtils.save_config("PaintballProperties", values, "user://settings.cfg")
-	var design_values: Dictionary = {}
-	design_values["design_paintballs"] = _design_canvas.design_paintballs
-	design_values["brush_size"] = _brush_size_slider.value
-	design_values["design_total_diameter"] = _design_total_diameter.value
-	design_values["design_total_diameter_max"] = _design_total_diameter_max.value
-	design_values["design_pixel_mode"] = _design_pixel_mode.pressed
-	design_values["color_slots_v2"] = design_color_slots
-	design_values["mirror_x"] = _mirror_x.pressed
-	design_values["mirror_y"] = _mirror_y.pressed
-	design_values["canvas_eraser"] = _canvas_eraser.pressed
-	design_values["straight_line"] = _straight_line_checkbox.pressed
-	design_values["line_mode"] = _get_design_line_mode()
-	design_values["design_jitter"] = _design_jitter.value
-	design_values["rotate_jitter"] = _rotate_jitter.value
-	design_values["rotate_fixed"] = _rotate_fixed.pressed
-	design_values["design_rotation"] = _design_rotation.value
-	design_values["spread_jitter"] = _spread_jitter.value
-	LnzLiveUtils.save_config("DesignMode", design_values, "user://settings.cfg")
 
-func load_settings() -> void:
-	var data: Dictionary = LnzLiveUtils.load_config("PaintballProperties", "user://settings.cfg")
-	var design_data: Dictionary = LnzLiveUtils.load_config("DesignMode", "user://settings.cfg")
-	if data.empty() and design_data.empty():
-		return
+func _load_pattern_file(path: String) -> void:
+	print("[STATUS] PaintballSettings: attempting to load pattern from %s" % path)
+	var file: File = File.new()
+	if file.open(path, File.READ) == OK:
+		var text: String = file.get_as_text()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK:
+			var data: Dictionary = json_res.result
+			if data.has("paintballs") and data.has("slots"):
+				_design_canvas.design_paintballs = data.paintballs
 
-	print("[STATUS] PaintballSettings: loading settings configuration")
-	_is_loading_settings = true
+				if data.slots is Array:
+					design_color_slots.clear()
+					for s in data.slots:
+						if s.has("display_color_r"):
+							s["display_color"] = Color(s["display_color_r"], s["display_color_g"], s["display_color_b"])
+							s.erase("display_color_r")
+							s.erase("display_color_g")
+							s.erase("display_color_b")
+						design_color_slots.append(s)
 
-	_diameter_min.value = data.get("diameter_min", 10.0)
-	_diameter_max.value = data.get("diameter_max", 20.0)
-	_tapered.pressed = data.get("tapered", false)
-	_pixel_mode.pressed = data.get("pixel_mode", false)
-	if _color: _color.text = data.get("color", "")
-	if _outline_color: _outline_color.text = data.get("outline_color", "244")
-	_outline_type_min.value = data.get("outline_type_min", -1.0)
-	_outline_type_max.value = data.get("outline_type_max", -1.0)
-	_fuzz_min.value = data.get("fuzz_min", 0.0)
-	_fuzz_max.value = data.get("fuzz_max", 0.0)
-	if _texture: _texture.text = data.get("texture", "0")
-	_group.value = data.get("group", 0.0)
-	_anchored.pressed = data.get("anchored", true)
-	_target.selected = data.get("target", 0)
-	_freeline_checkbox.pressed = data.get("freeline", false)
-	_straight_line_checkbox.pressed = data.get("straight_line", false)
-	_spacing.value = data.get("spacing", 5.0)
-	_jitter.value = data.get("jitter", 0.0)
-	_ordered.pressed = data.get("ordered", false)
-	_repeat.pressed = data.get("repeat", false)
-	_shuffle.pressed = data.get("shuffle", false)
-	_random_walk_checkbox.pressed = data.get("random_walk", false)
-	_walk_steps.value = data.get("walk_steps", 3.0)
-	_walk_spread.value = data.get("walk_spread", 5.0)
-	_exclude_eye_ballz.pressed = data.get("exclude_eye_ballz", true)
+				if data.has("info") and data["info"] is Dictionary:
+					var info: Dictionary = data["info"]
+					_pattern_info_dialog.find_node("AuthorEdit").text = info.get("author", "")
+					_pattern_info_dialog.find_node("WebsiteEdit").text = info.get("website", "")
+					_pattern_info_dialog.find_node("DescEdit").text = info.get("description", "")
 
-	var loaded_paintballs: Array = design_data.get("design_paintballs", [])
-	if loaded_paintballs.size() > 0:
-		_design_canvas.design_paintballs = loaded_paintballs
-		_design_canvas.update()
-		_design_canvas.emit_signal("design_changed")
-
-	_brush_size_slider.value = design_data.get("brush_size", 30.0)
-	_design_total_diameter.value = design_data.get("design_total_diameter", 20.0)
-	_design_total_diameter_max.value = design_data.get("design_total_diameter_max", 30.0)
-	_design_pixel_mode.pressed = design_data.get("design_pixel_mode", false)
-	_design_canvas.brush_size = _brush_size_slider.value
-	_brush_size_label.text = "Brush Size (" + str(_brush_size_slider.value) + "%)"
-	_brush_space_label.text = "Brush Spacing (" + str(_brush_space_slider.value) + "%)"
-
-	var loaded_slots_v2: Array = design_data.get("color_slots_v2", [])
-	if loaded_slots_v2.size() > 0:
-		design_color_slots = loaded_slots_v2
-	else:
-		var loaded_slots: Array = design_data.get("color_slots", [])
-		if loaded_slots.size() == 4:
-			for i in range(4):
-				var old_slot: Dictionary = loaded_slots[i]
-				design_color_slots[i].color = old_slot.color
-				design_color_slots[i].outline_color = old_slot.outline_color
-				design_color_slots[i].texture = old_slot.texture
-				design_color_slots[i].outline_type = old_slot.outline_type
+				_refresh_slot_buttons()
+				_design_canvas.update()
+				_design_canvas.emit_signal("design_changed")
+				print("[STATUS] PaintballSettings: loaded and applied pattern from %s" % path)
 		else:
-			design_color_slots.clear()
-			for s in DEFAULT_DESIGN_SLOTS:
-				design_color_slots.append(s.duplicate(true))
-
-	_mirror_x.pressed = design_data.get("mirror_x", false)
-	_mirror_y.pressed = design_data.get("mirror_y", false)
-	_canvas_eraser.pressed = design_data.get("canvas_eraser", false)
-	_straight_line_checkbox.pressed = design_data.get("straight_line", false)
-	_sync_design_line_mode(design_data.get("line_mode", 0))
-	_design_jitter.value = design_data.get("design_jitter", 0.0)
-	_rotate_jitter.value = design_data.get("rotate_jitter", 0.0)
-	_rotate_fixed.pressed = design_data.get("rotate_fixed", false)
-	_design_rotation.value = design_data.get("design_rotation", 0.0)
-	_spread_jitter.value = design_data.get("spread_jitter", 0.0)
-
-	_on_design_tool_toggled(null)
-
-	_refresh_slot_buttons()
-	_is_loading_settings = false
+			print("[ERROR] PaintballSettings: failed to parse JSON pattern from %s" % path)
+		file.close()
+	else:
+		print("[ERROR] PaintballSettings: failed to open pattern file for reading: %s" % path)
+	
 	_on_palette_changed()
-	_refresh_all_previews()
 
-func _on_reset_defaults_pressed() -> void:
-	print("[STATUS] PaintballSettings: resetting to default settings")
-	_is_loading_settings = true
 
-	_diameter_min.value = 10.0
-	_diameter_max.value = 20.0
-	_tapered.pressed = false
-	_pixel_mode.pressed = false
+func _on_export_pattern_pressed() -> void:
+	var author: String = _pattern_info_dialog.find_node("AuthorEdit").text.strip_edges()
+	var filename: String = "LnzLive_paintball_pattern_"
+	if not author.empty():
+		filename = str(filename, author.replace(" ", "_"), "_")
+	filename = str(filename, OS.get_unix_time(), ".json")
+
+	print("[STATUS] PaintballSettings: generating export for pattern, filename: %s" % filename)
+	if OS.has_feature("HTML5"):
+		var data: Dictionary = _get_pattern_data_dict()
+		var json_string: String = JSON.print(data, "\t")
+		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
+		var js_code: String = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + filename + """');
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+		print("[STATUS] PaintballSettings: pattern download triggered via web bridge")
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Export Stamp Pattern"
+		file_dialog.mode = FileDialog.MODE_SAVE_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Pattern"]
+		file_dialog.current_file = filename
+		file_dialog.connect("file_selected", self, "_save_pattern_file")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+
+func _get_pattern_data_dict() -> Dictionary:
+	var data: Dictionary = {
+		"exporter": "LnzLive",
+		"info": {
+			"time_generated": OS.get_datetime(),
+			"author": _pattern_info_dialog.find_node("AuthorEdit").text,
+			"website": _pattern_info_dialog.find_node("WebsiteEdit").text,
+			"description": _pattern_info_dialog.find_node("DescEdit").text
+		},
+		"paintballs": _design_canvas.design_paintballs,
+		"slots": []
+	}
+
+	for s in design_color_slots:
+		var slot_copy: Dictionary = s.duplicate()
+		if slot_copy.has("display_color") and slot_copy["display_color"] is Color:
+			var col: Color = slot_copy["display_color"]
+			slot_copy["display_color_r"] = col.r
+			slot_copy["display_color_g"] = col.g
+			slot_copy["display_color_b"] = col.b
+			slot_copy.erase("display_color")
+		data.slots.append(slot_copy)
+	return data
+
+
+func _save_pattern_file(path: String) -> void:
+	var data: Dictionary = _get_pattern_data_dict()
+	var file: File = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
+		print("[STATUS] PaintballSettings: saved pattern file to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for saving pattern to %s" % path)
+
+
+### LAYER MANAGEMENT ###
+# _setup_layer_tree
+# _refresh_layers_tree
+# _on_use_layers_toggled
+# _on_layer_visuals_dirty
+# _on_layer_visibility_toggled
+# _rebuild_3d_pending_visuals
+# _on_LayersTree_item_selected
+# _on_LayersTree_item_edited
+# _on_AddLayerButton_pressed
+# _on_TransferLnzButton_pressed
+# _on_ClearAllLayersButton_pressed
+# _on_MoveUpButton_pressed
+# _on_MoveDownButton_pressed
+# _on_MergeButton_pressed
+# _on_ClearLayerButton_pressed
+# _on_DeleteLayerButton_pressed
+# _delete_layer
+# _on_delete_layer_confirmed
+# _on_delete_layer_cancelled
+# _on_delete_layer_merge
+# _on_delete_layer_discard
+
+func _setup_layer_tree() -> void:
+	if not is_instance_valid(_layers_tree):
+		return
+	_layers_tree.columns = 3
+	_layers_tree.hide_root = true
+	_layers_tree.select_mode = Tree.SELECT_SINGLE
+	_layers_tree.set_column_titles_visible(true)
+	_layers_tree.set_column_title(0, "Vis")
+	_layers_tree.set_column_title(1, "Layer")
+	_layers_tree.set_column_title(2, "PB")
+	_layers_tree.set_column_expand(0, true)
+	_layers_tree.set_column_expand(1, true)
+	_layers_tree.set_column_expand(2, true)
+	_layers_tree.connect("item_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("cell_selected", self, "_on_LayersTree_item_selected")
+	_layers_tree.connect("item_edited", self, "_on_LayersTree_item_edited")
+	if is_instance_valid(_add_layer_button):
+		_add_layer_button.connect("pressed", self, "_on_AddLayerButton_pressed")
+	if is_instance_valid(_transfer_lnz_button):
+		_transfer_lnz_button.connect("pressed", self, "_on_TransferLnzButton_pressed")
+	if is_instance_valid(_clear_all_layers_button):
+		_clear_all_layers_button.connect("pressed", self, "_on_ClearAllLayersButton_pressed")
+	if is_instance_valid(find_node("MoveUpButton")):
+		find_node("MoveUpButton").connect("pressed", self, "_on_MoveUpButton_pressed")
+	if is_instance_valid(find_node("MoveDownButton")):
+		find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
+	if is_instance_valid(find_node("MergeButton")):
+		find_node("MergeButton").connect("pressed", self, "_on_MergeButton_pressed")
+	if is_instance_valid(find_node("ClearLayerButton")):
+		find_node("ClearLayerButton").connect("pressed", self, "_on_ClearLayerButton_pressed")
+	if is_instance_valid(find_node("DeleteLayerButton")):
+		find_node("DeleteLayerButton").connect("pressed", self, "_on_DeleteLayerButton_pressed")
+	if is_instance_valid(_export_layers_button):
+		_export_layers_button.connect("pressed", self, "export_layers_json")
+	if is_instance_valid(_import_layers_button):
+		_import_layers_button.connect("pressed", self, "_on_ImportLayersButton_pressed")
+	_refresh_layers_tree()
+
+
+func _refresh_layers_tree() -> void:
+	if not is_instance_valid(_layers_tree) or _is_refreshing_layer_tree:
+		return
+	_is_refreshing_layer_tree = true
+	_layers_tree.clear()
+	var root_item: TreeItem = _layers_tree.create_item()
+	var layer_count: int = PaintballLayerManager.layers.size()
+	for i in range(layer_count):
+		var layer: PaintballLayerData = PaintballLayerManager.layers[i]
+		var item: TreeItem = _layers_tree.create_item(root_item)
+		item.set_metadata(0, layer.layer_id)
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		item.set_checked(0, layer.visible)
+		item.set_editable(0, true)
+		item.set_cell_mode(1, TreeItem.CELL_MODE_STRING)
+		item.set_text(1, layer.name)
+		item.set_editable(1, true)
+		item.set_cell_mode(2, TreeItem.CELL_MODE_STRING)
+		item.set_text(2, str(layer.get_paintball_count()))
+		item.set_editable(2, false)
+		if layer.layer_id == PaintballLayerManager.active_layer_id:
+			for col_idx in range(3):
+				item.set_custom_bg_color(col_idx, Color(0.25, 0.45, 0.45, 0.6))
+	if is_instance_valid(_active_layer_label):
+		var active: PaintballLayerData = PaintballLayerManager.get_active_layer()
+		_active_layer_label.text = "Active: " + (active.name if active else "None")
+	_update_paintball_buttons()
+	_is_refreshing_layer_tree = false
+
+
+func _on_use_layers_toggled(is_on: bool) -> void:
+	print("[STATUS] PaintballSettings: use_layers toggled: %s" % is_on)
+	if is_instance_valid(_layer_section):
+		_layer_section.visible = is_on
+	_on_setting_changed()
+
+
+func _on_layer_visuals_dirty(_arg1 = null, _arg2 = null) -> void:
+	call_deferred("_refresh_layers_tree")
+
+
+func _on_layer_visibility_toggled(layer_id: int, is_vis: bool) -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("get_pending_paintball_nodes_for_layer"):
+		var nodes: Array = dog_gen.get_pending_paintball_nodes_for_layer(layer_id)
+		for node in nodes:
+			if is_instance_valid(node):
+				node.visible = is_vis
+	_update_paintball_buttons()
+	call_deferred("_refresh_layers_tree")
+
+
+func _rebuild_3d_pending_visuals() -> void:
+	var dog_gen = LnzLiveUtils.get_pet_node(get_tree().root)
+	if dog_gen and dog_gen.has_method("rebuild_pending_paintball_visuals"):
+		dog_gen.rebuild_pending_paintball_visuals()
+
+
+func _on_LayersTree_item_selected() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if layer_id >= 0 and layer_id != PaintballLayerManager.active_layer_id:
+		PaintballLayerManager.set_active_layer(layer_id)
+		call_deferred("_refresh_layers_tree")
+
+
+func _on_LayersTree_item_edited() -> void:
+	if _is_refreshing_layer_tree:
+		return
+	var item: TreeItem = _layers_tree.get_edited()
+	if not is_instance_valid(item):
+		return
+	var col: int = _layers_tree.get_edited_column()
+	var layer_id: int = int(item.get_metadata(0))
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
+	if col == 0:
+		var new_checked: bool = item.is_checked(0)
+		if new_checked != layer.visible:
+			PaintballLayerManager.toggle_layer_visibility(layer_id)
+	elif col == 1:
+		var new_name: String = item.get_text(1).strip_edges()
+		if new_name != "" and new_name != layer.name:
+			PaintballLayerManager.rename_layer(layer_id, new_name)
+
+
+
+func _on_AddLayerButton_pressed() -> void:
+	PaintballLayerManager.create_layer()
+	_refresh_layers_tree()
+
+
+func _on_TransferLnzButton_pressed() -> void:
+	var lnz_text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+	if lnz_text_edit and lnz_text_edit.has_method("transfer_paintballs_from_lnz_to_layer"):
+		var count: int = lnz_text_edit.transfer_paintballs_from_lnz_to_layer("Transferred")
+		if count > 0:
+			_refresh_layers_tree()
+
+
+func _on_ClearAllLayersButton_pressed() -> void:
+	PaintballLayerManager.clear_all_paintballs()
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+
+func _on_MoveUpButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_up(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+
+func _on_MoveDownButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	if PaintballLayerManager.move_layer_down(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+
+func _on_MergeButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	var idx: int = -1
+	for i in range(PaintballLayerManager.layers.size()):
+		if PaintballLayerManager.layers[i].layer_id == layer_id:
+			idx = i
+			break
+	if idx <= 0:
+		print("[WARNING] PaintballSettings: cannot merge layer %d — it is already the top layer" % layer_id)
+		return
+	if PaintballLayerManager.merge_layer_to_below(layer_id):
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+
+func _on_ClearLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	PaintballLayerManager.clear_layer(layer_id)
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+
+
+
+func _on_DeleteLayerButton_pressed() -> void:
+	var selected: TreeItem = _layers_tree.get_selected()
+	if not is_instance_valid(selected):
+		return
+	var layer_id: int = int(selected.get_metadata(0))
+	_delete_layer(layer_id)
+
+
+func _delete_layer(layer_id: int) -> void:
+	var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+	if not layer:
+		return
 	
-	if _color: _color.text = ""
-	if _outline_color: _outline_color.text = "244"
+	var pb_count: int = layer.get_paintball_count()
+	if pb_count == 0:
+		PaintballLayerManager.delete_layer(layer_id, false)
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+		return
 	
-	_outline_type_min.value = -1.0
-	_outline_type_max.value = -1.0
-	_fuzz_min.value = 0.0
-	_fuzz_max.value = 0.0
-	if _texture: _texture.text = "0"
-	_group.value = 0.0
-	_anchored.pressed = true
-	_target.selected = 0
-	_freeline_checkbox.pressed = false
-	_straight_line_checkbox.pressed = false
-	_line_btn.pressed = false
-	_hline_btn.pressed = false
-	_vline_btn.pressed = false
-	_brush_btn.pressed = true
-	_spacing.value = 5.0
-	_jitter.value = 0.0
-	_ordered.pressed = false
-	_repeat.pressed = false
-	_shuffle.pressed = false
-	_eraser_checkbox.pressed = false
+	if is_instance_valid(_delete_layer_dialog):
+		_pending_delete_layer_id = layer_id
+		_delete_layer_dialog.popup_centered()
+		if not _delete_layer_dialog.is_connected("confirmed", self, "_on_delete_layer_confirmed"):
+			_delete_layer_dialog.connect("confirmed", self, "_on_delete_layer_confirmed")
+		if not _delete_layer_dialog.is_connected("canceled", self, "_on_delete_layer_cancelled"):
+			_delete_layer_dialog.connect("canceled", self, "_on_delete_layer_cancelled")
+		var cancel_btn: Button = _delete_layer_dialog.find_node("CancelButton")
+		if is_instance_valid(cancel_btn):
+			if not cancel_btn.is_connected("pressed", self, "_on_delete_layer_cancelled"):
+				cancel_btn.connect("pressed", self, "_on_delete_layer_cancelled")
+		var ok_btn: Button = _delete_layer_dialog.find_node("OKButton")
+		if is_instance_valid(ok_btn):
+			ok_btn.visible = false
+		var merge_btn: Button = _delete_layer_dialog.find_node("MergeButton")
+		var discard_btn: Button = _delete_layer_dialog.find_node("DiscardButton")
+		if is_instance_valid(merge_btn):
+			if not merge_btn.is_connected("pressed", self, "_on_delete_layer_merge"):
+				merge_btn.connect("pressed", self, "_on_delete_layer_merge")
+		if is_instance_valid(discard_btn):
+			if not discard_btn.is_connected("pressed", self, "_on_delete_layer_discard"):
+				discard_btn.connect("pressed", self, "_on_delete_layer_discard")
+	else:
+		if PaintballLayerManager.delete_layer(layer_id, true):
+			_rebuild_3d_pending_visuals()
+			_refresh_layers_tree()
 
-	_random_walk_checkbox.pressed = false
-	_walk_steps.value = 3.0
-	_walk_spread.value = 5.0
 
-	_mirror_x.pressed = false
-	_mirror_y.pressed = false
-	_canvas_eraser.pressed = false
-	_design_jitter.value = 0.0
-	_rotate_fixed.pressed = false
+func _on_delete_layer_confirmed() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
 
-	_design_canvas.clear()
-	_brush_size_slider.value = 30.0
-	_design_total_diameter.value = 20.0
-	_design_total_diameter_max.value = 30.0
-	_design_rotation.value = 0.0
-	_design_pixel_mode.pressed = false
 
-	design_color_slots.clear()
-	for s in DEFAULT_DESIGN_SLOTS:
-		design_color_slots.append(s.duplicate(true))
-	_refresh_slot_buttons()
-	_on_design_tool_toggled(null)
+func _on_delete_layer_cancelled() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	_pending_delete_layer_id = -1
 
-	_is_loading_settings = false
-	save_settings()
-	_on_palette_changed()
-	_refresh_all_previews()
 
-func _get_design_line_mode() -> int:
-	if _brush_btn.pressed:
-		return 0
-	elif _line_btn.pressed:
-		return 1
-	elif _hline_btn.pressed:
-		return 2
-	elif _vline_btn.pressed:
-		return 3
-	return 0
+func _on_delete_layer_merge() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, true)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
 
-func _sync_design_line_mode(mode: int) -> void:
-	_brush_btn.set_block_signals(true)
-	_line_btn.set_block_signals(true)
-	_hline_btn.set_block_signals(true)
-	_vline_btn.set_block_signals(true)
+
+func _on_delete_layer_discard() -> void:
+	if is_instance_valid(_delete_layer_dialog):
+		_delete_layer_dialog.hide()
+	if _pending_delete_layer_id >= 0:
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(_pending_delete_layer_id)
+		if layer:
+			layer.clear_paintballs()
+		PaintballLayerManager.delete_layer(_pending_delete_layer_id, false)
+		_pending_delete_layer_id = -1
+		_rebuild_3d_pending_visuals()
+		_refresh_layers_tree()
+
+
+### LAYER JSON EXPORT/IMPORT ###
+# export_layers_json
+# _save_layers_file
+# _get_layers_data_dict
+# _on_ImportLayersButton_pressed
+# _on_web_layers_import_completed
+# _load_layers_file
+# _process_imported_layers_dict
+# _show_layer_remap_dialog
+# _on_layer_remap_confirmed
+# _on_layer_remap_cancelled
+# _apply_imported_layers
+
+func export_layers_json() -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	LnzLiveUtils.export_json_preset(data, "LnzLive_paintball_layers", self, "_save_layers_file")
+
+
+func _save_layers_file(path: String) -> void:
+	var data: Dictionary = _get_layers_data_dict()
+	var file: File = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
+		print("[STATUS] PaintballSettings: saved layers file to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for saving layers to %s" % path)
+
+
+func _get_layers_data_dict() -> Dictionary:
+	var data: Dictionary = {}
+	data["exporter"] = "LnzLive"
+	data["format_version"] = 1
+	data["species"] = "dog"
+	data["species_id"] = 2
+	data["species_ball_count"] = 67
+	if dog_generator and dog_generator.lnz:
+		data["species"] = KeyBallsData.species_to_string(dog_generator.lnz.species)
+		data["species_id"] = dog_generator.lnz.species
+		data["species_ball_count"] = dog_generator.lnz.balls.size()
+	var dt: Dictionary = OS.get_datetime()
+	data["exported_at"] = {
+		"year": dt["year"], "month": dt["month"], "day": dt["day"],
+		"hour": dt["hour"], "minute": dt["minute"], "second": dt["second"]
+	}
 	
-	if mode == 0:
-		_brush_btn.pressed = true
-		_line_btn.pressed = false
-		_hline_btn.pressed = false
-		_vline_btn.pressed = false
-	elif mode == 1:
-		_brush_btn.pressed = false
-		_line_btn.pressed = true
-		_hline_btn.pressed = false
-		_vline_btn.pressed = false
-	elif mode == 2:
-		_brush_btn.pressed = false
-		_line_btn.pressed = false
-		_hline_btn.pressed = true
-		_vline_btn.pressed = false
-	elif mode == 3:
-		_brush_btn.pressed = false
-		_line_btn.pressed = false
-		_hline_btn.pressed = false
-		_vline_btn.pressed = true
+	var layers_array: Array = []
+	for layer in PaintballLayerManager.layers:
+		var layer_dict: Dictionary = {}
+		layer_dict["name"] = layer.name
+		layer_dict["visible"] = layer.visible
+		var pb_array: Array = []
+		for pb in layer.paintballs:
+			var pb_dict: Dictionary = {}
+			pb_dict["base_ball_no"] = pb.get("base_ball_no", -1)
+			pb_dict["base_ball_name"] = KeyBallsData.get_ball_name_by_species(
+				data["species_id"], pb_dict["base_ball_no"])
+			pb_dict["parent_base_ball_no"] = pb.get("parent_base_ball_no", -1)
+			pb_dict["diameter"] = pb.get("diameter", 20)
+			var rel_pos: Vector3 = pb.get("relative_pos_lnz", Vector3.ZERO)
+			pb_dict["relative_pos_lnz"] = [rel_pos.x, rel_pos.y, rel_pos.z]
+			var normal: Vector3 = pb.get("surface_normal", Vector3.ZERO)
+			if normal == Vector3.ZERO:
+				normal = rel_pos.normalized()
+			pb_dict["surface_normal"] = [normal.x, normal.y, normal.z]
+			pb_dict["color"] = pb.get("color", 1)
+			pb_dict["outline_color"] = pb.get("outline_color", 1)
+			pb_dict["fuzz"] = pb.get("fuzz", 0)
+			pb_dict["outline_type"] = pb.get("outline_type", -1)
+			pb_dict["texture"] = pb.get("texture", -1)
+			pb_dict["anchored"] = pb.get("anchored", false)
+			pb_dict["group"] = pb.get("group", 0)
+			pb_array.append(pb_dict)
+		layer_dict["paintballs"] = pb_array
+		layers_array.append(layer_dict)
+	data["layers"] = layers_array
+	return data
+
+
+func _on_ImportLayersButton_pressed() -> void:
+	if OS.has_feature("HTML5"):
+		LnzLiveUtils.web_prompt_import_text(self, "_on_web_layers_import_completed")
+	else:
+		var file_dialog: FileDialog = FileDialog.new()
+		file_dialog.window_title = "Import Paintball Layers"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Paintball Layers"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_layers_file")
+		file_dialog.connect("popup_hide", self, "_on_file_dialog_closed", [file_dialog])
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+
+func _on_web_layers_import_completed(args: Array) -> void:
+	var json_res = JSON.parse(args[0])
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		_process_imported_layers_dict(json_res.result)
+
+
+func _load_layers_file(path: String) -> void:
+	var data: Dictionary = LnzLiveUtils.load_json_preset(path)
+	if typeof(data) == TYPE_DICTIONARY and not data.empty():
+		_process_imported_layers_dict(data)
+
+
+func _process_imported_layers_dict(data: Dictionary) -> void:
+	if not data.has("layers"):
+		print("[ERROR] PaintballSettings: imported JSON has no layers key")
+		return
 	
-	_brush_btn.set_block_signals(false)
-	_line_btn.set_block_signals(false)
-	_hline_btn.set_block_signals(false)
-	_vline_btn.set_block_signals(false)
+	var src_species_id: int = data.get("species_id", 0)
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
 	
-	_brush_btn.release_focus()
-	_line_btn.release_focus()
-	_hline_btn.release_focus()
-	_vline_btn.release_focus()
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	
+	# Collect unique base_ball_no values
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = pb.get("base_ball_no", -1)
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var all_exist: bool = true
+	for ball_no in unique_balls.keys():
+		var found: bool = false
+		if ball_no < dog_generator.ball_map.size():
+			found = true
+		if dog_generator.lnz and dog_generator.lnz.addballs.has(ball_no):
+			found = true
+		if not found:
+			all_exist = false
+			break
+	
+	if src_species_id == target_species_id and all_exist:
+		print("[STATUS] PaintballSettings: layers import compatible, applying directly")
+		_apply_imported_layers(data["layers"], {}, src_species_id)
+		return
+	
+	print("[STATUS] PaintballSettings: cross-species or missing balls detected, showing remap dialog")
+	_show_layer_remap_dialog(data)
 
-func _on_line_btn_toggled(pressed: bool) -> void:
-	if pressed:
-		_design_canvas._line_mode = 1
-		_design_canvas.update()
-		save_settings()
-		call_deferred("_sync_design_line_mode", 1)
 
-func _on_hline_btn_toggled(pressed: bool) -> void:
-	if pressed:
-		_design_canvas._line_mode = 2
-		_design_canvas.update()
-		save_settings()
-		call_deferred("_sync_design_line_mode", 2)
+func _show_layer_remap_dialog(data: Dictionary) -> void:
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Import Paintball Layers - Remap Balls"
+	dialog.rect_min_size = Vector2(540, 380)
+	
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.set_anchors_and_margins_preset(Control.PRESET_WIDE, Control.PRESET_MODE_MINSIZE, 10)
+	vbox.margin_bottom = -40
+	dialog.add_child(vbox)
+	
+	var label: Label = Label.new()
+	label.text = "Some balls need remapping. Select target balls for each source ball:"
+	vbox.add_child(label)
+	
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var scroll_vbox: VBoxContainer = VBoxContainer.new()
+	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(scroll_vbox)
+	
+	var src_species: int = KeyBallsData.string_to_species(data.get("species", "dog"))
+	var target_species_id: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species_id = dog_generator.lnz.species
+	
+	var unique_balls: Dictionary = {}
+	for layer in data["layers"]:
+		for pb in layer.get("paintballs", []):
+			var ball_no: int = int(pb.get("base_ball_no", -1))
+			if ball_no >= 0 and not unique_balls.has(ball_no):
+				unique_balls[ball_no] = pb
+	
+	var remapping: Dictionary = {}
+	var option_buttons: Array = []
+	
+	for ball_no in unique_balls.keys():
+		var hb: HBoxContainer = HBoxContainer.new()
+		hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll_vbox.add_child(hb)
+		
+		var ball_label: Label = Label.new()
+		var ball_name: String = KeyBallsData.get_ball_name_by_species(src_species, ball_no)
+		ball_label.text = "Ball %d (%s)" % [ball_no, ball_name if ball_name != "" else "unknown"]
+		ball_label.rect_min_size = Vector2(150, 25)
+		hb.add_child(ball_label)
+		
+		var status_label: Label = Label.new()
+		status_label.rect_min_size = Vector2(130, 25)
+		hb.add_child(status_label)
+		
+		var option: OptionButton = OptionButton.new()
+		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		option.rect_min_size = Vector2(180, 25)
+		hb.add_child(option)
+		
+		var parent_ball: int = int(unique_balls[ball_no].get("parent_base_ball_no", -1))
+		var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+			src_species, ball_no, target_species_id, parent_ball)
+		var resolution: int = equiv.get("resolution", KeyBallsData.ResolutionResult.MANUAL_REMAP)
+		
+		status_label.text = ["AUTO_MAPPED", "COLLAPSED", "ADDBALL_FALLBACK", "MANUAL_REMAP"][resolution]
+		
+		var candidates: Array = equiv.get("candidates", [])
+		if candidates.empty():
+			for i in range(KeyBallsData.max_base_ball_num):
+				candidates.append(i)
+		
+		for cand in candidates:
+			var cand_name: String = KeyBallsData.get_ball_name_by_species(target_species_id, cand)
+			option.add_item("%d (%s)" % [cand, cand_name if cand_name != "" else "unknown"], int(cand))
+		option.add_item("Skip (-1)", -1)
+		
+		var target: int = int(equiv.get("target_ball", -1))
+		for i in range(option.get_item_count()):
+			if option.get_item_id(i) == target:
+				option.selected = i
+				break
+		
+		option_buttons.append({"option": option, "src_ball": ball_no, "status_label": status_label})
+		remapping[ball_no] = target
+	
+	dialog.set_meta("remapping", remapping)
+	dialog.set_meta("data", data)
+	dialog.set_meta("option_buttons", option_buttons)
+	
+	dialog.connect("confirmed", self, "_on_layer_remap_confirmed", [dialog])
+	dialog.connect("canceled", self, "_on_layer_remap_cancelled", [dialog])
+	
+	get_tree().root.add_child(dialog)
+	dialog.popup_centered(Vector2(540, 380))
 
-func _on_vline_btn_toggled(pressed: bool) -> void:
-	if pressed:
-		_design_canvas._line_mode = 3
-		_design_canvas.update()
-		save_settings()
-		call_deferred("_sync_design_line_mode", 3)
 
-func _on_brush_btn_toggled(pressed: bool) -> void:
-	if pressed:
-		_design_canvas._line_mode = 0
-		_design_canvas.update()
-		save_settings()
-		call_deferred("_sync_design_line_mode", 0)
+func _on_layer_remap_confirmed(dialog: ConfirmationDialog) -> void:
+	var option_buttons: Array = dialog.get_meta("option_buttons")
+	if option_buttons == null:
+		option_buttons = []
+	var remapping: Dictionary = dialog.get_meta("remapping")
+	if remapping == null:
+		remapping = {}
+	var data: Dictionary = dialog.get_meta("data")
+	if data == null:
+		data = {}
+	
+	for ob in option_buttons:
+		var option: OptionButton = ob["option"]
+		var src_ball: int = ob["src_ball"]
+		if option.selected >= 0:
+			remapping[src_ball] = option.get_item_id(option.selected)
+	
+	dialog.queue_free()
+	_apply_imported_layers(data["layers"], remapping, KeyBallsData.string_to_species(data.get("species", "dog")))
+
+
+func _on_layer_remap_cancelled(dialog: ConfirmationDialog) -> void:
+	dialog.queue_free()
+
+
+func _apply_imported_layers(layers_array: Array, remapping: Dictionary, src_species: int = KeyBallsData.Species.DOG) -> void:
+	print("[STATUS] PaintballSettings: applying layers with remapping")
+	
+	# Clear current active layer paintballs
+	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
+	if active_layer and active_layer.get_paintball_count() > 0:
+		active_layer.clear_paintballs()
+	
+	var target_species: int = KeyBallsData.Species.DOG
+	if dog_generator and dog_generator.lnz:
+		target_species = dog_generator.lnz.species
+	
+	var pixel_world_size: float = 0.002
+	var engine_scale: float = 1.0
+	if dog_generator:
+		if "pixel_world_size" in dog_generator:
+			pixel_world_size = dog_generator.pixel_world_size
+		if "lnz" in dog_generator and is_instance_valid(dog_generator.lnz):
+			if "scales" in dog_generator.lnz:
+				engine_scale = dog_generator.lnz.scales.x
+	
+	for layer_data in layers_array:
+		var layer_name: String = layer_data.get("name", "Imported")
+		var layer_id: int = PaintballLayerManager.create_layer(layer_name)
+		var layer: PaintballLayerData = PaintballLayerManager.get_layer(layer_id)
+		if not layer:
+			continue
+		layer.visible = layer_data.get("visible", true)
+		
+		for pb_data in layer_data.get("paintballs", []):
+			var base_ball_no: int = pb_data.get("base_ball_no", -1)
+			var target_ball_no: int = base_ball_no
+			var was_remapped: bool = false
+			
+			if remapping.has(base_ball_no):
+				target_ball_no = remapping[base_ball_no]
+				was_remapped = true
+			else:
+				var src_check: String = ""
+				if pb_data.has("base_ball_name"):
+					src_check = pb_data["base_ball_name"]
+				if src_check != "":
+					var equiv: Dictionary = KeyBallsData.find_equivalent_ball(
+						src_species, base_ball_no, target_species, -1)
+					if equiv.get("target_ball", -1) >= 0:
+						if equiv["resolution"] != KeyBallsData.ResolutionResult.MANUAL_REMAP:
+							target_ball_no = equiv["target_ball"]
+							was_remapped = true
+						else:
+							print("[WARNING] PaintballSettings: no valid mapping for ball %d, skipping" % base_ball_no)
+							continue
+					else:
+						print("[WARNING] PaintballSettings: no mapping found for ball %d, skipping" % base_ball_no)
+						continue
+			
+			if target_ball_no < 0:
+				print("[WARNING] PaintballSettings: invalid target ball %d for paintball, skipping" % target_ball_no)
+				continue
+			
+			var raw_lnz = pb_data.get("relative_pos_lnz", [0, 0, 0])
+			var rel_lnz_vec: Vector3
+			if raw_lnz is Vector3:
+				rel_lnz_vec = raw_lnz
+			else:
+				rel_lnz_vec = Vector3(float(raw_lnz[0]), float(raw_lnz[1]), float(raw_lnz[2]))
+			
+			var raw_norm = pb_data.get("surface_normal", [0, 0, 0])
+			var surface_normal: Vector3
+			if raw_norm is Vector3:
+				surface_normal = raw_norm
+			else:
+				surface_normal = Vector3(float(raw_norm[0]), float(raw_norm[1]), float(raw_norm[2]))
+			
+			if surface_normal == Vector3.ZERO and rel_lnz_vec != Vector3.ZERO:
+				surface_normal = rel_lnz_vec.normalized()
+			
+			var new_pb: Dictionary = pb_data.duplicate(true)
+			new_pb["base_ball_no"] = target_ball_no
+			new_pb["relative_pos_lnz"] = rel_lnz_vec
+			new_pb["surface_normal"] = surface_normal
+			new_pb["relative_pos_local"] = LnzLiveUtils.lnz_to_world_delta(rel_lnz_vec, pixel_world_size, engine_scale)
+			
+			if was_remapped:
+				var target_ball_size: float = 20.0
+				var ball_key: int = target_ball_no
+				if ball_key < dog_generator.ball_map.size():
+					var ball_node = dog_generator.ball_map[ball_key]
+					if is_instance_valid(ball_node) and "ball_size" in ball_node:
+						target_ball_size = float(ball_node.ball_size)
+					else:
+						target_ball_size = 20.0
+				elif dog_generator.lnz and dog_generator.lnz.addballs.has(ball_key):
+					target_ball_size = float(dog_generator.lnz.addballs[ball_key].size)
+				
+				var surface_normal_3d: Vector3 = surface_normal * Vector3(1, -1, 1)
+				var new_rel_local: Vector3 = surface_normal_3d * (target_ball_size / 2.0) * pixel_world_size
+				var new_rel_lnz: Vector3 = LnzLiveUtils.world_to_lnz_delta(new_rel_local, pixel_world_size, engine_scale)
+				new_pb["relative_pos_local"] = new_rel_local
+				new_pb["relative_pos_lnz"] = new_rel_lnz
+			
+			layer.add_paintball(new_pb)
+	
+	_rebuild_3d_pending_visuals()
+	_refresh_layers_tree()
+	print("[STATUS] PaintballSettings: imported layers complete")
+

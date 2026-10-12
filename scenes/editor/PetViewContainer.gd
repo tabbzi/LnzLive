@@ -1,23 +1,23 @@
 extends Control
 
-# PetViewContainer.gd
-# - Translates 2D mouse input into 3D world interactions (raycasting/selection)
-# - Manages Modes (Move, Paint, Line, etc.)
-# - Handles coordinate conversion between spatial world and LNZ units
-# - Coordinates viewport visuals (gizmos, labels, and cursors)
+## PetViewContainer.gd
+## - Translates 2D mouse input into 3D world interactions (raycasting/selection)
+## - Manages Modes (Move, Paint, Line, etc.)
+## - Handles coordinate conversion between spatial world and LNZ units
+## - Coordinates viewport visuals (gizmos, labels, and cursors)
 
-# SECTIONS:
-#	SETUP & INITIALIZATION
-#	INPUT HANDLING
-#	MODE MANAGEMENT
-#	PALETTE VIEWER
-#	VARIATION VIEWER
-#	RECOLOR MODE
-#	PAINT MODE
-#	SHAPE MODE
-#	LINE MODE
-#	PRESET MODE
-#	MOVE MODE
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	INPUT HANDLING
+##	MODE MANAGEMENT
+##	PALETTE VIEWER
+##	VARIATION VIEWER
+##	RECOLOR MODE
+##	PAINT MODE
+##	SHAPE MODE
+##	LINE MODE
+##	PRESET MODE
+##	MOVE MODE
 
 var ui_is_dirty: bool = true
 
@@ -72,6 +72,7 @@ onready var struct_mode_check_box: CheckBox = find_node("StructModeCheckBox")
 
 onready var tools_menu: Node = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 onready var hidden_balls_label: Label = find_node("HiddenBallsLabel")
+onready var unapplied_changes_label: Label = find_node("UnappliedChangesLabel")
 
 var _auto_paint_affected_cache: Array = []
 
@@ -144,6 +145,7 @@ var close_paintball_on_apply: bool = false
 var freeline_active: bool = false
 var freeline_path: Array = []
 var last_freeline_point: Vector2 = Vector2()
+var freeline_start_pos: Vector2 = Vector2()
 
 var _ordered_color_index: int = 0
 var _ordered_outline_color_index: int = 0
@@ -340,9 +342,14 @@ func _ready() -> void:
 		paintball_settings_instance.connect(
 			"apply_paintballz", lnz_text_edit, "_on_apply_paintballz"
 		)
+		paintball_settings_instance.connect("apply_paintballz", self, "_update_unapplied_changes_label")
 		lnz_text_edit.connect("create_polygon", self, "_on_LnzTextEdit_create_polygon")
+		lnz_text_edit.connect("file_saved", self, "_update_unapplied_changes_label")
+		lnz_text_edit.connect("text_changed", self, "_update_unapplied_changes_label")
 	if is_instance_valid(pet_node):
 		paintball_settings_instance.connect("clear_paintballz", pet_node, "clear_pending_paintballz")
+		paintball_settings_instance.connect("clear_paintballz", self, "_on_paintball_clear")
+		paintball_settings_instance.connect("clear_paintballz", self, "_update_unapplied_changes_label")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	if is_instance_valid(pet_node):
@@ -360,6 +367,7 @@ func _ready() -> void:
 	if is_instance_valid(pet_node):
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
 		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "clear_auto_paintballz")
+		auto_paintballer_settings_instance.connect("clear_auto_paintballz", self, "_on_auto_paintballer_clear")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
 		pet_node.connect("hidden_balls_changed", self, "_on_hidden_balls_changed")
 
@@ -387,6 +395,7 @@ func _ready() -> void:
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+		recolor_settings_instance.connect("apply_batch_bucket", self, "_update_unapplied_changes_label")
 
 	var shader_settings_btn: Button = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
 	if is_instance_valid(shader_settings_btn):
@@ -966,6 +975,7 @@ func _update_3d_gizmo_visibility() -> void:
 
 func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 	var is_addball: bool = ball_no >= KeyBallsData.max_base_ball_num
+	var is_anchored: bool = false
 	var bhd_size: int = 0
 	var enl_x: float = 100.0
 	var enl_y: float = 0.0
@@ -989,14 +999,32 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 	else:
 		if pet_node.lnz.addballs.has(ball_no):
 			var ab = pet_node.lnz.addballs[ball_no]
-			if ab != null and ab is Dictionary:
-				if ab.has("anchor_ball") and ab.anchor_ball != -1:
-					if ab.anchor_ball < pet_node.bhd.ball_sizes.size():
-						bhd_size = pet_node.bhd.ball_sizes[ab.anchor_ball]
+			# 15th column (anchor_ball): defines which base ball's final rendered visual size
+			# is used as the reference base for this addball's unscaled size delta.
+			if ab != null and ab.anchor_ball > -1:
+				var anchor_id: int = ab.anchor_ball
+				is_anchored = true
+				if pet_node.ball_map.has(anchor_id) and is_instance_valid(pet_node.ball_map[anchor_id]):
+					bhd_size = int(round(pet_node.ball_map[anchor_id].ball_size))
+				elif anchor_id < pet_node.bhd.ball_sizes.size():
+					var anchor_pre: float = float(pet_node.bhd.ball_sizes[anchor_id])
+					if pet_node.lnz.balls.has(anchor_id):
+						anchor_pre += float(pet_node.lnz.balls[anchor_id].size)
+					var head_ext: Array = KeyBallsData.get_head_ext(pet_node.lnz.species)
+					var foot_ext: Array = KeyBallsData.get_foot_ext(pet_node.lnz.species)
+					if anchor_id in head_ext:
+						anchor_pre = floor(anchor_pre * (pet_node.lnz.head_enlargement.x / 100.0)) + pet_node.lnz.head_enlargement.y
+					else:
+						for foot_group in foot_ext:
+							if anchor_id in foot_group:
+								anchor_pre = floor(anchor_pre * (pet_node.lnz.foot_enlargement.x / 100.0)) + pet_node.lnz.foot_enlargement.y
+								break
+					bhd_size = int(LnzLiveUtils.lnz_to_visual_size_snapped(anchor_pre, pet_node.lnz.scales[1]))
 
 
 	return {
-		"is_addball": is_addball, 
+		"is_addball": is_addball,
+		"is_anchored": is_anchored,
 		"bhd_size": bhd_size,
 		"enl_x": enl_x,
 		"enl_y": enl_y
@@ -1259,12 +1287,21 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
+					_update_unapplied_changes_label()
 					_record_move_end_state("Drag Move")
 					return true
 
 				mark_ui_dirty()
 
 	elif event is InputEventMouseMotion and is_dragging and drag_ball:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+			is_dragging = false
+			is_resizing = false
+			drag_ball = null
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			mark_ui_dirty()
+			return true
+
 		if is_resizing:
 			var mouse_delta: Vector2 = event.position - drag_start_pos
 			var change_amount: float = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
@@ -1291,7 +1328,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var bhd_s: int = sizing_info.bhd_size
 
 				var snapped_visual: float = LnzLiveUtils.snap_visual_size(
-					target_visual, is_addball, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
+					target_visual, is_addball, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 				)
 				b.set_ball_size(snapped_visual)
 
@@ -1442,7 +1479,7 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 					if properties.has("size"):
 						var scale: float = pet_node.lnz.scales[1]
 						properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-							properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+							properties["size"], sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 						)
 
 			var scale_ratio: float = 1.0
@@ -1625,27 +1662,41 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				freeline_active = true
 				freeline_path.clear()
 				last_freeline_point = event.position
+				freeline_start_pos = event.position
 			else:
-				print("[STATUS] PetViewContainer: finished freeline path")
+				if freeline_active and freeline_path.size() <= 1:
+					var click_pos: Vector2 = _get_viewport_pos_from_screen_pos(freeline_start_pos)
+					var point_target_ball: Spatial = null
+					if paintball_target_ball and is_instance_valid(paintball_target_ball):
+						point_target_ball = paintball_target_ball
+					elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
+						point_target_ball = active_selected_ball
+					else:
+						point_target_ball = get_intended_ball(click_pos)
+					if point_target_ball:
+						var result = _create_paintball_at_position(click_pos, point_target_ball)
+						if result:
+							_record_paint_action([result])
+					print("[STATUS] PetViewContainer: SHIFT single-click placed paintball")
 				freeline_active = false
-
-				if is_straight_line:
-					var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
-					var end_pos: Vector2 = event.position
-
-					if Input.is_key_pressed(KEY_X):
-						end_pos.y = start_pos.y
-					elif Input.is_key_pressed(KEY_Y):
-						end_pos.x = start_pos.x
-
+				if freeline_path.size() > 1:
+					print("[STATUS] PetViewContainer: finished freeline path")
+					if is_straight_line:
+						var start_pos: Vector2 = freeline_path.front() if not freeline_path.empty() else last_freeline_point
+						var end_pos: Vector2 = event.position
+						if Input.is_key_pressed(KEY_X):
+							end_pos.y = start_pos.y
+						elif Input.is_key_pressed(KEY_Y):
+							end_pos.x = start_pos.x
+						freeline_path.clear()
+						var dist: float = start_pos.distance_to(end_pos)
+						var steps: int = max(1, round(dist / max(1.0, props.spacing)))
+						for i in range(steps + 1):
+							var t: float = float(i) / float(steps)
+							freeline_path.append(start_pos.linear_interpolate(end_pos, t))
+					_finalize_freeline(event.position)
+				else:
 					freeline_path.clear()
-					var dist: float = start_pos.distance_to(end_pos)
-					var steps: int = max(1, round(dist / max(1.0, props.spacing)))
-					for i in range(steps + 1):
-						var t: float = float(i) / float(steps)
-						freeline_path.append(start_pos.linear_interpolate(end_pos, t))
-
-				_finalize_freeline(event.position)
 			return true
 		elif freeline_active and not event.pressed:
 			freeline_active = false
@@ -1670,6 +1721,11 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			return true
 
 	if event is InputEventMouseMotion and freeline_active:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+			freeline_active = false
+			_finalize_freeline(event.position)
+			return false
+
 		var current_pos: Vector2 = event.position
 		if current_pos.distance_to(last_freeline_point) > props.spacing:
 			freeline_path.append(current_pos)
@@ -1698,7 +1754,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				return true
 
 			var closest_paintball = null
-			var min_dist_sq: float = INF
+			var min_depth: float = INF
 			var click_pos_local: Vector2 = event.position  # Use local mouse position
 
 			for pb_node in pending_paintballs:
@@ -1710,13 +1766,28 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				
 				var dist_sq: float = click_pos_local.distance_squared_to(paintball_screen_pos)
 
-				if dist_sq < min_dist_sq:
-					min_dist_sq = dist_sq
-					min_dist_sq = dist_sq
-					closest_paintball = pb_node
+				if dist_sq < 25 * 25:
+					# var depth: float = camera.global_transform.origin.distance_squared_to(pb_node.global_transform.origin)
+					var local_pos = camera.global_transform.affine_inverse().xform(pb_node.global_transform.origin)
+					var depth: float = -local_pos.z
+					
+					var z_add_val = 0.0
+					var mi = pb_node.get_node_or_null("MeshInstance")
+					if mi and mi.material_override and mi.material_override is ShaderMaterial:
+						var param = mi.material_override.get_shader_param("z_add")
+						if param != null: z_add_val = float(param)
+					elif "z_add" in pb_node: 
+						z_add_val = float(pb_node.z_add)
+					
+					depth -= z_add_val * 0.001
+					
+					if depth < min_depth:
+						min_depth = depth
+						closest_paintball = pb_node
 
-			if closest_paintball and min_dist_sq < 25 * 25:  # 25px threshold
+			if closest_paintball:
 				pet_node.remove_specific_pending_paintball(closest_paintball)
+				_update_unapplied_changes_label()
 				print("[STATUS] PetViewContainer: erased closest paintball node: %s" % closest_paintball.name)
 			else:
 				print("[WARNING] PetViewContainer: no paintball close enough to erase (threshold distance: 25px)")
@@ -1980,6 +2051,25 @@ func _gui_input(event: InputEvent) -> void:
 
 	# Update ball position or scale during moving or resizing:
 	if event is InputEventMouseMotion and is_dragging and drag_ball:
+		if not Input.is_mouse_button_pressed(BUTTON_LEFT) and not drag_started_via_code:
+			if is_resizing:
+				var delta: Vector2 = event.position - drag_start_pos
+				var change: float = delta.dot(Vector2(1, -1).normalized()) * 0.5
+				var raw_target_visual: float = clamp(original_scale + change, 1.0, 500.0)
+				var final_size: float = get_absolute_lnz_size(raw_target_visual, drag_ball, pet_node)
+				pet_node.emit_ball_resize(drag_ball.ball_no, final_size)
+			else:
+				print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+				var lnz_pos: Vector3 = get_lnz_position_from_visual(drag_ball, pet_node)
+				print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+				pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
+
+			is_dragging = false
+			is_resizing = false
+			drag_started_via_code = false
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			drag_ball = null
+			return
 		if is_resizing:
 			var delta: Vector2 = event.position - drag_start_pos
 			var change: float = delta.dot(Vector2(1, -1).normalized()) * 0.5
@@ -1997,7 +2087,7 @@ func _gui_input(event: InputEvent) -> void:
 			var engine_scale: float = pet_node.lnz.scales[1]
 
 			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
-				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 			)
 			drag_ball.set_ball_size(snapped_visual)
 		else:
@@ -2214,6 +2304,7 @@ func _gui_input(event: InputEvent) -> void:
 		var target_ball: Spatial = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			recolor_settings_instance.queue_bucket_change(target_ball)
+			_update_unapplied_changes_label()
 			_reset_tab_state()
 			get_tree().set_input_as_handled()
 			return
@@ -2567,6 +2658,12 @@ func _exit_all_modes() -> void:
 	if is_instance_valid(struct_settings_instance):
 		_update_mode_panel_visibility(struct_settings_instance, false)
 
+	freeline_active = false
+	freeline_path.clear()
+	is_dragging = false
+	is_resizing = false
+	drag_started_via_code = false
+
 	# Return to FileTree tab when explicitly exiting all modes (ESC)
 	if sidebar_controller:
 		var tree_tab: Node = sidebar_controller.tab_container.get_node_or_null("FileTree")
@@ -2610,6 +2707,7 @@ func set_mode(new_mode: int) -> void:
 
 	_sync_mode_cursor()
 	mark_ui_dirty()
+	_update_unapplied_changes_label()
 
 func _get_mode_settings_instance(mode: int) -> Control:
 	match mode:
@@ -2645,6 +2743,10 @@ func _exit_mode(mode: int) -> void:
 			var should_switch_tab = close_paintball_on_apply
 			paintball_target_ball = null
 			close_paintball_on_apply = false
+
+			freeline_active = false
+			freeline_path.clear()
+
 			_restore_all_balls()
 			_set_pending_paintballs_visible(false)
 			if should_switch_tab and sidebar_controller:
@@ -2678,6 +2780,7 @@ func _exit_mode(mode: int) -> void:
 				pet_node.clear_auto_paintballz()
 			_on_unselect_all()
 			_auto_paint_affected_cache.clear()
+			_update_unapplied_changes_label()
 			var all_balls: Array = _get_all_visual_balls()
 			for b in all_balls:
 				if is_instance_valid(b) and b.has_method("apply_outline_state"):
@@ -3073,6 +3176,27 @@ func _on_hidden_balls_changed(count: int) -> void:
 	else:
 		hidden_balls_label.visible = false
 
+func _update_unapplied_changes_label(_unused = null) -> void:
+	var total = 0
+	if is_instance_valid(lnz_text_edit):
+		if lnz_text_edit.has_unsaved_text_changes():
+			total += 1
+		if paintball_mode:
+			var pending_pb = pet_node.get_pending_paintballs_data()
+			total += pending_pb.size()
+		if move_mode:
+			total += pending_moves.size()
+		if auto_paintballer_mode:
+			total += _auto_paint_affected_cache.size()
+		if recolor_mode and is_instance_valid(recolor_settings_instance):
+			total += recolor_settings_instance.queued_bucket_changes.size()
+	print("[DEBUG] PetViewContainer: _update_unapplied_changes_label total=%d" % total)
+	if total > 0:
+		unapplied_changes_label.text = "%d unapplied changes" % total
+		unapplied_changes_label.visible = true
+	else:
+		unapplied_changes_label.visible = false
+
 func _on_texture_rotation_mode_changed(mode: int) -> void:
 	pet_node._shader_rotation_mode = mode
 	var all_balls: Array = _get_all_visual_balls()
@@ -3319,6 +3443,7 @@ func _on_affected_list_changed(ids: Array) -> void:
 		var ball: Spatial = find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			selected_balls.append(ball)
+	_update_unapplied_changes_label()
 
 	var all_balls: Array = _get_all_visual_balls()
 	for b in all_balls:
@@ -3355,15 +3480,47 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 
 	var space_state = camera.get_world().direct_space_state
-	var result: Dictionary = space_state.intersect_ray(from, to, [], 1, false, true)
+	var exclude_list = []
+	var hit_balls = []
 
-	if result and result.collider:
-		var parent: Node = result.collider.get_parent()
-		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
-			if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
-				return null
-			return parent
-	return null
+	for i in range(30):
+		var result: Dictionary = space_state.intersect_ray(from, to, exclude_list, 1, false, true)
+		if result and result.collider:
+			var parent: Node = result.collider.get_parent()
+			exclude_list.append(result.collider)
+			
+			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
+					continue
+				hit_balls.append(parent)
+		else:
+			break
+
+	if hit_balls.empty():
+		return null
+
+	var closest_ball = null
+	var min_depth: float = INF
+
+	for ball in hit_balls:
+		var local_pos = camera.global_transform.affine_inverse().xform(ball.global_transform.origin)
+		var depth: float = -local_pos.z
+		
+		var z_add_val = 0.0
+		var mi = ball.get_node_or_null("MeshInstance")
+		if mi and mi.material_override and mi.material_override is ShaderMaterial:
+			var param = mi.material_override.get_shader_param("z_add")
+			if param != null: z_add_val = float(param)
+		elif "z_add" in ball: 
+			z_add_val = float(ball.z_add)
+			
+		depth -= z_add_val * 0.001
+
+		if depth < min_depth:
+			min_depth = depth
+			closest_ball = ball
+
+	return closest_ball
 
 func get_intended_ball(mouse_pos: Vector2) -> Spatial:
 	if is_instance_valid(_last_selected_by_tab):
@@ -3487,7 +3644,7 @@ func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_nod
 	var engine_scale: float = pet_node.lnz.scales[1]
 
 	return LnzLiveUtils.visual_size_to_lnz_size(
-		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 	)
 
 func _isolate_target_ball(target_ball: Spatial) -> void:
@@ -3604,6 +3761,7 @@ func _on_unselect_all() -> void:
 
 	if auto_paintballer_mode:
 		_auto_paint_affected_cache.clear()
+	_update_unapplied_changes_label()
 
 	for b in to_update:
 		if is_instance_valid(b) and "ball_no" in b:
@@ -3819,6 +3977,7 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
+	_update_unapplied_changes_label()
 
 func _cap_history_arrays() -> void:
 	if paint_history.size() > MAX_INTERACTION_HISTORY:
@@ -3854,13 +4013,21 @@ func _undo_queued_paintball() -> void:
 		var data = pet_node.remove_last_pending_paintball()
 		if data:
 			paint_redo_stack.append([data])
+		_update_unapplied_changes_label()
 		return
 
 	var last_action: Array = paint_history.pop_back()
 	paint_redo_stack.append(last_action)
 
 	for i in range(last_action.size()):
-		pet_node.remove_last_pending_paintball()
+		var pb_data = last_action[i]
+		var uid: int = pb_data.get("_pb_uid", -1)
+		if uid >= 0:
+			pet_node.remove_paintball_by_uid(uid)
+		else:
+			pet_node.remove_last_pending_paintball()
+	_update_unapplied_changes_label()
+	_update_unapplied_changes_label()
 
 func _redo_queued_paintball() -> void:
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")
@@ -3872,6 +4039,7 @@ func _redo_queued_paintball() -> void:
 
 	for pb_data in action_to_redo:
 		pet_node.add_pending_paintball(pb_data)
+	_update_unapplied_changes_label()
 
 func _record_move_start_state() -> void:
 	var t_start: int = OS.get_ticks_msec()
@@ -4151,12 +4319,14 @@ func _update_paintball_mode_ui() -> void:
 			target_option_button.disabled = true
 		else:
 			target_option_button.disabled = false
+		_update_unapplied_changes_label()
 	else:
 		_set_pending_paintballs_visible(false)
 
 		paintball_settings_instance.hide()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+		_update_unapplied_changes_label()
 
 func _on_delete_mode_toggled(is_on: bool) -> void:
 	if is_on:
@@ -4170,6 +4340,9 @@ func _set_pending_paintballs_visible(is_visible: bool) -> void:
 		for pb in pending:
 			if is_instance_valid(pb):
 				pb.visible = is_visible
+
+func _on_paintball_clear() -> void:
+	_update_unapplied_changes_label()
 
 func _on_paintball_mode_for_ball_toggled(ball: Spatial) -> void:
 	print("[STATUS] PetViewContainer: paintball mode specifically focused on ball #%d" % ball.ball_no)
@@ -4254,6 +4427,7 @@ func _finalize_freeline(end_position = null) -> void:
 
 	print("[STATUS] PetViewContainer: freeline generated %d valid paintballs" % added_paintballs.size())
 	_record_paint_action(added_paintballs)
+	_update_unapplied_changes_label()
 
 	# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
 	# var _perf_stat_end: int = OS.get_static_memory_usage()
@@ -4278,11 +4452,25 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 	var space_state = camera.get_world().direct_space_state
-	var result: Dictionary = space_state.intersect_ray(from, to, [self], 1, true, true)
+	
+	var intersection_point: Vector3 = Vector3.ZERO
+	var hit_success: bool = false
+	var exclude_list = [self]
+	
+	for i in range(10):
+		var result: Dictionary = space_state.intersect_ray(from, to, exclude_list, 1, true, true)
+		if result and result.collider:
+			if result.collider.get_parent() == target_ball:
+				intersection_point = result.position
+				hit_success = true
+				break
+			else:
+				exclude_list.append(result.collider)
+		else:
+			break
 
-	if result and result.collider and result.collider.get_parent() == target_ball:
+	if hit_success:
 		# print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
-		var intersection_point: Vector3 = result.position
 
 		if paintball_settings_instance.is_design_mode_active():
 			var visual_radius: float = (intersection_point - target_ball.global_transform.origin).length()
@@ -4361,6 +4549,8 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 				pet_node.add_pending_paintball(pb_data)
 			
 			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [count, target_ball.ball_no])
+			
+			_update_unapplied_changes_label()
 			
 			pos_arr.resize(0)
 			diam_arr.resize(0)
@@ -4472,6 +4662,7 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
+		_update_unapplied_changes_label()
 		# print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
 		
 		# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
@@ -4498,6 +4689,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 
 	return null
 
+func _on_auto_paintballer_clear() -> void:
+	_auto_paint_affected_cache.clear()
+	_update_unapplied_changes_label()
+
 func _restore_auto_paintballer_selection() -> void:
 	# Double yield needed: dog_generator.generate_pet() calls init_visual_balls()
 	# which uses call_deferred("_finish_dependent_geometry"). 
@@ -4508,6 +4703,11 @@ func _restore_auto_paintballer_selection() -> void:
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	_on_affected_list_changed(_auto_paint_affected_cache)
+	var all_balls: Array = _get_all_visual_balls()
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+	_update_unapplied_changes_label()
 
 
 ### SHAPE MODE ###
@@ -4779,7 +4979,7 @@ func _on_preset_apply_selection() -> void:
 		elif size_mode == preset_settings_instance.SizeMode.TRUE:
 			var scale: float = pet_node.lnz.scales[1]
 			per_ball_props["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-				ref_val, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+				ref_val, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 			)
 
 		if per_ball_props.get("scale_paintballz", false) and per_ball_props.has("paintballz"):
@@ -4877,6 +5077,7 @@ func _on_move_mode_clear() -> void:
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
 	mark_ui_dirty()
+	_update_unapplied_changes_label()
 
 func _update_pivot_limit() -> void:
 	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
@@ -4949,6 +5150,7 @@ func _on_move_mode_apply() -> void:
 
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
+	_update_unapplied_changes_label()
 
 	selected_balls.clear()
 	for id in selected_ids:
@@ -5438,7 +5640,7 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 			var bhd_s: int = sizing_info.bhd_size
 			var engine_scale: float = pet_node.lnz.scales[1]
 			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
-				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 			)
 			b.set_ball_size(snapped_visual)
 
@@ -5581,7 +5783,6 @@ func _on_select_locked_balls_by_ids(ids: Array) -> void:
 	else:
 		locked_balls = ids.duplicate()
 	_sync_locked_balls_to_visuals()
-	update_locked_ballz_text(locked_balls)
 
 func update_locked_ballz_text(ball_ids: Array) -> void:
 	if not is_instance_valid(move_mode_settings_instance):

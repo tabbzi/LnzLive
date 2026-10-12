@@ -470,13 +470,13 @@ func test_lnz_scan_base_and_variations():
 	assert_true(parser.sections_map["Ballz Info"].has(1), "Should detect variation 1.")
 	
 	var base_lines = parser.sections_map["Ballz Info"][0].lines
-	assert_eq(base_lines[0], "10 10 10", "Base lines should be assigned to ID 0.")
+	assert_eq(base_lines[0].text, "10 10 10", "Base lines should be assigned to ID 0.")
 	
 	# First #N block before ## uses subblock key 0
 	var var1_subblocks = parser.sections_map["Ballz Info"][1]
 	assert_true(typeof(var1_subblocks) == TYPE_DICTIONARY, "Variation 1 should be a two-level map.")
 	assert_true(var1_subblocks.has(0), "Should have subblock key 0.")
-	assert_eq(var1_subblocks[0].lines[0], "20 20 20", "Variation lines should be assigned to subblock 0.")
+	assert_eq(var1_subblocks[0].lines[0].text, "20 20 20", "Variation lines should be assigned to subblock 0.")
 
 func test_lnz_compile_section_merging():
 	# Verify that compile_section correctly merges the base data with 
@@ -505,8 +505,8 @@ func test_lnz_scan_multiple_subblocks_separated_by_dd():
 	assert_true(subblocks.has(0), "Should have first subblock (key 0).")
 	assert_true(subblocks.has(1), "Should have second subblock (key 1).")
 	
-	assert_eq(subblocks[0].lines[0], "hip data 1", "First line should be in subblock 0.")
-	assert_eq(subblocks[1].lines[0], "hip data 2", "Second line should be in subblock 1.")
+	assert_eq(subblocks[0].lines[0].text, "hip data 1", "First line should be in subblock 0.")
+	assert_eq(subblocks[1].lines[0].text, "hip data 2", "Second line should be in subblock 1.")
 	
 	assert_eq(subblocks[0].name, ";left hip", "First subblock name is from the first #1 line.")
 	assert_eq(subblocks[1].name, ";right hip", "Second subblock name is from the second #1 line.")
@@ -527,9 +527,9 @@ func test_lnz_scan_linked_variations():
 	assert_true(subblocks.has(1), "Should have subblock 1 (#2.B).")
 	assert_true(subblocks.has(2), "Should have subblock 2 (#2).")
 	
-	assert_eq(subblocks[0].lines[0], "link data A", "Subblock 0 should have its data.")
-	assert_eq(subblocks[1].lines[0], "link data B", "Subblock 1 should have its data.")
-	assert_eq(subblocks[2].lines[0], "unlinked data", "Subblock 2 should have its data.")
+	assert_eq(subblocks[0].lines[0].text, "link data A", "Subblock 0 should have its data.")
+	assert_eq(subblocks[1].lines[0].text, "link data B", "Subblock 1 should have its data.")
+	assert_eq(subblocks[2].lines[0].text, "unlinked data", "Subblock 2 should have its data.")
 	
 	assert_true(subblocks[0].is_linked, "Subblock 0 should be linked.")
 	assert_true(subblocks[1].is_linked, "Subblock 1 should be linked.")

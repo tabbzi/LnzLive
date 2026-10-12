@@ -18,7 +18,8 @@ enum ToolMenu {
 	VIEW_PALETTE,
 	VIEW_VARIATIONS,
 	COLOR_SWAP,
-	CAPTURE_HEADSHOT
+	CAPTURE_HEADSHOT,
+	REBASE_ADDBALLZ
 }
 
 enum ModeMenu {
@@ -50,6 +51,7 @@ enum RenderMenu {
 	DRAW_BALLS,
 	SHOW_OMITTED,
 	SHOW_SPECIAL,
+	SHOW_NEGATIVE,
 	TRANSPARENCY,
 	UNHIDE_BALLS
 }
@@ -114,6 +116,7 @@ onready var _render_checkboxes: Array = [
 	$RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/BallCheckBox,
 	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox,
 	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls,
+	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleNegativeBalls,
 	$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox,
 ]
 
@@ -125,6 +128,7 @@ onready var _render_menu_ids: Array = [
 	RenderMenu.DRAW_BALLS,
 	RenderMenu.SHOW_OMITTED,
 	RenderMenu.SHOW_SPECIAL,
+	RenderMenu.SHOW_NEGATIVE,
 	RenderMenu.TRANSPARENCY,
 ]
 
@@ -195,6 +199,9 @@ func _setup_tool_menu() -> void:
 	popup.add_item("Capture Head Shot", ToolMenu.CAPTURE_HEADSHOT)
 	popup.set_item_tooltip(popup.get_item_index(ToolMenu.CAPTURE_HEADSHOT), "Hotkey K to capture [Head Shot]")
 	
+	#popup.add_item("Rebase Addballz", ToolMenu.REBASE_ADDBALLZ)
+	#popup.set_item_tooltip(popup.get_item_index(ToolMenu.REBASE_ADDBALLZ), "Resolves addballz based on addballz to basal-most parent base ballz")
+	
 	popup.connect("id_pressed", self, "_on_tool_menu_id_pressed")
 
 func _setup_mode_menu() -> void:
@@ -231,16 +238,17 @@ func _setup_render_menu() -> void:
 	var popup: PopupMenu = render_menu_btn.get_popup()
 	_style_popup(popup)
 	
-	popup.add_check_item("Draw Polygons", RenderMenu.DRAW_POLYGONS)
-	popup.add_check_item("Draw Lines", RenderMenu.DRAW_LINES)
-	popup.add_check_item("Draw Paintballs", RenderMenu.DRAW_PAINTBALLS)
-	popup.add_check_item("Draw Addballs", RenderMenu.DRAW_ADDBALLS)
-	popup.add_check_item("Draw Balls", RenderMenu.DRAW_BALLS)
+	popup.add_check_item("Draw Polygonz", RenderMenu.DRAW_POLYGONS)
+	popup.add_check_item("Draw Linez", RenderMenu.DRAW_LINES)
+	popup.add_check_item("Draw Paintballz", RenderMenu.DRAW_PAINTBALLS)
+	popup.add_check_item("Draw Addballz", RenderMenu.DRAW_ADDBALLS)
+	popup.add_check_item("Draw Ballz", RenderMenu.DRAW_BALLS)
 	
 	popup.add_separator()
 	
 	popup.add_check_item("Show Omitted Ballz", RenderMenu.SHOW_OMITTED)
-	popup.add_check_item("Show Special Balls", RenderMenu.SHOW_SPECIAL)
+	popup.add_check_item("Show Special Ballz", RenderMenu.SHOW_SPECIAL)
+	popup.add_check_item("Show Negative Ballz", RenderMenu.SHOW_NEGATIVE)
 	popup.add_check_item("Transparency (253)", RenderMenu.TRANSPARENCY)
 	
 	popup.add_separator()
@@ -322,6 +330,9 @@ func _on_tool_menu_id_pressed(id: int) -> void:
 		ToolMenu.CAPTURE_HEADSHOT:
 			if lnz_text_edit.has_method("_on_HeadShotButton_pressed"):
 				lnz_text_edit._on_HeadShotButton_pressed()
+		ToolMenu.REBASE_ADDBALLZ:
+			if lnz_text_edit.has_method("rebase_addballz"):
+				lnz_text_edit.rebase_addballz()
 
 func _on_mode_menu_id_pressed(id: int) -> void:
 	match id:
@@ -358,6 +369,8 @@ func _on_render_menu_id_pressed(id: int) -> void:
 			_toggle_legacy($RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox)
 		RenderMenu.SHOW_SPECIAL:
 			_toggle_legacy($RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls)
+		RenderMenu.SHOW_NEGATIVE:
+			_toggle_legacy($RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleNegativeBalls)
 		RenderMenu.TRANSPARENCY:
 			_toggle_legacy($RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox)
 		RenderMenu.UNHIDE_BALLS:
