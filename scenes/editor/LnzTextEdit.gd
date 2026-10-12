@@ -1,32 +1,32 @@
 extends TextEdit
 
-# LnzTextEdit.gd
-# - Loads and saves .lnz files
-# - Creates automatic backups before overwriting
-# - Preserves scroll and cursor positions across edits
-# - Listens for visual editor events
-# - Finds and updates the corresponding LNZ sections
-# - Handles batch recolor and mirror‐copy operations
-# - Emits signals for file_saved, file_backed_up, and find_ball actions
+## LnzTextEdit.gd
+## - Loads and saves .lnz files
+## - Creates automatic backups before overwriting
+## - Preserves scroll and cursor positions across edits
+## - Listens for visual editor events
+## - Finds and updates the corresponding LNZ sections
+## - Handles batch recolor and mirror‐copy operations
+## - Emits signals for file_saved, file_backed_up, and find_ball actions
 
-# SECTIONS:
-#	SETUP & INITIALIZATION
-#	SIGNAL CALLBACKS
-#	FILE SAVING & LOADING
-#	UNDO / REDO HISTORY
-#	TEXT EDITOR
-#	FIND & REPLACE
-#	LNZ TEXT FINDING
-#	LNZ TEXT PARSING
-#	LNZ TEXT EDITING
-#	LNZ DATA GETTERS
-#	LNZ DATA SETTERS
-#	LNZ DATA SECTIONS
-#	VISUAL NODE SIGNALS
-#	TOOLS MENU SIGNALS
-#	MIRRORING & SYMMETRY
-#	BATCH OPERATIONS
-#	HELPER FUNCTIONS
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	SIGNAL CALLBACKS
+##	FILE SAVING & LOADING
+##	UNDO / REDO HISTORY
+##	TEXT EDITOR
+##	FIND & REPLACE
+##	LNZ TEXT FINDING
+##	LNZ TEXT PARSING
+##	LNZ TEXT EDITING
+##	LNZ DATA GETTERS
+##	LNZ DATA SETTERS
+##	LNZ DATA SECTIONS
+##	VISUAL NODE SIGNALS
+##	TOOLS MENU SIGNALS
+##	MIRRORING & SYMMETRY
+##	BATCH OPERATIONS
+##	HELPER FUNCTIONS
 
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = self
@@ -878,6 +878,17 @@ func _build_search_pattern(search_text: String, whole_words: bool, match_case: b
 		pattern = "(?i)" + pattern
 	return pattern
 
+func _get_compiled_search_regex(search_text: String, whole_words: bool, match_case: bool) -> RegEx:
+	var pattern = _build_search_pattern(search_text, whole_words, match_case)
+	var cache_key = pattern + "|" + str(whole_words) + "|" + str(match_case)
+	if cache_key == _last_compiled_pattern:
+		return _search_regex
+	var error = _search_regex.compile(pattern)
+	if error != OK:
+		return null
+	_last_compiled_pattern = cache_key
+	return _search_regex
+
 func _ensure_section_exists(section_name: String) -> Dictionary:
 	var bounds = get_section_bounds(section_name)
 	if not bounds.empty():
@@ -969,16 +980,13 @@ func _find_text(forward):
 
 	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
 	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
-	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-	if pattern != _last_compiled_pattern:
-		var error = _search_regex.compile(pattern)
-		if error != OK:
-			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
-			return
-		_last_compiled_pattern = pattern
-		
-	var all_matches = _search_regex.search_all(all_text)
+	var regex = _get_compiled_search_regex(search_text, whole_words, match_case)
+	if regex == null:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+
+	var all_matches = regex.search_all(all_text)
 
 	if all_matches.size() == 0:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Not found
@@ -1079,9 +1087,9 @@ func _on_ReplaceButton_pressed():
 		var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
 		var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-		# Anchor the pattern to ensure the whole selection matches
+		# Anchor the pattern to ensure the whole selection matches exactly.
+		# Must use a separate RegEx -- never reuse _search_regex which has the un-anchored pattern.
 		var anchored_pattern = "^" + pattern + "$"
-
 		var regex = RegEx.new()
 		var err = regex.compile(anchored_pattern)
 		if err != OK:
@@ -1107,21 +1115,13 @@ func _on_ReplaceAllButton_pressed():
 
 	var whole_words = find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed
 	var match_case = find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed
-	var pattern = _build_search_pattern(search_text, whole_words, match_case)
 
-	var regex: RegEx = _search_regex
-	if _last_replace_pattern != pattern:
-		var err = regex.compile(pattern)
-		if err != OK:
-			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
-			return
-		_last_replace_pattern = pattern
-	var error = OK 
-	if error != OK:
+	var regex = _get_compiled_search_regex(search_text, whole_words, match_case)
+	if regex == null:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
-	else:
-		find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
 
 	self.readonly = false
 
@@ -1587,6 +1587,29 @@ func _for_each_line_in_section(tag: String, callback):
 		var line = get_line(i)
 		if line.strip_edges() == "" or line.begins_with(";"): continue
 		callback.call(i, line)
+
+func _process_section_lines(section_name: String, line_callback) -> Array:
+	var bounds = get_section_bounds(section_name)
+	if bounds.empty():
+		return []
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var results = []
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+		
+		var parts = split_line(line)
+		if parts.empty():
+			continue
+		
+		var result = line_callback.call_func(i, parts, delim)
+		if result != null:
+			results.append(result)
+	
+	return results
 
 
 ### LNZ TEXT EDITING ###
@@ -4886,10 +4909,10 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				var m2 = _resolve_mirror_id(b2, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				var m3 = _resolve_mirror_id(b3, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				
-				if m0 == -1: m0 = find_mirrored_ball(b0)
-				if m1 == -1: m1 = find_mirrored_ball(b1)
-				if m2 == -1: m2 = find_mirrored_ball(b2)
-				if m3 == -1: m3 = find_mirrored_ball(b3)
+				if m0 == -1: m0 = _resolve_mirror_id(b0, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m1 == -1: m1 = _resolve_mirror_id(b1, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m2 == -1: m2 = _resolve_mirror_id(b2, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
+				if m3 == -1: m3 = _resolve_mirror_id(b3, reverse, base_mirror_map, middle_balls_list, source_to_mirror_map)
 				
 				if m0 == b0 and m1 == b1 and m2 == b2 and m3 == b3: continue
 				
