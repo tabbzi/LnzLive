@@ -906,33 +906,39 @@ static func load_config(section: String, path: String) -> Dictionary:
 	return result
 
 ### WEB UTILITIES ###
-static func web_file_dialog(accept_extensions: String) -> void:
-	JavaScript.eval("""
-	window.fileUploadData = {}
+static func web_file_picker(accept_extensions: String, data_key: String, callback = null) -> void:
+	JavaScript.eval("window." + data_key + " = {}")
 
+	var js_code = """
 	let el = document.createElement("input");
 	el.type = "file"
 	el.accept = '""" + accept_extensions + """'
 	el.addEventListener("change", (e) => {
 	  if (e.target.files.length > 0) {
 		let file = e.target.files[0]
-		window.fileUploadData.name = file.name
+		window.""" + data_key + """.name = file.name
 
 		let reader = new FileReader()
 		reader.readAsArrayBuffer(file)
 		reader.onloadend = (ev) => {
-		  window.fileUploadData.blob = ev.target.result
+		  window.""" + data_key + """.blob = ev.target.result
 		}
 	  }
 	})
 	el.click()
-	""")
+	"""
 
-static func get_web_file_blob() -> Object:
-	return JavaScript.eval("window.fileUploadData.blob")
+	if callback != null:
+		var cb = JavaScript.create_callback(callback[0], callback[1])
+		JavaScript.get_interface("window").godotFilePickerCallback = cb
+		js_code += "window.godotFilePickerCallback();"
+	JavaScript.eval(js_code)
 
-static func get_web_file_name() -> String:
-	var name = JavaScript.eval("window.fileUploadData.name")
+static func get_web_file_blob(data_key: String = "fileUploadData") -> Object:
+	return JavaScript.eval("window." + data_key + ".blob")
+
+static func get_web_file_name(data_key: String = "fileUploadData") -> String:
+	var name = JavaScript.eval("window." + data_key + ".name")
 	return name if name != null else ""
 
 static func web_download_text(filename: String, content: String) -> void:
@@ -1049,41 +1055,6 @@ static func load_json_preset(file_path: String) -> Dictionary:
 		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
 			result = json_res.result
 	return result
-
-static func ensure_web_ref_dir() -> void:
-	JavaScript.eval("""
-	if (!window.fileUploadData) window.fileUploadData = {}
-	""")
-
-static func web_upload_image(dest_dir: String, callback_target: Object, callback_method: String) -> void:
-	var js_code = """
-	window.refUploadData = {}
-	var el = document.createElement("input");
-	el.type = "file"
-	el.accept = '.png,.jpg,.jpeg,.gif'
-	el.addEventListener("change", (e) => {
-	  if (e.target.files.length > 0) {
-		let file = e.target.files[0]
-		window.refUploadData.name = file.name
-		let reader = new FileReader()
-		reader.readAsArrayBuffer(file)
-		reader.onloadend = (ev) => {
-		  window.refUploadData.blob = ev.target.result
-		}
-	  }
-	})
-	el.click()
-	"""
-	var cb = JavaScript.create_callback(callback_target, callback_method)
-	JavaScript.get_interface("window").godotRefUpload = cb
-	JavaScript.eval(js_code)
-
-static func get_web_ref_blob() -> Object:
-	return JavaScript.eval("window.refUploadData.blob")
-
-static func get_web_ref_name() -> String:
-	var name = JavaScript.eval("window.refUploadData.name")
-	return name if name != null else ""
 
 static func save_web_ref_to_disk(file_name: String, file_blob) -> int:
 	var dir: Directory = Directory.new()
