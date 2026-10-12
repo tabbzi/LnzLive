@@ -812,7 +812,7 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 
 ### COLOR UTILITIES ###
 static func get_luminance(color: Color) -> float:
-	return color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+	return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
 
 static func get_saturation(color: Color) -> float:
 	var max_c: float = max(color.r, max(color.g, color.b))
@@ -1178,102 +1178,36 @@ static func color_distance_rgb(a: Color, b: Color) -> float:
 	var db: float = a.b - b.b
 	return sqrt(dr * dr + dg * dg + db * db)
 
-static func sort_colors_by_hue(colors: Array) -> Array:
-	var indexed: Array = []
-	for i in range(colors.size()):
-		indexed.append([i, colors[i]])
-	_bubble_sort_by_hue(indexed)
-	var result: Array = []
-	for item in indexed:
-		result.append(item[1])
-	return result
+class ColorSorter:
+	static func cmp_hue(a: Color, b: Color) -> bool:
+		return a.h < b.h
 
-static func _bubble_sort_by_hue(arr: Array) -> void:
-	for i in range(arr.size()):
-		for j in range(arr.size() - 1):
-			var hsv_a = color_to_hsv(arr[j][1])
-			var hsv_b = color_to_hsv(arr[j + 1][1])
-			if hsv_a.x > hsv_b.x:
-				var tmp = arr[j]
-				arr[j] = arr[j + 1]
-				arr[j + 1] = tmp
+	static func cmp_sat(a: Color, b: Color) -> bool:
+		return a.s < b.s
 
-static func sort_colors_by_saturation(colors: Array, descending: bool = false) -> Array:
-	var indexed: Array = []
-	for i in range(colors.size()):
-		indexed.append([i, colors[i]])
-	_bubble_sort_by_saturation(indexed)
-	if descending:
-		_reverse_array(indexed)
-	var result: Array = []
-	for item in indexed:
-		result.append(item[1])
-	return result
+	static func cmp_val(a: Color, b: Color) -> bool:
+		return a.v < b.v
 
-static func _bubble_sort_by_saturation(arr: Array) -> void:
-	for i in range(arr.size()):
-		for j in range(arr.size() - 1):
-			var hsv_a = color_to_hsv(arr[j][1])
-			var hsv_b = color_to_hsv(arr[j + 1][1])
-			if hsv_a.y > hsv_b.y:
-				var tmp = arr[j]
-				arr[j] = arr[j + 1]
-				arr[j + 1] = tmp
+	static func cmp_lum(a: Color, b: Color) -> bool:
+		return 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b < 0.2126 * b.r + 0.7152 * b.g + 0.0722 * b.b
 
-static func sort_colors_by_value(colors: Array, descending: bool = false) -> Array:
-	var indexed: Array = []
-	for i in range(colors.size()):
-		indexed.append([i, colors[i]])
-	_bubble_sort_by_value(indexed)
-	if descending:
-		_reverse_array(indexed)
-	var result: Array = []
-	for item in indexed:
-		result.append(item[1])
-	return result
+static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
+	var sorted: Array = colors.duplicate()
+	var sorter = ColorSorter.new()
 
-static func _bubble_sort_by_value(arr: Array) -> void:
-	for i in range(arr.size()):
-		for j in range(arr.size() - 1):
-			var hsv_a = color_to_hsv(arr[j][1])
-			var hsv_b = color_to_hsv(arr[j + 1][1])
-			if hsv_a.z > hsv_b.z:
-				var tmp = arr[j]
-				arr[j] = arr[j + 1]
-				arr[j + 1] = tmp
+	if sort_mode.begins_with("hue"):
+		sorted.sort_custom(sorter, "cmp_hue")
+	elif sort_mode.begins_with("saturation"):
+		sorted.sort_custom(sorter, "cmp_sat")
+	elif sort_mode.begins_with("value"):
+		sorted.sort_custom(sorter, "cmp_val")
+	elif sort_mode.begins_with("luminance"):
+		sorted.sort_custom(sorter, "cmp_lum")
 
-static func sort_colors_by_luminance(colors: Array, descending: bool = false) -> Array:
-	var indexed: Array = []
-	for i in range(colors.size()):
-		indexed.append([i, colors[i]])
-	_bubble_sort_by_luminance(indexed)
-	if descending:
-		_reverse_array(indexed)
-	var result: Array = []
-	for item in indexed:
-		result.append(item[1])
-	return result
+	if sort_mode.ends_with("_desc"):
+		sorted.invert()
 
-static func _bubble_sort_by_luminance(arr: Array) -> void:
-	for i in range(arr.size()):
-		for j in range(arr.size() - 1):
-			var lum_a = _get_luminance(arr[j][1])
-			var lum_b = _get_luminance(arr[j + 1][1])
-			if lum_a > lum_b:
-				var tmp = arr[j]
-				arr[j] = arr[j + 1]
-				arr[j + 1] = tmp
-
-static func _get_luminance(color: Color) -> float:
-	return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
-
-static func _reverse_array(arr: Array) -> void:
-	var sz: int = arr.size()
-	var sz_half: int = int(sz / 2)
-	for i in sz_half:
-		var tmp = arr[i]
-		arr[i] = arr[sz - 1 - i]
-		arr[sz - 1 - i] = tmp
+	return sorted
 
 static func find_closest_color_index(colors: Array, target: Color) -> int:
 	var best_idx: int = 0
@@ -1288,19 +1222,3 @@ static func find_closest_color_index(colors: Array, target: Color) -> int:
 static func find_closest_color(colors: Array, target: Color) -> Color:
 	var idx = find_closest_color_index(colors, target)
 	return colors[idx]
-
-static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
-	var sorted: Array = sort_colors_by_hue(colors)
-	if sort_mode == "saturation":
-		sorted = sort_colors_by_saturation(colors)
-	elif sort_mode == "saturation_desc":
-		sorted = sort_colors_by_saturation(colors, true)
-	elif sort_mode == "value":
-		sorted = sort_colors_by_value(colors)
-	elif sort_mode == "value_desc":
-		sorted = sort_colors_by_value(colors, true)
-	elif sort_mode == "luminance":
-		sorted = sort_colors_by_luminance(colors)
-	elif sort_mode == "luminance_desc":
-		sorted = sort_colors_by_luminance(colors, true)
-	return sorted
