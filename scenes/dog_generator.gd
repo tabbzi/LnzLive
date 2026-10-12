@@ -2371,7 +2371,7 @@ func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 		var ball = all_ball_dict.balls[k]
 		if ball.size <= 0:
 			_negative_balls[k] = true
-		ball.size = normalize_ball_size(ball.size, size_scale)
+		ball.size = LnzLiveUtils.lnz_to_visual_size_snapped(ball.size, size_scale)
 		ball.position = ball.position * (pos_scale / 255.0)
 	
 	# 2. Addballs (unanchored): raw LNZ size <= 0
@@ -2380,7 +2380,7 @@ func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 		if ball.anchor_ball == -1:
 			if ball.size <= 0:
 				_negative_balls[k] = true
-			ball.size = normalize_ball_size(ball.size, size_scale)
+		ball.size = LnzLiveUtils.lnz_to_visual_size_snapped(ball.size, size_scale)
 		ball.position = ball.position * (pos_scale / 255.0)
 
 	return {
@@ -2398,11 +2398,6 @@ func snap_ball_size(size: float) -> float:
 
 func base_z_offset(base_z: float) -> float:
 	return base_z * 20.0 + 10.0
-
-func normalize_ball_size(size: float, scale: float) -> float:
-	var s = max(1, round((size - 2) * (scale / 255.0)))
-	s -= 1 - fmod(s, 2)
-	return max(1, s)
 
 
 ### ANIMATIONS ###
@@ -3391,7 +3386,7 @@ func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallDat
 		vector_from_base *= (lnz.ear_extension / 100.0)
 		addball.position = base_ball_pos + vector_from_base
 	
-	addball.size = normalize_ball_size(addball.size, lnz.scales[1])
+	addball.size = LnzLiveUtils.lnz_to_visual_size_snapped(addball.size, lnz.scales[1])
 	addball.position = addball.position * (lnz.scales[0] / 255.0)
 	
 	return addball

@@ -282,6 +282,7 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 
 ### SIZE CONVERSIONS ###
 static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> int:
+	# Converts a visual float size back to a raw LNZ integer size
 	if is_anchored:
 		return int(round(target_visual - bhd_size))
 	
@@ -293,6 +294,7 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 	return int(round(req_total - bhd_size))
 
 static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	# Converts a raw LNZ integer size to a visual float size
 	if is_anchored:
 		return max(1.0, float(bhd_size + lnz_size))
 	
@@ -302,6 +304,7 @@ static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: fl
 	return (total - 2.0) * (engine_scale / 255.0)
 
 static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
+	# Takes a visual size, converts to LNZ, snaps to even, converts back to visual size, and returns snapped value
 	if is_anchored:
 		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
 		return max(1.0, float(bhd_size + final_lnz))
@@ -316,6 +319,12 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	var snapped: float = round((current_base_size - offset) * (engine_scale / 255.0))
 	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
 	return snapped
+
+static func lnz_to_visual_size_snapped(lnz_size: float, engine_scale: float) -> float:
+	# Converts raw LNZ size to visual float size with even-snapping
+	var s = max(1, round((lnz_size - 2.0) * (engine_scale / 255.0)))
+	s -= 1.0 - fmod(s, 2.0)
+	return max(1.0, s)
 
 
 ### PATTERN & PAINTBALL UTILITIES ###

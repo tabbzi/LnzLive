@@ -994,7 +994,7 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 							if anchor_id in foot_group:
 								anchor_pre = floor(anchor_pre * (pet_node.lnz.foot_enlargement.x / 100.0)) + pet_node.lnz.foot_enlargement.y
 								break
-					bhd_size = int(pet_node.normalize_ball_size(anchor_pre, pet_node.lnz.scales[1]))
+					bhd_size = int(LnzLiveUtils.lnz_to_visual_size_snapped(anchor_pre, pet_node.lnz.scales[1]))
 
 
 	return {
