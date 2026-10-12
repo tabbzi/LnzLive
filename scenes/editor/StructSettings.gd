@@ -30,12 +30,12 @@ var base_ball_range_edit: LineEdit = null
 var bake_button: Button = null
 var vertex_count_label: Label = null
 
-const PRESET_FIELDS: Array = ["name", "color", "outline_color", "z_add", "fuzz", "group", "outline", "size", "body_area", "add_group", "texture", "base"]
+const PRESET_FIELDS: Array = ["name", "color", "outline_color", "speckle", "fuzz", "group", "outline", "size", "body_area", "add_group", "texture", "base"]
 const PRESET_DEFAULTS: Dictionary = {
 	"name": "Preset 1",
 	"color": 10,
 	"outline_color": 10,
-	"z_add": 0,
+	"speckle": 0,
 	"fuzz": 0,
 	"group": 0,
 	"outline": -1,
@@ -246,7 +246,7 @@ func get_base_for_vertex(vertex: Dictionary) -> int:
 		0:
 			return single_base_spin
 		1:
-			var max_dist = proximity_range
+			var max_dist = proximity_range * pet_view.pixel_world_size
 			var min_dist = 10000.0
 			var best_base = 0
 			var allowed_ids: Array = []
@@ -323,7 +323,7 @@ func _on_bake_button_pressed() -> void:
 			lnz_delta.x, lnz_delta.y, lnz_delta.z,
 			p.get("color", -1),
 			p.get("outline_color", 0),
-			p.get("z_add", 0),
+			p.get("speckle", 0),
 			p.get("fuzz", 0),
 			p.get("group", 0),
 			p.get("outline", -1),
@@ -337,8 +337,8 @@ func _on_bake_button_pressed() -> void:
 		start_id += 1
 	var line_mode_settings = get_tree().root.find_node("LineModeSettings", true, false)
 	for e in edges:
-		var from_idx = int(e.x)
-		var to_idx = int(e.y)
+		var from_idx = int(e["x"])
+		var to_idx = int(e["y"])
 		if not vertex_to_addball_id.has(from_idx) or not vertex_to_addball_id.has(to_idx):
 			continue
 		var id1 = vertex_to_addball_id[from_idx]
