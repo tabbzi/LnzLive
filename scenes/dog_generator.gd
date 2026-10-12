@@ -224,6 +224,32 @@ func _select_option_item(option_button: OptionButton, name: String):
 			break
 
 
+### BHD VALIDATION ###
+# _validate_bhd
+# _get_default_bhd_for_species
+
+
+func _validate_bhd(path: String) -> bool:
+	var test_bhd = BhdParser.new(path)
+	if test_bhd == null or test_bhd.animation_ranges.empty():
+		print("[ERROR] dog_generator: _validate_bhd: BHD validation failed: " + path)
+		if console_log:
+			console_log.log_message("BHD validation failed: " + path)
+		return false
+	return true
+
+
+func _get_default_bhd_for_species(species) -> String:
+	if species == KeyBallsData.Species.DOG:
+		return "res://resources/animations/DOG.bhd"
+	elif species == KeyBallsData.Species.CAT:
+		return "res://resources/animations/CAT.bhd"
+	elif species == KeyBallsData.Species.BABY:
+		return "res://resources/animations/BABY.bhd"
+	else:
+		return "res://resources/animations/CAT.bhd"
+
+
 ### SIGNALS ###
 # _on_BhdSwitcher_item_selected
 # _on_BhdPrompt_confirmed
@@ -250,9 +276,7 @@ func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
 	var bhd_path = "res://resources/animations/" + bhd_name
 	
-	var test_bhd = BhdParser.new(bhd_path)
-	if test_bhd == null or test_bhd.animation_ranges.empty():
-		print("[ERROR] dog_generator: _on_BhdSwitcher_item_selected: BHD validation failed: " + bhd_path)
+	if not _validate_bhd(bhd_path):
 		return
 
 	init_ball_data(0, false, bhd_path)
@@ -267,9 +291,7 @@ func _on_BhdPrompt_confirmed():
 		_select_option_item(bhd_option_button, bhd_name)
 
 		var bhd_path = "res://resources/animations/" + bhd_name
-		var test_bhd = BhdParser.new(bhd_path)
-		if test_bhd == null or test_bhd.animation_ranges.empty():
-			print("[ERROR] dog_generator: _on_BhdPrompt_confirmed: BHD validation failed: " + bhd_path)
+		if not _validate_bhd(bhd_path):
 			return
 
 		init_ball_data(0, false, bhd_path)
@@ -284,24 +306,12 @@ func _on_GameSwitcher_item_selected(index):
 		if selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
 			var bhd_path = "res://resources/animations/" + bhd_name
-			var test_bhd = BhdParser.new(bhd_path)
-			if test_bhd == null or test_bhd.animation_ranges.empty():
-				print("[ERROR] dog_generator: _on_GameSwitcher_item_selected: BHD validation failed: " + bhd_path)
+			if not _validate_bhd(bhd_path):
 				return
 			init_ball_data(0, false, bhd_path)
 	else:
-		var default_bhd = ""
-		if lnz.species == KeyBallsData.Species.DOG:
-			default_bhd = "res://resources/animations/DOG.bhd"
-		elif lnz.species == KeyBallsData.Species.CAT:
-			default_bhd = "res://resources/animations/CAT.bhd"
-		elif lnz.species == KeyBallsData.Species.BABY:
-			default_bhd = "res://resources/animations/BABY.bhd"
-		else:
-			default_bhd = "res://resources/animations/CAT.bhd"
-		var test_bhd = BhdParser.new(default_bhd)
-		if test_bhd == null or test_bhd.animation_ranges.empty():
-			print("[ERROR] dog_generator: _on_GameSwitcher_item_selected: BHD validation failed for species " + str(lnz.species))
+		var default_bhd = _get_default_bhd_for_species(lnz.species)
+		if not _validate_bhd(default_bhd):
 			return
 		init_ball_data(lnz.species)
 
@@ -500,103 +510,12 @@ func generate_pet(file_path):
 		_clear_hidden_state_lists()
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
-			var sec_data = lnz.sections_map[section_name]
-			if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(1):
-				current_variation_config[section_name] = {}
-				var val = sec_data[1]
-				if typeof(val) == TYPE_DICTIONARY:
-					for sk in val:
-						current_variation_config[section_name][sk] = 1
-				else:
-					current_variation_config[section_name][0] = 1
-			elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(0):
-				current_variation_config[section_name] = {}
-				var lowest = _find_lowest_variation_id_in_data(sec_data)
-				if lowest > 0:
-					var val = sec_data[lowest]
-					if typeof(val) == TYPE_DICTIONARY:
-						for sk in val:
-							current_variation_config[section_name][sk] = lowest
-					else:
-						current_variation_config[section_name][0] = lowest
-				else:
-					current_variation_config[section_name][0] = 0
-			else:
-				current_variation_config[section_name] = null
+			current_variation_config[section_name] = _build_variation_config(lnz.sections_map[section_name])
 	else:
 		var old_config = current_variation_config.duplicate()
 		current_variation_config = {}
 		for section_name in lnz.sections_map:
-			var sec_data = lnz.sections_map[section_name]
-			if typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(1):
-				current_variation_config[section_name] = {}
-				if old_config.has(section_name):
-					var old_val = old_config[section_name]
-					if typeof(old_val) == TYPE_DICTIONARY:
-						for sk in old_val:
-							var v = old_val[sk]
-							if typeof(v) == TYPE_INT and v != 0:
-								if sec_data.has(v):
-									current_variation_config[section_name][sk] = v
-							elif typeof(v) == TYPE_STRING:
-								var parts = (v as String).split(".")
-								if parts.size() == 2 and sec_data.has(parts[0].to_int()):
-									var id_data = sec_data[parts[0].to_int()]
-									if typeof(id_data) == TYPE_DICTIONARY and id_data.has(parts[1]):
-										current_variation_config[section_name][sk] = v
-					elif typeof(old_val) == TYPE_ARRAY:
-						for id in old_val:
-							if id != 0 and sec_data.has(id):
-								var sv = sec_data[id]
-								if typeof(sv) == TYPE_DICTIONARY:
-									for sk in sv:
-										current_variation_config[section_name][sk] = id
-								else:
-									current_variation_config[section_name][0] = id
-				else:
-					var val = sec_data[1]
-					if typeof(val) == TYPE_DICTIONARY:
-						for sk in val:
-							current_variation_config[section_name][sk] = 1
-					else:
-						current_variation_config[section_name][0] = 1
-			elif typeof(sec_data) == TYPE_DICTIONARY and sec_data.has(0):
-				current_variation_config[section_name] = {}
-				var lowest = _find_lowest_variation_id_in_data(sec_data)
-				if lowest > 0:
-					var val = sec_data[lowest]
-					if typeof(val) == TYPE_DICTIONARY:
-						for sk in val:
-							current_variation_config[section_name][sk] = lowest
-					else:
-						current_variation_config[section_name][0] = lowest
-				else:
-					current_variation_config[section_name][0] = 0
-				if old_config.has(section_name):
-					var old_val = old_config[section_name]
-					if typeof(old_val) == TYPE_DICTIONARY:
-						for sk in old_val:
-							var v = old_val[sk]
-							if typeof(v) == TYPE_INT and v != 0:
-								if sec_data.has(v):
-									current_variation_config[section_name][sk] = v
-							elif typeof(v) == TYPE_STRING:
-								var parts = (v as String).split(".")
-								if parts.size() == 2 and sec_data.has(parts[0].to_int()):
-									var id_data = sec_data[parts[0].to_int()]
-									if typeof(id_data) == TYPE_DICTIONARY and id_data.has(parts[1]):
-										current_variation_config[section_name][sk] = v
-					elif typeof(old_val) == TYPE_ARRAY:
-						for id in old_val:
-							if id != 0 and sec_data.has(id):
-								var sv = sec_data[id]
-								if typeof(sv) == TYPE_DICTIONARY:
-									for sk in sv:
-										current_variation_config[section_name][sk] = id
-								else:
-									current_variation_config[section_name][0] = id
-			else:
-				current_variation_config[section_name] = null
+			current_variation_config[section_name] = _build_variation_config(lnz.sections_map[section_name], old_config)
 
 	var pet_view = LnzLiveUtils.get_pet_view_container(get_tree().root)
 	if pet_view and pet_view.has_node("variation_tree"):
@@ -644,41 +563,21 @@ func generate_pet(file_path):
 		var selected_idx = bhd_option_button.selected
 		if comment_model != "":
 			var candidate_bhd = "res://resources/animations/" + comment_model + ".bhd"
-			var test_bhd = BhdParser.new(candidate_bhd)
-			if test_bhd == null or test_bhd.animation_ranges.empty():
-				print("[ERROR] dog_generator: generate_pet: BHD validation failed, aborting load of: " + candidate_bhd)
-				if console_log:
-					console_log.log_message("BHD validation failed: " + candidate_bhd)
+			if not _validate_bhd(candidate_bhd):
 				return
 			init_ball_data(0, !full_rebuild, candidate_bhd)
 		elif selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
 			var candidate_bhd_path = "res://resources/animations/" + bhd_name
-			var test_bhd = BhdParser.new(candidate_bhd_path)
-			if test_bhd == null or test_bhd.animation_ranges.empty():
-				print("[ERROR] dog_generator: generate_pet: BHD validation failed, aborting load of: " + candidate_bhd_path)
-				if console_log:
-					console_log.log_message("BHD validation failed: " + candidate_bhd_path)
+			if not _validate_bhd(candidate_bhd_path):
 				return
 			init_ball_data(0, !full_rebuild, candidate_bhd_path)
 		else:
 			bhd_prompt_dialog.popup_centered()
 			return
 	else:
-		var default_bhd = ""
-		if lnz_info.species == KeyBallsData.Species.DOG:
-			default_bhd = "res://resources/animations/DOG.bhd"
-		elif lnz_info.species == KeyBallsData.Species.CAT:
-			default_bhd = "res://resources/animations/CAT.bhd"
-		elif lnz_info.species == KeyBallsData.Species.BABY:
-			default_bhd = "res://resources/animations/BABY.bhd"
-		else:
-			default_bhd = "res://resources/animations/CAT.bhd"
-		var test_bhd = BhdParser.new(default_bhd)
-		if test_bhd == null or test_bhd.animation_ranges.empty():
-			print("[ERROR] dog_generator: generate_pet: BHD validation failed for species " + str(lnz_info.species) + ", aborting load")
-			if console_log:
-				console_log.log_message("BHD validation failed for species " + str(lnz_info.species))
+		var default_bhd = _get_default_bhd_for_species(lnz_info.species)
+		if not _validate_bhd(default_bhd):
 			return
 		init_ball_data(lnz_info.species, !full_rebuild)
 
@@ -1087,6 +986,69 @@ func _find_lowest_variation_id_in_data(section_data) -> int:
 		if id > 0 and (lowest == 0 or id < lowest):
 			lowest = id
 	return lowest
+
+
+func _build_variation_config(sec_data, old_config = null):
+	if typeof(sec_data) != TYPE_DICTIONARY:
+		return null
+
+	var result = null
+	if sec_data.has(1):
+		result = _build_from_section(sec_data[1], 1)
+	elif sec_data.has(0):
+		var lowest = _find_lowest_variation_id_in_data(sec_data)
+		if lowest > 0:
+			result = _build_from_section(sec_data[lowest], lowest)
+		else:
+			result = {0: 0}
+
+	if old_config != null and sec_data in old_config:
+		var preserved = _preserve_variation_from_old(old_config[sec_data], sec_data)
+		if preserved != null:
+			for sk in preserved:
+				result[sk] = preserved[sk]
+
+	return result
+
+
+func _preserve_variation_from_old(old_val, sec_data):
+	if typeof(old_val) == TYPE_DICTIONARY:
+		var result = {}
+		for sk in old_val:
+			var v = old_val[sk]
+			if typeof(v) == TYPE_INT and v != 0 and sec_data.has(v):
+				result[sk] = v
+			elif typeof(v) == TYPE_STRING:
+				var parts = (v as String).split(".")
+				if parts.size() == 2 and sec_data.has(parts[0].to_int()):
+					var id_data = sec_data[parts[0].to_int()]
+					if typeof(id_data) == TYPE_DICTIONARY and id_data.has(parts[1]):
+						result[sk] = v
+		if result.size() > 0:
+			return result
+	elif typeof(old_val) == TYPE_ARRAY:
+		var result = {}
+		for id in old_val:
+			if id != 0 and sec_data.has(id):
+				var sv = sec_data[id]
+				if typeof(sv) == TYPE_DICTIONARY:
+					for sk in sv:
+						result[sk] = id
+				else:
+					result[0] = id
+		if result.size() > 0:
+			return result
+	return null
+
+
+func _build_from_section(val, variation_id):
+	var result = {}
+	if typeof(val) == TYPE_DICTIONARY:
+		for sk in val:
+			result[sk] = variation_id
+	else:
+		result[0] = variation_id
+	return result
 
 
 ### TEXTURES & PALETTES ###
@@ -2629,6 +2591,13 @@ func _update_all_ball_visibility():
 		if is_instance_valid(poly):
 			poly.set_visible(_should_polygon_be_visible(poly_idx, poly))
 
+
+func _apply_visibility_state(node_map, method_name, state):
+	for key in node_map:
+		var node = node_map[key]
+		if is_instance_valid(node) and node.has_method(method_name):
+			node.call(method_name, state)
+
 func is_special_ball(species: int, ball_no: int) -> bool:
 	if lnz != null and lnz.addballs.has(ball_no):
 		if lnz.addballs[ball_no].add_group != 0:
@@ -2653,20 +2622,9 @@ func unhide_all_balls():
 	_hidden_polygons.clear()
 	_hidden_paintballs.clear()
 	
-	for ball_no in ball_map:
-		var node = ball_map[ball_no]
-		if is_instance_valid(node) and node.has_method("set_hidden"):
-			node.set_hidden(false)
-			
-	for line_idx in lines_map:
-		var line = lines_map[line_idx]
-		if is_instance_valid(line) and line.has_method("set_hidden"):
-			line.set_hidden(false)
-
-	for poly_idx in polygons_map:
-		var poly = polygons_map[poly_idx]
-		if is_instance_valid(poly) and poly.has_method("set_hidden"):
-			poly.set_hidden(false)
+	_apply_visibility_state(ball_map, "set_hidden", false)
+	_apply_visibility_state(lines_map, "set_hidden", false)
+	_apply_visibility_state(polygons_map, "set_hidden", false)
 			
 	emit_signal("hidden_balls_changed", 0)
 	_update_all_ball_visibility()
