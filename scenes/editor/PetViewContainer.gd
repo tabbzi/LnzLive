@@ -1924,36 +1924,6 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 					mark_ui_dirty()
 				return true
 
-	# SHIFT+E: extrude new vertex from selected vertex, create edge
-	if event is InputEventKey and event.pressed and struct_mode:
-		if Input.is_key_pressed(KEY_SHIFT) and event.scancode == KEY_E:
-			get_tree().set_input_as_handled()
-			var verts = struct_settings_instance.vertices
-			var edges = struct_settings_instance.edges
-			if struct_selected_vertex < 0 or struct_selected_vertex >= verts.size():
-				return true
-			var screen_pos = get_local_mouse_position()
-			var vp_screen_pos = _get_viewport_pos_from_screen_pos(screen_pos)
-			var ray_o = camera.project_ray_origin(vp_screen_pos)
-			var ray_d = camera.project_ray_normal(vp_screen_pos)
-			var new_vertex_pos: Vector3
-			var base_pos = verts[struct_selected_vertex].pos
-			var plane_n = camera.global_transform.basis.z.normalized()
-			var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, base_pos)
-			if intersect:
-				new_vertex_pos = intersect
-			else:
-				new_vertex_pos = base_pos + camera.global_transform.basis.z * 2.0
-			var new_idx = verts.size()
-			verts.append({"pos": new_vertex_pos, "preset_id": struct_settings_instance.active_preset_idx})
-			edges.append({"x": struct_selected_vertex, "y": new_idx})
-			struct_selected_vertex = new_idx
-			struct_is_dragging = true
-			mark_ui_dirty()
-			if is_instance_valid(struct_settings_instance):
-				struct_settings_instance._update_vertex_count()
-			return true
-
 	return false
 
 
@@ -3085,6 +3055,35 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 
 	if _handle_mode_shortcut_key_input(event):
+		return
+
+	# Struct Mode: SHIFT+E extrude new vertex from selected vertex, create edge
+	if struct_mode and event.pressed and event.scancode == KEY_E and Input.is_key_pressed(KEY_SHIFT):
+		get_tree().set_input_as_handled()
+		var verts = struct_settings_instance.vertices
+		var edges = struct_settings_instance.edges
+		if struct_selected_vertex < 0 or struct_selected_vertex >= verts.size():
+			return
+		var screen_pos = get_local_mouse_position()
+		var vp_screen_pos = _get_viewport_pos_from_screen_pos(screen_pos)
+		var ray_o = camera.project_ray_origin(vp_screen_pos)
+		var ray_d = camera.project_ray_normal(vp_screen_pos)
+		var new_vertex_pos: Vector3
+		var base_pos = verts[struct_selected_vertex].pos
+		var plane_n = camera.global_transform.basis.z.normalized()
+		var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, base_pos)
+		if intersect:
+			new_vertex_pos = intersect
+		else:
+			new_vertex_pos = base_pos + camera.global_transform.basis.z * 2.0
+		var new_idx = verts.size()
+		verts.append({"pos": new_vertex_pos, "preset_id": struct_settings_instance.active_preset_idx})
+		edges.append({"x": struct_selected_vertex, "y": new_idx})
+		struct_selected_vertex = new_idx
+		struct_is_dragging = true
+		mark_ui_dirty()
+		if is_instance_valid(struct_settings_instance):
+			struct_settings_instance._update_vertex_count()
 		return
 
 	# Move Mode ball lock: Q to toggle lock on hovered ball, CTRL+Q to unlock all
