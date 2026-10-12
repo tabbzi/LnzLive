@@ -5739,8 +5739,8 @@ func _idx_in_list(idx: int, list: Array) -> bool:
 			return true
 	return false
 
-func apply_struct_strings(addballz_str: String, linez_str: String) -> void:
-	if addballz_str.empty() and linez_str.empty():
+func apply_struct_strings(addballz_str: String, linez_str: String, polygonz_str: String = "") -> void:
+	if addballz_str.empty() and linez_str.empty() and polygonz_str.empty():
 		return
 	save_backup()
 	if not addballz_str.empty():
@@ -5753,6 +5753,12 @@ func apply_struct_strings(addballz_str: String, linez_str: String) -> void:
 		var bounds = _ensure_section_exists("[Linez]")
 		var delim = _detect_delimiter(bounds.start, bounds.end)
 		var formatted_str = linez_str.replace(", ", delim)
+		var insert_at_line = _find_insertion_line(bounds.start, bounds.end)
+		_insert_text_at_cursor_at_line(insert_at_line, formatted_str + "\n")
+	if not polygonz_str.empty():
+		var bounds = _ensure_section_exists("[Polygons]")
+		var delim = _detect_delimiter(bounds.start, bounds.end)
+		var formatted_str = polygonz_str.replace(", ", delim)
 		var insert_at_line = _find_insertion_line(bounds.start, bounds.end)
 		_insert_text_at_cursor_at_line(insert_at_line, formatted_str + "\n")
 	save_file(true)
