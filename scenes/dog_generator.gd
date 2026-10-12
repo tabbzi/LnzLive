@@ -75,11 +75,9 @@ var _shader_rotation_input = Vector2.ZERO
 var _shader_affected_by_size = true
 var _shader_affected_by_rotation = false
 
-var _texture_cache = {}
-var _atlas_manifest = {}
-var _atlas_manifest_normalized = {}
-var _atlas_textures = {}
-var _perf_texture_load_time = 0
+var _tex_mgr = preload("res://data_classes/texture_cache.gd").new()
+var _vis_mgr = preload("res://data_classes/visibility_manager.gd").new()
+var _pb_mgr = preload("res://data_classes/paintball_manager.gd").new()
 
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
@@ -153,18 +151,22 @@ signal palette_changed(palette_name)
 
 func _ready():
 	var t_start = OS.get_ticks_msec()
+	var atlas_manifest_data = {}
 	var f = File.new()
 	if f.open("res://resources/texture_atlas/atlas_manifest.json", File.READ) == OK:
 		var result = JSON.parse(f.get_as_text())
 		if result.error == OK:
-			_atlas_manifest = result.result
-			print("[STATUS] dog_generator: read texture atlas manifest with " + str(_atlas_manifest.size()) + " entries in " + str(OS.get_ticks_msec() - t_start) + "ms")
+			atlas_manifest_data = result.result
+			print("[STATUS] dog_generator: read texture atlas manifest with " + str(result.result.size()) + " entries in " + str(OS.get_ticks_msec() - t_start) + "ms")
 		else:
 			print("[ERROR] dog_generator: failed to parse texture atlas manifest")
 		f.close()
-		_build_atlas_manifest_lookup()
 	else:
 		print("[ERROR] dog_generator: failed to open texture atlas manifest")
+
+	_tex_mgr.init(atlas_manifest_data)
+	_vis_mgr.init(self)
+	_pb_mgr.init(self)
 
 	var editor = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
 	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
@@ -481,7 +483,6 @@ func _on_OptionButton_file_saved(file_name):
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
-	_perf_texture_load_time = 0
 
 	var full_rebuild = not _skip_next_rebuild
 	_skip_next_rebuild = false
@@ -584,7 +585,7 @@ func generate_pet(file_path):
 	recompose_model()
 
 	print("[TIME] dog_generator: generate_pet: model generation from BHD+LNZ completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
-	print("[TIME] dog_generator: generate_pet: texture loading completed in " + str(_perf_texture_load_time) + "ms")
+	print("[TIME] dog_generator: generate_pet: texture loading completed in " + str(_tex_mgr._perf_texture_load_time) + "ms")
 
 func set_skip_next_rebuild(val: bool):
 	_skip_next_rebuild = val
@@ -1068,140 +1069,17 @@ func _build_from_section(val, variation_id):
 # apply_visual_properties
 
 
-func _build_atlas_manifest_lookup():
-	_atlas_manifest_normalized.clear()
-	for key in _atlas_manifest.keys():
-		var lower_key = str(key).to_lower()
-		if not _atlas_manifest_normalized.has(lower_key):
-			_atlas_manifest_normalized[lower_key] = _atlas_manifest[key]
+func load_texture(texture_filename: String, preloader: ResourcePreloader, custom_lnz_palette: Array = []):
+	return _tex_mgr.load_texture(texture_filename, preloader, is_babyz_mode, custom_lnz_palette)
 
-func load_texture(texture_filename: String, preloader: ResourcePreloader, custom_lnz_palette: Array = []) -> Texture:
-	var t_start = OS.get_ticks_msec()
-	if _texture_cache.has(texture_filename):
-		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-		return _texture_cache[texture_filename]
-
-	var texture = null
-	var base_name = texture_filename.get_basename()
-	var extension = texture_filename.get_extension()
-
-	# Check atlas manifest first
-	var atlas_key = texture_filename.get_basename() # e.g. "hair10" from "hair10.bmp"
-
-	# Try exact match or case-insensitive match against manifest keys
-	var manifest_entry = null
-	var lookup_key = atlas_key.to_lower()
-	if _atlas_manifest_normalized.has(lookup_key):
-		manifest_entry = _atlas_manifest_normalized[lookup_key]
-
-	if manifest_entry:
-		var atlas_file = manifest_entry["babyz_atlas"] if is_babyz_mode else manifest_entry["petz_atlas"]
-		# Fix extension .bmp -> .png for atlas file
-		if atlas_file.to_lower().ends_with(".bmp"):
-			atlas_file = atlas_file.get_basename() + ".png"
-
-		var atlas_path = "res://resources/texture_atlas/" + atlas_file
-		var atlas_tex = null
-
-		if _atlas_textures.has(atlas_path):
-			atlas_tex = _atlas_textures[atlas_path]
-		elif ResourceLoader.exists(atlas_path):
-			atlas_tex = ResourceLoader.load(atlas_path)
-			_atlas_textures[atlas_path] = atlas_tex
-
-		if atlas_tex:
-			var region = Rect2(
-				manifest_entry["x"], manifest_entry["y"], manifest_entry["w"], manifest_entry["h"]
-			)
-			texture = AtlasTexture.new()
-			texture.atlas = atlas_tex
-			texture.region = region
-
-			_texture_cache[texture_filename] = texture
-			print("[INFO] dog_generator: load_texture: loaded atlas texture: " + texture_filename)
-			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-			return texture
-		else:
-			print("[WARNING] dog_generator: load_texture: texture atlas file not found: " + atlas_path)
-
-	print("[INFO] dog_generator: load_texture: loading individual texture: " + texture_filename)
-	var filename_variants = [
-		texture_filename, texture_filename.to_upper(), texture_filename.to_lower(),
-		base_name + "." + extension.to_upper(), base_name + "." + extension.to_lower(),
-		base_name.to_upper() + "." + extension, base_name.to_lower() + "." + extension,
-		base_name.to_upper() + "." + extension.to_upper(), base_name.to_lower() + "." + extension.to_lower()
-	]
-
-	var deduped = []
-	for v in filename_variants:
-		if not v in deduped:
-			deduped.append(v)
-	filename_variants = deduped
-
-	# ALL MODES + USER TEXTURE: exact 8-bit index parsing
-	if texture == null:
-		var loaded_path = ""
-		var dir = Directory.new()
-		for variant in filename_variants:
-			if dir.file_exists("user://resources/textures/" + variant):
-				loaded_path = "user://resources/textures/" + variant
-				break
-			elif dir.file_exists("res://resources/textures/" + variant):
-				loaded_path = "res://resources/textures/" + variant
-				break
-
-		if loaded_path != "":
-			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode, false, custom_lnz_palette)
-			if raw_bmp_data.has("data"):
-				var w = raw_bmp_data["w"]
-				var h = raw_bmp_data["h"]
-				var data = raw_bmp_data["data"]
-				var img = Image.new()
-				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
-				texture = ImageTexture.new()
-				texture.create_from_image(img, 0)
-				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
-	
-	# FALLBACK: native loader
-	if texture == null:
-		for variant in filename_variants:
-			var resource_path = "res://resources/textures/" + variant
-			var user_resource_path = "user://resources/textures/" + variant
-
-			if ResourceLoader.exists(resource_path):
-				texture = ResourceLoader.load(resource_path)
-				break
-			elif ResourceLoader.exists(user_resource_path):
-				texture = ResourceLoader.load(user_resource_path)
-				break
-
-	# PRELOADER FALLBACK
-	if texture == null:
-		if preloader.has_resource(texture_filename.to_lower()):
-			texture = preloader.get_resource(texture_filename.to_lower())
-
-	_texture_cache[texture_filename] = texture
-	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-	
-	return texture
-
-func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = []) -> Texture:
-	if texture_id < 0 or texture_id >= texture_list.size():
-		return null
-
-	var tex_info = texture_list[texture_id]
-	if tex_info.has("filename"):
-		var texture_filename = tex_info.filename
-		return load_texture(texture_filename, preloader, custom_lnz_palette)
-	return null
+func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = []):
+	return _tex_mgr.load_texture_from_list(texture_id, texture_list, custom_lnz_palette)
 
 func clear_texture_cache_for(filename: String):
-	if _texture_cache.has(filename):
-		_texture_cache.erase(filename)
+	_tex_mgr.clear_texture_cache_for(filename)
 
 func clear_texture_cache():
-	_texture_cache.clear()
-	print("[STATUS] dog_generator: clear_texture_cache: texture cache cleared for model refresh")
+	_tex_mgr.clear_texture_cache()
 
 func generate_color_icon(color_index: int) -> ImageTexture:
 	if not current_palette_texture:
@@ -2524,126 +2402,37 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 
 
 func _should_ball_be_visible(ball_no: int, node: Spatial) -> bool:
-	if _hidden_balls.has(ball_no):
-		return false
-	if node.get("omitted") == true:
-		return draw_omitted_balls
-	if _negative_balls.has(ball_no) and not draw_negative_balls:
-		return false
-	if node.is_in_group("special_balls") and not draw_special_balls:
-		return false
-	if node.is_in_group("addballs") and not draw_addballs:
-		return false
-	if node.is_in_group("balls") and not draw_balls:
-		return false
-	return true
+	return _vis_mgr._should_ball_be_visible(ball_no, node)
 
 func _should_line_be_visible(line_idx: int, node: Spatial) -> bool:
-	if _hidden_lines.has(line_idx):
-		return false
-	if node.is_in_group("special_balls") and not draw_special_balls:
-		return false
-	if not draw_lines:
-		return false
-	if lnz and line_idx < lnz.lines.size():
-		var line_data = lnz.lines[line_idx]
-		for b_no in [line_data.start, line_data.end]:
-			if ball_map.has(b_no) and not _should_ball_be_visible(b_no, ball_map[b_no]):
-				return false
-	return true
+	return _vis_mgr._should_line_be_visible(line_idx, node)
 
 func _should_polygon_be_visible(poly_idx: int, node: Spatial) -> bool:
-	if _hidden_polygons.has(poly_idx):
-		return false
-	if node.is_in_group("special_balls") and not draw_special_balls:
-		return false
-	if not draw_polygons:
-		return false
-	if lnz and poly_idx < lnz.polygons.size():
-		var poly = lnz.polygons[poly_idx]
-		for b_no in [poly.ball1, poly.ball2, poly.ball3, poly.ball4]:
-			if ball_map.has(b_no) and not _should_ball_be_visible(b_no, ball_map[b_no]):
-				return false
-	return true
+	return _vis_mgr._should_polygon_be_visible(poly_idx, node)
 
 func _update_all_ball_visibility():
-	for ball_no in ball_map:
-		var node = ball_map[ball_no]
-		if is_instance_valid(node) and node.is_inside_tree():
-			var vis = _should_ball_be_visible(ball_no, node)
-			node.visible_override = vis
-			node.set_visible(vis)
-			
-			if paintball_map.has(ball_no):
-				for pb in paintball_map[ball_no]:
-					if is_instance_valid(pb):
-						var pb_vis = vis and draw_paintballs
-						pb.visible_override = pb_vis
-						pb.set_visible(pb_vis)
-
-	for line_idx in lines_map:
-		var line = lines_map[line_idx]
-		if is_instance_valid(line):
-			line.set_visible(_should_line_be_visible(line_idx, line))
-
-	for poly_idx in polygons_map:
-		var poly = polygons_map[poly_idx]
-		if is_instance_valid(poly):
-			poly.set_visible(_should_polygon_be_visible(poly_idx, poly))
-
+	_vis_mgr._update_all_ball_visibility()
 
 func _apply_visibility_state(node_map, method_name, state):
-	for key in node_map:
-		var node = node_map[key]
-		if is_instance_valid(node) and node.has_method(method_name):
-			node.call(method_name, state)
+	_vis_mgr._apply_visibility_state(node_map, method_name, state)
 
 func is_special_ball(species: int, ball_no: int) -> bool:
-	if lnz != null and lnz.addballs.has(ball_no):
-		if lnz.addballs[ball_no].add_group != 0:
-			return true
-	return false
+	return _vis_mgr.is_special_ball(species, ball_no)
 
 func is_hidden_ball(ball_no):
-	return _hidden_balls.has(ball_no)
+	return _vis_mgr.is_hidden_ball(ball_no)
 
 func hide_ball(ball_no):
-	# print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
-	if not _hidden_balls.has(ball_no):
-		_hidden_balls.append(ball_no)
-		emit_signal("hidden_balls_changed", _hidden_balls.size())
+	_vis_mgr.hide_ball(ball_no)
 
-	_apply_hidden_state_to_visuals(ball_no)
-	
 func unhide_all_balls():
-	print("[STATUS] Node: unhide_all_balls: restoring %d balls" % _hidden_balls.size())
-	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
-	
-	_apply_visibility_state(ball_map, "set_hidden", false)
-	_apply_visibility_state(lines_map, "set_hidden", false)
-	_apply_visibility_state(polygons_map, "set_hidden", false)
-			
-	emit_signal("hidden_balls_changed", 0)
-	_update_all_ball_visibility()
-
+	_vis_mgr.unhide_all_balls()
 
 func _apply_hidden_state_to_visuals(ball_no):
-	if ball_map.has(ball_no):
-		var node = ball_map[ball_no]
-		if is_instance_valid(node) and node.has_method("set_hidden"):
-			node.set_hidden(true)
-	_update_all_ball_visibility()
+	_vis_mgr._apply_hidden_state_to_visuals(ball_no)
 
 func _restore_hidden_states():
-	for ball_no in _hidden_balls:
-		if ball_map.has(ball_no):
-			var node = ball_map[ball_no]
-			if is_instance_valid(node) and node.has_method("set_hidden"):
-				node.set_hidden(true)
-	_update_all_ball_visibility()
+	_vis_mgr._restore_hidden_states()
 
 func _on_EyeLidButton_pressed():
 	eyelid_mode = (eyelid_mode + 1) % EYELID_LABELS.size()
@@ -2707,11 +2496,7 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 	_update_all_ball_visibility()
 
 func _clear_hidden_state_lists():
-	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
-	_negative_balls.clear()
+	_vis_mgr._clear_hidden_state_lists()
 
 
 ### PAINTBALLZ ###
@@ -2737,431 +2522,61 @@ func _clear_hidden_state_lists():
 
 
 func _create_paintball_instance(base_ball_node):
-	var pb = paintball_scene.instance()
-	base_ball_node.add_child(pb)
-	pb.set_owner(get_root())
-	pb.add_to_group("paintballs")
-	return pb
+	return _pb_mgr._create_paintball_instance(base_ball_node)
 
 func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size):
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
-	var target_layer = 1
-	var base_mesh = base_ball_node.get_node_or_null("MeshInstance")
-	if base_mesh and base_mesh is VisualInstance:
-		target_layer = base_mesh.layers
-	
-	var pb_mesh = pb_visual_ball.get_node_or_null("MeshInstance")
-	if pb_mesh and pb_mesh is VisualInstance:
-		pb_mesh.layers = target_layer
-
-	var final_size = snap_ball_size(base_ball_node.ball_size * (float(pb_diameter) / 100.0))
-	pb_visual_ball.ball_size = final_size
-	pb_visual_ball.transform.origin = pb_pos
-	pb_visual_ball.set_surface_normal(pb_pos.normalized())
-
-	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
-	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
-	pb_visual_ball.base_ball_no = base_ball_node.name.to_int() # Ensure consistent naming
-	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
-	pb_visual_ball.base_ball_size = base_ball_node.ball_size
-	pb_visual_ball.color_index = pb_data.color
-	pb_visual_ball.outline_color_index = pb_data.outline_color
-	pb_visual_ball.outline = pb_data.outline
-	pb_visual_ball.group = pb_data.group
-	pb_visual_ball.fuzz_amount = fuzz_to_amount(pb_data.fuzz)
-	pb_visual_ball.palette = base_ball_node.palette
-
-	if pb_data.texture > -1:
-		var tex_pb = load_texture_from_list(pb_data.texture, lnz.texture_list, active_custom_palette)
-		if tex_pb:
-			pb_visual_ball.texture = tex_pb
-			if pb_data.texture < lnz.texture_list.size():
-				pb_visual_ball.transparent_color = lnz.texture_list[pb_data.texture].transparent_color
-	else:
-		print("[WARNING] Node: _setup_paintball_node: failed to load texture %d" % pb_data.texture)
-
-	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
-	pb_visual_ball.z_add = base_z_offset(base_z) + float(existing_count) + float(list_size)
-
-	return pb_visual_ball
+	return _pb_mgr._setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size)
 
 func add_pending_paintball(paintball_info):
-	PaintballLayerManager.ensure_default_layer()
-	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
-	if active_layer:
-		active_layer.add_paintball(paintball_info)
-
-	_pending_paintballs_data.append(paintball_info)
-	var base_ball_node = ball_map[paintball_info.base_ball_no]
-	var pb_visual_ball = _create_paintball_instance(base_ball_node)
-	
-	var layer_id: int = PaintballLayerManager.active_layer_id if PaintballLayerManager.active_layer_id >= 0 else -1
-	pb_visual_ball.paint_layer_id = layer_id
-	pb_visual_ball.set_meta("pb_uid", paintball_info.get("_pb_uid", -1))
-	
-	var pb_data = {
-		"color": paintball_info.color, "outline_color": paintball_info.outline_color,
-		"outline": paintball_info.outline_type, "fuzz": paintball_info.fuzz,
-		"texture": paintball_info.texture, "group": paintball_info.group
-	}
-
-	_setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, 
-						paintball_info.relative_pos_local, paintball_info.diameter,
-						paintball_map.get(paintball_info.base_ball_no, []).size(),
-						_pending_paintballs_data.size())
-	
-	if paintball_info.outline_type >= 0 and paintball_info.outline_color <= 0:
-		pb_visual_ball.outline_color_index = get_layer_outline_color(layer_id)
-	
-	_pending_paintball_nodes.append(pb_visual_ball)
-	# print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
+	_pb_mgr.add_pending_paintball(paintball_info)
 
 func remove_last_pending_paintball():
-	print("[STATUS] Node: remove_last_pending_paintball: request received")
-	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
-	if not active_layer or active_layer.get_paintball_count() == 0:
-		if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
-			var last_pb = _pending_paintballs_data[_pending_paintballs_data.size() - 1]
-			var last_visual_node = _pending_paintball_nodes.pop_back()
-			if is_instance_valid(last_visual_node):
-				last_visual_node.queue_free()
-				print("[STATUS] Node: remove_last_pending_paintball: visual node freed")
-			_pending_paintballs_data.pop_back()
-			return last_pb
-		print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
-		return null
-
-	var last_pb: Dictionary = active_layer.paintballs[active_layer.paintballs.size() - 1]
-	var uid: int = last_pb.get("_pb_uid", -1)
-	active_layer.paintballs.pop_back()
-
-	var node_to_remove: Spatial = null
-	for node in _pending_paintball_nodes:
-		if not is_instance_valid(node):
-			continue
-		if node.has_meta("pb_uid") and node.get_meta("pb_uid") == uid:
-			node_to_remove = node
-			break
-
-	if is_instance_valid(node_to_remove):
-		var node_idx = _pending_paintball_nodes.find(node_to_remove)
-		if node_idx != -1:
-			_pending_paintball_nodes.remove(node_idx)
-			if uid >= 0:
-				for i in range(_pending_paintballs_data.size()):
-					if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
-						_pending_paintballs_data.remove(i)
-						break
-			node_to_remove.queue_free()
-			print("[STATUS] Node: remove_last_pending_paintball: freed visual node for uid %d" % uid)
-	else:
-		print("[WARNING] Node: remove_last_pending_paintball: no visual node found for uid %d" % uid)
-	print("[STATUS] Node: remove_last_pending_paintball: removed paintball, %d remaining on layer" % active_layer.get_paintball_count())
-	return last_pb
+	return _pb_mgr.remove_last_pending_paintball()
 
 func remove_paintball_by_uid(uid: int):
-	if uid < 0:
-		return
-	if not is_instance_valid(PaintballLayerManager) or PaintballLayerManager.layers.empty():
-		return
-	for layer in PaintballLayerManager.layers:
-		var idx: int = -1
-		for i in range(layer.paintballs.size()):
-			if layer.paintballs[i].get("_pb_uid", -1) == uid:
-				idx = i
-				break
-		if idx >= 0:
-			layer.paintballs.remove(idx)
-			break
-
-	var node_to_remove: Spatial = null
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node) and node.has_meta("pb_uid") and node.get_meta("pb_uid") == uid:
-			node_to_remove = node
-			break
-
-	if is_instance_valid(node_to_remove):
-		var node_idx = _pending_paintball_nodes.find(node_to_remove)
-		if node_idx != -1:
-			_pending_paintball_nodes.remove(node_idx)
-			node_to_remove.queue_free()
-
-	for i in range(_pending_paintballs_data.size()):
-		if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
-			_pending_paintballs_data.remove(i)
-			break
-
+	_pb_mgr.remove_paintball_by_uid(uid)
 
 func remove_specific_pending_paintball(paintball_node):
-	print("[STATUS] Node: remove_specific_pending_paintball: called for node %s" % paintball_node)
-	var uid: int = -1
-	if paintball_node.has_meta("pb_uid"):
-		uid = paintball_node.get_meta("pb_uid")
-	
-	if uid >= 0:
-		PaintballLayerManager.remove_paintball_by_uid(uid)
-	
-	var node_idx = _pending_paintball_nodes.find(paintball_node)
-	if node_idx != -1:
-		_pending_paintball_nodes.remove(node_idx)
-		if uid >= 0:
-			for i in range(_pending_paintballs_data.size()):
-				if _pending_paintballs_data[i].has("_pb_uid") and _pending_paintballs_data[i]["_pb_uid"] == uid:
-					_pending_paintballs_data.remove(i)
-					break
-		elif _pending_paintballs_data.size() > node_idx:
-			_pending_paintballs_data.remove(node_idx)
-		if is_instance_valid(paintball_node):
-			paintball_node.queue_free()
-			print("[STATUS] Node: remove_specific_pending_paintball: node freed")
-	else:
-		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
+	_pb_mgr.remove_specific_pending_paintball(paintball_node)
 
 func get_pending_paintballs_data():
-	if is_instance_valid(PaintballLayerManager) and PaintballLayerManager.layers.size() > 0:
-		var all_paintballs: Array = []
-		for layer in PaintballLayerManager.layers:
-			if not layer.visible:
-				continue
-			for pb in layer.paintballs:
-				all_paintballs.append(pb)
-		return all_paintballs
-	return _pending_paintballs_data
+	return _pb_mgr.get_pending_paintballs_data()
 
 func get_pending_paintball_nodes():
-	return _pending_paintball_nodes
+	return _pb_mgr.get_pending_paintball_nodes()
 
 func clear_pending_paintballz():
-	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
-	_clear_paintball_list(_pending_paintball_nodes, _pending_paintballs_data)
-	PaintballLayerManager.clear_all_paintballs()
+	_pb_mgr.clear_pending_paintballz()
 
 func _clear_paintball_state_on_model_load():
-	print("[STATUS] Node: _clear_paintball_state_on_model_load: clearing %d pending / %d auto"
-		% [_pending_paintball_nodes.size(), _auto_paintball_nodes.size()])
-	if is_instance_valid(PaintballLayerManager):
-		PaintballLayerManager.clear_all_layers()
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_pending_paintball_nodes.clear()
-	_pending_paintballs_data.clear()
-	for node in _auto_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_auto_paintball_nodes.clear()
-	_auto_paintballs_data.clear()
+	_pb_mgr._clear_paintball_state_on_model_load()
 
 func clear_auto_paintballz():
-	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
-	_clear_paintball_list(_auto_paintball_nodes, _auto_paintballs_data)
+	_pb_mgr.clear_auto_paintballz()
 
 func _on_randomize_auto_paintballz(paintballz):
-	print("[STATUS] Node: _on_randomize_auto_paintballz: clearing and generating %d auto-paintballs" % paintballz.size())
-	clear_auto_paintballz()
-	_auto_paintballs_data = paintballz
-
-	for pb_data in _auto_paintballs_data:
-		var base_ball_node = ball_map.get(pb_data.base)
-		
-		if not is_instance_valid(base_ball_node):
-			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found or invalid" % pb_data.base)
-			continue
-
-		var pb_visual_ball = _create_paintball_instance(base_ball_node)
-		
-		var pb_pos = auto_paintball_world_offset(pb_data, base_ball_node)
-
-		var adapter = make_paintball_adapter(pb_data)
-
-		_setup_paintball_node(
-			pb_visual_ball, 
-			adapter, 
-			base_ball_node, 
-			pb_pos, 
-			pb_data.size,
-			paintball_map.get(pb_data.base, []).size(),
-			_auto_paintball_nodes.size()
-		)
-
-		_auto_paintball_nodes.append(pb_visual_ball)
+	_pb_mgr._on_randomize_auto_paintballz(paintballz)
 
 func _on_apply_auto_paintballz():
-	print("[STATUS] Node: _on_apply_auto_paintballz: attempting to apply auto paintballs")
-	PaintballLayerManager.ensure_default_layer()
-	var active_layer: PaintballLayerData = PaintballLayerManager.get_active_layer()
-	if active_layer and not active_layer.visible:
-		active_layer.visible = true
-	var processed_paintballs = {}
-	var processed_count = 0
-	var cap = 1000
-
-	for pb_data in _auto_paintballs_data:
-		if processed_count >= cap:
-			print("[WARNING] Node: _on_apply_auto_paintballz: hit cap of %d auto paintballs" % cap)
-			break
-
-		var base_ball_node = ball_map.get(pb_data.base)
-		if not is_instance_valid(base_ball_node):
-			continue
-
-		var local_pos = auto_paintball_world_offset(pb_data, base_ball_node)
-
-		var lnz_scale = lnz.scales[0] / 255.0
-		var relative_pos_lnz = local_pos / (pixel_world_size * lnz_scale)
-		relative_pos_lnz.y *= -1
-
-		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
-
-		if processed_paintballs.has(key):
-			continue
-
-		processed_paintballs[key] = true
-
-		var paintball_info = {
-			"base_ball_no": pb_data.base,
-			"relative_pos_local": local_pos,
-			"relative_pos_lnz": relative_pos_lnz,
-			"diameter": pb_data.size,
-			"color": pb_data.color_index,
-			"outline_color": pb_data.outline_color_index,
-			"outline_type": pb_data.outline,
-			"fuzz": pb_data.fuzz,
-			"texture": pb_data.texture_id,
-			"group": pb_data.group,
-			"anchored": pb_data.anchored == 1
-		}
-		if active_layer:
-			active_layer.add_paintball(paintball_info)
-		_pending_paintballs_data.append(paintball_info)
-
-		processed_count += 1
-		
-	print("[STATUS] Node: _on_apply_auto_paintballz: appended %d paintballs to pending queue" % processed_count)
-
-	var lnz_text_edit = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
-	if lnz_text_edit:
-		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
-		lnz_text_edit.apply_paintballz()
-	else:
-		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
-
-	clear_auto_paintballz()
+	_pb_mgr._on_apply_auto_paintballz()
 
 func get_pending_paintball_nodes_for_layer(layer_id: int) -> Array:
-	var result: Array = []
-	for node in _pending_paintball_nodes:
-		if not is_instance_valid(node):
-			continue
-		if "paint_layer_id" in node and node.paint_layer_id == layer_id:
-			result.append(node)
-	return result
+	return _pb_mgr.get_pending_paintball_nodes_for_layer(layer_id)
 
 func get_layer_outline_color(layer_id: int) -> int:
-	var layer_colors: Array = [1, 165, 100, 130, 170]
-	if layer_id < layer_colors.size():
-		return layer_colors[layer_id]
-	var offset: int = (layer_id - layer_colors.size()) % 100 + 100
-	return offset
+	return _pb_mgr.get_layer_outline_color(layer_id)
 
 func rebuild_pending_paintball_visuals():
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_pending_paintball_nodes.clear()
-
-	var total_visible: int = 0
-	for layer in PaintballLayerManager.layers:
-		if layer.visible:
-			total_visible += layer.get_paintball_count()
-
-	var layer_offsets: Array = []
-	var running_count: int = 0
-	for layer in PaintballLayerManager.layers:
-		if layer.visible:
-			layer_offsets.append(running_count)
-			running_count += layer.get_paintball_count()
-		else:
-			layer_offsets.append(-1)
-
-	for layer in PaintballLayerManager.layers:
-		if not layer.visible:
-			continue
-		var layer_idx: int = -1
-		for li in range(PaintballLayerManager.layers.size()):
-			if PaintballLayerManager.layers[li] == layer:
-				layer_idx = li
-				break
-		var layer_pb_count: int = layer.get_paintball_count()
-		for i in range(layer_pb_count):
-			var pb_data = layer.paintballs[i]
-			var base_ball_node = ball_map.get(pb_data.base_ball_no)
-			if not is_instance_valid(base_ball_node):
-				continue
-
-			var local_pos: Vector3 = pb_data.get("relative_pos_local", Vector3.ZERO)
-			if local_pos == Vector3.ZERO and pb_data.has("relative_pos_lnz"):
-				var engine_scale: float = 1.0
-				if "lnz" in self and is_instance_valid(lnz):
-					if "scales" in lnz:
-						engine_scale = lnz.scales[0]
-				local_pos = LnzLiveUtils.lnz_to_world_delta(pb_data["relative_pos_lnz"], pixel_world_size, engine_scale)
-				pb_data["relative_pos_local"] = local_pos
-
-			var pb_visual = _create_paintball_instance(base_ball_node)
-			pb_visual.paint_layer_id = layer.layer_id
-			pb_visual.set_meta("pb_uid", pb_data.get("_pb_uid", -1))
-			pb_visual.visible = layer.visible
-
-			var pb_info_data = {
-				"color": pb_data.color,
-				"outline_color": pb_data.outline_color,
-				"outline": pb_data.outline_type,
-				"fuzz": pb_data.fuzz,
-				"texture": pb_data.texture,
-				"group": pb_data.group
-			}
-
-			var commit_output_index: int = layer_offsets[layer_idx] + (layer_pb_count - 1 - i)
-			var z_add_value: int = total_visible - commit_output_index - 1
-			_setup_paintball_node(
-				pb_visual,
-				pb_info_data,
-				base_ball_node,
-				pb_data.relative_pos_local,
-				pb_data.diameter,
-				paintball_map.get(pb_data.base_ball_no, []).size(),
-				z_add_value
-			)
-
-			if pb_data.outline_type >= 0 and pb_data.outline_color <= 0:
-				pb_visual.outline_color_index = get_layer_outline_color(layer.layer_id)
-
-			_pending_paintball_nodes.append(pb_visual)
-
-	print("[STATUS] Node: rebuild_pending_paintball_visuals: rebuilt %d visual nodes from %d layers"
-		% [_pending_paintball_nodes.size(), PaintballLayerManager.layers.size()])
-
+	_pb_mgr.rebuild_pending_paintball_visuals()
 
 func _clear_paintball_list(node_list: Array, data_list: Array):
-	for node in node_list:
-		if is_instance_valid(node):
-			node.queue_free()
-	node_list.clear()
-	data_list.clear()
+	_pb_mgr._clear_paintball_list(node_list, data_list)
 
 func auto_paintball_world_offset(pb_data, base_node):
-	return pb_data.position * (base_node.ball_size / 2.0) * pixel_world_size
+	return _pb_mgr.auto_paintball_world_offset(pb_data, base_node)
 
 func make_paintball_adapter(src):
-	return {
-		"color": src.color_index,
-		"outline_color": src.outline_color_index,
-		"outline": src.outline,
-		"fuzz": src.fuzz,
-		"texture": src.texture_id,
-		"group": src.group
-	}
+	return _pb_mgr.make_paintball_adapter(src)
 
 ### ADD BALLZ ###
 # _validate_addball_props

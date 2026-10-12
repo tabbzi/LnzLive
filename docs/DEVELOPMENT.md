@@ -205,6 +205,9 @@ This directory holds the parsers, utils, and memory structures that bridge raw t
 * `paintball_data.gd`: Memory structure for `[Paint Ballz]`. Pre-calculates `normalised_position` which is required for placing paintballz on surface of base ballz.
 * `line_data.gd`: Memory structure for `[Linez]`, storing start/end ballz IDs and linez properties (e.g., left/right edge outline colors).
 * `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat 2D rectangles connecting 3 or 4 ballz.
+* `texture_cache.gd`: `Reference` class managing texture loading with caching, atlas manifest parsing/lookup, and palette resolution. Holds its own `_texture_cache`, `_atlas_manifest`, `_atlas_manifest_normalized`, and `_atlas_textures` dictionaries. Initialized via `init(atlas_manifest_data)` with the parsed JSON manifest.
+* `visibility_manager.gd`: `Reference` class managing visibility logic for balls, lines, and polygons. Takes a reference to `dog_generator` via `init(self)` during setup and operates directly on generator state (`gen.draw_balls`, `gen.ball_map`, `gen._hidden_balls`, etc.) without owning any state itself.
+* `paintball_manager.gd`: `Reference` class managing paintball instance creation, visual setup, pending/auto paintball data, and layer management. Takes a reference to `dog_generator` via `init(self)` and operates directly on generator state (`gen._pending_paintballs_data`, `gen.ball_map`, etc.) without owning any state itself.
 
 ### `scripts/`
 Core scripts that attach directly to the 3D visual nodes and manage their spatial properties for the shaders.
@@ -225,7 +228,7 @@ Custom Spatial shaders (`.tres`) designed to emulate P.F. Magic games rendering 
 
 Root controllers and initialization scripts.
 
-* `dog_generator.gd`: **"Model Generator"**. Central script generating model visuals. It takes structured LNZ data and `.bhd`/`.bdt` animations, computes extensions and scales, and generates spatial nodes (`Ball.tscn`, `Paintball.tscn`). Sets up dictionaries mapping LNZ IDs to actual nodes (e.g., ball_map`[48]` \= \<Node\>) allowing the UI to cross-reference 3D clicks back to text IDs.
+* `dog_generator.gd`: **"Model Generator"**. Central script coordinating model generation. Preloads and instantiates `TextureCache`, `VisibilityManager`, and `PaintballManager` as `Reference` delegates (`_tex_mgr`, `_vis_mgr`, `_pb_mgr`). Initializes them in `_ready()` (atlas manifest data passed to `_tex_mgr`, `self` passed to visibility and paintball managers). Delegates texture loading, visibility state, and paintball management to these managers. Takes structured LNZ data and `.bhd`/`.bdt` animations, computes extensions and scales, and generates spatial nodes (`Ball.tscn`, `Paintball.tscn`). Sets up dictionaries mapping LNZ IDs to actual nodes (e.g., `ball_map[48]` = \<Node\>) allowing the UI to cross-reference 3D clicks back to text IDs. All `export var` and `signal` declarations remain in this script so the Godot Inspector and scene tree signal connections stay intact.
 * `bootsplash.tscn / bootsplash.gd`: Handles the initial loading screen, restores persistent window positions/sizes from `user://settings.cfg` before launching the editor scene.
 
 ### `scenes/editor/`
@@ -234,7 +237,10 @@ The core UI, Viewport, and Text Editor functionalities.
 
 #### **Core Editors & Interaction**
 
-* `LnzTextEdit.gd`: Manages LNZ text as the source of truth. Manages the raw string array, handles file saving, backup creation, and undo/redo history. Helps commit visual 3D interactions to LNZ text blocks.  
+* `LnzTextEdit.gd`: Manages LNZ text as the source of truth. Manages the raw string array, handles file saving, backup creation. Core text finding/parsing/editing and ball operations. Undo/redo extracted to `LnzHistoryManager.gd`, find/replace extracted to `FindReplaceController.gd`, and mirroring extracted to `LnzMirrorController.gd`.  
+* `LnzHistoryManager.gd`: Extracted from `LnzTextEdit.gd`. Manages the dual undo/redo history (SNAPSHOT full-text checkpoints and LOGICAL single-line diffs). Uses Callable callbacks to interface with the text editor.  
+* `FindReplaceController.gd`: Extracted from `LnzTextEdit.gd`. Handles all find/replace UI callbacks and unified regex compilation. Provides `find_text()`, `replace_current()`, and `replace_all()` methods with shared pattern caching.  
+* `LnzMirrorController.gd`: Extracted from `LnzTextEdit.gd`. Handles all mirroring and symmetry operations (full left-to-right/right-to-left mirror and per-ball mirror-copy). Routes all mirror ID resolution through `_resolve_mirror_id`.  
 * `PetViewContainer.gd`: The 2D viewport overlay translating mouse inputs (clicks, drags) into 3D raycasts. It also manages all the Tools / Modes (Select, Move, Recolor, Paintball). Calculates 3D-to-2D dragging math and commits visual edits to `LnzTextEdit.gd`.  
 * `editor.tscn`: The root UI scene containing all layouts, panels, buttons, and viewports.
 
