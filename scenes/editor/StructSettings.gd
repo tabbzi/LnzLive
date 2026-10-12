@@ -246,7 +246,7 @@ func get_base_for_vertex(vertex: Dictionary) -> int:
 		0:
 			return single_base_spin
 		1:
-			var max_dist = proximity_range * pet_view.pixel_world_size
+			var max_dist = proximity_range
 			var min_dist = 10000.0
 			var best_base = 0
 			var allowed_ids: Array = []
@@ -390,6 +390,15 @@ func _update_vertex_count() -> void:
 		vertex_count_label.text = "Vertices: " + str(vertices.size()) + " | Edges: " + str(edges.size())
 		bake_button.disabled = (vertices.size() == 0)
 
+
+func update_selected_balls_text(ids: Array) -> void:
+	var str_ids = PoolStringArray()
+	for id in ids:
+		str_ids.append(str(id))
+	var text_val = str_ids.join(", ")
+	base_ball_range = text_val
+	if is_instance_valid(base_ball_range_edit):
+		base_ball_range_edit.text = text_val
 
 func add_affected_ball_ids(ids: Array) -> void:
 	var current_text = base_ball_range_edit.text.strip_edges()

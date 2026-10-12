@@ -1039,7 +1039,7 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	return global_pos - self.rect_global_position
 
 func _handle_box_selection(event: InputEvent) -> bool:
-	if not (move_mode or preset_mode or auto_paintballer_mode):
+	if not (move_mode or preset_mode or auto_paintballer_mode or struct_mode):
 		return false
 
 	var start_select: bool = false
@@ -1887,26 +1887,27 @@ func _handle_struct_mode_gui_input(event: InputEvent) -> bool:
 		elif event.pressed and not Input.is_key_pressed(KEY_SHIFT):
 			var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 			if target_ball:
-				var current_ids: Array = []
-				if struct_settings_instance.base_ball_range.strip_edges() != "":
-					current_ids = LnzLiveUtils.parse_number_list(struct_settings_instance.base_ball_range)
 				if Input.is_key_pressed(KEY_CONTROL):
-					if target_ball.ball_no in current_ids:
-						current_ids.erase(target_ball.ball_no)
+					# Toggle selection
+					if target_ball in selected_balls:
+						selected_balls.erase(target_ball)
+						target_ball.apply_outline_state(get_visual_state_for_ball(target_ball))
 					else:
-						current_ids.append(target_ball.ball_no)
+						selected_balls.append(target_ball)
+						target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
 				else:
-					current_ids = [target_ball.ball_no]
-				var str_ids = PoolStringArray()
-				for id in current_ids:
-					str_ids.append(str(id))
-				struct_settings_instance.base_ball_range_edit.text = str_ids.join(", ")
-				struct_settings_instance._on_base_ball_range_changed(struct_settings_instance.base_ball_range_edit.text)
+					# Fresh selection
+					if not (target_ball in selected_balls):
+						_on_unselect_all()
+						selected_balls.append(target_ball)
+						target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+						
+				_update_selected_ballz_in_settings()
 				return true
 			else:
+				# Clicked background
 				if not Input.is_key_pressed(KEY_CONTROL):
-					struct_settings_instance.base_ball_range_edit.text = ""
-					struct_settings_instance._on_base_ball_range_changed("")
+					_on_unselect_all()
 				return true
 
 	if event is InputEventMouseMotion and struct_is_dragging and struct_selected_vertex != -1:
@@ -3387,7 +3388,7 @@ func get_visual_state_for_ball(b: Spatial):
 				if b.ball_no == pivot_id:
 					return b.OutlineState.PIVOT
 
-		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
+		if (move_mode or preset_mode or auto_paintballer_mode or struct_mode) and b in selected_balls:
 			return b.OutlineState.ACTIVE_SELECTED
 		elif move_mode and pending_moves.has(b.ball_no):
 			return b.OutlineState.MODIFIED
@@ -3836,6 +3837,10 @@ func _update_selected_ballz_in_settings() -> void:
 
 	if auto_paintballer_mode:
 		auto_paintballer_settings_instance.update_selected_balls_text(ids)
+
+	if struct_mode and is_instance_valid(struct_settings_instance):
+		if struct_settings_instance.has_method("update_selected_balls_text"):
+			struct_settings_instance.update_selected_balls_text(ids)
 
 	var locked_ids: Array = locked_balls.duplicate()
 	update_locked_ballz_text(locked_ids)
