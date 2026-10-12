@@ -426,8 +426,16 @@ func load_hotkeys() -> void:
 
 
 func save_hotkeys() -> void:
-	var config: ConfigFile = ConfigFile.new()
+	_save_hotkeys_to_config()
 
+	_apply_bindings()
+	emit_signal("hotkeys_reloaded")
+
+	print("[HotkeyManager] Hotkeys saved to settings.cfg")
+
+
+func _save_hotkeys_to_config() -> void:
+	var config: ConfigFile = ConfigFile.new()
 	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		printerr("[HotkeyManager] Error loading settings config: ", err)
@@ -438,15 +446,7 @@ func save_hotkeys() -> void:
 	var json_str: String = JSON.print(user_bindings)
 	config.set_value(HOTKEYS_SECTION, "bindings", json_str)
 
-	var err2: int = config.save(SETTINGS_PATH)
-	if err2 != OK:
-		printerr("[HotkeyManager] Error saving settings config: ", err2)
-
-	# Reapply bindings to live InputMap
-	_apply_bindings()
-	emit_signal("hotkeys_reloaded")
-
-	print("[HotkeyManager] Hotkeys saved to settings.cfg")
+	config.save(SETTINGS_PATH)
 
 
 func save_profile(name: String) -> bool:
@@ -499,21 +499,6 @@ func reset_to_defaults() -> void:
 	_save_hotkeys_to_config()
 	emit_signal("hotkeys_reloaded")
 	print("[HotkeyManager] Reset to defaults.")
-
-
-func _save_hotkeys_to_config() -> void:
-	var config: ConfigFile = ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
-	if err != OK and err != ERR_FILE_NOT_FOUND:
-		printerr("[HotkeyManager] Error loading settings config: ", err)
-
-	if config.has_section(HOTKEYS_SECTION):
-		config.erase_section(HOTKEYS_SECTION)
-
-	var json_str: String = JSON.print(user_bindings)
-	config.set_value(HOTKEYS_SECTION, "bindings", json_str)
-
-	config.save(SETTINGS_PATH)
 
 
 func get_binding(action: String) -> Dictionary:
@@ -716,16 +701,7 @@ func _apply_bindings_for_actions(actions_to_apply: Array) -> void:
 
 
 func _update_single_binding(action_name: String) -> void:
-	if InputMap.has_action(action_name):
-		InputMap.erase_action(action_name)
-	var binding: Dictionary = default_bindings[action_name]
-	var user_override: Dictionary = {}
-	if user_bindings.has(action_name):
-		user_override = user_bindings[action_name]
-	var effective: Dictionary = binding.duplicate()
-	for key in user_override:
-		effective[key] = user_override[key]
-	_input_add_action_input(action_name, effective)
+	_apply_bindings_for_actions([action_name])
 
 
 func _input_add_action_input(action_name: String, binding: Dictionary) -> void:
