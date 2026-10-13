@@ -2736,11 +2736,23 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			get_tree().set_input_as_handled()
 			return
 
+	if event.pressed:
+		if event.scancode == KEY_EQUAL or event.scancode == KEY_PLUS or event.scancode == KEY_KP_ADD:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+		elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+
 	if _is_text_input_focused(event):
 		return
 
 	if event is InputEventKey:
-		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
+		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT, KEY_ESCAPE, KEY_ENTER, KEY_SPACE, KEY_TAB]:
 			mark_ui_dirty()
 
 	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):

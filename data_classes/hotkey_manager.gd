@@ -746,6 +746,9 @@ func _create_input_event(binding: Dictionary) -> InputEvent:
 	if _is_standard_key(scancode):
 		var event: InputEventKey = InputEventKey.new()
 		event.scancode = scancode
+		var phys: int = binding.get("physical_scancode", 0)
+		if phys != 0:
+			event.unicode = phys
 		event.pressed = true
 		event.control = binding.get("ctrl", false)
 		event.shift = binding.get("shift", false)
