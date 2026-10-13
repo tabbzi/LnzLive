@@ -120,6 +120,7 @@ var sidebar_controller = null
 var linez_mode: bool = false
 var linez_start_ball = null
 var line_mode_close: bool = false
+var _linez_hovered_ball = null
 
 var polygon_mode: bool = false
 var polygon_balls: Array = []
@@ -2043,12 +2044,13 @@ func _gui_input(event: InputEvent) -> void:
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
 			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-			var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-			for b in _get_all_visual_balls():
-				if b != linez_start_ball and b.has_method("apply_outline_state"):
-					b.apply_outline_state(b.OutlineState.NONE)
-			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
-				hover.apply_outline_state(hover.OutlineState.HOVER)
+			var new_hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			if new_hover != _linez_hovered_ball:
+				if is_instance_valid(_linez_hovered_ball) and _linez_hovered_ball != linez_start_ball and _linez_hovered_ball.has_method("apply_outline_state"):
+					_linez_hovered_ball.apply_outline_state(_linez_hovered_ball.OutlineState.NONE)
+				if new_hover and new_hover != linez_start_ball and new_hover.has_method("apply_outline_state"):
+					new_hover.apply_outline_state(new_hover.OutlineState.HOVER)
+				_linez_hovered_ball = new_hover
 		elif not preset_mode and not paintball_mode and not project_mode and not move_mode and not recolor_mode:
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
@@ -2573,6 +2575,9 @@ func _exit_mode(mode: int) -> void:
 			if is_instance_valid(linez_start_ball):
 				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 			linez_start_ball = null
+			if is_instance_valid(_linez_hovered_ball):
+				_linez_hovered_ball.apply_outline_state(_linez_hovered_ball.OutlineState.NONE)
+				_linez_hovered_ball = null
 			if polygon_mode:
 				_clear_polygon_selection()
 				polygon_balls.clear()
