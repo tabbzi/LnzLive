@@ -115,6 +115,8 @@ var _group_panning: bool = false
 var _group_pan_start_pos: Vector2 = Vector2.ZERO
 var _group_pan_start_origin: Vector3 = Vector3.ZERO
 
+var _space_pan_active: bool = false
+
 var sidebar_controller = null
 
 var linez_mode: bool = false
@@ -2024,9 +2026,7 @@ func _gui_input(event: InputEvent) -> void:
 		# 		pass
 
 		var space_and_left: bool = false
-		if HotkeyManager and HotkeyManager.is_action_pressed("viewport_pan_alt") and Input.is_mouse_button_pressed(BUTTON_LEFT):
-			space_and_left = true
-		elif Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT):
+		if _space_pan_active and Input.is_mouse_button_pressed(BUTTON_LEFT):
 			space_and_left = true
 		var middle_drag: bool = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
 
@@ -2706,6 +2706,12 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	if input_is_paused:
 		return
+
+	if event.scancode == KEY_SPACE:
+		if event.pressed:
+			_space_pan_active = true
+		elif _space_pan_active:
+			_space_pan_active = false
 
 	# Zoom view using SHIFT + + / -
 	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
