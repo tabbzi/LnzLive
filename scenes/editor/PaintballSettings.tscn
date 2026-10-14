@@ -101,7 +101,7 @@ anti_aliasing = false
 [node name="PaintballSettings" type="Panel"]
 margin_right = 525.0
 margin_bottom = 1500.0
-rect_min_size = Vector2( 525, 1025 )
+rect_min_size = Vector2( 525, 0 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
@@ -117,7 +117,8 @@ margin_top = 15.0
 margin_right = -15.0
 margin_bottom = -15.0
 rect_min_size = Vector2( 250, 0 )
-rect_clip_content = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -218,7 +219,6 @@ text = "Reset Defaults"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 170.0
 margin_right = 495.0
-margin_bottom = 1470.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {

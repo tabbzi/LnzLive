@@ -65,7 +65,7 @@ anti_aliasing = false
 [node name="VariationTree" type="Panel"]
 margin_right = 500.0
 margin_bottom = 625.0
-rect_min_size = Vector2( 300, 625 )
+rect_min_size = Vector2( 300, 0 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 3 )
 script = ExtResource( 1 )
@@ -81,7 +81,8 @@ margin_top = 15.0
 margin_right = -15.0
 margin_bottom = -15.0
 rect_min_size = Vector2( 250, 0 )
-rect_clip_content = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
 custom_constants/separation = 6
 __meta__ = {
 "_edit_use_anchors_": false
@@ -146,8 +147,6 @@ text = "Flatten Variations"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 174.0
 margin_right = 470.0
-margin_bottom = 595.0
-rect_min_size = Vector2( 0, 400 )
 size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
