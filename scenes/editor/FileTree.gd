@@ -291,7 +291,7 @@ func _on_ImportLNZ_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		LnzLiveUtils.web_file_picker(".lnz,.txt,text/plain", "fileUploadData")
+		web_file_dialog(".lnz,.txt,text/plain")
 
 func _on_ImportTexture_pressed() -> void:
 	current_import_type = ImportType.TEXTURE
@@ -302,7 +302,7 @@ func _on_ImportTexture_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		LnzLiveUtils.web_file_picker(".bmp,image/bmp", "fileUploadData")
+		web_file_dialog(".bmp,image/bmp")
 
 func _on_ImportPalette_pressed() -> void:
 	current_import_type = ImportType.PALETTE
@@ -315,7 +315,7 @@ func _on_ImportPalette_pressed() -> void:
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		LnzLiveUtils.web_file_picker(".png,.bmp,image/png,image/bmp", "fileUploadData")
+		web_file_dialog(".png,.bmp,image/png,image/bmp")
 
 func _on_OpenUserFolder_pressed() -> void:
 	var path: String = ProjectSettings.globalize_path("user://")
@@ -421,13 +421,36 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 		
 	return ""
 		
+func web_file_dialog(accept_extensions: String) -> void:
+	JavaScript.eval("""
+	window.fileUploadData = {}
+
+	let el = document.createElement("input");
+	el.type = "file"
+	el.accept = '""" + accept_extensions + """'
+	el.addEventListener("change", (e) => {
+	  if (e.target.files.length > 0) {
+		let file = e.target.files[0]
+		window.fileUploadData.name = file.name
+
+		let reader = new FileReader()
+		reader.readAsArrayBuffer(file)
+		reader.onloadend = (ev) => {
+		  window.fileUploadData.blob = ev.target.result
+		}
+	  }
+	})
+	el.click()
+	""")
+	upload_popup.visible = true
+	
 func _on_web_file_upload_popup_confirmed() -> void:
-	var file_blob = LnzLiveUtils.get_web_file_blob("fileUploadData")
+	var file_blob = JavaScript.eval("window.fileUploadData.blob")
 	if (file_blob == null):
 		print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: File is empty.")
 		return
 		
-	var file_name: String = LnzLiveUtils.get_web_file_name("fileUploadData")
+	var file_name: String = JavaScript.eval("window.fileUploadData.name")
 	var file_extension: String = file_name.get_extension().to_lower()
 	
 

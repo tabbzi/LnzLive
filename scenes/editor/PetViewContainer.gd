@@ -121,11 +121,14 @@ var _group_panning: bool = false
 var _group_pan_start_pos: Vector2 = Vector2.ZERO
 var _group_pan_start_origin: Vector3 = Vector3.ZERO
 
+var _space_pan_active: bool = false
+
 var sidebar_controller = null
 
 var linez_mode: bool = false
 var linez_start_ball = null
 var line_mode_close: bool = false
+var _linez_hovered_ball = null
 
 var polygon_mode: bool = false
 var polygon_balls: Array = []
@@ -2159,9 +2162,7 @@ func _gui_input(event: InputEvent) -> void:
 		# 		pass
 
 		var space_and_left: bool = false
-		if HotkeyManager and HotkeyManager.is_action_pressed("viewport_pan_alt") and Input.is_mouse_button_pressed(BUTTON_LEFT):
-			space_and_left = true
-		elif Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT):
+		if _space_pan_active and Input.is_mouse_button_pressed(BUTTON_LEFT):
 			space_and_left = true
 		var middle_drag: bool = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
 
@@ -2179,12 +2180,13 @@ func _gui_input(event: InputEvent) -> void:
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
 			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-			var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
-			for b in _get_all_visual_balls():
-				if b != linez_start_ball and b.has_method("apply_outline_state"):
-					b.apply_outline_state(b.OutlineState.NONE)
-			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
-				hover.apply_outline_state(hover.OutlineState.HOVER)
+			var new_hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			if new_hover != _linez_hovered_ball:
+				if is_instance_valid(_linez_hovered_ball) and _linez_hovered_ball != linez_start_ball and _linez_hovered_ball.has_method("apply_outline_state"):
+					_linez_hovered_ball.apply_outline_state(_linez_hovered_ball.OutlineState.NONE)
+				if new_hover and new_hover != linez_start_ball and new_hover.has_method("apply_outline_state"):
+					new_hover.apply_outline_state(new_hover.OutlineState.HOVER)
+				_linez_hovered_ball = new_hover
 		elif not preset_mode and not paintball_mode and not project_mode and not move_mode and not recolor_mode:
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
@@ -2730,6 +2732,9 @@ func _exit_mode(mode: int) -> void:
 			if is_instance_valid(linez_start_ball):
 				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 			linez_start_ball = null
+			if is_instance_valid(_linez_hovered_ball):
+				_linez_hovered_ball.apply_outline_state(_linez_hovered_ball.OutlineState.NONE)
+				_linez_hovered_ball = null
 			if polygon_mode:
 				_clear_polygon_selection()
 				polygon_balls.clear()
@@ -2932,6 +2937,12 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
 		return
 
+	if event.scancode == KEY_SPACE:
+		if event.pressed:
+			_space_pan_active = true
+		elif _space_pan_active:
+			_space_pan_active = false
+
 	# Zoom view using SHIFT + + / -
 	if event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		if HotkeyManager and (HotkeyManager.is_action_pressed("viewport_zoom_in_incremental") or HotkeyManager.is_action_pressed("viewport_zoom_in_alt2")):
@@ -2955,11 +2966,23 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			get_tree().set_input_as_handled()
 			return
 
+	if event.pressed:
+		if event.scancode == KEY_EQUAL or event.scancode == KEY_PLUS or event.scancode == KEY_KP_ADD:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+		elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= ZOOM_STEP
+			get_tree().set_input_as_handled()
+			return
+
 	if _is_text_input_focused(event):
 		return
 
 	if event is InputEventKey:
-		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
+		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT, KEY_ESCAPE, KEY_ENTER, KEY_SPACE, KEY_TAB]:
 			mark_ui_dirty()
 
 	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):

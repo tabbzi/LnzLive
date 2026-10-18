@@ -60,7 +60,7 @@ anti_aliasing = false
 [node name="RecolorSettings" type="Panel"]
 margin_right = 500.0
 margin_bottom = 1131.0
-rect_min_size = Vector2( 250, 625 )
+rect_min_size = Vector2( 250, 0 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
@@ -76,7 +76,6 @@ margin_top = 15.0
 margin_right = -15.0
 margin_bottom = -15.0
 rect_min_size = Vector2( 250, 0 )
-rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -118,7 +117,6 @@ Check Ramp to recolor all colors of ramp (e.g. 10-19) to corresponding colors of
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 83.0
 margin_right = 495.0
-margin_bottom = 1101.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -285,7 +283,6 @@ text = "No Texture Rotate"
 [node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 248.0
 margin_right = 470.0
-margin_bottom = 448.0
 rect_min_size = Vector2( 0, 200 )
 scroll_horizontal_enabled = false
 
@@ -449,7 +446,6 @@ text = "Nose Ballz"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 86.0
 margin_right = 470.0
-margin_bottom = 336.0
 rect_min_size = Vector2( 0, 250 )
 scroll_horizontal_enabled = false
 

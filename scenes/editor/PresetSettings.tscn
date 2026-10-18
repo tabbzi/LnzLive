@@ -90,7 +90,7 @@ anti_aliasing = false
 margin_left = 1.0
 margin_right = 526.0
 margin_bottom = 1500.0
-rect_min_size = Vector2( 525, 1175 )
+rect_min_size = Vector2( 525, 0 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
@@ -106,7 +106,6 @@ margin_top = 15.0
 margin_right = -15.0
 margin_bottom = -15.0
 rect_min_size = Vector2( 250, 0 )
-rect_clip_content = true
 size_flags_vertical = 3
 custom_constants/separation = 8
 __meta__ = {
@@ -148,7 +147,6 @@ This is an advanced mode. Tutorial coming soon too!"
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 116.0
 margin_right = 495.0
-margin_bottom = 1438.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
