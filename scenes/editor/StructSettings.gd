@@ -133,12 +133,16 @@ func _ready() -> void:
 		rot_z.connect("value_changed", self, "_on_prim_rot_changed")
 	
 	if is_instance_valid(shape_option):
+		shape_option.clear()
 		shape_option.add_item("Cube")
 		shape_option.add_item("Sphere")
-		shape_option.add_item("Cone")
+		shape_option.add_item("Cone/Cylinder")
+		shape_option.add_item("Torus")
 		shape_option.add_item("Ring")
 		shape_option.add_item("Plane")
-		shape_option.add_item("Star")
+		shape_option.add_item("Flat Star")
+		shape_option.add_item("Pyramid")
+		shape_option.add_item("Star Candy")
 	
 	_update_base_mode_ui()
 	_add_default_preset()
@@ -488,7 +492,7 @@ func _on_primitive_segments_input_changed(new_text: String) -> void:
 
 
 func _on_primitive_taper_changed(value: float) -> void:
-	primitive_taper = clamp(value, 0.01, 1.0)
+	primitive_taper = clamp(value, 0.01, 2.0)
 	_rebuild_preview()
 
 
@@ -549,7 +553,7 @@ func _on_snap_to_selection_pressed() -> void:
 func _update_primitive_shape_label() -> void:
 	if not is_instance_valid(shape_option):
 		return
-	var labels = ["Cube", "Sphere", "Cone", "Ring", "Plane", "Star"]
+	var labels = ["Cube", "Sphere", "Cone/Cylinder", "Torus", "Ring", "Plane", "Flat Star", "Pyramid", "Star Candy"]
 	if is_instance_valid(primitive_vertex_count_label):
 		primitive_vertex_count_label.text = labels[primitive_shape]
 
@@ -562,9 +566,12 @@ func _rebuild_preview() -> void:
 		0: _generate_cube()
 		1: _generate_sphere()
 		2: _generate_cone()
-		3: _generate_ring()
-		4: _generate_plane()
-		5: _generate_star()
+		3: _generate_torus()
+		4: _generate_ring()
+		5: _generate_plane()
+		6: _generate_flat_star()
+		7: _generate_pyramid()
+		8: _generate_star()
 	_update_primitive_vertex_count()
 
 
@@ -575,10 +582,10 @@ func _update_primitive_vertex_count() -> void:
 
 
 func _generate_cube() -> void:
-	var r = primitive_radius
+	var r = primitive_radius / 2.0
 	var h = primitive_height / 2.0
-	var hw = r / 2.0
-	var hh = h / 2.0
+	var hw = r
+	var hh = h
 	preview_verts = [
 		Vector3(-hw, -hh, -hw), Vector3(hw, -hh, -hw),
 		Vector3(hw, -hh, hw), Vector3(-hw, -hh, hw),
@@ -611,9 +618,16 @@ func _generate_sphere() -> void:
 		for lon in range(0, lon_steps):
 			var theta = 2 * PI * lon / lon_steps
 			verts.append(Vector3(r * sin(phi) * cos(theta), r * cos(phi), r * sin(phi) * sin(theta)))
+		if lat == 1:
+			for lon in range(lon_steps):
+				edges.append([0, row_start + lon])
 		for i in range(lon_steps - 1):
 			edges.append([row_start + i, row_start + i + 1])
 		edges.append([row_start + lon_steps - 1, row_start])
+		if lat > 1:
+			var prev_row_start = row_start - lon_steps
+			for i in range(lon_steps):
+				edges.append([prev_row_start + i, row_start + i])
 		for i in range(lon_steps - 1):
 			faces.append([row_start + i, row_start + lon_steps + i, row_start + lon_steps + i + 1, row_start + i + 1])
 	verts.append(Vector3(0, -r, 0))
@@ -671,7 +685,7 @@ func _generate_cone() -> void:
 	preview_faces = faces
 
 
-func _generate_ring() -> void:
+func _generate_torus() -> void:
 	var verts = []
 	var edges = []
 	var faces = []
@@ -679,26 +693,48 @@ func _generate_ring() -> void:
 	var tube_r = primitive_radius / 6.0
 	var major_steps = max(6, primitive_segments)
 	var minor_steps = max(4, primitive_segments / 2)
+	var first_row_start = 0
+	var last_row_start = 0
 	for i in range(major_steps):
 		var theta = 2 * PI * i / major_steps
-		var next_theta = 2 * PI * (i + 1) / major_steps
 		var cx = outer_r * cos(theta)
 		var cz = outer_r * sin(theta)
 		var row_start = verts.size()
+		if i == 0:
+			first_row_start = row_start
+		last_row_start = row_start
 		for j in range(minor_steps):
 			var phi = 2 * PI * j / minor_steps
 			verts.append(Vector3(tube_r * cos(phi) * cos(theta) + cx, tube_r * sin(phi), tube_r * cos(phi) * sin(theta) + cz))
 		for j in range(minor_steps - 1):
 			edges.append([row_start + j, row_start + j + 1])
 		edges.append([row_start + minor_steps - 1, row_start])
+		var next_row_start = row_start + minor_steps
 		if i < major_steps - 1:
 			for j in range(minor_steps):
-				edges.append([row_start + j, row_start + minor_steps + j])
+				edges.append([row_start + j, next_row_start + j])
 			for j in range(minor_steps - 1):
-				faces.append([row_start + j, row_start + minor_steps + j, row_start + minor_steps + j + 1, row_start + j + 1])
+				faces.append([row_start + j, next_row_start + j, next_row_start + j + 1, row_start + j + 1])
+	for j in range(minor_steps):
+		edges.append([last_row_start + j, first_row_start + j])
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
+
+
+func _generate_ring() -> void:
+	var verts = []
+	var edges = []
+	var steps = max(6, primitive_segments)
+	var r = primitive_radius / 2.0
+	for i in range(steps):
+		var theta = 2 * PI * i / steps
+		verts.append(Vector3(r * cos(theta), 0, r * sin(theta)))
+	for i in range(steps):
+		var next_i = (i + 1) % steps
+		edges.append([i, next_i])
+	preview_verts = verts
+	preview_edges = edges
 
 
 func _generate_plane() -> void:
@@ -725,40 +761,210 @@ func _generate_plane() -> void:
 	preview_faces = faces
 
 
-func _generate_star() -> void:
+func _generate_pyramid() -> void:
+	var r = primitive_radius / 2.0
+	var h = primitive_height / 2.0
+	var sides = max(3, primitive_segments)
 	var verts = []
 	var edges = []
-	var faces = []
+	
+	var base_start = 0
+	for i in range(sides):
+		var theta = 2 * PI * i / sides
+		verts.append(Vector3(r * cos(theta), -h, r * sin(theta)))
+	
+	var apex_idx = verts.size()
+	verts.append(Vector3(0, h, 0))
+	
+	for i in range(sides):
+		var next_i = (i + 1) % sides
+		edges.append([base_start + i, base_start + next_i])
+	
+	for i in range(sides):
+		edges.append([base_start + i, apex_idx])
+	
+	if not primitive_is_hollow:
+		for i in range(sides):
+			var next_i = (i + 1) % sides
+			edges.append([base_start + i, base_start + next_i])
+	
+	preview_verts = verts
+	preview_edges = edges
+
+
+func _generate_uncapped_cylinder() -> void:
+	var r = primitive_radius / 2.0
+	var top_r = r * primitive_taper
+	var hh = primitive_height / 2.0
+	var steps = max(3, primitive_segments)
+	for i in range(steps):
+		var theta = TAU * i / steps
+		preview_verts.append(Vector3(r * cos(theta), -hh, r * sin(theta)))
+	for i in range(steps):
+		var theta = TAU * i / steps
+		preview_verts.append(Vector3(top_r * cos(theta), hh, top_r * sin(theta)))
+	for i in range(steps):
+		var next_i = (i + 1) % steps
+		preview_edges.append([i, next_i])
+		preview_edges.append([steps + i, steps + next_i])
+		preview_edges.append([i, steps + i])
+
+
+func _generate_flat_star() -> void:
+	var verts = []
+	var edges = []
 	var points = max(3, primitive_segments / 2)
 	var outer_r = primitive_radius / 2.0
 	var inner_r = outer_r * 0.4
-	var h = primitive_height / 2.0
-	var bottom_ring_start = verts.size()
+	var depth = primitive_taper * primitive_height / 2.0
+	
+	var top_start = verts.size()
 	for i in range(points * 2):
 		var theta = PI * i / points - PI / 2.0
 		var r = outer_r if i % 2 == 0 else inner_r
-		verts.append(Vector3(r * cos(theta), -h, r * sin(theta)))
-	var top_ring_start = verts.size()
-	var top_outer = outer_r * primitive_taper
-	var top_inner = inner_r * primitive_taper
-	for i in range(points * 2):
-		var theta = PI * i / points - PI / 2.0
-		var r = top_outer if i % 2 == 0 else top_inner
-		verts.append(Vector3(r * cos(theta), h, r * sin(theta)))
+		verts.append(Vector3(r * cos(theta), depth, r * sin(theta)))
+	
+	if depth > 0.001:
+		var bot_start = verts.size()
+		for i in range(points * 2):
+			var theta = PI * i / points - PI / 2.0
+			var r = outer_r if i % 2 == 0 else inner_r
+			verts.append(Vector3(r * cos(theta), -depth, r * sin(theta)))
+		
+		for i in range(points * 2):
+			edges.append([top_start + i, bot_start + i])
+		
+		for i in range(points * 2):
+			var next_i = (i + 1) % (points * 2)
+			edges.append([bot_start + i, bot_start + next_i])
+	
 	for i in range(points * 2):
 		var next_i = (i + 1) % (points * 2)
-		edges.append([bottom_ring_start + i, bottom_ring_start + next_i])
-	for i in range(points * 2):
-		var next_i = (i + 1) % (points * 2)
-		edges.append([top_ring_start + i, top_ring_start + next_i])
-	for i in range(points * 2):
-		edges.append([bottom_ring_start + i, top_ring_start + i])
-		for j in range(points * 2):
-			if j == i:
-				faces.append([bottom_ring_start + i, top_ring_start + i, top_ring_start + (i + 1) % (points * 2), bottom_ring_start + (i + 1) % (points * 2)])
+		edges.append([top_start + i, top_start + next_i])
+	
 	preview_verts = verts
 	preview_edges = edges
-	preview_faces = faces
+
+
+func _generate_star() -> void:
+	var verts: Array = []
+	var edges_arr: Array = []
+	var faces_arr: Array = []
+	
+	var r = primitive_radius / 2.0
+	var h = primitive_height / 2.0
+	var taper = primitive_taper
+	
+	var lat_steps = max(3, int(primitive_segments / 2))
+	var lon_steps = max(3, primitive_segments)
+	
+	var base_verts: Array = []
+	base_verts.append(Vector3(0, 1, 0))
+	for lat in range(1, lat_steps):
+		var phi = PI * lat / lat_steps
+		for lon in range(lon_steps):
+			var theta = TAU * lon / lon_steps
+			base_verts.append(Vector3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta)))
+	base_verts.append(Vector3(0, -1, 0))
+	
+	for bv in base_verts:
+		verts.append(Vector3(bv.x * r, bv.y * h, bv.z * r))
+	
+	for lon in range(lon_steps):
+		var next_lon = (lon + 1) % lon_steps
+		var v1_idx = 0
+		var v2_idx = 1 + lon
+		var v3_idx = 1 + next_lon
+		
+		var center = (base_verts[v1_idx] + base_verts[v2_idx] + base_verts[v3_idx]) / 3.0
+		var tip_pos = center.normalized() * (1.0 + taper)
+		
+		var tip_idx = verts.size()
+		verts.append(Vector3(tip_pos.x * r, tip_pos.y * h, tip_pos.z * r))
+		
+		edges_arr.append([v1_idx, tip_idx])
+		edges_arr.append([v2_idx, tip_idx])
+		edges_arr.append([v3_idx, tip_idx])
+		
+		edges_arr.append([v1_idx, v2_idx])
+		edges_arr.append([v2_idx, v3_idx])
+		edges_arr.append([v3_idx, v1_idx])
+		
+		faces_arr.append([v1_idx, v2_idx, tip_idx])
+		faces_arr.append([v2_idx, v3_idx, tip_idx])
+		faces_arr.append([v3_idx, v1_idx, tip_idx])
+
+	for lat in range(1, lat_steps - 1):
+		var row_start = 1 + (lat - 1) * lon_steps
+		var next_row_start = 1 + lat * lon_steps
+		
+		for lon in range(lon_steps):
+			var next_lon = (lon + 1) % lon_steps
+			
+			var v1_idx = row_start + lon
+			var v2_idx = row_start + next_lon
+			var v3_idx = next_row_start + next_lon
+			var v4_idx = next_row_start + lon
+			
+			var center = (base_verts[v1_idx] + base_verts[v2_idx] + base_verts[v3_idx] + base_verts[v4_idx]) / 4.0
+			var tip_pos = center.normalized() * (1.0 + taper)
+			
+			var tip_idx = verts.size()
+			verts.append(Vector3(tip_pos.x * r, tip_pos.y * h, tip_pos.z * r))
+			
+			edges_arr.append([v1_idx, tip_idx])
+			edges_arr.append([v2_idx, tip_idx])
+			edges_arr.append([v3_idx, tip_idx])
+			edges_arr.append([v4_idx, tip_idx])
+			
+			edges_arr.append([v1_idx, v2_idx])
+			edges_arr.append([v2_idx, v3_idx])
+			edges_arr.append([v3_idx, v4_idx])
+			edges_arr.append([v4_idx, v1_idx])
+			
+			faces_arr.append([v1_idx, v2_idx, tip_idx])
+			faces_arr.append([v2_idx, v3_idx, tip_idx])
+			faces_arr.append([v3_idx, v4_idx, tip_idx])
+			faces_arr.append([v4_idx, v1_idx, tip_idx])
+
+	var south_idx = base_verts.size() - 1
+	var last_row_start = 1 + (lat_steps - 2) * lon_steps
+	
+	for lon in range(lon_steps):
+		var next_lon = (lon + 1) % lon_steps
+		var v1_idx = south_idx
+		var v2_idx = last_row_start + next_lon
+		var v3_idx = last_row_start + lon
+		
+		var center = (base_verts[v1_idx] + base_verts[v2_idx] + base_verts[v3_idx]) / 3.0
+		var tip_pos = center.normalized() * (1.0 + taper)
+		
+		var tip_idx = verts.size()
+		verts.append(Vector3(tip_pos.x * r, tip_pos.y * h, tip_pos.z * r))
+		
+		edges_arr.append([v1_idx, tip_idx])
+		edges_arr.append([v2_idx, tip_idx])
+		edges_arr.append([v3_idx, tip_idx])
+		
+		edges_arr.append([v1_idx, v2_idx])
+		edges_arr.append([v2_idx, v3_idx])
+		edges_arr.append([v3_idx, v1_idx])
+		
+		faces_arr.append([v1_idx, v2_idx, tip_idx])
+		faces_arr.append([v2_idx, v3_idx, tip_idx])
+		faces_arr.append([v3_idx, v1_idx, tip_idx])
+
+	preview_verts = verts
+	preview_faces = faces_arr
+	
+	var unique_edges: Dictionary = {}
+	for e in edges_arr:
+		var min_i = min(e[0], e[1])
+		var max_i = max(e[0], e[1])
+		if min_i != max_i:
+			unique_edges[str(min_i) + "_" + str(max_i)] = [min_i, max_i]
+			
+	preview_edges = unique_edges.values()
 
 
 func _find_visual_ball_by_no(ball_no: int) -> Node:
