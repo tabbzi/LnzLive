@@ -410,6 +410,7 @@ margin_right = 470.0
 margin_bottom = 1054.0
 custom_fonts/font = SubResource( 4 )
 disabled = true
+text = "Add Primitive to Struct"
 text = "Bake Primitives to LNZ"
 
 [node name="VertexCountLabel" type="Label" parent="VBoxContainer"]

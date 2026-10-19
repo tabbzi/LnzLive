@@ -9,6 +9,8 @@ var vertices: Array = []
 var edges: Array = []
 var next_vertex_id: int = 1
 var next_edge_id: int = 1
+var next_group_id: int = 1
+var active_group_id: int = 0
 
 var presets: Array = []
 var active_preset_idx: int = 0
@@ -92,6 +94,12 @@ func _ready() -> void:
 	base_ball_range_edit = find_node("AffectedBallzEdit")
 	bake_button = find_node("BakeButton")
 	vertex_count_label = find_node("VertexCountLabel")
+	
+	if is_instance_valid(base_mode_option) and base_mode_option.get_item_count() == 0:
+		base_mode_option.add_item("Single Base Ball")
+		base_mode_option.add_item("Closest Base Ball (Proximity)")
+		base_mode_option.add_item("Per-Preset Base Ball")
+		base_mode_option.selected = base_mode
 	
 	# Primitives controls
 	shape_option = find_node("ShapeOption")
@@ -260,7 +268,6 @@ func _on_base_ball_range_changed(text: String) -> void:
 		ids = LnzLiveUtils.parse_number_list(text)
 	emit_signal("affected_list_changed", ids)
 
-
 func _update_base_mode_ui() -> void:
 	var root = presets_tree.get_root()
 	if is_instance_valid(single_base_spin_box):
@@ -274,7 +281,8 @@ func get_base_for_vertex(vertex: Dictionary) -> int:
 		0:
 			return single_base_spin
 		1:
-			var max_dist = proximity_range
+			var px_scale = pet_view.pixel_world_size if is_instance_valid(pet_view) else 0.002
+			var max_dist = proximity_range * px_scale * 10.0
 			var min_dist = 10000.0
 			var best_base = 0
 			var allowed_ids: Array = []
@@ -282,18 +290,29 @@ func get_base_for_vertex(vertex: Dictionary) -> int:
 				allowed_ids = LnzLiveUtils.parse_number_list(base_ball_range)
 			var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 			for b in all_balls:
-				if not "ball_no" in b:
+				if not is_instance_valid(b) or not ("ball_no" in b):
 					continue
 				if allowed_ids.size() > 0 and not (b.ball_no in allowed_ids):
 					continue
 				var dist = b.global_transform.origin.distance_to(vertex.pos)
-				if dist < max_dist and dist < min_dist:
+				if dist <= max_dist and dist < min_dist:
 					min_dist = dist
 					best_base = b.ball_no
-			return best_base
+			# Fallback to closest allowed ball if none within proximity_range
+			if best_base == 0:
+				for b in all_balls:
+					if not is_instance_valid(b) or not ("ball_no" in b):
+						continue
+					if allowed_ids.size() > 0 and not (b.ball_no in allowed_ids):
+						continue
+					var dist = b.global_transform.origin.distance_to(vertex.pos)
+					if dist < min_dist:
+						min_dist = dist
+						best_base = b.ball_no
+			return max(0, best_base) as int
 		2:
-			var preset = presets[vertex.get("preset_id", 0)]
-			return preset.get("base", 0)
+			var pid = clamp(vertex.get("preset_id", 0), 0, presets.size() - 1)
+			return presets[pid].get("base", 0)
 	return 0
 
 
@@ -338,6 +357,7 @@ func _on_bake_button_pressed() -> void:
 		if KeyBallsData.bodyarea_map.has(base_id):
 			body_area = KeyBallsData.bodyarea_map[base_id]
 		var p = presets[v.get("preset_id", 0)]
+		var gid: int = v.get("group_id", 0)
 		var line_str = "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" % [
 			base_id,
 			lnz_delta.x, lnz_delta.y, lnz_delta.z,
@@ -345,7 +365,7 @@ func _on_bake_button_pressed() -> void:
 			p.get("outline_color", 0),
 			p.get("speckle", 0),
 			p.get("fuzz", 0),
-			p.get("group", 0),
+			gid,
 			p.get("outline", -1),
 			p.get("size", 10),
 			body_area,
@@ -761,13 +781,109 @@ func _format_line_string(id1: int, id2: int) -> String:
 	]
 
 
+### Vertex / Edge / Group Manipulation ###
+
+func delete_vertices(sel_indices: Array) -> void:
+	if sel_indices.empty():
+		return
+	var to_delete: Dictionary = {}
+	for idx in sel_indices:
+		to_delete[idx] = true
+	var old_to_new: Dictionary = {}
+	var new_verts: Array = []
+	for i in range(vertices.size()):
+		if not to_delete.has(i):
+			old_to_new[i] = new_verts.size()
+			new_verts.append(vertices[i])
+	var new_edges: Array = []
+	for e in edges:
+		var ox: int = int(e["x"])
+		var oy: int = int(e["y"])
+		if old_to_new.has(ox) and old_to_new.has(oy):
+			new_edges.append({"x": old_to_new[ox], "y": old_to_new[oy]})
+	vertices = new_verts
+	edges = new_edges
+	_update_vertex_count()
+
+func delete_edges_between(sel_indices: Array) -> void:
+	if sel_indices.empty():
+		return
+	var sel_set: Dictionary = {}
+	for idx in sel_indices:
+		sel_set[idx] = true
+	var new_edges: Array = []
+	for e in edges:
+		if sel_set.has(int(e["x"])) and sel_set.has(int(e["y"])):
+			continue
+		new_edges.append(e)
+	edges = new_edges
+	_update_vertex_count()
+
+func toggle_edges_for_selection(sel_indices: Array) -> void:
+	if sel_indices.size() < 2:
+		return
+	for i in range(sel_indices.size() - 1):
+		var a: int = sel_indices[i]
+		var b: int = sel_indices[i + 1]
+		if a == b:
+			continue
+		var found_idx: int = -1
+		for ei in range(edges.size()):
+			var ex: int = int(edges[ei]["x"])
+			var ey: int = int(edges[ei]["y"])
+			if (ex == a and ey == b) or (ex == b and ey == a):
+				found_idx = ei
+				break
+		if found_idx != -1 and sel_indices.size() == 2:
+			edges.remove(found_idx)
+		elif found_idx == -1:
+			edges.append({"x": a, "y": b})
+	_update_vertex_count()
+
+func assign_active_preset_to_vertices(sel_indices: Array) -> void:
+	for idx in sel_indices:
+		if idx >= 0 and idx < vertices.size():
+			vertices[idx]["preset_id"] = active_preset_idx
+
+func get_group_vertices_for_selection(sel_indices: Array) -> Array:
+	var target_groups: Dictionary = {}
+	for idx in sel_indices:
+		if idx >= 0 and idx < vertices.size():
+			target_groups[vertices[idx].get("group_id", 0)] = true
+	var result: Array = []
+	for i in range(vertices.size()):
+		if target_groups.has(vertices[i].get("group_id", 0)):
+			result.append(i)
+	return result
+
+func scale_vertices(sel_indices: Array, factor: float) -> void:
+	if sel_indices.empty():
+		return
+	var center: Vector3 = Vector3.ZERO
+	var count: int = 0
+	for idx in sel_indices:
+		if idx >= 0 and idx < vertices.size():
+			center += vertices[idx].pos
+			count += 1
+	if count == 0:
+		return
+	center /= float(count)
+	for idx in sel_indices:
+		if idx >= 0 and idx < vertices.size():
+			vertices[idx].pos = center + (vertices[idx].pos - center) * factor
+
+### Preset Helpers ###
+
 func _on_bake_primitive_pressed() -> void:
 	if preview_verts.size() == 0:
 		return
 	# Merge primitive verts/edges into the struct vertex system
+	var new_group = next_group_id
+	next_group_id += 1
 	var vert_offset = vertices.size()
 	for v in preview_verts:
-		vertices.append({"pos": v, "preset_id": active_preset_idx})
+		vertices.append({"pos": v, "preset_id": active_preset_idx, "group_id": new_group})
+	active_group_id = new_group
 	var edge_offset = preview_verts.size()
 	for e in preview_edges:
 		edges.append({"x": e[0] + vert_offset, "y": e[1] + vert_offset})
