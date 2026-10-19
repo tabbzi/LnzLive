@@ -345,13 +345,6 @@ margin_bottom = 17.0
 custom_fonts/font = SubResource( 4 )
 text = "Symmetry"
 
-[node name="SymmetricCheckBox" type="CheckBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
-margin_top = 21.0
-margin_right = 355.0
-margin_bottom = 44.0
-custom_fonts/font = SubResource( 5 )
-text = "Mirror X (symmetric)"
-
 [node name="RadiusLabel" type="Label" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
 margin_right = 355.0
 margin_bottom = 17.0
@@ -396,6 +389,84 @@ max_value = 50.0
 step = 0.1
 custom_fonts/font = SubResource( 5 )
 
+[node name="OffsetLabel" type="Label" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
+margin_left = 14.0
+margin_top = 380.0
+margin_right = 442.0
+margin_bottom = 402.0
+text = "Preview Offset (X, Y, Z)"
+custom_fonts/font = SubResource( 4 )
+
+[node name="OffsetHBox" type="HBoxContainer" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
+margin_left = 14.0
+margin_top = 405.0
+margin_right = 442.0
+margin_bottom = 435.0
+
+[node name="OffsetXSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/OffsetHBox"]
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="OffsetYSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/OffsetHBox"]
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="OffsetZSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/OffsetHBox"]
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="RotLabel" type="Label" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
+margin_left = 14.0
+margin_top = 445.0
+margin_right = 442.0
+margin_bottom = 467.0
+text = "Preview Rotation Deg (X, Y, Z)"
+custom_fonts/font = SubResource( 4 )
+
+[node name="RotHBox" type="HBoxContainer" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
+margin_left = 14.0
+margin_top = 470.0
+margin_right = 442.0
+margin_bottom = 500.0
+
+[node name="RotXSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/RotHBox"]
+min_value = -180.0
+max_value = 180.0
+step = 5.0
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="RotYSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/RotHBox"]
+min_value = -180.0
+max_value = 180.0
+step = 5.0
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="RotZSpin" type="SpinBox" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/RotHBox"]
+min_value = -180.0
+max_value = 180.0
+step = 5.0
+value = 0.0
+custom_fonts/font = SubResource( 5 )
+
+[node name="SnapToSelectionBtn" type="Button" parent="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox"]
+margin_left = 14.0
+margin_top = 515.0
+margin_right = 442.0
+margin_bottom = 540.0
+text = "Snap Preview to Selected Ball / Vert"
+custom_fonts/font = SubResource( 4 )
+
 [node name="BakeButton" type="Button" parent="VBoxContainer"]
 margin_top = 1004.0
 margin_right = 470.0
@@ -410,8 +481,7 @@ margin_right = 470.0
 margin_bottom = 1054.0
 custom_fonts/font = SubResource( 4 )
 disabled = true
-text = "Add Primitive to Struct"
-text = "Bake Primitives to LNZ"
+text = "Bake Primitive to Struct"
 
 [node name="VertexCountLabel" type="Label" parent="VBoxContainer"]
 margin_top = 1059.0
@@ -442,7 +512,7 @@ text = "Verts: 0 | Edges: 0"
 [connection signal="text_changed" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/SegmentsHBox/SegmentsSpinEdit" to="." method="_on_primitive_segments_input_changed"]
 [connection signal="value_changed" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/TaperHBox/TaperSpinBox" to="." method="_on_primitive_taper_changed"]
 [connection signal="toggled" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/HollowCheckBox" to="." method="_on_primitive_hollow_toggled"]
-[connection signal="toggled" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/SymmetricCheckBox" to="." method="_on_primitive_symmetric_toggled"]
 [connection signal="value_changed" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/RadiusHBox/RadiusSpinBox" to="." method="_on_primitive_radius_changed"]
 [connection signal="value_changed" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/HeightHBox/HeightSpinBox" to="." method="_on_primitive_height_changed"]
+[connection signal="pressed" from="VBoxContainer/ModeTabContainer/PrimitivesTab/PrimitivesScroll/PrimitivesVBox/SnapToSelectionBtn" to="." method="_on_snap_to_selection_pressed"]
 [connection signal="pressed" from="VBoxContainer/BakePrimitiveButton" to="." method="_on_bake_primitive_pressed"]

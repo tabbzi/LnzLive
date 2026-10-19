@@ -20,6 +20,9 @@ var single_base_spin: int = 0
 var proximity_range: float = 50.0
 var base_ball_range: String = ""
 
+var shift_click_creates_vert: bool = false
+var show_primitive_preview: bool = true
+
 var pet_view: Control = null
 
 var presets_tree: Tree = null
@@ -36,8 +39,6 @@ var shape_option: OptionButton = null
 var segments_spin_box: SpinBox = null
 var segments_spin_edit: LineEdit = null
 var taper_spin_box: SpinBox = null
-var hollow_check_box: CheckBox = null
-var symmetric_check_box: CheckBox = null
 var radius_spin_box: SpinBox = null
 var height_spin_box: SpinBox = null
 var bake_primitive_button: Button = null
@@ -46,10 +47,11 @@ var primitive_vertex_count_label: Label = null
 var primitive_segments: int = 16
 var primitive_taper: float = 1.0
 var primitive_is_hollow: bool = true
-var primitive_is_symmetric: bool = false
 var primitive_radius: float = 1.0
 var primitive_height: float = 1.0
 var primitive_shape: int = 0
+var primitive_offset: Vector3 = Vector3.ZERO
+var primitive_rotation_deg: Vector3 = Vector3.ZERO
 
 var preview_verts: Array = []
 var preview_edges: Array = []
@@ -106,12 +108,29 @@ func _ready() -> void:
 	segments_spin_box = find_node("SegmentsSpinBox")
 	segments_spin_edit = find_node("SegmentsSpinEdit")
 	taper_spin_box = find_node("TaperSpinBox")
-	hollow_check_box = find_node("HollowCheckBox")
-	symmetric_check_box = find_node("SymmetricCheckBox")
 	radius_spin_box = find_node("RadiusSpinBox")
 	height_spin_box = find_node("HeightSpinBox")
 	bake_primitive_button = find_node("BakePrimitiveButton")
 	primitive_vertex_count_label = find_node("PrimitiveVertexCountLabel")
+	
+	var off_x = find_node("OffsetXSpin")
+	if is_instance_valid(off_x):
+		off_x.connect("value_changed", self, "_on_prim_offset_changed")
+	var off_y = find_node("OffsetYSpin")
+	if is_instance_valid(off_y):
+		off_y.connect("value_changed", self, "_on_prim_offset_changed")
+	var off_z = find_node("OffsetZSpin")
+	if is_instance_valid(off_z):
+		off_z.connect("value_changed", self, "_on_prim_offset_changed")
+	var rot_x = find_node("RotXSpin")
+	if is_instance_valid(rot_x):
+		rot_x.connect("value_changed", self, "_on_prim_rot_changed")
+	var rot_y = find_node("RotYSpin")
+	if is_instance_valid(rot_y):
+		rot_y.connect("value_changed", self, "_on_prim_rot_changed")
+	var rot_z = find_node("RotZSpin")
+	if is_instance_valid(rot_z):
+		rot_z.connect("value_changed", self, "_on_prim_rot_changed")
 	
 	if is_instance_valid(shape_option):
 		shape_option.add_item("Cube")
@@ -316,6 +335,19 @@ func get_base_for_vertex(vertex: Dictionary) -> int:
 	return 0
 
 
+func get_transformed_preview_verts() -> Array:
+	var out = []
+	var rot_rad = Vector3(
+		deg2rad(primitive_rotation_deg.x),
+		deg2rad(primitive_rotation_deg.y),
+		deg2rad(primitive_rotation_deg.z)
+	)
+	var basis = Basis(Quat(rot_rad))
+	for v in preview_verts:
+		out.append(basis.xform(v) + primitive_offset)
+	return out
+
+
 func get_preset_color(preset_id: int) -> Color:
 	if preset_id < 0 or preset_id >= presets.size():
 		preset_id = 0
@@ -440,7 +472,7 @@ func _on_primitive_shape_selected(idx: int) -> void:
 func _on_primitive_segments_changed(value: float) -> void:
 	primitive_segments = max(3, int(value))
 	if is_instance_valid(segments_spin_edit):
-		segments_spin_edit.value = primitive_segments
+		segments_spin_edit.text = str(primitive_segments)
 	_update_primitive_vertex_count()
 	_rebuild_preview()
 
@@ -465,11 +497,6 @@ func _on_primitive_hollow_toggled(toggled: bool) -> void:
 	_rebuild_preview()
 
 
-func _on_primitive_symmetric_toggled(toggled: bool) -> void:
-	primitive_is_symmetric = toggled
-	_rebuild_preview()
-
-
 func _on_primitive_radius_changed(value: float) -> void:
 	primitive_radius = max(0.01, value)
 	_rebuild_preview()
@@ -478,6 +505,45 @@ func _on_primitive_radius_changed(value: float) -> void:
 func _on_primitive_height_changed(value: float) -> void:
 	primitive_height = max(0.01, value)
 	_rebuild_preview()
+
+func _on_prim_offset_changed(_val: float) -> void:
+	var off_x = find_node("OffsetXSpin")
+	var off_y = find_node("OffsetYSpin")
+	var off_z = find_node("OffsetZSpin")
+	if is_instance_valid(off_x) and is_instance_valid(off_y) and is_instance_valid(off_z):
+		primitive_offset = Vector3(off_x.value, off_y.value, off_z.value)
+	if is_instance_valid(pet_view):
+		pet_view.mark_ui_dirty()
+
+func _on_prim_rot_changed(_val: float) -> void:
+	var rot_x = find_node("RotXSpin")
+	var rot_y = find_node("RotYSpin")
+	var rot_z = find_node("RotZSpin")
+	if is_instance_valid(rot_x) and is_instance_valid(rot_y) and is_instance_valid(rot_z):
+		primitive_rotation_deg = Vector3(rot_x.value, rot_y.value, rot_z.value)
+	if is_instance_valid(pet_view):
+		pet_view.mark_ui_dirty()
+
+func _on_snap_to_selection_pressed() -> void:
+	if not is_instance_valid(pet_view):
+		return
+	var target_pos = Vector3.ZERO
+	if pet_view.struct_selected_vertex >= 0 and pet_view.struct_selected_vertex < vertices.size():
+		target_pos = vertices[pet_view.struct_selected_vertex].pos
+	elif pet_view.selected_balls.size() > 0 and is_instance_valid(pet_view.selected_balls[0]):
+		target_pos = pet_view.selected_balls[0].global_transform.origin
+	primitive_offset = target_pos
+	var off_x = find_node("OffsetXSpin")
+	var off_y = find_node("OffsetYSpin")
+	var off_z = find_node("OffsetZSpin")
+	if is_instance_valid(off_x):
+		off_x.value = target_pos.x
+	if is_instance_valid(off_y):
+		off_y.value = target_pos.y
+	if is_instance_valid(off_z):
+		off_z.value = target_pos.z
+	if is_instance_valid(pet_view):
+		pet_view.mark_ui_dirty()
 
 
 func _update_primitive_shape_label() -> void:
@@ -529,8 +595,6 @@ func _generate_cube() -> void:
 		[0,4,5,1], [3,2,6,7],
 		[1,5,6,2], [0,3,7,4]
 	]
-	if primitive_is_symmetric:
-		_mirror_shape()
 
 
 func _generate_sphere() -> void:
@@ -560,8 +624,6 @@ func _generate_sphere() -> void:
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
-	if primitive_is_symmetric:
-		_mirror_shape()
 
 
 func _generate_cone() -> void:
@@ -607,8 +669,6 @@ func _generate_cone() -> void:
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
-	if primitive_is_symmetric:
-		_mirror_shape()
 
 
 func _generate_ring() -> void:
@@ -639,8 +699,6 @@ func _generate_ring() -> void:
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
-	if primitive_is_symmetric:
-		_mirror_shape()
 
 
 func _generate_plane() -> void:
@@ -665,8 +723,6 @@ func _generate_plane() -> void:
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
-	if primitive_is_symmetric:
-		_mirror_shape()
 
 
 func _generate_star() -> void:
@@ -703,33 +759,6 @@ func _generate_star() -> void:
 	preview_verts = verts
 	preview_edges = edges
 	preview_faces = faces
-	if primitive_is_symmetric:
-		_mirror_shape()
-
-
-func _mirror_shape() -> void:
-	var mirrored_verts = []
-	var mirrored_edges = []
-	var mirrored_faces = []
-	var offset = preview_verts.size()
-	for v in preview_verts:
-		mirrored_verts.append(Vector3(-v.x, v.y, -v.z))
-	for e in preview_edges:
-		mirrored_edges.append([e[0], e[1]])
-	for i in range(mirrored_verts.size()):
-		mirrored_verts[i] = Vector3(-mirrored_verts[i].x, mirrored_verts[i].y, -mirrored_verts[i].z)
-	var mirrored_edge_offset = mirrored_verts.size()
-	for e in mirrored_edges:
-		mirrored_edges.append([e[0] + mirrored_edge_offset, e[1] + mirrored_edge_offset])
-	var mirrored_face_offset = mirrored_verts.size()
-	for f in preview_faces:
-		var new_face = [f[0] + mirrored_face_offset, f[1] + mirrored_face_offset, f[2] + mirrored_face_offset]
-		if f.size() > 3:
-			new_face.append(f[3] + mirrored_face_offset)
-		mirrored_faces.append(new_face)
-	preview_verts = preview_verts + mirrored_verts
-	preview_edges = preview_edges + mirrored_edges
-	preview_faces = preview_faces + mirrored_faces
 
 
 func _find_visual_ball_by_no(ball_no: int) -> Node:
@@ -748,14 +777,14 @@ func _find_visual_ball_by_no(ball_no: int) -> Node:
 
 func _format_line_string(id1: int, id2: int) -> String:
 	var line_mode_settings = get_tree().root.find_node("LineModeSettings", true, false)
-	var l_fuzz = 0
-	var l_color = 10
-	var l_outline_color_left = -1
-	var l_outline_color_right = -1
-	var l_start_thickness = 100
-	var l_end_thickness = 100
-	var l_outline = -1
-	var l_draw_order = -1
+	var l_fuzz: int = 0
+	var l_color: int = -1
+	var l_outline_color_left: int = -1
+	var l_outline_color_right: int = -1
+	var l_start_thickness: int = 100
+	var l_end_thickness: int = 100
+	var l_outline: int = -1
+	var l_draw_order: int = -1
 	if is_instance_valid(line_mode_settings):
 		var props = line_mode_settings.get_properties()
 		if props.get("apply_fuzz", false):
@@ -767,9 +796,9 @@ func _format_line_string(id1: int, id2: int) -> String:
 		if props.get("apply_right_outline", false):
 			l_outline_color_right = props.get("right_outline_color", -1)
 		if props.get("apply_start_thickness", false):
-			l_start_thickness = props.get("start_thickness", 10)
+			l_start_thickness = props.get("start_thickness", 100)
 		if props.get("apply_end_thickness", false):
-			l_end_thickness = props.get("end_thickness", 10)
+			l_end_thickness = props.get("end_thickness", 100)
 		if props.get("apply_outline_type", false):
 			l_outline = props.get("outline_type", -1)
 		if props.get("apply_draw_order", false):
@@ -877,14 +906,14 @@ func scale_vertices(sel_indices: Array, factor: float) -> void:
 func _on_bake_primitive_pressed() -> void:
 	if preview_verts.size() == 0:
 		return
-	# Merge primitive verts/edges into the struct vertex system
+	# Merge transformed primitive verts/edges into the struct vertex system
+	var transformed_verts = get_transformed_preview_verts()
 	var new_group = next_group_id
 	next_group_id += 1
 	var vert_offset = vertices.size()
-	for v in preview_verts:
+	for v in transformed_verts:
 		vertices.append({"pos": v, "preset_id": active_preset_idx, "group_id": new_group})
 	active_group_id = new_group
-	var edge_offset = preview_verts.size()
 	for e in preview_edges:
 		edges.append({"x": e[0] + vert_offset, "y": e[1] + vert_offset})
 	preview_verts.clear()

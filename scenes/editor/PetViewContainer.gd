@@ -2717,9 +2717,7 @@ func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
 
 
 func _exit_all_modes() -> void:
-	if current_mode != Mode.NONE:
-		_exit_mode(current_mode)
-		current_mode = Mode.NONE
+	set_mode(Mode.NONE)
 	
 	paintball_check_box.pressed = false
 	line_mode_check_box.pressed = false
@@ -2734,9 +2732,6 @@ func _exit_all_modes() -> void:
 	view_palette_check_box.pressed = false
 	view_variations_check_box.pressed = false
 	
-	if is_instance_valid(struct_settings_instance):
-		_update_mode_panel_visibility(struct_settings_instance, false)
-
 	freeline_active = false
 	freeline_path.clear()
 	is_dragging = false
@@ -2990,32 +2985,61 @@ func _update_struct_visuals() -> void:
 	if not is_instance_valid(struct_geo) or not is_instance_valid(struct_settings_instance):
 		return
 	struct_geo.clear()
-	if struct_settings_instance.vertices.size() == 0 and struct_settings_instance.edges.size() == 0:
-		return
+
 	var verts = struct_settings_instance.vertices
 	var edges = struct_settings_instance.edges
-	struct_geo.begin(Mesh.PRIMITIVE_LINES)
+	var p_verts = struct_settings_instance.get_transformed_preview_verts()
+	var p_edges = struct_settings_instance.preview_edges
+
+	if verts.empty() and edges.empty() and p_verts.empty():
+		return
+
+	# 1. Draw committed Struct Edges (green if both endpoints selected, white otherwise)
 	for edge in edges:
-		struct_geo.set_color(Color.white)
-		struct_geo.add_vertex(verts[edge.x].pos)
-		struct_geo.add_vertex(verts[edge.y].pos)
-	struct_geo.end()
+		var ix = int(edge["x"])
+		var iy = int(edge["y"])
+		if ix < 0 or ix >= verts.size() or iy < 0 or iy >= verts.size():
+			continue
+		var both_sel = (ix in struct_selected_vertices) and (iy in struct_selected_vertices)
+		struct_geo.begin(Mesh.PRIMITIVE_LINES)
+		struct_geo.set_color(Color(0.3, 1.0, 0.5) if both_sel else Color.white)
+		struct_geo.add_vertex(verts[ix].pos)
+		struct_geo.add_vertex(verts[iy].pos)
+		struct_geo.end()
+
 	for i in range(verts.size()):
 		var v = verts[i]
+		var is_sel = (i in struct_selected_vertices)
+		var is_hov = (i == struct_hovered_vertex)
 		var col = struct_settings_instance.get_preset_color(v.get("preset_id", 0))
-		if i == struct_selected_vertex:
-			struct_geo.begin(Mesh.PRIMITIVE_LINES)
-			struct_geo.set_color(Color.green)
-			struct_geo.add_vertex(v.pos + Vector3(0.01, 0, 0))
-			struct_geo.add_vertex(v.pos - Vector3(0.01, 0, 0))
-			struct_geo.add_vertex(v.pos + Vector3(0, 0.01, 0))
-			struct_geo.add_vertex(v.pos - Vector3(0, 0.01, 0))
-			struct_geo.end()
+		if is_hov:
+			_draw_3d_cross(v.pos, 0.014, Color.yellow)
+		elif is_sel:
+			_draw_3d_cross(v.pos, 0.012, Color.green)
 		else:
-			struct_geo.begin(Mesh.PRIMITIVE_POINTS)
-			struct_geo.set_color(col)
-			struct_geo.add_vertex(v.pos)
-			struct_geo.end()
+			_draw_3d_cross(v.pos, 0.006, col)
+
+	if struct_settings_instance.show_primitive_preview and p_verts.size() > 0:
+		for e in p_edges:
+			if e[0] < p_verts.size() and e[1] < p_verts.size():
+				struct_geo.begin(Mesh.PRIMITIVE_LINES)
+				struct_geo.set_color(Color(0.2, 0.9, 1.0, 0.9))
+				struct_geo.add_vertex(p_verts[e[0]])
+				struct_geo.add_vertex(p_verts[e[1]])
+				struct_geo.end()
+		for pv in p_verts:
+			_draw_3d_cross(pv, 0.005, Color(1.0, 0.85, 0.2))
+
+func _draw_3d_cross(pos: Vector3, half_size: float, col: Color) -> void:
+	struct_geo.begin(Mesh.PRIMITIVE_LINES)
+	struct_geo.set_color(col)
+	struct_geo.add_vertex(pos + Vector3(half_size, 0, 0))
+	struct_geo.add_vertex(pos - Vector3(half_size, 0, 0))
+	struct_geo.add_vertex(pos + Vector3(0, half_size, 0))
+	struct_geo.add_vertex(pos - Vector3(0, half_size, 0))
+	struct_geo.add_vertex(pos + Vector3(0, 0, half_size))
+	struct_geo.add_vertex(pos - Vector3(0, 0, half_size))
+	struct_geo.end()
 
 
 func _unhandled_key_input(event: InputEventKey) -> void:
