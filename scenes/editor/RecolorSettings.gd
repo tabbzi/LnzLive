@@ -47,6 +47,7 @@ onready var header_container = $VBoxContainer/ScrollContainer/VBoxContainer/Swap
 
 onready var top_row = header_container.get_node("TopRow")
 onready var freq_edit: LineEdit = top_row.get_node_or_null("FreqEdit")
+onready var after_to_before_btn: Button = top_row.get_node_or_null("AfterToBeforeButton")
 
 onready var middle_row = header_container.get_node("MiddleRow")
 onready var rand_after_btn: Button = middle_row.get_node_or_null("RandomizeAfterButton")
@@ -114,6 +115,9 @@ func _ready() -> void:
 
 	if is_instance_valid(rand_after_btn):
 		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
+	
+	if is_instance_valid(after_to_before_btn):
+		after_to_before_btn.connect("pressed", self, "_on_AfterToBefore_pressed")
 	
 	if is_instance_valid(theory_seed_picker):
 		theory_seed_picker.connect("color_changed", self, "_on_theory_seed_changed")
@@ -489,6 +493,37 @@ func _on_ClearSwap_pressed() -> void:
 
 	_refresh_all_previews()
 	populate_bucket_palette()
+
+
+func _on_AfterToBefore_pressed() -> void:
+	var lines: Array = swap_lines_container.get_children()
+	for l in lines:
+		if l.is_queued_for_deletion():
+			continue
+		var before_color: LineEdit = l.find_node("BeforeColor", true, false)
+		var before_texture: LineEdit = l.find_node("BeforeTexture", true, false)
+		var after_color: LineEdit = l.find_node("AfterColor", true, false)
+		var after_texture: LineEdit = l.find_node("AfterTexture", true, false)
+
+		if is_instance_valid(after_color) and is_instance_valid(before_color):
+			var after_col_text: String = after_color.text.strip_edges()
+			var before_col_text: String = before_color.text.strip_edges()
+			if not after_col_text.empty():
+				var temp: String = before_col_text
+				before_color.text = after_col_text
+				after_color.text = temp
+
+		if is_instance_valid(after_texture) and is_instance_valid(before_texture):
+			var after_tex_text: String = after_texture.text.strip_edges()
+			var before_tex_text: String = before_texture.text.strip_edges()
+			if not after_tex_text.empty():
+				var temp: String = before_tex_text
+				before_texture.text = after_tex_text
+				after_texture.text = temp
+
+	_refresh_all_previews()
+	save_settings()
+
 
 func populate_bucket_palette() -> void:
 	if not is_instance_valid(bucket_palette_grid):

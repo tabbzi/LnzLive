@@ -530,6 +530,19 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Randomize"
 
+[node name="AfterToBeforeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 371.0
+margin_right = 470.0
+margin_bottom = 25.0
+hint_tooltip = "Swap non-empty After colors and textures with Before fields"
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "After<>Before"
+
 [node name="MiddleRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_top = 36.0
 margin_right = 470.0
