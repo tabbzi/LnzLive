@@ -1109,8 +1109,8 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 
 	var hbox = HBoxContainer.new()
 	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.rect_min_size = le.rect_min_size
+	hbox.add_constant_override("separation", 4)
 
 	var pos: int = le.get_index()
 	var orig_owner: Node = le.owner
@@ -1123,10 +1123,10 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 	if is_instance_valid(orig_owner):
 		hbox.owner = orig_owner
 	le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var preview_container = HBoxContainer.new()
 	preview_container.name = le_name + "_Preview"
+	preview_container.rect_min_size = Vector2(24, 0)
 	hbox.add_child(preview_container)
 	if is_instance_valid(orig_owner):
 		preview_container.owner = orig_owner

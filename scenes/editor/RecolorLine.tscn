@@ -19,66 +19,66 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="HBoxContainer" type="HBoxContainer"]
-margin_right = 450.0
+margin_right = 284.0
 margin_bottom = 24.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="BeforeColor" type="LineEdit" parent="."]
-margin_right = 82.0
+margin_right = 41.0
 margin_bottom = 27.0
 hint_tooltip = "Old color index"
-size_flags_horizontal = 3
+rect_max_size = Vector2( 41, 0 )
 custom_fonts/font = SubResource( 1 )
-placeholder_text = "Color"
+placeholder_text = "Col"
 
 [node name="BeforeTexture" type="LineEdit" parent="."]
-margin_left = 86.0
-margin_right = 169.0
+margin_left = 43.0
+margin_right = 85.0
 margin_bottom = 27.0
 hint_tooltip = "Old texture index"
-size_flags_horizontal = 3
+rect_max_size = Vector2( 42, 0 )
 custom_fonts/font = SubResource( 1 )
-placeholder_text = "Texture"
+placeholder_text = "Tex"
 
 [node name="Label" type="Label" parent="."]
-margin_left = 173.0
+margin_left = 89.0
 margin_top = 5.0
-margin_right = 187.0
+margin_right = 103.0
 margin_bottom = 22.0
 custom_fonts/font = SubResource( 1 )
 text = "->"
 
 [node name="AfterColor" type="LineEdit" parent="."]
-margin_left = 191.0
-margin_right = 274.0
+margin_left = 107.0
+margin_right = 149.0
 margin_bottom = 27.0
 hint_tooltip = "New color index"
-size_flags_horizontal = 3
+rect_max_size = Vector2( 42, 0 )
 custom_fonts/font = SubResource( 1 )
-placeholder_text = "Color"
+placeholder_text = "Col"
 
 [node name="AfterTexture" type="LineEdit" parent="."]
-margin_left = 278.0
-margin_right = 361.0
+margin_left = 153.0
+margin_right = 195.0
 margin_bottom = 27.0
 hint_tooltip = "New texture index"
-size_flags_horizontal = 3
+rect_max_size = Vector2( 42, 0 )
 custom_fonts/font = SubResource( 1 )
-placeholder_text = "Texture"
+placeholder_text = "Tex"
 
 [node name="ColorRampCheck" type="CheckBox" parent="."]
-margin_left = 365.0
-margin_right = 427.0
+margin_left = 199.0
+margin_right = 261.0
 margin_bottom = 27.0
 hint_tooltip = "Convert all values in old ramp to corresponding in new ramp (100-to-90, 101-to-91, etc.)"
 custom_fonts/font = SubResource( 1 )
 text = "Ramp"
 
 [node name="RemoveButton" type="Button" parent="."]
-margin_left = 431.0
-margin_right = 450.0
+margin_left = 265.0
+margin_right = 284.0
 margin_bottom = 27.0
 hint_tooltip = "Remove slot"
 custom_styles/hover = SubResource( 2 )
