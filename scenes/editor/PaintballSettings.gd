@@ -97,6 +97,9 @@ onready var _delete_layer_dialog: ConfirmationDialog = find_node("DeleteLayerDia
 onready var _layer_section: Control = find_node("LayerSection")
 onready var _use_layers_checkbox: CheckBox = find_node("UseLayersCheckBox")
 
+onready var _palette_scroll: ScrollContainer = find_node("PaletteScroll")
+onready var _palette_grid: GridContainer = find_node("PaletteGrid")
+
 var dog_generator: Node = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
@@ -278,6 +281,9 @@ func _connect_settings_signals() -> void:
 
 	if _reset_defaults_btn:
 		_reset_defaults_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+	
+	if is_instance_valid(_palette_scroll):
+		_palette_scroll.connect("resized", self, "_on_palette_scroll_resized")
 
 
 func _connect_design_signals() -> void:
@@ -960,6 +966,7 @@ func _on_palette_changed(palette_name = "") -> void:
 	_refresh_slot_buttons()
 	_design_canvas.update()
 	_refresh_all_previews()
+	populate_paintball_palette()
 
 
 func _on_color_list_text_changed(new_text: String, container: Container) -> void:
@@ -1011,6 +1018,50 @@ func _create_color_icon(color_str) -> Texture:
 	var tex: ImageTexture = ImageTexture.new()
 	tex.create_from_image(img)
 	return tex
+
+
+func populate_paintball_palette() -> void:
+	if not is_instance_valid(_palette_grid):
+		return
+
+	PaletteGrid.populate_grid(
+		_palette_grid,
+		cached_palette_colors,
+		PaletteGrid.CellType.BUTTON,
+		24.0,
+		0,
+		0,
+		"_on_paintball_palette_color_selected",
+		"",
+		self
+	)
+
+	_on_palette_scroll_resized()
+
+
+func _on_palette_scroll_resized() -> void:
+	if is_instance_valid(_palette_scroll) and is_instance_valid(_palette_grid):
+		PaletteGrid.recalculate_columns(_palette_grid, _palette_scroll.rect_size.x, 24.0, 0, 16)
+
+
+func _on_paintball_palette_color_selected(index: int) -> void:
+	if not is_instance_valid(_color):
+		return
+
+	var multi_pick: bool = HotkeyManager != null and HotkeyManager.is_action_pressed("paint_palette_multi_pick")
+	var index_str: String = str(index)
+
+	if multi_pick and _color.text.strip_edges() != "":
+		var current_text: String = _color.text.strip_edges()
+		if current_text.ends_with(","):
+			_color.text = current_text + index_str
+		else:
+			_color.text = current_text + "," + index_str
+	else:
+		_color.text = index_str
+
+	save_settings()
+	_refresh_all_previews()
 
 
 func _on_InterpolateColors_pressed() -> void:

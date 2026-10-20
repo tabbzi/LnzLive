@@ -82,6 +82,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `CTRL` + `H` | **Design - Horizontal**: Activate H-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `V` | **Design - Vertical**: Activate V-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
+| **Paintball Mode** | `SHIFT` + left-click (on palette) | **Multi-Pick Color**: Append clicked palette color to comma-separated Color list |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
@@ -397,7 +398,7 @@ In the Standard tab, you control the properties of individual paintballs as they
 
 **Diameter:** Set a minimum and maximum range of diameter for random sizing or tapering freelines. Toggle `Pixel Size` checkbox to compute diameter of paintballz on ballz needed to achieve visual pixel diameter.
 
-**Sampled LNZ Properties:** Use comma-separated lists or ranges (e.g., `1,2,5-10`) to cycle through or randomize colors and textures.
+**Sampled LNZ Properties:** Use comma-separated lists or ranges (e.g., `1,2,5-10`) to cycle through or randomize colors and textures. Click a swatch in the palette picker to set the Color field, or hold `SHIFT` while clicking swatches to append multiple colors to the comma-separated list.
 
 **Placement Modes:**
 

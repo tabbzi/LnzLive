@@ -502,6 +502,19 @@ margin_right = -5.0
 margin_bottom = -2.0
 custom_constants/separation = 5
 
+[node name="PaletteScroll" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
+margin_right = 485.0
+margin_bottom = 120.0
+rect_min_size = Vector2( 0, 120 )
+size_flags_horizontal = 3
+scroll_horizontal_enabled = false
+
+[node name="PaletteGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PaletteScroll"]
+margin_right = 485.0
+margin_bottom = 120.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
 margin_right = 485.0
 margin_bottom = 31.0
