@@ -359,7 +359,7 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 		print("[ERROR] FileTree: _on_FileDialog_file_selected: unknown import type")
 		return ""
 
-	var dest_filename: String = selected_path.get_file()
+	var dest_filename: String = LnzLiveUtils.sanitize_filename(selected_path.get_file())
 	if current_import_type == ImportType.LNZ and file_extension == "txt":
 		dest_filename = dest_filename.get_basename() + ".lnz"
 	

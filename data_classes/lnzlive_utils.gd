@@ -1235,3 +1235,14 @@ static func find_closest_color_index(colors: Array, target: Color) -> int:
 static func find_closest_color(colors: Array, target: Color) -> Color:
 	var idx = find_closest_color_index(colors, target)
 	return colors[idx]
+
+static func sanitize_filename(name: String) -> String:
+	var sanitized := ""
+	var regex := RegEx.new()
+	regex.compile("[a-zA-Z0-9 _\\-\\.]")
+	var matches := regex.search_all(name)
+	for m in matches:
+		sanitized += m.get_string()
+	if sanitized.empty():
+		sanitized = "unnamed"
+	return sanitized

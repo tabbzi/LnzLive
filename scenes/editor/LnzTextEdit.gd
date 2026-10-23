@@ -375,6 +375,10 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 			else:
 				base_name = source_file.trim_suffix(".lnz")
 		
+		base_name = LnzLiveUtils.sanitize_filename(base_name)
+		if base_name == null or base_name.empty():
+			base_name = "unnamed"
+		
 		var possible_file_name = "user://resources/" + base_name + ".lnz"
 		if dir.file_exists(possible_file_name):
 			possible_file_name = "user://resources/" + base_name + "_" + str(OS.get_unix_time()) + ".lnz"
@@ -386,7 +390,9 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
 		if dir.file_exists(save_path):
-			var base = output_path.get_file().get_basename()
+			var base = LnzLiveUtils.sanitize_filename(output_path.get_file().get_basename())
+			if base == null or base.empty():
+				base = "unnamed"
 			save_path = "user://resources/" + base + "_" + str(OS.get_unix_time()) + ".lnz"
 		is_user_file = true
 
