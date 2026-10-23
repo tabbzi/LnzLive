@@ -93,12 +93,7 @@ func _ready() -> void:
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
 	
-	var user_settings: Node = get_tree().root.find_node("SceneRoot", true, false)
-	if user_settings:
-		user_settings.connect("global_font_updated", self, "_on_global_font_updated")
-
 	_setup_swap_lines()
-	_refresh_swap_line_widths()
 
 	_setup_grid_preview(bucket_color_edit, bucket_color_icon, "BucketColor")
 	_setup_grid_preview(bucket_outline_edit, bucket_outline_icon, "BucketOutline")
@@ -278,40 +273,6 @@ func _refresh_all_previews() -> void:
 		var ac = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor")
 		var ac_prev: Node = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor_" + str(id) + "_Preview")
 		if ac and ac_prev: _on_color_list_text_changed(ac.text, ac_prev)
-
-
-func _on_global_font_updated() -> void:
-	_refresh_swap_line_widths()
-
-
-func _refresh_swap_line_widths() -> void:
-	if not is_instance_valid(swap_lines_container):
-		return
-	var font: Font = swap_lines_container.get_theme_font("font")
-	if not is_instance_valid(font):
-		return
-	var font_size: float = font.get_size()
-	
-	var color_width: int = max(22, int(4 * font_size))
-	var tex_width: int = max(22, int(4 * font_size))
-	
-	for i in range(swap_lines_container.get_child_count()):
-		var line: Control = swap_lines_container.get_child(i)
-		if line.is_queued_for_deletion():
-			continue
-		var before_color: LineEdit = line.find_node("BeforeColor", true, false)
-		var before_texture: LineEdit = line.find_node("BeforeTexture", true, false)
-		var after_color: LineEdit = line.find_node("AfterColor", true, false)
-		var after_texture: LineEdit = line.find_node("AfterTexture", true, false)
-		
-		if is_instance_valid(before_color):
-			before_color.rect_max_size = Vector2(color_width, 0)
-		if is_instance_valid(before_texture):
-			before_texture.rect_max_size = Vector2(tex_width, 0)
-		if is_instance_valid(after_color):
-			after_color.rect_max_size = Vector2(color_width, 0)
-		if is_instance_valid(after_texture):
-			after_texture.rect_max_size = Vector2(tex_width, 0)
 
 
 func _on_palette_changed(palette_name = "") -> void:
