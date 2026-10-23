@@ -937,10 +937,11 @@ static func get_web_file_name() -> String:
 
 static func web_download_text(filename: String, content: String) -> void:
 	var escaped = content.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n")
+	var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	var element = document.createElement('a');
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent('""" + escaped + """'));
-	element.setAttribute('download', '""" + filename + """');
+	element.setAttribute('download', '""" + safe_filename + """');
 	element.style.display = 'none';
 	document.body.appendChild(element);
 	element.click();
@@ -950,10 +951,11 @@ static func web_download_text(filename: String, content: String) -> void:
 
 static func web_download_json(filename: String, content: String) -> void:
 	var base64_content: String = Marshalls.raw_to_base64(content.to_utf8())
+	var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	var element = document.createElement('a');
 	element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-	element.setAttribute('download', '""" + filename + """');
+	element.setAttribute('download', '""" + safe_filename + """');
 	element.style.display = 'none';
 	document.body.appendChild(element);
 	element.click();
@@ -1014,11 +1016,12 @@ static func export_json_preset(settings_dict: Dictionary, preset_name: String, c
 	var filename: String = str(preset_name, "_", OS.get_unix_time(), ".json")
 	
 	if OS.has_feature("HTML5"):
+		var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
 		var js_code: String = """
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
+		element.setAttribute('download', '""" + safe_filename + """');
 		element.style.display = 'none';
 		document.body.appendChild(element);
 		element.click();
@@ -1056,6 +1059,7 @@ static func ensure_web_ref_dir() -> void:
 	""")
 
 static func web_upload_image(dest_dir: String, callback_target: Object, callback_method: String) -> void:
+	var safe_dest_dir = dest_dir.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	window.refUploadData = {}
 	var el = document.createElement("input");
