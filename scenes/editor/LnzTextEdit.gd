@@ -2923,6 +2923,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 	for ball_no in pending_moves.keys():
 		if ball_no >= KeyBallsData.max_base_ball_num:
 			continue
+		if not head_group.has(ball_no):
+			continue
 		var data = pending_moves[ball_no]
 		var world_delta = data.new_pos - data.orig_pos
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
@@ -2933,7 +2935,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 				var ny = int(round(parts[2].to_float() + lnz_delta.y))
 				var nz = int(round(parts[3].to_float() + lnz_delta.z))
-				if head_group.has(ball_no) and head_id != -1 and parts.size() >= 5 and (abs(ny) > 25 or abs(nz) > 25):
+				if parts.size() >= 5 and head_id != -1 and (abs(ny) > 25 or abs(nz) > 25):
 					old_anchor_lines.append({line_idx = i, old_text = get_line(i).strip_edges()})
 				break
 	
@@ -2941,6 +2943,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var comment_block = "; OLD [Move] entries before head group move\n"
 		for entry in old_anchor_lines:
 			comment_block += "; " + entry.old_text + " ; OLD group head move\n"
+			set_line(entry.line_idx, "; " + entry.old_text + " ; OLD group head move")
 		_insert_text_at_cursor_at_line(move_start, comment_block)
 		move_start += comment_block.split("\n").size() - 1
 		move_end += comment_block.split("\n").size() - 1
@@ -2968,13 +2971,26 @@ func apply_batch_moves(pending_moves: Dictionary):
 			var ny = int(round(lnz_delta.y))
 			var nz = int(round(lnz_delta.z))
 			
-			if had_old_anchor:
+			if had_old_anchor and head_group.has(ball_no) and head_id != -1:
 				# Old anchor commented out; insert new line with head anchor using old coordinates + delta
 				nx = int(round(old_parts_check[1].to_float() + lnz_delta.x))
 				ny = int(round(old_parts_check[2].to_float() + lnz_delta.y))
 				nz = int(round(old_parts_check[3].to_float() + lnz_delta.z))
 				new_parts = [str(ball_no), str(nx), str(ny), str(nz), str(head_id)]
 				insert_new_line = true
+			elif had_old_anchor:
+				for i in range(move_start, move_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					var parts = split_line(raw)
+					if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+						if parts.size() >= 5:
+							parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+							parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+							parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+							set_line(i, _join_array(parts, delim))
+							updated = true
+						break
 			else:
 				# Find and update active line
 				for i in range(move_start, move_end):
@@ -3008,6 +3024,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 			
 			if insert_new_line:
 				var line_txt = _join_array(new_parts, delim)
+				if had_old_anchor:
+					line_txt += " ; NEW group head move"
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 				move_end += 1
