@@ -800,6 +800,9 @@ func get_polygons(reader: VirtualFileLineReader) -> void:
 func get_ball_size_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "size"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_ball_size_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			balls[line.ball].size = line.size
 		elif addballs.has(line.ball):
@@ -810,6 +813,9 @@ func get_ball_size_override(reader: VirtualFileLineReader) -> void:
 func get_color_info_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "color", "group", "texture"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_color_info_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "color_index" in ball_data:
@@ -834,6 +840,9 @@ func get_color_info_override(reader: VirtualFileLineReader) -> void:
 func get_outline_color_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "outline_color"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_outline_color_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "outline_color_index" in ball_data:
@@ -850,6 +859,9 @@ func get_outline_color_override(reader: VirtualFileLineReader) -> void:
 func get_fuzz_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "fuzz"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_fuzz_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "fuzz" in ball_data:
@@ -864,6 +876,9 @@ func get_fuzz_override(reader: VirtualFileLineReader) -> void:
 func get_add_ball_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "x", "y", "z"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_add_ball_override: negative ball index ", line.ball, " skipped")
+			continue
 		if addballs.has(line.ball):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
 		else:
