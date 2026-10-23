@@ -521,6 +521,10 @@ func parse_paintballs(reader: VirtualFileLineReader) -> void:
 		var texture: int = int(split_line[10].get_string())
 		var anchored: int = int(split_line[11].get_string()) if split_line.size() > 11 else 0
 
+		if base < 0:
+			print("[WARNING] lnz_parser: negative paintball base ball index ", base, " skipped")
+			continue
+
 		var paintball: PaintBallData = PaintBallData.new(base, diameter, position, color, outline_color, outline, fuzz, 0, texture, anchored)
 		var pb_array: Array = self.paintballs.get(base, [])
 		pb_array.append(paintball)
@@ -542,6 +546,9 @@ func parse_moves(reader: VirtualFileLineReader) -> void:
 		if split_line.size() < 4:
 			continue
 		var base: int = int(split_line[0].get_string())
+		if base < 0:
+			print("[WARNING] lnz_parser: negative move base ball index ", base, " skipped")
+			continue
 		var position: Vector3 = Vector3(
 			int(split_line[1].get_string()),
 			int(split_line[2].get_string()),
