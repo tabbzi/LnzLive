@@ -286,6 +286,9 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 	if is_anchored:
 		return int(round(target_visual - bhd_size))
 	
+	if engine_scale <= 0.0:
+		return 0
+	
 	var req_total: float = (target_visual / (engine_scale / 255.0)) + 2.0
 	
 	if not is_addball:
@@ -298,6 +301,9 @@ static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: fl
 	if is_anchored:
 		return max(1.0, float(bhd_size + lnz_size))
 	
+	if engine_scale <= 0.0:
+		return 0.0
+	
 	var total: float = lnz_size + bhd_size
 	if not is_addball:
 		total = total * (enl_x / 100.0) + enl_y
@@ -308,6 +314,9 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	if is_anchored:
 		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
 		return max(1.0, float(bhd_size + final_lnz))
+	
+	if engine_scale <= 0.0:
+		return 0.0
 	
 	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, false)
 	var current_base_size: float = bhd_size + final_lnz
@@ -322,6 +331,8 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 
 static func lnz_to_visual_size_snapped(lnz_size: float, engine_scale: float) -> float:
 	# Converts raw LNZ size to visual float size with even-snapping
+	if engine_scale <= 0.0:
+		return 0.0
 	var s = max(1, round((lnz_size - 2.0) * (engine_scale / 255.0)))
 	s -= 1.0 - fmod(s, 2.0)
 	return max(1.0, s)
