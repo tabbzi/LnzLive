@@ -12,26 +12,119 @@ var file_path: String
 var frames_offset: int
 var ball_sizes = []
 
+const MAX_BALLS: int = 256
+const MAX_ANIMATIONS: int = 500
+const MAX_FILE_SIZE: int = 4 * 1024 * 1024
+
 func _init(file_path):
 	self.file_path = file_path
 	#print("Initializing BhdParser with file: ", file_path)
 	var file = File.new()
-	file.open(file_path, File.READ)
+	var open_err = file.open(file_path, File.READ)
+	if open_err != OK:
+		print("[ERROR] BhdParser: failed to open file: ", file_path, " error: ", open_err)
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
+	var file_len = file.get_len()
+	if file_len < 8:
+		print("[ERROR] BhdParser: file too small: ", file_path, " (", file_len, " bytes)")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
+	if file_len > MAX_FILE_SIZE:
+		print("[ERROR] BhdParser: file too large: ", file_path, " (", file_len, " bytes, max ", MAX_FILE_SIZE, ")")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
 	frames_offset = file.get_16()
+	if file.eof_reached():
+		print("[ERROR] BhdParser: unexpected EOF reading frames_offset")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
 	#print("Frames Offset: ", frames_offset)
 	file.get_32()
+	if file.eof_reached():
+		print("[ERROR] BhdParser: unexpected EOF reading header")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
 	num_balls = file.get_16()
-	#print("Number of Balls: ", num_balls)
+	if file.eof_reached():
+		print("[ERROR] BhdParser: unexpected EOF reading num_balls")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
+	if num_balls < 0 or num_balls > MAX_BALLS:
+		print("[ERROR] BhdParser: invalid num_balls: ", num_balls, " (valid: 0-", MAX_BALLS, ")")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
 
 	if "baby" in file_path.to_lower():
-		file.seek(file.get_position() + 30)
+		var seek_target = file.get_position() + 30
+		if seek_target > file_len:
+			print("[ERROR] BhdParser: seek out of bounds in baby path")
+			file.close()
+			animation_ranges = []
+			num_balls = 0
+			ball_sizes = []
+			return
+		file.seek(seek_target)
 		for i in range(num_balls):
+			if file.eof_reached():
+				print("[WARNING] BhdParser: EOF reading ball_sizes (got ", i, " of ", num_balls, ")")
+				break
 			ball_sizes.append(file.get_16()) 
 			#print("Ball Size[", i, "]: ", ball_sizes[i])
+		if file.eof_reached():
+			file.close()
+			animation_ranges = []
+			num_balls = 0
+			ball_sizes = []
+			return
 		file.seek(438)
+		if file.eof_reached():
+			print("[WARNING] BhdParser: EOF at seek(438) in baby file")
+			file.close()
+			animation_ranges = []
+			num_balls = 0
+			ball_sizes = []
+			return
 	elif "dog" in file_path.to_lower() or "cat" in file_path.to_lower():
-		file.seek(file.get_position() + 30)
+		var seek_target = file.get_position() + 30
+		if seek_target > file_len:
+			print("[ERROR] BhdParser: seek out of bounds in dog/cat path")
+			file.close()
+			animation_ranges = []
+			num_balls = 0
+			ball_sizes = []
+			return
+		file.seek(seek_target)
 		for i in range(num_balls):
+			if file.eof_reached():
+				print("[WARNING] BhdParser: EOF reading ball_sizes (got ", i, " of ", num_balls, ")")
+				break
 			ball_sizes.append(file.get_16())
 			#print("Ball Size[", i, "]: ", ball_sizes[i])
 	else:
@@ -40,23 +133,57 @@ func _init(file_path):
 		if start_offset != -1:
 			file.seek(start_offset)
 			for i in range(num_balls):
+				if file.eof_reached():
+					print("[WARNING] BhdParser: EOF reading ball_sizes (got ", i, " of ", num_balls, ")")
+					break
 				ball_sizes.append(file.get_16())
 
 			# After reading ball sizes, skip the zero padding to find animation count
 			while true:
+				if file.eof_reached():
+					break
 				var val = file.get_16()
+				if file.eof_reached():
+					break
 				if val != 0:
 					file.seek(file.get_position() - 2) # Back up to read it as count
 					break
-				if file.eof_reached():
-					break
 		else:
 			# If not found, try standard petz offset 38 as fallback
-			file.seek(38)
-			for i in range(num_balls):
-				ball_sizes.append(file.get_16())
+			if 38 > file_len:
+				print("[WARNING] BhdParser: file too small for fallback seek(38)")
+			else:
+				file.seek(38)
+				for i in range(num_balls):
+					if file.eof_reached():
+						print("[WARNING] BhdParser: EOF reading ball_sizes (got ", i, " of ", num_balls, ")")
+						break
+					ball_sizes.append(file.get_16())
+
+	if file.eof_reached():
+		print("[ERROR] BhdParser: unexpected EOF before reading animation_count")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
 
 	var animation_count = file.get_16()
+	if file.eof_reached():
+		print("[ERROR] BhdParser: unexpected EOF reading animation_count")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
+
+	if animation_count < 0 or animation_count > MAX_ANIMATIONS:
+		print("[ERROR] BhdParser: invalid animation_count: ", animation_count, " (valid: 0-", MAX_ANIMATIONS, ")")
+		file.close()
+		animation_ranges = []
+		num_balls = 0
+		ball_sizes = []
+		return
 	#print("Number of Animations: ", animation_count)
 	
 	# for i in range(animation_count):
