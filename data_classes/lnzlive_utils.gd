@@ -694,6 +694,11 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	if bpp != 8:
 		f.close()
 		return {}
+	
+	if w <= 0 or h <= 0 or w > 16384 or h > 16384:
+		print("[WARNING] lnzlive_utils: BMP dimensions out of range: ", w, "x", h)
+		f.close()
+		return {}
 		
 	f.seek(pixel_offset)
 	var row_size: int = int((w + 3) / 4) * 4
