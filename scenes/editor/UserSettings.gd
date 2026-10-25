@@ -56,6 +56,7 @@ func _ready() -> void:
 	default_global_font.font_data = load("res://resources/fonts/PixelCode.ttf")
 	default_global_font.size = 14
 	global_theme.default_font = default_global_font
+	global_theme.set_constant("minimum_spaces", "LineEdit", 1)
 	self.theme = global_theme
 
 	base_fonts[default_global_font.get_instance_id()] = {
@@ -359,9 +360,9 @@ func _apply_global_font_settings() -> void:
 			var path: String = f_info.base_data.font_path
 			
 			if "PixelCode" in path:
-				target_base_size = int(f_info.base_size * 1.0)
+				target_base_size = int(f_info.base_size * 0.9)
 			elif "pixel_maz" in path:
-				target_base_size = int(f_info.base_size * 0.5) 
+				target_base_size = int(f_info.base_size * 0.45) 
 				
 		else:
 			f.font_data = f_info.base_data

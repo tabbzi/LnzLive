@@ -132,21 +132,21 @@ text = "Paintball Mode"
 [node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
 margin_right = 495.0
-margin_bottom = 104.0
-rect_min_size = Vector2( 0, 75 )
+margin_bottom = 129.0
+rect_min_size = Vector2( 0, 100 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
 margin_right = 495.0
-margin_bottom = 75.0
+margin_bottom = 100.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
 margin_right = 495.0
-margin_bottom = 75.0
+margin_bottom = 100.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/normal = SubResource( 2 )
@@ -163,9 +163,9 @@ In Design tab, you can make a design then stamp it by clicking on ballz.
 In Advanced tab, you can toggle extra settings."
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 108.0
+margin_top = 133.0
 margin_right = 495.0
-margin_bottom = 137.0
+margin_bottom = 162.0
 alignment = 1
 
 [node name="EraserCheckBox" type="CheckBox" parent="VBoxContainer/HBoxContainer10"]
@@ -205,9 +205,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Clear"
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
-margin_top = 141.0
+margin_top = 166.0
 margin_right = 495.0
-margin_bottom = 166.0
+margin_bottom = 191.0
 custom_styles/hover = SubResource( 7 )
 custom_styles/pressed = SubResource( 7 )
 custom_styles/focus = SubResource( 8 )
@@ -217,8 +217,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Reset Defaults"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
-margin_top = 170.0
+margin_top = 195.0
 margin_right = 495.0
+margin_bottom = 1470.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 __meta__ = {
@@ -227,7 +228,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 495.0
-margin_bottom = 1300.0
+margin_bottom = 1275.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -482,7 +483,7 @@ margin_bottom = 276.0
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 61.0
 margin_right = 495.0
-margin_bottom = 1300.0
+margin_bottom = 1275.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 8 )
@@ -493,7 +494,6 @@ custom_fonts/font = SubResource( 3 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -516,8 +516,9 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
+margin_top = 125.0
 margin_right = 485.0
-margin_bottom = 31.0
+margin_bottom = 156.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer2"]
 margin_top = 5.0
@@ -537,9 +538,9 @@ custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 36.0
+margin_top = 161.0
 margin_right = 485.0
-margin_bottom = 67.0
+margin_bottom = 192.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer6"]
 margin_top = 5.0
@@ -560,9 +561,9 @@ text = "0"
 placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainerInterp" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 72.0
+margin_top = 197.0
 margin_right = 485.0
-margin_bottom = 97.0
+margin_bottom = 222.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerInterp"]
 margin_top = 2.0
@@ -596,9 +597,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Add to Color List"
 
 [node name="HBoxContainerGenPalette" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 102.0
+margin_top = 227.0
 margin_right = 485.0
-margin_bottom = 133.0
+margin_bottom = 258.0
 
 [node name="GenPaletteBaseInput" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerGenPalette"]
 margin_right = 95.0
@@ -630,9 +631,9 @@ custom_fonts/font = SubResource( 3 )
 text = "Randomize Colors"
 
 [node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 138.0
+margin_top = 263.0
 margin_right = 485.0
-margin_bottom = 167.0
+margin_bottom = 292.0
 
 [node name="Ordered" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
 margin_right = 159.0
@@ -661,14 +662,14 @@ custom_fonts/font = SubResource( 3 )
 text = "Shuffled"
 
 [node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 172.0
+margin_top = 297.0
 margin_right = 485.0
-margin_bottom = 172.0
+margin_bottom = 297.0
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 177.0
+margin_top = 302.0
 margin_right = 485.0
-margin_bottom = 208.0
+margin_bottom = 333.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer3"]
 margin_top = 5.0
@@ -689,9 +690,9 @@ text = "244"
 placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 213.0
+margin_top = 338.0
 margin_right = 485.0
-margin_bottom = 237.0
+margin_bottom = 362.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer4"]
 margin_top = 1.0
@@ -726,9 +727,9 @@ max_value = 10.0
 value = -1.0
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 242.0
+margin_top = 367.0
 margin_right = 485.0
-margin_bottom = 266.0
+margin_bottom = 391.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer5"]
 margin_top = 1.0
@@ -755,9 +756,9 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 271.0
+margin_top = 396.0
 margin_right = 485.0
-margin_bottom = 295.0
+margin_bottom = 420.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer7"]
 margin_top = 1.0
@@ -776,9 +777,9 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 300.0
+margin_top = 425.0
 margin_right = 485.0
-margin_bottom = 324.0
+margin_bottom = 449.0
 
 [node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/HBoxContainer8"]
 margin_top = 1.0
@@ -822,9 +823,9 @@ items = [ "Hovered Ball", null, false, 0, null, "Selected Ball", null, false, 1,
 selected = 0
 
 [node name="FreelineContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 329.0
+margin_top = 454.0
 margin_right = 485.0
-margin_bottom = 447.0
+margin_bottom = 572.0
 
 [node name="FreelineCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_right = 485.0
@@ -886,9 +887,9 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="PresetContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard"]
-margin_top = 452.0
+margin_top = 577.0
 margin_right = 485.0
-margin_bottom = 477.0
+margin_bottom = 602.0
 alignment = 1
 
 [node name="ImportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Standard/PresetContainer"]
@@ -917,6 +918,7 @@ custom_fonts/font = SubResource( 3 )
 text = "Export JSON"
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0

@@ -1127,10 +1127,10 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 		return
 	var parent: Node = le.get_parent()
 
-	var hbox = HBoxContainer.new()
+	var hbox: HBoxContainer = HBoxContainer.new()
 	hbox.name = le_name + "Wrapper"
-	hbox.rect_min_size = le.rect_min_size
-	hbox.add_constant_override("separation", 4)
+	hbox.size_flags_horizontal = 0
+	hbox.add_constant_override("separation", 2)
 
 	var pos: int = le.get_index()
 	var orig_owner: Node = le.owner
@@ -1144,15 +1144,45 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 		hbox.owner = orig_owner
 	le.owner = orig_owner
 
-	var preview_container = HBoxContainer.new()
+	var preview_container: HBoxContainer = HBoxContainer.new()
 	preview_container.name = le_name + "_Preview"
-	preview_container.rect_min_size = Vector2(24, 0)
+	preview_container.rect_min_size = Vector2(16, 0)
 	hbox.add_child(preview_container)
 	if is_instance_valid(orig_owner):
 		preview_container.owner = orig_owner
 
 	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):
 		le.connect("text_changed", parent_script, "_on_color_list_text_changed", [preview_container])
+
+static func setup_relative_width(control: Control, char_count: int = 3) -> void:
+	if not is_instance_valid(control):
+		return
+	if control is LineEdit:
+		control.add_constant_override("minimum_spaces", 1)
+	elif control is SpinBox:
+		var inner_le: LineEdit = control.get_line_edit()
+		if is_instance_valid(inner_le):
+			inner_le.add_constant_override("minimum_spaces", 1)
+
+	var font: Font = control.get_font("font") if control.has_method("get_font") else null
+	var sample: String = ""
+	for _i in range(max(1, char_count)):
+		sample += "0"
+
+	var text_width: float = float(char_count) * 8.0
+	if font:
+		text_width = font.get_string_size(sample).x
+
+	var style_pad: float = 8.0
+	if control.has_method("get_stylebox"):
+		var sb: StyleBox = control.get_stylebox("normal")
+		if sb:
+			style_pad = max(6.0, sb.get_minimum_size().x + 2.0)
+
+	var target_w: float = clamp(ceil(text_width + style_pad), 28.0, 64.0)
+	control.rect_min_size.x = target_w
+	control.rect_size.x = target_w
+	control.set_meta("relative_char_count", char_count)
 
 static func color_to_hsv(color: Color) -> Vector3:
 	var h: float = 0.0
