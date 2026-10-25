@@ -725,7 +725,7 @@ margin_bottom = 22.0
 custom_fonts/font = SubResource( 5 )
 text = "Eye Out:"
 
-[node name="EyeOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
+[node name="EyeOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
 margin_left = 55.0
 margin_right = 254.0
 margin_bottom = 27.0
@@ -735,7 +735,7 @@ custom_fonts/font = SubResource( 5 )
 max_length = 3
 placeholder_text = "eyeR outline"
 
-[node name="EyeOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
+[node name="EyeOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeOutlineRow"]
 margin_left = 258.0
 margin_right = 458.0
 margin_bottom = 27.0
@@ -757,7 +757,7 @@ margin_bottom = 22.0
 custom_fonts/font = SubResource( 5 )
 text = "Eye Col:"
 
-[node name="EyeColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
+[node name="EyeColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
 margin_left = 52.0
 margin_right = 253.0
 margin_bottom = 27.0
@@ -767,7 +767,7 @@ custom_fonts/font = SubResource( 5 )
 max_length = 3
 placeholder_text = "eyeR color"
 
-[node name="EyeColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
+[node name="EyeColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeColRow"]
 margin_left = 257.0
 margin_right = 458.0
 margin_bottom = 27.0
@@ -817,7 +817,7 @@ margin_bottom = 22.0
 custom_fonts/font = SubResource( 5 )
 text = "Iris Out:"
 
-[node name="IrisOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
+[node name="IrisOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
 margin_left = 58.0
 margin_right = 256.0
 margin_bottom = 27.0
@@ -827,7 +827,7 @@ custom_fonts/font = SubResource( 5 )
 max_length = 3
 placeholder_text = "irisR outline"
 
-[node name="IrisOutlineRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
+[node name="IrisOutlineLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisOutlineRow"]
 margin_left = 260.0
 margin_right = 458.0
 margin_bottom = 27.0
@@ -849,7 +849,7 @@ margin_bottom = 22.0
 custom_fonts/font = SubResource( 5 )
 text = "Iris Col:"
 
-[node name="IrisColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
+[node name="IrisColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
 margin_left = 55.0
 margin_right = 254.0
 margin_bottom = 27.0
@@ -859,7 +859,7 @@ custom_fonts/font = SubResource( 5 )
 max_length = 3
 placeholder_text = "irisR color"
 
-[node name="IrisColRightEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
+[node name="IrisColLeftEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/IrisColRow"]
 margin_left = 258.0
 margin_right = 458.0
 margin_bottom = 27.0
