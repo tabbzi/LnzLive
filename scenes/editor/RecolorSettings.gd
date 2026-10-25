@@ -2,7 +2,7 @@ extends Control
 
 signal recolor(recolor_info)
 signal apply_bucket(ball_no, properties)
-signal apply_batch_bucket(changes)
+signal apply_batch_bucket(changes, write_to_overrides)
 signal apply_eye_colors(eye_colors_info)
 
 onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
@@ -20,6 +20,7 @@ onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/B
 onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/NoTextureRotateCheck
 onready var bucket_apply_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton
 onready var bucket_clear_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton
+onready var bucket_write_overrides_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/WriteToOverridesCheck
 
 onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
@@ -471,7 +472,10 @@ func _on_ApplyBucket_pressed() -> void:
 		var changes = queued_bucket_changes.duplicate()
 		queued_bucket_changes.clear()
 		_saved_visual_states.clear()
-		emit_signal("apply_batch_bucket", changes)
+		var write_to_overrides = false
+		if is_instance_valid(bucket_write_overrides_check):
+			write_to_overrides = bucket_write_overrides_check.pressed
+		emit_signal("apply_batch_bucket", changes, write_to_overrides)
 	
 	_pending_bucket_count = 0
 	_update_bucket_buttons()

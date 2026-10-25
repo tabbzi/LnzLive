@@ -388,7 +388,7 @@ func _ready() -> void:
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
-		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+		recolor_settings_instance.connect("apply_batch_bucket", self, "_on_recolor_settings_apply_batch_bucket")
 		recolor_settings_instance.connect("apply_batch_bucket", self, "_update_unapplied_changes_label")
 
 	var shader_settings_btn: Button = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
@@ -2939,6 +2939,10 @@ func _on_hidden_balls_changed(count: int) -> void:
 		hidden_balls_label.visible = true
 	else:
 		hidden_balls_label.visible = false
+
+func _on_recolor_settings_apply_batch_bucket(changes, write_to_overrides) -> void:
+	if is_instance_valid(lnz_text_edit):
+		lnz_text_edit.apply_batch_presets(changes, write_to_overrides)
 
 func _update_unapplied_changes_label(_unused = null) -> void:
 	var total = 0

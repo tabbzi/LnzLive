@@ -303,10 +303,17 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Apply Bucket"
 
-[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
-margin_top = 499.0
+[node name="WriteToOverridesCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
+margin_top = 529.0
 margin_right = 458.0
-margin_bottom = 524.0
+margin_bottom = 554.0
+custom_fonts/font = SubResource( 5 )
+text = "Write to Overrides"
+
+[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
+margin_top = 559.0
+margin_right = 458.0
+margin_bottom = 584.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )

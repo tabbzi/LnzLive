@@ -2430,9 +2430,14 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 		save_file(true)
 		commit_full_snapshot("Applied Preset to Ballz #%d" % ball_no)
 
-func apply_batch_presets(changes: Dictionary):
+func apply_batch_presets(changes: Dictionary, write_to_overrides: bool = false):
 	if changes.empty(): return
 	save_backup()
+
+	if write_to_overrides:
+		_apply_bucket_to_overrides(changes)
+		return
+
 	var applied_something = false
 
 	for ball_no in changes:
@@ -2443,6 +2448,110 @@ func apply_batch_presets(changes: Dictionary):
 	if applied_something:
 		save_file(true)
 		commit_full_snapshot("Batch Applied Properties to %d Ballz" % changes.size())
+
+
+func _apply_bucket_to_overrides(changes: Dictionary):
+	var dt = OS.get_datetime()
+	var batch_label = "PAINTBUCKET %04d-%02d-%02d %02d:%02d:%02d" % [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second]
+	var batch_comment = "; " + batch_label
+
+	var color_info_entries: Array = []
+	var outline_color_entries: Array = []
+	var fuzz_entries: Array = []
+	var ball_size_entries: Array = []
+
+	for ball_no in changes:
+		var props = changes[ball_no]
+		var is_addball = ball_no >= KeyBallsData.max_base_ball_num
+		var raw_ball_no = ball_no if not is_addball else ball_no - KeyBallsData.max_base_ball_num
+
+		if props.has("color_index"):
+			color_info_entries.append({
+				"ball": raw_ball_no,
+				"color": props.color_index,
+				"group": props.get("group", -1),
+				"texture": props.get("texture_id", -1)
+			})
+
+		if props.has("outline_color_index"):
+			outline_color_entries.append({
+				"ball": raw_ball_no,
+				"outline_color": props.outline_color_index
+			})
+
+		if props.has("fuzz"):
+			fuzz_entries.append({
+				"ball": raw_ball_no,
+				"fuzz": props.fuzz
+			})
+
+		if props.has("size"):
+			ball_size_entries.append({
+				"ball": raw_ball_no,
+				"size": props.size
+			})
+
+	if not color_info_entries.empty():
+		_write_override_section("[Color Info Override]", color_info_entries, "color_info", batch_comment)
+
+	if not outline_color_entries.empty():
+		_write_override_section("[Outline Color Override]", outline_color_entries, "outline_color", batch_comment)
+
+	if not fuzz_entries.empty():
+		_write_override_section("[Fuzz Override]", fuzz_entries, "fuzz", batch_comment)
+
+	if not ball_size_entries.empty():
+		_write_override_section("[Ball Size Override]", ball_size_entries, "ball_size", batch_comment)
+
+	save_file(true)
+	commit_full_snapshot("Batch Applied Overrides to %d Ballz" % changes.size())
+
+
+func _write_override_section(section_name: String, entries: Array, entry_type: String, batch_comment: String):
+	var bounds = _ensure_section_exists(section_name)
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var insert_at = _find_insertion_line(bounds.start, bounds.end)
+
+	var lines_to_insert: Array = []
+	lines_to_insert.append(batch_comment)
+
+	for entry in entries:
+		var line_txt = ""
+
+		match entry_type:
+			"color_info":
+				line_txt = "%d%s%d%s%d%s%d" % [
+					entry.ball, delim,
+					entry.color, delim,
+					entry.group, delim,
+					entry.texture
+				]
+			"outline_color":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.outline_color
+				]
+			"fuzz":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.fuzz
+				]
+			"ball_size":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.size
+				]
+
+		lines_to_insert.append(line_txt)
+
+	if not lines_to_insert.empty():
+		var text_to_insert = ""
+		for i in range(lines_to_insert.size()):
+			text_to_insert += str(lines_to_insert[i])
+			if i < lines_to_insert.size() - 1:
+				text_to_insert += "\n"
+		text_to_insert += "\n"
+		_insert_text_at_cursor_at_line(insert_at, text_to_insert)
 
 func _transform_paintballz_section(transforms: Dictionary):
 	print("[STATUS] LnzTextEdit: _transform_paintballz_section: Transforming %d paintballs" % transforms.size())
