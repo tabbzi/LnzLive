@@ -3548,13 +3548,13 @@ func select_ball(section, ball_no, is_addball, max_addball_no):
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 			target_section_name = "[Add Ball]"
 		else:
-			actual_start_point = find_line_in_move_section(ball_no, current_line)
+			actual_start_point = find_line_in_move_section(ball_no)
 			target_section_name = "[Move]"
 	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no, current_line)
+		actual_start_point = find_line_in_project_section(ball_no)
 		target_section_name = "[Project Ball]"
 	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no, current_line)
+		actual_start_point = find_line_in_linez_section(ball_no)
 		target_section_name = "[Linez]"
 	
 	if actual_start_point == -1:
