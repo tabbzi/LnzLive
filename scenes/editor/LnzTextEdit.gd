@@ -2836,7 +2836,7 @@ func _on_palette_selected(filename_without_extension):
 		var found_palette_line = false
 		for i in range(start_line, end_line):
 			var line = get_line(i).strip_edges()
-			if line.begins_with(""):
+			if not line.empty() and not line.begins_with(";") and not line.begins_with("#"):
 				set_line(i, new_line)
 				found_palette_line = true
 				break
