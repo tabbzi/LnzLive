@@ -2119,6 +2119,13 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 	var base_ball_dict = all_ball_dict.balls
 	var lnz_balls = lnz.balls
+
+	var moves_by_ball: Dictionary = {}
+	for m in lnz.moves:
+		var arr = moves_by_ball.get(m.ball_no, [])
+		arr.append(m)
+		moves_by_ball[m.ball_no] = arr
+
 	for k in base_ball_dict:
 		var v: BallData = lnz_balls.get(k)
 		var b: BallData = base_ball_dict.get(k)
@@ -2133,8 +2140,8 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		b.outline = v.outline
 		b.fuzz = v.fuzz
 
-		for m in lnz.moves:
-			if m.ball_no == k:
+		if moves_by_ball.has(k):
+			for m in moves_by_ball[k]:
 				var move_base = b
 				var rot = move_base.rotation
 				if m.relative_to != null and base_ball_dict.has(m.relative_to):
