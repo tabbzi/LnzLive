@@ -431,6 +431,8 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 			console_log.log_message(msg)
  
 		emit_signal("file_saved", save_path)
+		_update_section_bookmarks()
+		update()
 
 	filepath = save_path
 
