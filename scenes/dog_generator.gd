@@ -53,6 +53,8 @@ var paintball_group_scene = preload("res://PaintballGroup.tscn")
 var line_scene = preload("res://Line.tscn")
 var polygon_scene = preload("res://Polygon.tscn")
 
+var PaintBallEntry = preload("res://data_classes/paintball_entry.gd")
+
 var bhd: BhdParser
 var lnz: LnzParser
 var current_animation = 0
@@ -885,27 +887,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 			a.anchor_ball
 		)
 
-	var paintballs = {}
-
-	for k in lnz_info.paintballs:
-		var ar = lnz_info.paintballs[k]
-		paintballs[k] = ar.duplicate()
-		var i = 0
-		for a in ar:
-			paintballs[k][i] = {
-				base = a.base,
-				size = a.size,
-				normalised_position = a.normalised_position,
-				color_index = a.color_index,
-				outline = a.outline,
-				outline_color_index = a.outline_color_index,
-				fuzz = a.fuzz,
-				z_add = a.z_add,
-				group = a.group,
-				texture_id = a.texture_id,
-				anchored = a.anchored
-			}
-			i += 1
+	var paintballs = lnz_info.paintballs
 
 	collated_data = {balls = collated_data, addballs = addballs, paintballs = paintballs}
 	collated_data = munge_balls(collated_data, lnz_info)
@@ -1478,7 +1460,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if need_mesh_build:
 				var count = 0
 				for pb_data in paint_list:
-					var entry = preload("res://data_classes/paintball_entry.gd").new()
+					var entry = PaintBallEntry.new()
 					entry.local_origin = pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size
 					entry.pb_normal = pb_data.normalised_position
 					entry.pb_normal.y *= -1.0
@@ -1488,7 +1470,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					entry.outline = pb_data.outline
 					entry.fuzz_amount = int(fuzz_to_amount(pb_data.fuzz))
 					entry.z_add = base_z_offset(base_z) + float(count)
-					entry.group = pb_data.get("group", pb_data.group if pb_data is Reference else 0)
+					entry.group = pb_data.group
 					entry.has_texture = false
 					entry.tile_texture = not lnz.no_texture_rotate.has(key)
 					entry.transparent_color = 0
