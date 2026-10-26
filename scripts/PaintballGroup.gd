@@ -1,6 +1,6 @@
 ## PaintballGroup.gd
 ## Batched paintball mesh builder to replace Paintball.gd when stored in paintball_map[key]
-## Packs per-paintball state into vertex attributes via SurfaceTool
+## Packs per-paintball state into vertex attributes via ArrayMesh.add_surface_from_arrays()
 ## Modeled after approach designed by Ziv for OpenPetz (thank you!)
 
 extends Spatial
@@ -69,13 +69,7 @@ func build_mesh(entries_list: Array) -> void:
 		var bucket_entries: Array = buckets[key]
 		if bucket_entries.empty():
 			continue
-		var st = SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-		for entry in bucket_entries:
-			_emit_quad(st, entry)
-
-		st.commit(mesh)
+		_build_bucket_surface(mesh, bucket_entries)
 
 		var mat = preload("res://shaders/paintball_group.tres").duplicate()
 		_configure_surface_material(mat, key)
@@ -84,6 +78,90 @@ func build_mesh(entries_list: Array) -> void:
 		surface_idx += 1
 
 	mesh_instance.mesh = mesh
+
+
+func _build_bucket_surface(mesh: ArrayMesh, bucket_entries: Array) -> void:
+	var count: int = bucket_entries.size()
+	var vert_count: int = count * 4
+	var idx_count: int = count * 6
+
+	var verts := PoolVector3Array()
+	var normals := PoolVector3Array()
+	var colors := PoolColorArray()
+	var uvs := PoolVector2Array()
+	var uvs2 := PoolVector2Array()
+	var indices := PoolIntArray()
+
+	verts.resize(vert_count)
+	normals.resize(vert_count)
+	colors.resize(vert_count)
+	uvs.resize(vert_count)
+	uvs2.resize(vert_count)
+	indices.resize(idx_count)
+
+	for i in range(count):
+		var entry = bucket_entries[i]
+		var v_base: int = i * 4
+		var idx_base: int = i * 6
+
+		var packed_color := Color(
+			float(entry.color_index + 1) / 255.0,
+			float(entry.outline_color_index + 1) / 255.0,
+			float(entry.outline + 4) / 255.0,
+			float(entry.fuzz_amount) / 255.0
+		)
+		var has_tex: int = 1 if entry.has_texture else 0
+		var tile_tex: int = 1 if entry.tile_texture else 0
+		var hi_flag: int = 1 if entry.highlight else 0
+		var flags: float = float(has_tex + (tile_tex * 2) + (hi_flag * 4))
+		var mag_x: float = 1.0 + float(entry.transparent_color)
+		var mag_y: float = 1.0 + flags
+		var uv2_val := Vector2(float(entry.ball_size), entry.z_add)
+		var origin: Vector3 = entry.local_origin
+		var normal: Vector3 = entry.pb_normal
+
+		verts[v_base] = origin
+		verts[v_base + 1] = origin
+		verts[v_base + 2] = origin
+		verts[v_base + 3] = origin
+
+		normals[v_base] = normal
+		normals[v_base + 1] = normal
+		normals[v_base + 2] = normal
+		normals[v_base + 3] = normal
+
+		colors[v_base] = packed_color
+		colors[v_base + 1] = packed_color
+		colors[v_base + 2] = packed_color
+		colors[v_base + 3] = packed_color
+
+		uvs[v_base] = Vector2(-mag_x, -mag_y)
+		uvs[v_base + 1] = Vector2(-mag_x, mag_y)
+		uvs[v_base + 2] = Vector2(mag_x, mag_y)
+		uvs[v_base + 3] = Vector2(mag_x, -mag_y)
+
+		uvs2[v_base] = uv2_val
+		uvs2[v_base + 1] = uv2_val
+		uvs2[v_base + 2] = uv2_val
+		uvs2[v_base + 3] = uv2_val
+
+		indices[idx_base] = v_base
+		indices[idx_base + 1] = v_base + 1
+		indices[idx_base + 2] = v_base + 2
+		indices[idx_base + 3] = v_base
+		indices[idx_base + 4] = v_base + 3
+		indices[idx_base + 5] = v_base + 2
+
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = uvs2
+	arrays[Mesh.ARRAY_INDEX] = indices
+
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 
 
 func _configure_surface_material(mat: ShaderMaterial, key) -> void:
@@ -120,38 +198,6 @@ func _configure_surface_material(mat: ShaderMaterial, key) -> void:
 	else:
 		mat.set_shader_param("ball_texture", null)
 		mat.set_shader_param("is_atlas", false)
-
-
-func _emit_quad(st: SurfaceTool, entry) -> void:
-	var corners: Array = [
-		Vector2(-1.0, -1.0),
-		Vector2(-1.0, 1.0),
-		Vector2(1.0, 1.0),
-		Vector2(-1.0, -1.0),
-		Vector2(1.0, -1.0),
-		Vector2(1.0, 1.0)
-	]
-
-	var r: float = float(entry.color_index + 1) / 255.0
-	var g: float = float(entry.outline_color_index + 1) / 255.0
-	var b: float = float(entry.outline + 4) / 255.0
-	var a: float = float(entry.fuzz_amount) / 255.0
-	var packed_color := Color(r, g, b, a)
-
-	var has_tex: int = 1 if entry.has_texture else 0
-	var tile_tex: int = 1 if entry.tile_texture else 0
-	var hi_flag: int = 1 if entry.highlight else 0
-	var flags: float = float(has_tex + (tile_tex * 2) + (hi_flag * 4))
-
-	for corner in corners:
-		st.add_normal(entry.pb_normal)
-		st.add_color(packed_color)
-		var uv_x: float = corner.x * (1.0 + float(entry.transparent_color))
-		var uv_y: float = corner.y * (1.0 + flags)
-		st.add_uv(Vector2(uv_x, uv_y))
-		st.add_uv2(Vector2(float(entry.ball_size), entry.z_add))
-		st.add_vertex(entry.local_origin)
-
 func set_hidden(is_hidden: bool) -> void:
 	if has_node("MeshInstance") and is_instance_valid(get_node("MeshInstance")):
 		$MeshInstance.visible = not is_hidden
