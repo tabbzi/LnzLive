@@ -1263,22 +1263,27 @@ class ColorSorter:
 		return 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b < 0.2126 * b.r + 0.7152 * b.g + 0.0722 * b.b
 
 static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
-	var sorted: Array = colors.duplicate()
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
 	var sorter = ColorSorter.new()
 
 	if sort_mode.begins_with("hue"):
-		sorted.sort_custom(sorter, "cmp_hue")
+		indexed.sort_custom(sorter, "cmp_hue")
 	elif sort_mode.begins_with("saturation"):
-		sorted.sort_custom(sorter, "cmp_sat")
+		indexed.sort_custom(sorter, "cmp_sat")
 	elif sort_mode.begins_with("value"):
-		sorted.sort_custom(sorter, "cmp_val")
+		indexed.sort_custom(sorter, "cmp_val")
 	elif sort_mode.begins_with("luminance"):
-		sorted.sort_custom(sorter, "cmp_lum")
+		indexed.sort_custom(sorter, "cmp_lum")
 
 	if sort_mode.ends_with("_desc"):
-		sorted.invert()
+		indexed.invert()
 
-	return sorted
+	var result: Array = []
+	for entry in indexed:
+		result.append(entry[0])
+	return result
 
 static func find_closest_color_index(colors: Array, target: Color) -> int:
 	var best_idx: int = 0
