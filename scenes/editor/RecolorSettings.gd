@@ -570,6 +570,9 @@ func _on_AfterToBefore_pressed() -> void:
 				var temp: String = before_col_text
 				before_color.text = after_col_text
 				after_color.text = temp
+			elif not before_col_text.empty():
+				after_color.text = before_col_text
+				before_color.text = ""
 
 		if is_instance_valid(after_texture) and is_instance_valid(before_texture):
 			var after_tex_text: String = after_texture.text.strip_edges()
@@ -578,6 +581,9 @@ func _on_AfterToBefore_pressed() -> void:
 				var temp: String = before_tex_text
 				before_texture.text = after_tex_text
 				after_texture.text = temp
+			elif not before_tex_text.empty():
+				after_texture.text = before_tex_text
+				before_texture.text = ""
 
 	_refresh_all_previews()
 	save_settings()
