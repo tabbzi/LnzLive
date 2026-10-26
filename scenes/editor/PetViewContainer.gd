@@ -616,7 +616,8 @@ func get_lnz_scale() -> float:
 		return 1.0
 
 func _process(_delta: float) -> void:
-	_update_reference_image_bg()
+	if reference_image_bg and reference_image_bg.visible:
+		_update_reference_image_bg()
 	if is_instance_valid(_overlay_camera):
 		_sync_overlay()
 
