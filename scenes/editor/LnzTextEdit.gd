@@ -828,8 +828,9 @@ func _update_section_bookmarks():
 	var lines = get_line_count() 
 	
 	for i in range(lines):
-		var line_text = get_line(i).strip_edges() 
-		if line_text.begins_with("["): 
+		var line_text = get_line(i)
+		var trimmed = line_text.lstrip(" \t")
+		if trimmed.begins_with("["): 
 			bookmarks.append(i)
 
 func _on_cursor_changed():
