@@ -3061,8 +3061,9 @@ func apply_batch_moves(pending_moves: Dictionary):
 			comment_block += "; " + entry.old_text + " ; OLD group head move\n"
 			set_line(entry.line_idx, "; " + entry.old_text + " ; OLD group head move")
 		_insert_text_at_cursor_at_line(move_start, comment_block)
-		move_start += comment_block.split("\n").size() - 1
-		move_end += comment_block.split("\n").size() - 1
+		var comment_lines = comment_block.split("\n").size() - 1
+		move_start += comment_lines
+		move_end += comment_lines
 	
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
