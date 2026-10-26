@@ -1554,6 +1554,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 					+ str(polygon.ball4)
 				)
 			)
+			i += 1
 			continue
 
 		#print("[INFO] dog_generator: generate_polygons: creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
@@ -1566,6 +1567,9 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 			parent.add_child(visual_polygon)
 			visual_polygon.set_owner(root)
 		else:
+			if not polygons_map.has(i):
+				i += 1
+				continue
 			visual_polygon = polygons_map[i]
 
 		# Set positions for the polygon's 4 vertices
