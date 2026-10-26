@@ -42,12 +42,14 @@ export var draw_special_balls = false
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
+export var use_grouped_paintballs = true
 export var draw_polygons = true
 export var draw_omitted_balls = false
 export var draw_negative_balls = false
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
+var paintball_group_scene = preload("res://scenes/PaintballGroup.tscn")
 var line_scene = preload("res://Line.tscn")
 var polygon_scene = preload("res://Polygon.tscn")
 
@@ -1261,10 +1263,16 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			ball_map[key] = ball_scene.instance()
 		
 		for key in paintball_data:
-			var p_arr = []
-			for i in range(paintball_data[key].size()): 
-				p_arr.append(paintball_scene.instance())
-			paintball_map[key] = p_arr
+			if paintball_data[key].empty():
+				paintball_map[key] = []
+				continue
+			if use_grouped_paintballs:
+				paintball_map[key] = [paintball_group_scene.instance()]
+			else:
+				var p_arr = []
+				for i in range(paintball_data[key].size()): 
+					p_arr.append(paintball_scene.instance())
+				paintball_map[key] = p_arr
 
 	# --- BASE BALLZ ---
 	for key in ball_data:
@@ -1450,56 +1458,120 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			for pb in paintball_map[key]:
 				if is_instance_valid(pb):
 					pb.queue_free()
+			paintball_map[key] = []
 			continue
 
 		var paint_list = paintball_data[key].duplicate()
 		paint_list.invert() 
 
-		var count = 0
 		var is_omitted = omissions.has(key)
 		var base_z = base_node.z_add if "z_add" in base_node else 0.0
 
-		for pb_data in paint_list:
-			var node = paintball_map[key][count]
-			var final_size = snap_ball_size(base_data.size * (pb_data.size / 100.0))
+		if use_grouped_paintballs:
+			var group_node = paintball_map[key][0] if (paintball_map.has(key) and paintball_map[key].size() > 0) else null
+			if not is_instance_valid(group_node):
+				continue
+
+			var need_mesh_build: bool = new_create or (base_data.size != group_node.base_ball_size)
+			var entries: Array = []
+
+			if need_mesh_build:
+				var count = 0
+				for pb_data in paint_list:
+					var entry = preload("res://data_classes/paintball_entry.gd").new()
+					entry.local_origin = pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size
+					entry.pb_normal = pb_data.normalised_position
+					entry.pb_normal.y *= -1.0
+					entry.ball_size = int(snap_ball_size(base_data.size * (pb_data.size / 100.0)))
+					entry.color_index = pb_data.color_index
+					entry.outline_color_index = pb_data.outline_color_index
+					entry.outline = pb_data.outline
+					entry.fuzz_amount = int(fuzz_to_amount(pb_data.fuzz))
+					entry.z_add = base_z_offset(base_z) + float(count)
+					entry.has_texture = false
+					entry.tile_texture = not lnz.no_texture_rotate.has(key)
+					entry.transparent_color = 0
+					if pb_data.texture_id >= 0 and pb_data.texture_id < texture_list.size():
+						var tex = load_texture_from_list(pb_data.texture_id, texture_list, active_custom_palette, is_babyz_mode)
+						if tex:
+							entry.has_texture = true
+							entry.texture = tex
+							var tex_info = texture_list[pb_data.texture_id]
+							entry.texture_size = tex_info.texture_size if (tex_info.has("texture_size") and tex_info.texture_size != null) else Vector2(256, 256)
+							entry.transparent_color = int(tex_info.transparent_color)
+					entries.append(entry)
+					count += 1
 
 			if new_create:
-				base_node.add_child(node)
-				#node.set_owner(root)
-				node.add_to_group("paintballs")
-				
-				node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
-				node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
-				node.set_species(species, is_babyz_mode)
+				group_node.base_ball_no = key
+				base_node.add_child(group_node)
+				group_node.add_to_group("paintballs")
+				group_node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
+				group_node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+				group_node.set_species(species, is_babyz_mode)
+				group_node.set_palette(palette)
+				group_node.set_render_flat_colors(render_flat_colors_global)
+				group_node.tile_texture = not lnz.no_texture_rotate.has(key)
+				group_node.base_ball_size = base_data.size
+				group_node.base_ball_position = base_node.global_transform.origin
+				group_node.build_mesh(entries)
+			else:
+				if need_mesh_build:
+					group_node.update_base_ball_size_and_origins(base_data.size, entries)
+				group_node.base_ball_position = base_node.global_transform.origin
 
-				var pb_normal = pb_data.normalised_position
-				pb_normal.y *= -1.0
-				node.set_surface_normal(pb_normal)
-
-				apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
-
-				# Inherit no_texture_rotate from base ball so paintball texture stays centered
-				if lnz.no_texture_rotate.has(key):
-					node.set_tile_texture(false)
-
-			#node.base_ball_position = base_node.transform.origin
-			node.base_ball_position = base_node.global_transform.origin
-			
-			node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
-			node.ball_size = final_size
-			node.base_ball_size = base_data.size
-			node.z_add = base_z_offset(base_z) + float(count)
-			node.base_ball_no = pb_data.base
-
+			group_node.omitted = is_omitted
 			if is_omitted:
-				if draw_omitted_balls: node.visible_override = true
+				if draw_omitted_balls:
+					group_node.visible_override = true
+					group_node.set_visible(true)
 				else:
-					node.call_deferred("set_visible", false)
-					node.call_deferred("set_visible", false) # TBD: Check whether this is really needed but IIRC it was... but definitely hacky
-			elif !draw_paintballs:
-				node.call_deferred("set_visible", false)
+					group_node.call_deferred("set_visible", false)
+			elif not draw_paintballs:
+				group_node.call_deferred("set_visible", false)
+
+		else:
+			var count = 0
+			for pb_data in paint_list:
+				var node = paintball_map[key][count]
+				var final_size = snap_ball_size(base_data.size * (pb_data.size / 100.0))
+
+				if new_create:
+					base_node.add_child(node)
+					#node.set_owner(root)
+					node.add_to_group("paintballs")
+					
+					node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
+					node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+					node.set_species(species, is_babyz_mode)
+
+					var pb_normal = pb_data.normalised_position
+					pb_normal.y *= -1.0
+					node.set_surface_normal(pb_normal)
+
+					apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
+
+					if lnz.no_texture_rotate.has(key):
+						node.set_tile_texture(false)
+
+				#node.base_ball_position = base_node.transform.origin
+				node.base_ball_position = base_node.global_transform.origin
 				
-			count += 1
+				node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
+				node.ball_size = final_size
+				node.base_ball_size = base_data.size
+				node.z_add = base_z_offset(base_z) + float(count)
+				node.base_ball_no = pb_data.base
+
+				if is_omitted:
+					if draw_omitted_balls: node.visible_override = true
+					else:
+						node.call_deferred("set_visible", false)
+						node.call_deferred("set_visible", false) # TBD: Check whether this is really needed but IIRC it was... but definitely hacky
+				elif !draw_paintballs:
+					node.call_deferred("set_visible", false)
+					
+				count += 1
 
 	# Update global positions for ballz in paintballz visual properties
 	for key in ball_map.keys():

@@ -89,7 +89,7 @@ func add_pending_paintball(paintball_info):
 
 	_setup_paintball_node(pb_visual_ball, pb_data, base_ball_node,
 						paintball_info.relative_pos_local, paintball_info.diameter,
-						gen.paintball_map.get(paintball_info.base_ball_no, []).size(),
+						gen.lnz.paintballs.get(paintball_info.base_ball_no, []).size(),
 						gen._pending_paintballs_data.size())
 
 	if paintball_info.outline_type >= 0 and paintball_info.outline_color <= 0:
@@ -269,7 +269,7 @@ func _on_randomize_auto_paintballz(paintballz):
 			base_ball_node,
 			pb_pos,
 			pb_data.size,
-			gen.paintball_map.get(pb_data.base, []).size(),
+			gen.lnz.paintballs.get(pb_data.base, []).size(),
 			gen._auto_paintball_nodes.size()
 		)
 
@@ -423,7 +423,7 @@ func rebuild_pending_paintball_visuals():
 				base_ball_node,
 				pb_data.relative_pos_local,
 				pb_data.diameter,
-				gen.paintball_map.get(pb_data.base_ball_no, []).size(),
+				gen.lnz.paintballs.get(pb_data.base_ball_no, []).size(),
 				z_add_value
 			)
 

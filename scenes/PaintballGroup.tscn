@@ -1,10 +1,10 @@
 [gd_scene load_steps=2 format=2]
 
+[ext_resource path="res://scripts/PaintballGroup.gd" type="Script" id=1]
+
 [node name="PaintballGroup" type="Spatial"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 script = ExtResource( 1 )
 groups = [ "paintballs" ]
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
-
-[ext_resource type="Script" id=1 path="res://scripts/PaintballGroup.gd" id="1"]

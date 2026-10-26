@@ -3,7 +3,7 @@
 [sub_resource type="Shader" id=1]
 code = "shader_type spatial;
 
-render_mode unshaded, skip_vertex_transform;
+render_mode unshaded, skip_vertex_transform, cull_disabled;
 
 uniform bool debug_mode = true;
 
@@ -32,15 +32,15 @@ uniform vec3 z_center_pet_world = vec3(0.0);
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
-varying flat int v_fuzz_amount;
-varying flat int v_ball_size;
-varying flat int v_outline;
-varying flat int v_color_index;
-varying flat int v_outline_color_index;
-varying flat int v_transparent_index;
-varying flat int v_has_texture;
-varying flat int v_tile_texture;
-varying flat int v_highlight;
+varying flat float v_fuzz_amount;
+varying flat float v_ball_size;
+varying flat float v_outline;
+varying flat float v_color_index;
+varying flat float v_outline_color_index;
+varying flat float v_transparent_index;
+varying flat float v_has_texture;
+varying flat float v_tile_texture;
+varying flat float v_highlight;
 varying flat vec3 v_pb_normal;
 
 varying flat vec2 center_fragcoord;
@@ -60,14 +60,14 @@ float random (float x) {
 // Apply z-based palette shifts (z-shading)
 vec3 get_shifted_color(int palette_index) {
     int new_palette_index;
-
+    
     // Calculate base decade
-    int base_decade = v_color_index - int(mod(float(v_color_index), 10.0));
+    int base_decade = int(v_color_index) - int(mod(float(int(v_color_index)), 10.0));
 
-    if (base_decade == 10 && v_transparent_index == 1 && palette_index <= 9) {
+    if (base_decade == 10 && int(v_transparent_index) == 1 && palette_index <= 9) {
         // Keep indices 0-9 on base decade 10
          new_palette_index = palette_index;
-    } else if (v_transparent_index == 1 && (palette_index <= 9 || palette_index >= 150)) {
+    } else if (int(v_transparent_index) == 1 && (palette_index <= 9 || palette_index >= 150)) {
         if (palette_index == 0) {
             // For color 0, drop 2 ramps -21 from base decade and true modulo wrap by 120 for positive index
             new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
@@ -90,7 +90,7 @@ vec3 get_shifted_color(int palette_index) {
         } else if (z_center_ball > z_center_pet) {
             ramp_offset = int(max(float(ramp_offset - 1), 0.0));
         }
-
+        
         new_palette_index = base_decade + ramp_offset;
     }
 
@@ -99,7 +99,7 @@ vec3 get_shifted_color(int palette_index) {
 
 vec2 calculate_uvs(vec2 offset, vec2 screen_uv, vec2 viewport_size) {
     vec2 tex_coords;
-    if (v_tile_texture != 0) {
+    if (v_tile_texture != 0.0) {
         vec2 center_uv = (center_fragcoord / viewport_size) - vec2(1.0);
         vec2 uv = (screen_uv - center_uv) * (1000.0 / texture_size);
 
@@ -203,20 +203,21 @@ int get_closest_petz_index(vec4 raw_color) {
 
 vec3 apply_palette_shift(int palette_index) {
     int effective_index = palette_index;
+    int v_transp = int(v_transparent_index);
 
-    if (v_transparent_index == 80 && palette_index == 1) {
+    if (v_transp == 80 && palette_index == 1) {
         effective_index = 89;
-    } else if (v_transparent_index == 130 && palette_index == 2) {
+    } else if (v_transp == 130 && palette_index == 2) {
         effective_index = 139;
-    } else if (v_transparent_index == 140 && palette_index == 4) {
+    } else if (v_transp == 140 && palette_index == 4) {
         effective_index = 149;
     }
 
-    if (v_transparent_index > 0) {
-        if (v_transparent_index == 1 || (effective_index >= v_transparent_index && effective_index < v_transparent_index + 10)) {
+    if (v_transp > 0) {
+        if (v_transp == 1 || (effective_index >= v_transp && effective_index < v_transp + 10)) {
             return get_shifted_color(effective_index);
         } else {
-            int target_decade = v_transparent_index - int(mod(float(v_transparent_index), 10.0));
+            int target_decade = v_transp - int(mod(float(v_transp), 10.0));
             int current_decade = effective_index - int(mod(float(effective_index), 10.0));
 
             if (current_decade == target_decade) {
@@ -253,12 +254,12 @@ void fragment() {
 
     // Determine if this paintball is actively textured
     int texture_limit = is_babyz_mode ? 230 : 150;
-    bool is_textured = !render_flat_colors && v_has_texture != 0 && v_color_index >= 10 && v_color_index < texture_limit;
+    bool is_textured = !render_flat_colors && v_has_texture != 0.0 && v_color_index >= 10.0 && v_color_index < float(texture_limit);
 
     // OUTLINING
     float pct2 = 0.0;
     vec2 st2 = st;
-    int effective_outline = is_textured ? -1 : v_outline;
+    int effective_outline = is_textured ? -1 : int(v_outline);
     int modified_outline = effective_outline;
 
     if (effective_outline == -1) {
@@ -339,12 +340,12 @@ void fragment() {
         }
     } else {
         // untextured, if range check failed or has_texture is false
-        int fill_idx = v_color_index == 0 ? 244 : v_color_index;
+        int fill_idx = int(v_color_index) == 0 ? 244 : int(v_color_index);
         texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.0)).rgb;
         is_transparent = false;
     }
 
-    int outline_idx = v_outline_color_index == 0 ? 244 : v_outline_color_index;
+    int outline_idx = int(v_outline_color_index) == 0 ? 244 : int(v_outline_color_index);
     vec3 outline_color = texture(palette, vec2(float(outline_idx) / 255.0, 0.0)).rgb;
     ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
 
@@ -357,27 +358,28 @@ void fragment() {
     ALPHA = alpha_value;
     ALPHA_SCISSOR = 1.0;
 
-    if (v_highlight != 0) {
+    if (int(v_highlight) != 0) {
         ALBEDO = vec3(1.0, 1.0, 0.0);
     }
 }
 
 void vertex() {
     // Unpack per-paintball attributes from vertex attributes (packed by SurfaceTool)
-    v_color_index = int(round(COLOR.r * 256.0)) - 1;
-    v_outline_color_index = int(round(COLOR.g * 256.0)) - 1;
-    v_outline = int(round(COLOR.b * 256.0)) - 4;
-    v_fuzz_amount = int(round(COLOR.a * 255.0));
+    v_color_index = float(int(round(COLOR.r * 256.0)) - 1);
+    v_outline_color_index = float(int(round(COLOR.g * 256.0)) - 1);
+    v_outline = float(int(round(COLOR.b * 256.0)) - 4);
+    v_fuzz_amount = float(int(round(COLOR.a * 255.0)));
 
-    v_ball_size = int(round(UV2.x));
+    v_ball_size = float(int(round(UV2.x)));
     float pb_z_add = UV2.y;
 
     v_pb_normal = NORMAL;
 
-    v_has_texture = int(round(CUSTOM0.r));
-    v_transparent_index = int(round(CUSTOM0.g * 255.0));
-    v_tile_texture = int(round(CUSTOM0.b));
-    v_highlight = int(round(CUSTOM0.a));
+    v_transparent_index = float(int(round(abs(UV.x))) - 1);
+    int flags = int(round(abs(UV.y))) - 1;
+    v_has_texture = float(mod(float(flags), 2.0));
+    v_tile_texture = float(mod(float(int(float(flags) / 2.0)), 2.0));
+    v_highlight = float(mod(float(int(float(flags) / 4.0)), 2.0));
 
     mat4 original_mv = INV_CAMERA_MATRIX * WORLD_MATRIX;
     view_forward = normalize(original_mv[2].xyz);
@@ -398,7 +400,7 @@ void vertex() {
     vec3 vert_in_clip_space = center_clip_space.xyz;
     vert_in_clip_space.z = base_center_clip_space.z + 0.0001 + (pb_z_add * 0.00005);
 
-    float b = (float(v_ball_size) / 2.0 + float(v_fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
+    float b = (float(v_ball_size) / 2.0 + float(v_fuzz_amount) + 3.0) / (VIEWPORT_SIZE.x / 2.0);
     vert_in_clip_space.x = center_clip_space.x + b * sign(UV.x);
     vert_in_clip_space.y = center_clip_space.y + b * sign(UV.y);
 
@@ -409,19 +411,3 @@ void vertex() {
 [resource]
 resource_local_to_scene = true
 shader = SubResource( 1 )
-shader_param/debug_mode = true
-shader_param/is_babyz_mode = false
-shader_param/should_quantize = false
-shader_param/palette_size = 256
-shader_param/render_flat_colors = false
-shader_param/base_world_position = Vector3( 0, 0, 0 )
-shader_param/base_ball_size = 10
-shader_param/transparency_on = true
-shader_param/is_atlas = false
-shader_param/atlas_rect = null
-shader_param/atlas_size = null
-shader_param/texture_size = Vector2( 256, 256 )
-shader_param/texture_size_raw = null
-shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
-shader_param/rotation = Vector3( 0, 0, 0 )
-shader_param/tiling_unit = 128.0

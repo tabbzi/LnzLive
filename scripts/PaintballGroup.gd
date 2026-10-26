@@ -23,7 +23,6 @@ export var tile_texture: bool = true setget set_tile_texture
 
 var entries: Array = []
 var _surface_materials: Array = []
-var _last_base_ball_size: int = 0
 
 const DEFAULT_PALETTE = LnzLiveUtils.DEFAULT_PALETTE
 const BABYZ_PALETTE = LnzLiveUtils.BABYZ_PALETTE
@@ -31,10 +30,11 @@ const BABYZ_PALETTE = LnzLiveUtils.BABYZ_PALETTE
 func _ready():
 	if has_node("MeshInstance") and is_instance_valid(get_node("MeshInstance")):
 		set_species(species, is_babyz_mode)
-		$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
-		$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
-		$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
-		$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
+		if $MeshInstance.material_override:
+			$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
+			$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
+			$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+			$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 
 func build_mesh(entries_list: Array) -> void:
 	entries = entries_list.duplicate()
@@ -46,18 +46,20 @@ func build_mesh(entries_list: Array) -> void:
 	if not is_instance_valid(mesh_instance):
 		return
 
+	_surface_materials.clear()
+	if entries.empty():
+		mesh_instance.mesh = null
+		return
+
 	# Group entries into buckets by texture key
 	var buckets: Dictionary = {}
 	for entry in entries:
-		var key: Variant = null
+		var key = null
 		if entry.has_texture and is_instance_valid(entry.texture):
 			key = [entry.texture, entry.texture_size]
 		if not key in buckets:
 			buckets[key] = []
 		buckets[key].append(entry)
-
-	# Clear previous surface materials
-	_surface_materials.clear()
 
 	# Build one surface per texture bucket
 	var mesh = ArrayMesh.new()
@@ -65,58 +67,69 @@ func build_mesh(entries_list: Array) -> void:
 
 	for key in buckets:
 		var bucket_entries: Array = buckets[key]
+		if bucket_entries.empty():
+			continue
 		var st = SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
 
 		for entry in bucket_entries:
 			_emit_quad(st, entry)
 
-		st.index()
-		st.generate_normals()
-		var mesh_buffer = st.commit(mesh)
+		st.commit(mesh)
 
-		# Duplicate shader material per surface
 		var mat = preload("res://shaders/paintball_group.tres").duplicate()
-		mesh_instance.set_surface_material(surface_idx, mat)
+		_configure_surface_material(mat, key)
+		mesh.surface_set_material(surface_idx, mat)
 		_surface_materials.append(mat)
-
-		# Set ball_texture uniform for this surface
-		if key != null:
-			var tex_info = key as Array
-			var tex: Texture = tex_info[0] as Texture
-			var tex_size: Vector2 = tex_info[1] as Vector2
-			mat.set_shader_param("ball_texture", tex)
-			if tex is AtlasTexture:
-				var atlas_tex: AtlasTexture = tex
-				var rect: Rect2 = atlas_tex.region
-				mat.set_shader_param("is_atlas", true)
-				mat.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
-				mat.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
-				var raw_size: Vector2 = rect.size
-				var eff_size: Vector2 = tex_size if (tex_size != Vector2.ZERO and !tile_texture) else raw_size
-				mat.set_shader_param("texture_size", eff_size)
-				mat.set_shader_param("texture_size_raw", raw_size)
-			else:
-				mat.set_shader_param("is_atlas", false)
-				mat.set_shader_param("texture_size", tex_size)
-				mat.set_shader_param("texture_size_raw", tex.get_size())
-		else:
-			mat.set_shader_param("ball_texture", null)
-			mat.set_shader_param("is_atlas", false)
-
 		surface_idx += 1
 
 	mesh_instance.mesh = mesh
 
+
+func _configure_surface_material(mat: ShaderMaterial, key) -> void:
+	mat.set_shader_param("petz_palette", DEFAULT_PALETTE)
+	mat.set_shader_param("is_babyz_mode", is_babyz_mode)
+	mat.set_shader_param("palette_size", 256)
+	mat.set_shader_param("palette", palette if palette != null else (BABYZ_PALETTE if is_babyz_mode else DEFAULT_PALETTE))
+	mat.set_shader_param("transparency_on", transparency_on)
+	mat.set_shader_param("render_flat_colors", render_flat_colors)
+	mat.set_shader_param("base_world_position", base_ball_position)
+	mat.set_shader_param("base_ball_size", base_ball_size)
+
+	if key != null:
+		var tex_info = key as Array
+		var tex: Texture = tex_info[0] as Texture
+		var tex_size: Vector2 = tex_info[1] as Vector2
+		mat.set_shader_param("ball_texture", tex)
+		if tex is AtlasTexture:
+			var atlas_tex: AtlasTexture = tex
+			var rect: Rect2 = atlas_tex.region
+			mat.set_shader_param("is_atlas", true)
+			mat.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
+			mat.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
+			var raw_size: Vector2 = rect.size
+			var eff_size: Vector2 = tex_size if (tex_size != Vector2.ZERO and !tile_texture) else raw_size
+			mat.set_shader_param("texture_size", eff_size)
+			mat.set_shader_param("texture_size_raw", raw_size)
+		else:
+			var raw_size: Vector2 = tex.get_size()
+			var eff_size: Vector2 = tex_size if (tex_size != Vector2.ZERO and !tile_texture) else raw_size
+			mat.set_shader_param("is_atlas", false)
+			mat.set_shader_param("texture_size", eff_size)
+			mat.set_shader_param("texture_size_raw", raw_size)
+	else:
+		mat.set_shader_param("ball_texture", null)
+		mat.set_shader_param("is_atlas", false)
+
+
 func _emit_quad(st: SurfaceTool, entry) -> void:
 	var corners: Array = [
-		Vector2(-0.5, -0.5),
-		Vector2(-0.5, 0.5),
-		Vector2(0.5, 0.5),
-		Vector2(-0.5, -0.5),
-		Vector2(0.5, -0.5),
-		Vector2(0.5, 0.5)
+		Vector2(-1.0, -1.0),
+		Vector2(-1.0, 1.0),
+		Vector2(1.0, 1.0),
+		Vector2(-1.0, -1.0),
+		Vector2(1.0, -1.0),
+		Vector2(1.0, 1.0)
 	]
 
 	var r: float = float(entry.color_index + 1) / 256.0
@@ -125,15 +138,18 @@ func _emit_quad(st: SurfaceTool, entry) -> void:
 	var a: float = float(entry.fuzz_amount) / 255.0
 	var packed_color := Color(r, g, b, a)
 
-	var has_tex: float = 1.0 if entry.has_texture else 0.0
-	var tile_tex: float = 1.0 if entry.tile_texture else 0.0
+	var has_tex: int = 1 if entry.has_texture else 0
+	var tile_tex: int = 1 if entry.tile_texture else 0
+	var hi_flag: int = 1 if entry.highlight else 0
+	var flags: float = float(has_tex + (tile_tex * 2) + (hi_flag * 4))
 
-	for corner_uv in corners:
+	for corner in corners:
 		st.add_normal(entry.pb_normal)
 		st.add_color(packed_color)
-		st.add_uv(corner_uv)
+		var uv_x: float = corner.x * (1.0 + float(entry.transparent_color))
+		var uv_y: float = corner.y * (1.0 + flags)
+		st.add_uv(Vector2(uv_x, uv_y))
 		st.add_uv2(Vector2(float(entry.ball_size), entry.z_add))
-		st.add_custom(0, Color(has_tex, float(entry.transparent_color) / 255.0, tile_tex, 0.0))
 		st.add_vertex(entry.local_origin)
 
 func set_hidden(is_hidden: bool) -> void:
@@ -152,11 +168,10 @@ func set_base_ball_position(new_value: Vector3) -> void:
 			mat.set_shader_param("base_world_position", new_value)
 
 func set_base_ball_size(new_value: int) -> void:
-	if new_value != _last_base_ball_size:
-		_last_base_ball_size = new_value
-		for mat in _surface_materials:
-			if is_instance_valid(mat):
-				mat.set_shader_param("base_ball_size", new_value)
+	base_ball_size = new_value
+	for mat in _surface_materials:
+		if is_instance_valid(mat):
+			mat.set_shader_param("base_ball_size", new_value)
 
 func set_palette(new_value) -> void:
 	if new_value != null:
@@ -204,7 +219,6 @@ func update_base_ball_size_and_origins(new_size: int, new_entries: Array) -> voi
 	if new_size != base_ball_size:
 		base_ball_size = new_size
 		entries = new_entries.duplicate()
-		_last_base_ball_size = new_size
 		if has_node("MeshInstance") and is_instance_valid(get_node("MeshInstance")):
 			build_mesh(entries)
 
