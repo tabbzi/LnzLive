@@ -3795,7 +3795,6 @@ func _undo_queued_paintball() -> void:
 		else:
 			pet_node.remove_last_pending_paintball()
 	_update_unapplied_changes_label()
-	_update_unapplied_changes_label()
 
 func _redo_queued_paintball() -> void:
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")
