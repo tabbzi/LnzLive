@@ -132,9 +132,9 @@ func _emit_quad(st: SurfaceTool, entry) -> void:
 		Vector2(1.0, 1.0)
 	]
 
-	var r: float = float(entry.color_index + 1) / 256.0
-	var g: float = float(entry.outline_color_index + 1) / 256.0
-	var b: float = float(entry.outline + 4) / 256.0
+	var r: float = float(entry.color_index + 1) / 255.0
+	var g: float = float(entry.outline_color_index + 1) / 255.0
+	var b: float = float(entry.outline + 4) / 255.0
 	var a: float = float(entry.fuzz_amount) / 255.0
 	var packed_color := Color(r, g, b, a)
 

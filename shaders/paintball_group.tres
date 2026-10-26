@@ -61,13 +61,17 @@ float random (float x) {
 vec3 get_shifted_color(int palette_index) {
     int new_palette_index;
     
+    // Safely round the varying floats before converting to integers
+    int safe_color_index = int(round(v_color_index));
+    int safe_transparent = int(round(v_transparent_index));
+    
     // Calculate base decade
-    int base_decade = int(v_color_index) - int(mod(float(int(v_color_index)), 10.0));
+    int base_decade = safe_color_index - int(mod(float(safe_color_index), 10.0));
 
-    if (base_decade == 10 && int(v_transparent_index) == 1 && palette_index <= 9) {
+    if (base_decade == 10 && safe_transparent == 1 && palette_index <= 9) {
         // Keep indices 0-9 on base decade 10
          new_palette_index = palette_index;
-    } else if (int(v_transparent_index) == 1 && (palette_index <= 9 || palette_index >= 150)) {
+    } else if (safe_transparent == 1 && (palette_index <= 9 || palette_index >= 150)) {
         if (palette_index == 0) {
             // For color 0, drop 2 ramps -21 from base decade and true modulo wrap by 120 for positive index
             new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
@@ -113,7 +117,7 @@ vec2 calculate_uvs(vec2 offset, vec2 screen_uv, vec2 viewport_size) {
         float angle_v = atan(m7, m8);
 
         // Slide texture a distance equal to angle * radius
-        float radius = float(v_ball_size) / 2.0;
+        float radius = round(v_ball_size) / 2.0;
 
         // Divide by texture_size_raw to convert that pixel distance into UV space
         float shift_u = (angle_u * radius) / texture_size_raw.x;
@@ -203,21 +207,21 @@ int get_closest_petz_index(vec4 raw_color) {
 
 vec3 apply_palette_shift(int palette_index) {
     int effective_index = palette_index;
-    int v_transp = int(v_transparent_index);
+    int safe_transparent = int(round(v_transparent_index));
 
-    if (v_transp == 80 && palette_index == 1) {
+    if (safe_transparent == 80 && palette_index == 1) {
         effective_index = 89;
-    } else if (v_transp == 130 && palette_index == 2) {
+    } else if (safe_transparent == 130 && palette_index == 2) {
         effective_index = 139;
-    } else if (v_transp == 140 && palette_index == 4) {
+    } else if (safe_transparent == 140 && palette_index == 4) {
         effective_index = 149;
     }
 
-    if (v_transp > 0) {
-        if (v_transp == 1 || (effective_index >= v_transp && effective_index < v_transp + 10)) {
+    if (safe_transparent > 0) {
+        if (safe_transparent == 1 || (effective_index >= safe_transparent && effective_index < safe_transparent + 10)) {
             return get_shifted_color(effective_index);
         } else {
-            int target_decade = v_transp - int(mod(float(v_transp), 10.0));
+            int target_decade = safe_transparent - int(mod(float(safe_transparent), 10.0));
             int current_decade = effective_index - int(mod(float(effective_index), 10.0));
 
             if (current_decade == target_decade) {
@@ -238,84 +242,80 @@ void fragment() {
         discard;
     }
 
+    // Safely round all integer varyings to prevent GLSL truncation errors
+    int safe_outline = int(round(v_outline));
+    int safe_color_index = int(round(v_color_index));
+    int safe_outline_color_index = int(round(v_outline_color_index));
+    int safe_fuzz_amount = int(round(v_fuzz_amount));
+    int safe_ball_size = int(round(v_ball_size));
+
     vec2 c = center_fragcoord;
     vec2 b = base_center_fragcoord;
     vec2 st = FRAGCOORD.xy;
 
     // FUZZING
-    // Find random number based on y-pixel, offset to center of ball
     float r = random(st.y - c.y);
-    // Stretch random number between -1.0 and 1.0
     r = (r * 2.0) - 1.0;
-    // Increase distortion by fuzz amount
-    r *= float(v_fuzz_amount);
-    // Offset x line by the final random amount
+    r *= float(safe_fuzz_amount);
     st.x += floor(r);
 
     // Determine if this paintball is actively textured
     int texture_limit = is_babyz_mode ? 230 : 150;
-    bool is_textured = !render_flat_colors && v_has_texture != 0.0 && v_color_index >= 10.0 && v_color_index < float(texture_limit);
+    bool is_textured = !render_flat_colors && round(v_has_texture) != 0.0 && safe_color_index >= 10 && safe_color_index < texture_limit;
 
     // OUTLINING
     float pct2 = 0.0;
     vec2 st2 = st;
-    int effective_outline = is_textured ? -1 : int(v_outline);
+    int effective_outline = is_textured ? -1 : safe_outline;
     int modified_outline = effective_outline;
 
     if (effective_outline == -1) {
-        // no outline
         modified_outline = 0;
     }
     else if (effective_outline == 0) {
-        // one sided outline
         st2.x -= 1.0;
         vec2 vec = st2 - c;
-        pct2 = step(length(vec), float(v_ball_size) / 2.0);
+        pct2 = step(length(vec), float(safe_ball_size) / 2.0);
         modified_outline = 0;
     }
     else if (effective_outline == -2) {
-        // one sided outline
         st2.x += 1.0;
         vec2 vec = st2 - c;
-        pct2 = step(length(vec), float(v_ball_size) / 2.0);
+        pct2 = step(length(vec), float(safe_ball_size) / 2.0);
         modified_outline = 0;
     }
     else if (effective_outline > 1) {
         vec2 vec = st2 - c;
-        pct2 = step(length(vec), float(v_ball_size) / 2.0);
+        pct2 = step(length(vec), float(safe_ball_size) / 2.0);
         modified_outline -= 1;
     }
     else if (effective_outline == 1) {
-        // dotted outline
         float side = sign(st2.x - c.x);
         st2.x -= 1.0 * side;
         vec2 vec = st2 - c;
-        pct2 = step(length(vec), float(v_ball_size) / 2.0);
+        pct2 = step(length(vec), float(safe_ball_size) / 2.0);
         modified_outline = 0;
     }
     else if (effective_outline < -1) {
-        // use as debug for now
         float side = sign(st2.x - c.x);
         float side2 = sign(st2.y - c.y);
         st2.x -= 1.0 * side;
         st2.y -= 1.0 * side2;
         vec2 vec = st2 - c;
-        pct2 = step(length(vec), float(v_ball_size) / 2.0);
+        pct2 = step(length(vec), float(safe_ball_size) / 2.0);
         modified_outline = 0;
     }
 
     // DRAWING
     vec2 vector_from_base_center = st - b;
     vec2 vector_from_center = st - c;
-
-    // Draw a circle.
-    // Base ball size gives exact pixel size at camera scale 1.
+    
     float base_pct = step(length(vector_from_base_center), (float(base_ball_size) / 2.0));
-    float pct = step(length(vector_from_center), (float(v_ball_size) / 2.0 - float(modified_outline)));
+    float pct = step(length(vector_from_center), (float(safe_ball_size) / 2.0 - float(modified_outline)));
 
     pct *= base_pct;
 
-    if (effective_outline != -1)
+    if (effective_outline != -1)   
         pct2 -= pct;
 
     pct2 *= base_pct;
@@ -339,13 +339,12 @@ void fragment() {
             texture_color = apply_palette_shift(palette_index);
         }
     } else {
-        // untextured, if range check failed or has_texture is false
-        int fill_idx = int(v_color_index) == 0 ? 244 : int(v_color_index);
+        int fill_idx = safe_color_index == 0 ? 244 : safe_color_index;
         texture_color = texture(palette, vec2(float(fill_idx) / 255.0, 0.0)).rgb;
         is_transparent = false;
     }
-
-    int outline_idx = int(v_outline_color_index) == 0 ? 244 : int(v_outline_color_index);
+    
+    int outline_idx = safe_outline_color_index == 0 ? 244 : safe_outline_color_index;
     vec3 outline_color = texture(palette, vec2(float(outline_idx) / 255.0, 0.0)).rgb;
     ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
 
@@ -358,16 +357,16 @@ void fragment() {
     ALPHA = alpha_value;
     ALPHA_SCISSOR = 1.0;
 
-    if (int(v_highlight) != 0) {
+    if (round(v_highlight) != 0.0) {
         ALBEDO = vec3(1.0, 1.0, 0.0);
     }
 }
 
 void vertex() {
     // Unpack per-paintball attributes from vertex attributes (packed by SurfaceTool)
-    v_color_index = float(int(round(COLOR.r * 256.0)) - 1);
-    v_outline_color_index = float(int(round(COLOR.g * 256.0)) - 1);
-    v_outline = float(int(round(COLOR.b * 256.0)) - 4);
+    v_color_index = float(int(round(COLOR.r * 255.0)) - 1);
+    v_outline_color_index = float(int(round(COLOR.g * 255.0)) - 1);
+    v_outline = float(int(round(COLOR.b * 255.0)) - 4);
     v_fuzz_amount = float(int(round(COLOR.a * 255.0)));
 
     v_ball_size = float(int(round(UV2.x)));
