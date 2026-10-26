@@ -18,5 +18,6 @@ var texture_size: Vector2 = Vector2(256, 256)
 var transparent_color: int = 0
 var tile_texture: bool = true
 var highlight: bool = false
+var group: int = -1
 var uid: int = -1
 var paint_layer_id: int = -1

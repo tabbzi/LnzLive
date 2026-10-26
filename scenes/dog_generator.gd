@@ -49,7 +49,7 @@ export var draw_negative_balls = false
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
-var paintball_group_scene = preload("res://scenes/PaintballGroup.tscn")
+var paintball_group_scene = preload("res://PaintballGroup.tscn")
 var line_scene = preload("res://Line.tscn")
 var polygon_scene = preload("res://Polygon.tscn")
 
@@ -1488,6 +1488,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					entry.outline = pb_data.outline
 					entry.fuzz_amount = int(fuzz_to_amount(pb_data.fuzz))
 					entry.z_add = base_z_offset(base_z) + float(count)
+					entry.group = pb_data.get("group", pb_data.group if pb_data is Reference else 0)
 					entry.has_texture = false
 					entry.tile_texture = not lnz.no_texture_rotate.has(key)
 					entry.transparent_color = 0
