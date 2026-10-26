@@ -146,7 +146,7 @@ func _scan_file(file: File) -> void:
 		elif line_stripped == "##":
 			_subblock_counter += 1
 			current_var_id = 0
-		elif line.begins_with("#"):
+		elif line_stripped.begins_with("#"):
 			var match_res: RegExMatch = var_regex.search(line_stripped)
 			if match_res:
 				var parsed_id: int = int(match_res.get_string(1))
@@ -380,10 +380,10 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
 		var current_pos = reader.get_position()
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"): # Should not happen in compiled section usually
+		if line.begins_with("["): # Should not happen in compiled section usually
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -405,10 +405,10 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 func get_parsed_line_strings(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"):
+		if line.begins_with("["):
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -500,7 +500,7 @@ func parse_paintballs(reader: VirtualFileLineReader) -> void:
 		var line: String = reader.get_line()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"):
+		if line.begins_with("["):
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -596,7 +596,7 @@ func get_whiskers(reader: VirtualFileLineReader) -> void:
 		return
 
 	while true:
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
 		if line.begins_with("["):
