@@ -245,6 +245,11 @@ func _on_NotificationTimer_timeout():
 # _on_ApplyChangesButton_pressed
 
 func _load_file(filepath: String, user_flag: bool):
+	for item in history_stack:
+		item.full_text = ""
+	history_stack.clear()
+	history_index = -1
+
 	print("#".repeat(100))
 	var t_start = OS.get_ticks_msec()
 
