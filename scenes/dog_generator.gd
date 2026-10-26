@@ -2039,8 +2039,12 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# body
 	var special_ball = body_ext[0]
+	if not base_ball_dict.has(special_ball):
+		return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 	for ball_no in body_ext:
 		if ball_no == special_ball:
+			continue
+		if not base_ball_dict.has(ball_no):
 			continue
 		var ball = base_ball_dict[ball_no]
 		ball.position.z += lnz.body_extension * 2
@@ -2048,14 +2052,20 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# face
 	var head_ball_key = head_ext[0]
+	if not base_ball_dict.has(head_ball_key):
+		return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 	var head_rot = base_ball_dict[head_ball_key].rotation
 	for ball_no in face_ext:
+		if not base_ball_dict.has(ball_no):
+			continue
 		var ball = base_ball_dict[ball_no]
 		ball.position.z -= lnz.face_extension
 
 	# head enlargement
 	var head_pos = base_ball_dict[head_ball_key].position
 	for ball_no in head_ext:
+		if not base_ball_dict.has(ball_no):
+			continue
 		var ball = base_ball_dict[ball_no]
 		var addballs = addballs_by_base.get(ball_no, [])
 		if ball_no != head_ball_key:
@@ -2068,8 +2078,12 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# feet
 	for foot_group in foot_ext:
+		if not base_ball_dict.has(foot_group[0]):
+			continue
 		var foot_pos = base_ball_dict[foot_group[0]].position
 		for ball_no in foot_group:
+			if not base_ball_dict.has(ball_no):
+				continue
 			var ball = base_ball_dict[ball_no]
 			if ball_no != foot_group[0]:
 				var mod_v = ball.position - foot_pos
@@ -2083,8 +2097,12 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# ears
 	for base_ball_no in ear_ext:
+		if not base_ball_dict.has(base_ball_no):
+			continue
 		var base_ball = base_ball_dict[base_ball_no]
 		for k in ear_ext[base_ball_no]:
+			if not base_ball_dict.has(k):
+				continue
 			var ear_ball = base_ball_dict[k]
 			var vector_from_base = ear_ball.position - base_ball.position
 			vector_from_base *= (lnz.ear_extension / 100.0)
@@ -2115,8 +2133,8 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 			if m.ball_no == k:
 				var move_base = b
 				var rot = move_base.rotation
-				if m.relative_to:
-					rot = base_ball_dict.get(m.relative_to).rotation
+				if m.relative_to != null and base_ball_dict.has(m.relative_to):
+					rot = base_ball_dict[m.relative_to].rotation
 				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
 		b.texture_id = v.texture_id
 		b.color_index = v.color_index
