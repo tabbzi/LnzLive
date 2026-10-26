@@ -1930,11 +1930,6 @@ func _index_ball_to_feature(map: Dictionary, ball_no: int, index: int):
 func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 	var base_ball_dict = all_ball_dict.balls
 	var addball_dict = all_ball_dict.addballs
-	var addballs_by_base = {}
-	for ab in addball_dict.values():
-		var ar = addballs_by_base.get(ab.base, [])
-		ar.append(ab)
-		addballs_by_base[ab.base] = ar
 
 	var legs
 	var body_ext
@@ -2071,7 +2066,6 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 		if not base_ball_dict.has(ball_no):
 			continue
 		var ball = base_ball_dict[ball_no]
-		var addballs = addballs_by_base.get(ball_no, [])
 		if ball_no != head_ball_key:
 			var mod_v = ball.position - head_pos
 			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
@@ -2111,8 +2105,6 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 			var vector_from_base = ear_ball.position - base_ball.position
 			vector_from_base *= (lnz.ear_extension / 100.0)
 			ear_ball.position = base_ball.position + vector_from_base
-		#for addball in addballs_by_base.get(ball_no, []):
-		#	addball.position *= (lnz.ear_extension / 100.0)
 
 	return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 
