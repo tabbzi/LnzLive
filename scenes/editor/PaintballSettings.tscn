@@ -944,6 +944,7 @@ margin_bottom = 55.0
 [node name="DesignTotalDiameter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
 margin_right = 90.0
 margin_bottom = 29.0
+rect_min_size = Vector2( 100, 0 )
 hint_tooltip = "Minimum random size"
 custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
@@ -954,6 +955,7 @@ value = 20.0
 margin_left = 94.0
 margin_right = 184.0
 margin_bottom = 29.0
+rect_min_size = Vector2( 100, 0 )
 hint_tooltip = "Maximum random size"
 custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
