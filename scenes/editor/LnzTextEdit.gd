@@ -52,6 +52,7 @@ onready var find_panel = get_node("../FindPanel")
 var is_user_file = false
 var filepath: String
 var _last_saved_text: String = ""
+var _has_unsaved_changes: bool = false
 
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
@@ -273,6 +274,7 @@ func _load_file(filepath: String, user_flag: bool):
 
 	_set_text_preserve(contents)
 	_last_saved_text = self.text
+	_has_unsaved_changes = false
 	initialize_history()
 	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
 		pet_view._update_unapplied_changes_label()
@@ -422,13 +424,13 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 
 	if not silent:
 		_last_saved_text = self.text
+		_has_unsaved_changes = false
 		var msg = "Saved LNZ and Applied Changes!"
 		print("[STATUS] LnzTextEdit: save_file: " + msg)
 		if console_log:
 			console_log.log_message(msg)
  
 		emit_signal("file_saved", save_path)
-		_set_text_preserve(get_text())
 
 	filepath = save_path
 
@@ -438,7 +440,7 @@ func _on_Tree_backup_file():
 	save_backup()
 
 func has_unsaved_text_changes() -> bool:
-	return self.text != _last_saved_text
+	return _has_unsaved_changes
 
 func _on_ApplyChangesButton_pressed():
 	save_backup()
@@ -951,6 +953,7 @@ func _set_text_preserve(new_text: String):
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
 	_update_section_bookmarks()
+	_has_unsaved_changes = true
 
 func _on_menu_id_pressed(id):
 	if id == 100: # Find/Replace
