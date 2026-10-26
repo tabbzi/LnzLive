@@ -501,13 +501,17 @@ static func compute_distance_transform(mask: Array, size: int) -> Array:
 		
 		var x: int = i % size
 		var y: int = i / size
-		var min_d: float = 100.0
+		var min_d_sq: float = 10000.0
 		for my in range(size):
+			var dy = y - my
 			for mx in range(size):
 				if not mask[my * size + mx]:
-					var d: float = sqrt(pow(x - mx, 2) + pow(y - my, 2))
-					if d < min_d: min_d = d
+					var dx = x - mx
+					var d_sq = dx * dx + dy * dy
+					if d_sq < min_d_sq:
+						min_d_sq = d_sq
 
+		var min_d = sqrt(min_d_sq)
 		min_d = min(min_d, min(x + 0.5, min(y + 0.5, min(size - 1 - x + 0.5, size - 1 - y + 0.5))))
 		dists[i] = min_d
 	return dists
