@@ -594,18 +594,26 @@ static func get_texture_dimensions(path: String) -> Dictionary:
 	return result
 
 static func _load_atlas_manifest() -> Dictionary:
+	var cache_key = "atlas_manifest_cache"
+	var cache = Engine.get_meta(cache_key)
+	if cache != null:
+		return cache
+
+	var manifest := {}
 	var f := File.new()
 	if f.open(ATLAS_MANIFEST_PATH, File.READ) == OK:
 		var json_text := f.get_as_text()
 		f.close()
 		var parsed = JSON.parse(json_text)
 		if parsed.result is Dictionary:
-			return parsed.result
+			manifest = parsed.result
 	elif ResourceLoader.exists(ATLAS_MANIFEST_PATH):
 		var res = ResourceLoader.load(ATLAS_MANIFEST_PATH)
 		if res is Dictionary:
-			return res
-	return {}
+			manifest = res
+
+	Engine.set_meta(cache_key, manifest)
+	return manifest
 
 static func validate_8bit_bmp(path: String) -> Dictionary:
 	var f: File = File.new()
