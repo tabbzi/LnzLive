@@ -48,7 +48,7 @@ onready var header_container = $VBoxContainer/ScrollContainer/VBoxContainer/Swap
 
 onready var top_row = header_container.get_node("TopRow")
 onready var freq_edit: LineEdit = header_container.get_node("FreqRow").get_node_or_null("FreqEdit")
-onready var after_to_before_btn: Button = top_row.get_node_or_null("AfterToBeforeButton")
+onready var after_to_before_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/AfterToBeforeButton
 
 onready var middle_row = header_container.get_node("MiddleRow")
 onready var rand_after_btn: Button = header_container.get_node("TheoryRow").get_node_or_null("RandomizeAfterButton")
