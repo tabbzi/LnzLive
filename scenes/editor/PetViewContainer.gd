@@ -3247,7 +3247,8 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 
 	var space_state = camera.get_world().direct_space_state
-	var exclude_list = []
+	var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
+	var exclude_list = paintball_nodes.duplicate()
 	var hit_balls = []
 
 	for i in range(30):
