@@ -52,6 +52,7 @@ onready var find_panel = get_node("../FindPanel")
 var is_user_file = false
 var filepath: String
 var _last_saved_text: String = ""
+var _has_unsaved_changes: bool = false
 
 var _split_regex: RegEx = RegEx.new()
 var _search_regex: RegEx = RegEx.new()
@@ -245,6 +246,11 @@ func _on_NotificationTimer_timeout():
 # _on_ApplyChangesButton_pressed
 
 func _load_file(filepath: String, user_flag: bool):
+	for item in history_stack:
+		item.full_text = ""
+	history_stack.clear()
+	history_index = -1
+
 	print("#".repeat(100))
 	var t_start = OS.get_ticks_msec()
 
@@ -268,6 +274,7 @@ func _load_file(filepath: String, user_flag: bool):
 
 	_set_text_preserve(contents)
 	_last_saved_text = self.text
+	_has_unsaved_changes = false
 	initialize_history()
 	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
 		pet_view._update_unapplied_changes_label()
@@ -375,6 +382,10 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 			else:
 				base_name = source_file.trim_suffix(".lnz")
 		
+		base_name = LnzLiveUtils.sanitize_filename(base_name)
+		if base_name == null or base_name.empty():
+			base_name = "unnamed"
+		
 		var possible_file_name = "user://resources/" + base_name + ".lnz"
 		if dir.file_exists(possible_file_name):
 			possible_file_name = "user://resources/" + base_name + "_" + str(OS.get_unix_time()) + ".lnz"
@@ -386,7 +397,9 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 		dir.open("user://")
 		dir.make_dir_recursive("resources")
 		if dir.file_exists(save_path):
-			var base = output_path.get_file().get_basename()
+			var base = LnzLiveUtils.sanitize_filename(output_path.get_file().get_basename())
+			if base == null or base.empty():
+				base = "unnamed"
 			save_path = "user://resources/" + base + "_" + str(OS.get_unix_time()) + ".lnz"
 		is_user_file = true
 
@@ -411,13 +424,15 @@ func save_file(skip_history: bool = false, silent: bool = false, output_path: St
 
 	if not silent:
 		_last_saved_text = self.text
+		_has_unsaved_changes = false
 		var msg = "Saved LNZ and Applied Changes!"
 		print("[STATUS] LnzTextEdit: save_file: " + msg)
 		if console_log:
 			console_log.log_message(msg)
  
 		emit_signal("file_saved", save_path)
-		_set_text_preserve(get_text())
+		_update_section_bookmarks()
+		update()
 
 	filepath = save_path
 
@@ -427,7 +442,7 @@ func _on_Tree_backup_file():
 	save_backup()
 
 func has_unsaved_text_changes() -> bool:
-	return self.text != _last_saved_text
+	return _has_unsaved_changes
 
 func _on_ApplyChangesButton_pressed():
 	save_backup()
@@ -815,8 +830,9 @@ func _update_section_bookmarks():
 	var lines = get_line_count() 
 	
 	for i in range(lines):
-		var line_text = get_line(i).strip_edges() 
-		if line_text.begins_with("["): 
+		var line_text = get_line(i)
+		var trimmed = line_text.lstrip(" \t")
+		if trimmed.begins_with("["): 
 			bookmarks.append(i)
 
 func _on_cursor_changed():
@@ -940,6 +956,7 @@ func _set_text_preserve(new_text: String):
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
 	_update_section_bookmarks()
+	_has_unsaved_changes = true
 
 func _on_menu_id_pressed(id):
 	if id == 100: # Find/Replace
@@ -1468,11 +1485,7 @@ func add_texture_entry(line_content: String) -> void:
 			continue
 		insert_line = i
 	
-	var total_lines: int = get_line_count()
-	for i in range(total_lines, insert_line + 1, -1):
-		set_line(i, get_line(i - 1))
-	set_line(insert_line + 1, line_content)
-	
+	_insert_text_at_cursor_at_line(insert_line + 1, line_content + "\n")
 	cursor_set_line(insert_line + 1)
 
 func get_current_section_name() -> String:
@@ -2424,9 +2437,14 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 		save_file(true)
 		commit_full_snapshot("Applied Preset to Ballz #%d" % ball_no)
 
-func apply_batch_presets(changes: Dictionary):
+func apply_batch_presets(changes: Dictionary, write_to_overrides: bool = false):
 	if changes.empty(): return
 	save_backup()
+
+	if write_to_overrides:
+		_apply_bucket_to_overrides(changes)
+		return
+
 	var applied_something = false
 
 	for ball_no in changes:
@@ -2437,6 +2455,110 @@ func apply_batch_presets(changes: Dictionary):
 	if applied_something:
 		save_file(true)
 		commit_full_snapshot("Batch Applied Properties to %d Ballz" % changes.size())
+
+
+func _apply_bucket_to_overrides(changes: Dictionary):
+	var dt = OS.get_datetime()
+	var batch_label = "PAINTBUCKET %04d-%02d-%02d %02d:%02d:%02d" % [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second]
+	var batch_comment = "; " + batch_label
+
+	var color_info_entries: Array = []
+	var outline_color_entries: Array = []
+	var fuzz_entries: Array = []
+	var ball_size_entries: Array = []
+
+	for ball_no in changes:
+		var props = changes[ball_no]
+		var is_addball = ball_no >= KeyBallsData.max_base_ball_num
+		var raw_ball_no = ball_no if not is_addball else ball_no - KeyBallsData.max_base_ball_num
+
+		if props.has("color_index"):
+			color_info_entries.append({
+				"ball": raw_ball_no,
+				"color": props.color_index,
+				"group": props.get("group", -1),
+				"texture": props.get("texture_id", -1)
+			})
+
+		if props.has("outline_color_index"):
+			outline_color_entries.append({
+				"ball": raw_ball_no,
+				"outline_color": props.outline_color_index
+			})
+
+		if props.has("fuzz"):
+			fuzz_entries.append({
+				"ball": raw_ball_no,
+				"fuzz": props.fuzz
+			})
+
+		if props.has("size"):
+			ball_size_entries.append({
+				"ball": raw_ball_no,
+				"size": props.size
+			})
+
+	if not color_info_entries.empty():
+		_write_override_section("[Color Info Override]", color_info_entries, "color_info", batch_comment)
+
+	if not outline_color_entries.empty():
+		_write_override_section("[Outline Color Override]", outline_color_entries, "outline_color", batch_comment)
+
+	if not fuzz_entries.empty():
+		_write_override_section("[Fuzz Override]", fuzz_entries, "fuzz", batch_comment)
+
+	if not ball_size_entries.empty():
+		_write_override_section("[Ball Size Override]", ball_size_entries, "ball_size", batch_comment)
+
+	save_file(true)
+	commit_full_snapshot("Batch Applied Overrides to %d Ballz" % changes.size())
+
+
+func _write_override_section(section_name: String, entries: Array, entry_type: String, batch_comment: String):
+	var bounds = _ensure_section_exists(section_name)
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var insert_at = _find_insertion_line(bounds.start, bounds.end)
+
+	var lines_to_insert: Array = []
+	lines_to_insert.append(batch_comment)
+
+	for entry in entries:
+		var line_txt = ""
+
+		match entry_type:
+			"color_info":
+				line_txt = "%d%s%d%s%d%s%d" % [
+					entry.ball, delim,
+					entry.color, delim,
+					entry.group, delim,
+					entry.texture
+				]
+			"outline_color":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.outline_color
+				]
+			"fuzz":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.fuzz
+				]
+			"ball_size":
+				line_txt = "%d%s%d" % [
+					entry.ball, delim,
+					entry.size
+				]
+
+		lines_to_insert.append(line_txt)
+
+	if not lines_to_insert.empty():
+		var text_to_insert = ""
+		for i in range(lines_to_insert.size()):
+			text_to_insert += str(lines_to_insert[i])
+			if i < lines_to_insert.size() - 1:
+				text_to_insert += "\n"
+		text_to_insert += "\n"
+		_insert_text_at_cursor_at_line(insert_at, text_to_insert)
 
 func _transform_paintballz_section(transforms: Dictionary):
 	print("[STATUS] LnzTextEdit: _transform_paintballz_section: Transforming %d paintballs" % transforms.size())
@@ -2721,7 +2843,7 @@ func _on_palette_selected(filename_without_extension):
 		var found_palette_line = false
 		for i in range(start_line, end_line):
 			var line = get_line(i).strip_edges()
-			if line.begins_with(""):
+			if not line.empty() and not line.begins_with(";") and not line.begins_with("#"):
 				set_line(i, new_line)
 				found_palette_line = true
 				break
@@ -2917,6 +3039,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 	for ball_no in pending_moves.keys():
 		if ball_no >= KeyBallsData.max_base_ball_num:
 			continue
+		if not head_group.has(ball_no):
+			continue
 		var data = pending_moves[ball_no]
 		var world_delta = data.new_pos - data.orig_pos
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
@@ -2927,7 +3051,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 				var ny = int(round(parts[2].to_float() + lnz_delta.y))
 				var nz = int(round(parts[3].to_float() + lnz_delta.z))
-				if head_group.has(ball_no) and head_id != -1 and parts.size() >= 5 and (abs(ny) > 25 or abs(nz) > 25):
+				if parts.size() >= 5 and head_id != -1 and (abs(ny) > 25 or abs(nz) > 25):
 					old_anchor_lines.append({line_idx = i, old_text = get_line(i).strip_edges()})
 				break
 	
@@ -2935,9 +3059,11 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var comment_block = "; OLD [Move] entries before head group move\n"
 		for entry in old_anchor_lines:
 			comment_block += "; " + entry.old_text + " ; OLD group head move\n"
+			set_line(entry.line_idx, "; " + entry.old_text + " ; OLD group head move")
 		_insert_text_at_cursor_at_line(move_start, comment_block)
-		move_start += comment_block.split("\n").size() - 1
-		move_end += comment_block.split("\n").size() - 1
+		var comment_lines = comment_block.split("\n").size() - 1
+		move_start += comment_lines
+		move_end += comment_lines
 	
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
@@ -2962,13 +3088,26 @@ func apply_batch_moves(pending_moves: Dictionary):
 			var ny = int(round(lnz_delta.y))
 			var nz = int(round(lnz_delta.z))
 			
-			if had_old_anchor:
+			if had_old_anchor and head_group.has(ball_no) and head_id != -1:
 				# Old anchor commented out; insert new line with head anchor using old coordinates + delta
 				nx = int(round(old_parts_check[1].to_float() + lnz_delta.x))
 				ny = int(round(old_parts_check[2].to_float() + lnz_delta.y))
 				nz = int(round(old_parts_check[3].to_float() + lnz_delta.z))
 				new_parts = [str(ball_no), str(nx), str(ny), str(nz), str(head_id)]
 				insert_new_line = true
+			elif had_old_anchor:
+				for i in range(move_start, move_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					var parts = split_line(raw)
+					if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
+						if parts.size() >= 5:
+							parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+							parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+							parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+							set_line(i, _join_array(parts, delim))
+							updated = true
+						break
 			else:
 				# Find and update active line
 				for i in range(move_start, move_end):
@@ -3002,6 +3141,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 			
 			if insert_new_line:
 				var line_txt = _join_array(new_parts, delim)
+				if had_old_anchor:
+					line_txt += " ; NEW group head move"
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 				move_end += 1
@@ -3408,13 +3549,13 @@ func select_ball(section, ball_no, is_addball, max_addball_no):
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 			target_section_name = "[Add Ball]"
 		else:
-			actual_start_point = find_line_in_move_section(ball_no, current_line)
+			actual_start_point = find_line_in_move_section(ball_no)
 			target_section_name = "[Move]"
 	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no, current_line)
+		actual_start_point = find_line_in_project_section(ball_no)
 		target_section_name = "[Project Ball]"
 	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no, current_line)
+		actual_start_point = find_line_in_linez_section(ball_no)
 		target_section_name = "[Linez]"
 	
 	if actual_start_point == -1:

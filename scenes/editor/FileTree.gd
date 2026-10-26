@@ -359,7 +359,7 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 		print("[ERROR] FileTree: _on_FileDialog_file_selected: unknown import type")
 		return ""
 
-	var dest_filename: String = selected_path.get_file()
+	var dest_filename: String = LnzLiveUtils.sanitize_filename(selected_path.get_file())
 	if current_import_type == ImportType.LNZ and file_extension == "txt":
 		dest_filename = dest_filename.get_basename() + ".lnz"
 	
@@ -422,12 +422,13 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 	return ""
 		
 func web_file_dialog(accept_extensions: String) -> void:
+	var safe_ext = accept_extensions.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	JavaScript.eval("""
 	window.fileUploadData = {}
 
 	let el = document.createElement("input");
 	el.type = "file"
-	el.accept = '""" + accept_extensions + """'
+	el.accept = '""" + safe_ext + """'
 	el.addEventListener("change", (e) => {
 	  if (e.target.files.length > 0) {
 		let file = e.target.files[0]

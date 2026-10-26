@@ -286,6 +286,9 @@ static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engi
 	if is_anchored:
 		return int(round(target_visual - bhd_size))
 	
+	if engine_scale <= 0.0:
+		return 0
+	
 	var req_total: float = (target_visual / (engine_scale / 255.0)) + 2.0
 	
 	if not is_addball:
@@ -298,6 +301,9 @@ static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: fl
 	if is_anchored:
 		return max(1.0, float(bhd_size + lnz_size))
 	
+	if engine_scale <= 0.0:
+		return 0.0
+	
 	var total: float = lnz_size + bhd_size
 	if not is_addball:
 		total = total * (enl_x / 100.0) + enl_y
@@ -308,6 +314,9 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	if is_anchored:
 		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
 		return max(1.0, float(bhd_size + final_lnz))
+	
+	if engine_scale <= 0.0:
+		return 0.0
 	
 	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, false)
 	var current_base_size: float = bhd_size + final_lnz
@@ -322,6 +331,8 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 
 static func lnz_to_visual_size_snapped(lnz_size: float, engine_scale: float) -> float:
 	# Converts raw LNZ size to visual float size with even-snapping
+	if engine_scale <= 0.0:
+		return 0.0
 	var s = max(1, round((lnz_size - 2.0) * (engine_scale / 255.0)))
 	s -= 1.0 - fmod(s, 2.0)
 	return max(1.0, s)
@@ -490,13 +501,17 @@ static func compute_distance_transform(mask: Array, size: int) -> Array:
 		
 		var x: int = i % size
 		var y: int = i / size
-		var min_d: float = 100.0
+		var min_d_sq: float = 10000.0
 		for my in range(size):
+			var dy = y - my
 			for mx in range(size):
 				if not mask[my * size + mx]:
-					var d: float = sqrt(pow(x - mx, 2) + pow(y - my, 2))
-					if d < min_d: min_d = d
+					var dx = x - mx
+					var d_sq = dx * dx + dy * dy
+					if d_sq < min_d_sq:
+						min_d_sq = d_sq
 
+		var min_d = sqrt(min_d_sq)
 		min_d = min(min_d, min(x + 0.5, min(y + 0.5, min(size - 1 - x + 0.5, size - 1 - y + 0.5))))
 		dists[i] = min_d
 	return dists
@@ -579,18 +594,26 @@ static func get_texture_dimensions(path: String) -> Dictionary:
 	return result
 
 static func _load_atlas_manifest() -> Dictionary:
+	var cache_key = "atlas_manifest_cache"
+	var cache = Engine.get_meta(cache_key)
+	if cache != null:
+		return cache
+
+	var manifest := {}
 	var f := File.new()
 	if f.open(ATLAS_MANIFEST_PATH, File.READ) == OK:
 		var json_text := f.get_as_text()
 		f.close()
 		var parsed = JSON.parse(json_text)
 		if parsed.result is Dictionary:
-			return parsed.result
+			manifest = parsed.result
 	elif ResourceLoader.exists(ATLAS_MANIFEST_PATH):
 		var res = ResourceLoader.load(ATLAS_MANIFEST_PATH)
 		if res is Dictionary:
-			return res
-	return {}
+			manifest = res
+
+	Engine.set_meta(cache_key, manifest)
+	return manifest
 
 static func validate_8bit_bmp(path: String) -> Dictionary:
 	var f: File = File.new()
@@ -681,6 +704,11 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	var is_bottom_up: bool = (h_raw > 0)
 	
 	if bpp != 8:
+		f.close()
+		return {}
+	
+	if w <= 0 or h <= 0 or w > 16384 or h > 16384:
+		print("[WARNING] lnzlive_utils: BMP dimensions out of range: ", w, "x", h)
 		f.close()
 		return {}
 		
@@ -937,10 +965,11 @@ static func get_web_file_name() -> String:
 
 static func web_download_text(filename: String, content: String) -> void:
 	var escaped = content.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n")
+	var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	var element = document.createElement('a');
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent('""" + escaped + """'));
-	element.setAttribute('download', '""" + filename + """');
+	element.setAttribute('download', '""" + safe_filename + """');
 	element.style.display = 'none';
 	document.body.appendChild(element);
 	element.click();
@@ -950,10 +979,11 @@ static func web_download_text(filename: String, content: String) -> void:
 
 static func web_download_json(filename: String, content: String) -> void:
 	var base64_content: String = Marshalls.raw_to_base64(content.to_utf8())
+	var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	var element = document.createElement('a');
 	element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-	element.setAttribute('download', '""" + filename + """');
+	element.setAttribute('download', '""" + safe_filename + """');
 	element.style.display = 'none';
 	document.body.appendChild(element);
 	element.click();
@@ -1014,11 +1044,12 @@ static func export_json_preset(settings_dict: Dictionary, preset_name: String, c
 	var filename: String = str(preset_name, "_", OS.get_unix_time(), ".json")
 	
 	if OS.has_feature("HTML5"):
+		var safe_filename = filename.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 		var base64_content: String = Marshalls.raw_to_base64(json_string.to_utf8())
 		var js_code: String = """
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
-		element.setAttribute('download', '""" + filename + """');
+		element.setAttribute('download', '""" + safe_filename + """');
 		element.style.display = 'none';
 		document.body.appendChild(element);
 		element.click();
@@ -1056,6 +1087,7 @@ static func ensure_web_ref_dir() -> void:
 	""")
 
 static func web_upload_image(dest_dir: String, callback_target: Object, callback_method: String) -> void:
+	var safe_dest_dir = dest_dir.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r")
 	var js_code = """
 	window.refUploadData = {}
 	var el = document.createElement("input");
@@ -1107,10 +1139,10 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 		return
 	var parent: Node = le.get_parent()
 
-	var hbox = HBoxContainer.new()
+	var hbox: HBoxContainer = HBoxContainer.new()
 	hbox.name = le_name + "Wrapper"
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.rect_min_size = le.rect_min_size
+	hbox.size_flags_horizontal = 0
+	hbox.add_constant_override("separation", 2)
 
 	var pos: int = le.get_index()
 	var orig_owner: Node = le.owner
@@ -1123,16 +1155,46 @@ static func setup_preview_wrapper(parent_script: Object, le: Control, le_name: S
 	if is_instance_valid(orig_owner):
 		hbox.owner = orig_owner
 	le.owner = orig_owner
-	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var preview_container = HBoxContainer.new()
+	var preview_container: HBoxContainer = HBoxContainer.new()
 	preview_container.name = le_name + "_Preview"
+	preview_container.rect_min_size = Vector2(16, 0)
 	hbox.add_child(preview_container)
 	if is_instance_valid(orig_owner):
 		preview_container.owner = orig_owner
 
 	if not le.is_connected("text_changed", parent_script, "_on_color_list_text_changed"):
 		le.connect("text_changed", parent_script, "_on_color_list_text_changed", [preview_container])
+
+static func setup_relative_width(control: Control, char_count: int = 3) -> void:
+	if not is_instance_valid(control):
+		return
+	if control is LineEdit:
+		control.add_constant_override("minimum_spaces", 1)
+	elif control is SpinBox:
+		var inner_le: LineEdit = control.get_line_edit()
+		if is_instance_valid(inner_le):
+			inner_le.add_constant_override("minimum_spaces", 1)
+
+	var font: Font = control.get_font("font") if control.has_method("get_font") else null
+	var sample: String = ""
+	for _i in range(max(1, char_count)):
+		sample += "0"
+
+	var text_width: float = float(char_count) * 8.0
+	if font:
+		text_width = font.get_string_size(sample).x
+
+	var style_pad: float = 8.0
+	if control.has_method("get_stylebox"):
+		var sb: StyleBox = control.get_stylebox("normal")
+		if sb:
+			style_pad = max(6.0, sb.get_minimum_size().x + 2.0)
+
+	var target_w: float = clamp(ceil(text_width + style_pad), 28.0, 64.0)
+	control.rect_min_size.x = target_w
+	control.rect_size.x = target_w
+	control.set_meta("relative_char_count", char_count)
 
 static func color_to_hsv(color: Color) -> Vector3:
 	var h: float = 0.0
@@ -1201,22 +1263,27 @@ class ColorSorter:
 		return 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b < 0.2126 * b.r + 0.7152 * b.g + 0.0722 * b.b
 
 static func get_sorted_palette_indices(colors: Array, sort_mode: String) -> Array:
-	var sorted: Array = colors.duplicate()
+	var indexed: Array = []
+	for i in range(colors.size()):
+		indexed.append([i, colors[i]])
 	var sorter = ColorSorter.new()
 
 	if sort_mode.begins_with("hue"):
-		sorted.sort_custom(sorter, "cmp_hue")
+		indexed.sort_custom(sorter, "cmp_hue")
 	elif sort_mode.begins_with("saturation"):
-		sorted.sort_custom(sorter, "cmp_sat")
+		indexed.sort_custom(sorter, "cmp_sat")
 	elif sort_mode.begins_with("value"):
-		sorted.sort_custom(sorter, "cmp_val")
+		indexed.sort_custom(sorter, "cmp_val")
 	elif sort_mode.begins_with("luminance"):
-		sorted.sort_custom(sorter, "cmp_lum")
+		indexed.sort_custom(sorter, "cmp_lum")
 
 	if sort_mode.ends_with("_desc"):
-		sorted.invert()
+		indexed.invert()
 
-	return sorted
+	var result: Array = []
+	for entry in indexed:
+		result.append(entry[0])
+	return result
 
 static func find_closest_color_index(colors: Array, target: Color) -> int:
 	var best_idx: int = 0
@@ -1231,3 +1298,14 @@ static func find_closest_color_index(colors: Array, target: Color) -> int:
 static func find_closest_color(colors: Array, target: Color) -> Color:
 	var idx = find_closest_color_index(colors, target)
 	return colors[idx]
+
+static func sanitize_filename(name: String) -> String:
+	var sanitized := ""
+	var regex := RegEx.new()
+	regex.compile("[a-zA-Z0-9 _\\-\\.]")
+	var matches := regex.search_all(name)
+	for m in matches:
+		sanitized += m.get_string()
+	if sanitized.empty():
+		sanitized = "unnamed"
+	return sanitized

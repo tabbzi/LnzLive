@@ -141,3 +141,6 @@ func _clear_hidden_state_lists():
 	gen._hidden_polygons.clear()
 	gen._hidden_paintballs.clear()
 	gen._negative_balls.clear()
+
+func is_hidden_ball(ball_no: int) -> bool:
+	return gen._hidden_balls.has(ball_no)

@@ -403,7 +403,7 @@ func _ready() -> void:
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
-		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+		recolor_settings_instance.connect("apply_batch_bucket", self, "_on_recolor_settings_apply_batch_bucket")
 		recolor_settings_instance.connect("apply_batch_bucket", self, "_update_unapplied_changes_label")
 
 	var shader_settings_btn: Button = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
@@ -640,7 +640,8 @@ func get_lnz_scale() -> float:
 		return 1.0
 
 func _process(_delta: float) -> void:
-	_update_reference_image_bg()
+	if reference_image_bg and reference_image_bg.visible:
+		_update_reference_image_bg()
 	if is_instance_valid(_overlay_camera):
 		_sync_overlay()
 
@@ -802,7 +803,9 @@ func _process(_delta: float) -> void:
 
 	# HOTKEYS
 	if is_instance_valid(ball_label) and ball_label.visible:
-		var hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+		var hovered_ball = highlighted_ball
+		if not hovered_ball or not is_instance_valid(hovered_ball):
+			hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
 		var hotkey_hint: String = _get_hotkey_hint_for_ball(hovered_ball)
 		footer = hotkey_hint
 
@@ -961,15 +964,11 @@ func _update_3d_gizmo_visibility() -> void:
 	var show_y: bool = hotkey_y if any_hotkey else ui_active_y
 	var show_z: bool = hotkey_z if any_hotkey else ui_active_z
 
-	if not is_dragging:
+	if not is_dragging and not any_hotkey:
 		gizmo_3d_root.visible = false
 		return
 
-	gizmo_x.visible = show_x
-	gizmo_y.visible = show_y
-	gizmo_z.visible = show_z
-
-	if not is_dragging and not any_hotkey:
+	if not is_dragging:
 		gizmo_3d_root.visible = false
 		return
 
@@ -3388,6 +3387,10 @@ func _on_hidden_balls_changed(count: int) -> void:
 	else:
 		hidden_balls_label.visible = false
 
+func _on_recolor_settings_apply_batch_bucket(changes, write_to_overrides) -> void:
+	if is_instance_valid(lnz_text_edit):
+		lnz_text_edit.apply_batch_presets(changes, write_to_overrides)
+
 func _update_unapplied_changes_label(_unused = null) -> void:
 	var total = 0
 	if is_instance_valid(lnz_text_edit):
@@ -3692,7 +3695,8 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
 
 	var space_state = camera.get_world().direct_space_state
-	var exclude_list = []
+	var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
+	var exclude_list = paintball_nodes.duplicate()
 	var hit_balls = []
 
 	for i in range(30):
@@ -4260,7 +4264,6 @@ func _undo_queued_paintball() -> void:
 			pet_node.remove_paintball_by_uid(uid)
 		else:
 			pet_node.remove_last_pending_paintball()
-	_update_unapplied_changes_label()
 	_update_unapplied_changes_label()
 
 func _redo_queued_paintball() -> void:

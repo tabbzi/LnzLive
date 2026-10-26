@@ -2,7 +2,7 @@ extends Control
 
 signal recolor(recolor_info)
 signal apply_bucket(ball_no, properties)
-signal apply_batch_bucket(changes)
+signal apply_batch_bucket(changes, write_to_overrides)
 signal apply_eye_colors(eye_colors_info)
 
 onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
@@ -17,9 +17,10 @@ onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/B
 onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
 onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
 onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
-onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/NoTextureRotateCheck
+onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/NoTextureRotateCheck
 onready var bucket_apply_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton
 onready var bucket_clear_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton
+onready var bucket_write_overrides_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/WriteToOverridesCheck
 
 onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
@@ -46,18 +47,19 @@ onready var apply_eye_colors_btn: Button = $VBoxContainer/ScrollContainer/VBoxCo
 onready var header_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header
 
 onready var top_row = header_container.get_node("TopRow")
-onready var freq_edit: LineEdit = top_row.get_node_or_null("FreqEdit")
+onready var freq_edit: LineEdit = header_container.get_node("FreqRow").get_node_or_null("FreqEdit")
+onready var after_to_before_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/AfterToBeforeButton
 
 onready var middle_row = header_container.get_node("MiddleRow")
-onready var rand_after_btn: Button = middle_row.get_node_or_null("RandomizeAfterButton")
-onready var color_theory_select: OptionButton = middle_row.get_node_or_null("ColorTheorySelect")
+onready var rand_after_btn: Button = header_container.get_node("TheoryRow").get_node_or_null("RandomizeAfterButton")
+onready var color_theory_select: OptionButton = header_container.get_node("TheoryRow").get_node_or_null("ColorTheorySelect")
 onready var theory_seed_picker: ColorPickerButton = middle_row.get_node_or_null("TheorySeedColor")
 
 onready var bottom_row = header_container.get_node("BottomRow")
 onready var random_seed_check: CheckBox = bottom_row.get_node_or_null("RandomSeedCheckBox")
 onready var natural_colors_check: CheckBox = bottom_row.get_node_or_null("NaturalColorsOnly")
 onready var texturable_only_check: CheckBox = bottom_row.get_node_or_null("TexturableOnly")
-onready var tex_list_check: CheckBox = bottom_row.get_node_or_null("TexListCheck")
+onready var tex_list_check: CheckBox = header_container.get_node("TexListRow").get_node_or_null("TexListCheck")
 
 onready var check_container_2 = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2
 onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("NoseBallz")
@@ -91,7 +93,12 @@ func _ready() -> void:
 	dog_generator = LnzLiveUtils.get_pet_node(get_tree().root)
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
-
+	
+	var scene_root: Node = get_tree().root.find_node("SceneRoot", true, false)
+	if is_instance_valid(scene_root) and scene_root.has_signal("global_font_updated"):
+		if not scene_root.is_connected("global_font_updated", self, "_on_global_font_updated"):
+			scene_root.connect("global_font_updated", self, "_on_global_font_updated")
+	
 	_setup_swap_lines()
 
 	_setup_grid_preview(bucket_color_edit, bucket_color_icon, "BucketColor")
@@ -114,6 +121,9 @@ func _ready() -> void:
 
 	if is_instance_valid(rand_after_btn):
 		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
+	
+	if is_instance_valid(after_to_before_btn):
+		after_to_before_btn.connect("pressed", self, "_on_AfterToBefore_pressed")
 	
 	if is_instance_valid(theory_seed_picker):
 		theory_seed_picker.connect("color_changed", self, "_on_theory_seed_changed")
@@ -160,6 +170,46 @@ func _populate_color_theory_options() -> void:
 func _on_theory_seed_changed(color: Color) -> void:
 	pass
 
+func _on_global_font_updated() -> void:
+	if is_instance_valid(freq_edit):
+		LnzLiveUtils.setup_relative_width(freq_edit, 3)
+
+	var header_buttons: Array = [
+		top_row.get_node_or_null("AddButton") if is_instance_valid(top_row) else null,
+		top_row.get_node_or_null("ClearButton") if is_instance_valid(top_row) else null,
+		top_row.get_node_or_null("AutofillButton") if is_instance_valid(top_row) else null,
+		theory_seed_picker,
+		color_theory_select,
+		rand_after_btn
+	]
+	for btn in header_buttons:
+		if is_instance_valid(btn):
+			btn.clip_text = false
+
+	if is_instance_valid(theory_seed_picker):
+		theory_seed_picker.rect_min_size.x = 80.0
+
+	var compact_edits: Array = [
+		bucket_color_edit, bucket_outline_edit, bucket_type_edit,
+		bucket_fuzz_edit, bucket_texture_edit,
+		eye_outline_left_edit, eye_outline_right_edit, eyelid_edit,
+		iris_outline_left_edit, iris_outline_right_edit,
+		iris_col_left_edit, iris_col_right_edit,
+		eye_col_left_edit, eye_col_right_edit
+	]
+	for le in compact_edits:
+		if is_instance_valid(le):
+			le.add_constant_override("minimum_spaces", 1)
+			le.rect_min_size.x = 36.0
+	for line in swap_lines_container.get_children():
+		if line.is_queued_for_deletion():
+			continue
+		for field_name in ["BeforeColor", "BeforeTexture", "AfterColor", "AfterTexture"]:
+			var le: Control = line.find_node(field_name, true, false)
+			if is_instance_valid(le):
+				LnzLiveUtils.setup_relative_width(le, 3)
+	_on_bucket_scroll_resized()
+
 func _on_random_seed_toggled(is_on: bool) -> void:
 	pass
 
@@ -193,6 +243,14 @@ func _add_swap_line() -> Control:
 	
 	LnzLiveUtils.setup_preview_wrapper(self, before_color, "BeforeColor_" + str(id))
 	LnzLiveUtils.setup_preview_wrapper(self, after_color, "AfterColor_" + str(id))
+	
+	LnzLiveUtils.setup_relative_width(before_color, 3)
+	LnzLiveUtils.setup_relative_width(after_color, 3)
+	
+	var before_texture = line.get_node("BeforeTexture")
+	var after_texture = line.get_node("AfterTexture")
+	LnzLiveUtils.setup_relative_width(before_texture, 3)
+	LnzLiveUtils.setup_relative_width(after_texture, 3)
 	
 	var remove_btn: Button = line.get_node_or_null("RemoveButton")
 	if remove_btn:
@@ -269,6 +327,7 @@ func _refresh_all_previews() -> void:
 		var ac = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor")
 		var ac_prev: Node = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor_" + str(id) + "_Preview")
 		if ac and ac_prev: _on_color_list_text_changed(ac.text, ac_prev)
+
 
 func _on_palette_changed(palette_name = "") -> void:
 	if not dog_generator or not dog_generator.current_palette_texture:
@@ -413,7 +472,10 @@ func _on_ApplyBucket_pressed() -> void:
 		var changes = queued_bucket_changes.duplicate()
 		queued_bucket_changes.clear()
 		_saved_visual_states.clear()
-		emit_signal("apply_batch_bucket", changes)
+		var write_to_overrides = false
+		if is_instance_valid(bucket_write_overrides_check):
+			write_to_overrides = bucket_write_overrides_check.pressed
+		emit_signal("apply_batch_bucket", changes, write_to_overrides)
 	
 	_pending_bucket_count = 0
 	_update_bucket_buttons()
@@ -490,6 +552,43 @@ func _on_ClearSwap_pressed() -> void:
 	_refresh_all_previews()
 	populate_bucket_palette()
 
+
+func _on_AfterToBefore_pressed() -> void:
+	var lines: Array = swap_lines_container.get_children()
+	for l in lines:
+		if l.is_queued_for_deletion():
+			continue
+		var before_color: LineEdit = l.find_node("BeforeColor", true, false)
+		var before_texture: LineEdit = l.find_node("BeforeTexture", true, false)
+		var after_color: LineEdit = l.find_node("AfterColor", true, false)
+		var after_texture: LineEdit = l.find_node("AfterTexture", true, false)
+
+		if is_instance_valid(after_color) and is_instance_valid(before_color):
+			var after_col_text: String = after_color.text.strip_edges()
+			var before_col_text: String = before_color.text.strip_edges()
+			if not after_col_text.empty():
+				var temp: String = before_col_text
+				before_color.text = after_col_text
+				after_color.text = temp
+			elif not before_col_text.empty():
+				after_color.text = before_col_text
+				before_color.text = ""
+
+		if is_instance_valid(after_texture) and is_instance_valid(before_texture):
+			var after_tex_text: String = after_texture.text.strip_edges()
+			var before_tex_text: String = before_texture.text.strip_edges()
+			if not after_tex_text.empty():
+				var temp: String = before_tex_text
+				before_texture.text = after_tex_text
+				after_texture.text = temp
+			elif not before_tex_text.empty():
+				after_texture.text = before_tex_text
+				before_texture.text = ""
+
+	_refresh_all_previews()
+	save_settings()
+
+
 func populate_bucket_palette() -> void:
 	if not is_instance_valid(bucket_palette_grid):
 		return
@@ -510,9 +609,13 @@ func populate_bucket_palette() -> void:
 
 
 func _on_bucket_scroll_resized() -> void:
-	var scroll: Control = bucket_palette_grid.get_parent()
-	if is_instance_valid(scroll):
-		PaletteGrid.recalculate_columns(bucket_palette_grid, scroll.rect_size.x, 24.0, 0, 16)
+	if is_instance_valid(bucket_container) and is_instance_valid(bucket_palette_grid):
+		var avail_w: float = bucket_container.rect_size.x
+		if avail_w <= 0.0:
+			var scroll: Control = bucket_palette_grid.get_parent()
+			if is_instance_valid(scroll):
+				avail_w = scroll.rect_size.x
+		PaletteGrid.recalculate_columns(bucket_palette_grid, avail_w, 24.0, 0, 16)
 
 func _on_bucket_palette_color_selected(index: int) -> void:
 	if bucket_color_edit:

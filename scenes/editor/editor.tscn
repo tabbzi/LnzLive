@@ -916,9 +916,9 @@ align = 2
 
 [node name="ShrinkSpinBox" type="SpinBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 647.0
-margin_right = 721.0
+margin_right = 722.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 25, 0 )
+rect_min_size = Vector2( 75, 0 )
 hint_tooltip = "Change window resolution"
 min_value = 1.0
 max_value = 2.0
@@ -950,9 +950,9 @@ text = "<"
 
 [node name="AnimPicker" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 33.0
-margin_right = 83.0
+margin_right = 108.0
 margin_bottom = 20.0
-rect_min_size = Vector2( 0, 20 )
+rect_min_size = Vector2( 75, 20 )
 mouse_filter = 1
 size_flags_vertical = 0
 custom_styles/normal = ExtResource( 19 )
@@ -964,8 +964,8 @@ __meta__ = {
 }
 
 [node name="NextAnim" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 87.0
-margin_right = 112.0
+margin_left = 112.0
+margin_right = 137.0
 margin_bottom = 22.0
 rect_min_size = Vector2( 25, 20 )
 size_flags_vertical = 0
@@ -978,8 +978,8 @@ custom_fonts/font = ExtResource( 27 )
 text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 116.0
-margin_right = 593.0
+margin_left = 141.0
+margin_right = 594.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -989,8 +989,8 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 597.0
-margin_right = 647.0
+margin_left = 598.0
+margin_right = 648.0
 margin_bottom = 22.0
 rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
@@ -1010,7 +1010,7 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 651.0
+margin_left = 652.0
 margin_top = 4.0
 margin_right = 683.0
 margin_bottom = 18.0
@@ -1156,7 +1156,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-12"
+text = "PB-beta-v1.4.8-preview-15"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]

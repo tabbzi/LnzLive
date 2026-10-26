@@ -104,6 +104,69 @@ The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-
 3. **Model Generator (`scenes/dog_generator.gd`)**: Process takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
 4. **Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
 
+### Data Flow Details
+
+**Text → Visual:** `LnzTextEdit` saves → `dog_generator._on_OptionButton_file_saved()` → `generate_pet()` → `recompose_model()` → `init_visual_balls()` → `generate_balls/lines/polygons()`.
+
+**Visual → Text:** `PetViewContainer` input → `LnzTextEdit` update → Signals → `dog_generator.recompose_model()` → rebuild.
+
+**Undo:** Dual history: `SNAPSHOT` (full text) and `LOGICAL` (single-line diff, merged if <300ms same ID).
+
+### BHD / BDT Binary Formats
+
+**BHD (Binary Header):** Model definition file containing ball count, default sizes, and byte offset ranges mapping to BDT frames. Uses heuristic fallback scanning for custom/non-standard files.
+
+**BDT (Binary Animation):** Animation frame data containing `Vector3` position and rotation data for each ball at each frame.
+
+Both parsers are in `data_classes/bhd_parser.gd` and `data_classes/bdt_parser.gd`. They are included in `resources/animations/` and parsed at runtime. Custom or non-standard files may require heuristic fallback parsing.
+
+### Export Process
+
+LnzLive is configured to export to three platforms via `export_presets.cfg`:
+
+| Platform | Export Path | Template |
+|---|---|---|
+| **HTML5 (Web)** | `export/index.html` | `godot.javascript.opt.zip` / `godot.javascript.opt.debug.zip` |
+| **Windows Desktop** | `export/LnzLive_PB-beta-v###-preview-##.exe` | `godot.windows.opt.64.exe` / `godot.windows.opt.debug.64.exe` |
+| **Linux/X11** | `export/LnzLive_PB-beta-v###-preview-##.x11_64.x86_64` | `godot.x11.opt.64` |
+
+**Export templates** are provided by [Draconizations/godot-petz](https://github.com/Draconizations/godot-petz/releases/tag/v0.1.0) and stored in the `export/` folder. Both release and debug versions are included.
+
+**Required export settings:**
+
+```
+export_filter = "all_resources"
+include_filter = "*.bmp,*.lnz,*.bdt,*.bhd,*.png,*.gif,*.ico,*.ttf,*.json"
+exclude_filter = "export/,addons/,engine/,local/,test/,*.rst"
+```
+
+**Windows-specific:**
+```
+64_bits = true
+embed_pck = true
+s3tc = true
+no_bptc_fallbacks = true
+timestamp = true
+codesign/timestamp = true
+```
+
+**Linux-specific:**
+```
+64_bits = true
+embed_pck = true
+s3tc = true
+no_bptc_fallbacks = true
+```
+
+**Web-specific:**
+```
+html/full_window_size = true
+custom_template/debug = "path/to/godot.javascript.opt.debug.zip"
+custom_template/release = "path/to/godot.javascript.opt.zip"
+```
+
+To test the web export locally, serve from the export directory using `python -m http.server 8080` and navigate to `http://localhost:8080`. Note that host or browser restrictions (e.g., clipboard access, host policies) may prevent the web version from catching everything that could go wrong when hosting LnzLive online (e.g., on itch.io).
+
 ### Logic
 
 1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into LNZ integer units.  
@@ -125,6 +188,17 @@ The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-
 #### Atlas (PNG) files
 
 ### Palettes
+
+## Autoload Singletons
+
+LnzLive uses Godot's autoload system to register global singletons. These are configured in `project.godot` under the `[autoload]` section:
+
+| Singleton | Script |
+|---|---|
+| **KeyBallsData** | `data_classes/key_balls_data.gd` |
+| **PaletteCache** | `data_classes/palette_cache.gd` |
+| **HotkeyManager** | `data_classes/hotkey_manager.gd` |
+| **PaintballLayerManager** | `data_classes/paintball_layer_manager.gd` |
 
 ## Graphics
 
@@ -274,7 +348,42 @@ Most tools and modes have settings panels that extend `DraggablePanel.gd` to all
 
 ## Resources
 
-All the static assets, examples, and original game data required to render the models.
+### Model (BHD) files
+
+### Animation (BDT) files
+
+### LNZ files
+
+### Textures
+
+#### Texture (BMP) files
+
+#### Atlas (PNG) files
+
+### Palettes
+
+## Texture Atlas System
+
+The texture atlas system is critical for performance. Instead of loading hundreds of individual BMP textures, LnzLive uses pre-baked sprite sheets (atlas textures) that pack multiple textures into a single image.
+
+### How it works:
+
+1. **Atlas Manifest:** A JSON manifest file maps individual texture IDs to their UV coordinates within the atlas.
+2. **Texture Cache:** `data_classes/texture_cache.gd` (`TextureCache` class) manages loading with caching. It holds `_texture_cache`, `_atlas_manifest`, `_atlas_manifest_normalized`, and `_atlas_textures` dictionaries.
+3. **Initialization:** `TextureCache.init(atlas_manifest_data)` is called during startup with the parsed JSON manifest.
+4. **Lookup Flow:** Atlas manifest → case-insensitive filename match → CPU-baked 8-bit BMP fallback → `ResourceLoader` → preloader fallback.
+5. **Normalization:** Manifest keys are case-normalized for lookup consistency.
+
+### Utility Scripts:
+
+- `scripts/texture_atlas_baker.gd`: Generates texture atlas from BMP textures
+- `scripts/texture_atlas_baker_per_game.gd`: Game-specific (Petz, Babyz) texture atlas baking script
+- `scripts/texture_reimporter.gd`: Re-imports modified textures into texture atlas
+- `scripts/thumbnail_baker.gd`: Generates thumbnail previews for FileTree
+
+You will rarely need to run or modify these scripts. They are primarily used during the build process when adding new textures to the project.
+
+## Resources
 
 - **`animations/`**: Contains the original binary `.bhd` and `.bdt` files for standard base models (e.g., `DOG`, `CAT`, `BABY`) and toys (e.g., `BONE`, `MOUSE`). These are parsed to determine base body proportions and frame-by-frame 3D positioning.
 - **`fonts/`**: Custom fonts used throughout the editor interface, including monospaced coding fonts (`PixelCode`, `CascadiaCode`) for the text editor and retro pixel fonts for the UI labels.
@@ -332,6 +441,17 @@ Use the following method to send messages to both the debug window and in-editor
 3. **Call `console_log.log_message()`** for the UI panel: `if console_log: console_log.log_message("[STATUS] Loading file...")`
 
 Use descriptive prefixes to categorize messages: `[STATUS]`, `[ERROR]`, `[WARNING]`, `[TIME]`, `[HELPER]`, and also note the script from which the message originated (helps pinpoint bugs later, too!)
+
+### Debug Logging
+
+LnzLive also writes debug logs to a file via Godot's built-in logging system. The log path is configured in `project.godot`:
+
+```
+file_logging/enable_file_logging=true
+file_logging/log_path="user://logs/lnzlive_debug.log"
+```
+
+The log file is stored at `%APPDATA%/Godot/app_userdata/LnzLive/logs/lnzlive_debug.log` on Windows. This is useful for tracking down issues that occur outside of the Godot editor.
 
 ## Developer Tools
 

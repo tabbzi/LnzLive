@@ -19,6 +19,7 @@ var context_specific_actions: Array = [
 	"texture_tool_bucket_toggle",
 	"design_stamp_scale", "design_stamp_scale_down", "design_stamp_rotate", "design_stamp_rotate_down",
 	"design_sync_brush", "design_sync_line", "design_sync_horizontal", "design_sync_vertical",
+	"paint_palette_multi_pick",
 	"text_save", "text_undo", "text_redo", "text_find",
 	"text_next_section", "text_prev_section", "text_jump_ball_index",
 ]
@@ -155,6 +156,7 @@ var default_bindings: Dictionary = {
 	"paint_scale_brush_alt_down": { "scancode": KEY_DOWN, "ctrl": false, "shift": true, "alt": false, "meta": false },
 	"paint_mini_undo": { "scancode": KEY_Z, "ctrl": true, "shift": true, "alt": false, "meta": false },
 	"paint_mini_redo": { "scancode": KEY_X, "ctrl": true, "shift": true, "alt": false, "meta": false },
+	"paint_palette_multi_pick": { "scancode": KEY_SHIFT, "ctrl": false, "shift": false, "alt": false, "meta": false },
 
 	# === Paintball Design Mode ===
 	"design_stamp_scale": { "scancode": BUTTON_WHEEL_UP, "ctrl": true, "shift": false, "alt": false, "meta": false },
@@ -241,7 +243,8 @@ var action_groups: Dictionary = {
 		"paint_straight_line", "paint_straight_line_alt",
 		"paint_lock_axis_x", "paint_lock_axis_y",
 		"paint_scale_brush", "paint_scale_brush_down", "paint_scale_brush_alt", "paint_scale_brush_alt_down",
-		"paint_mini_undo", "paint_mini_redo"
+		"paint_mini_undo", "paint_mini_redo",
+		"paint_palette_multi_pick"
 	],
 	"Paintball Design": [
 		"design_stamp_scale", "design_stamp_scale_down", "design_stamp_rotate", "design_stamp_rotate_down",
@@ -364,6 +367,7 @@ var action_display_names: Dictionary = {
 	"paint_scale_brush_alt_down": "Scale Brush (down)",
 	"paint_mini_undo": "Mini-History Undo",
 	"paint_mini_redo": "Mini-History Redo",
+	"paint_palette_multi_pick": "Multi-Pick Palette Color (hold)",
 	"design_stamp_scale": "Scale Stamp",
 	"design_stamp_scale_down": "Scale Stamp (down)",
 	"design_stamp_rotate": "Rotate Stamp",
@@ -676,6 +680,7 @@ func _bindings_match(a: Dictionary, b: Dictionary) -> bool:
 func _is_standard_key(scancode: int) -> bool:
 	return (scancode >= KEY_SPACE and scancode <= KEY_Z) or \
 		(scancode >= KEY_ESCAPE and scancode <= KEY_F16) or \
+		(scancode >= KEY_SHIFT and scancode <= KEY_META) or \
 		(scancode >= KEY_KP_MULTIPLY and scancode <= KEY_KP_9)
 
 

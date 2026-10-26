@@ -146,7 +146,7 @@ func _scan_file(file: File) -> void:
 		elif line_stripped == "##":
 			_subblock_counter += 1
 			current_var_id = 0
-		elif line.begins_with("#"):
+		elif line_stripped.begins_with("#"):
 			var match_res: RegExMatch = var_regex.search(line_stripped)
 			if match_res:
 				var parsed_id: int = int(match_res.get_string(1))
@@ -380,10 +380,10 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
 		var current_pos = reader.get_position()
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"): # Should not happen in compiled section usually
+		if line.begins_with("["): # Should not happen in compiled section usually
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -405,10 +405,10 @@ func get_parsed_lines(reader: VirtualFileLineReader, keys: Array) -> Array:
 func get_parsed_line_strings(reader: VirtualFileLineReader, keys: Array) -> Array:
 	var return_array: Array = []
 	while true:
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"):
+		if line.begins_with("["):
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -500,7 +500,7 @@ func parse_paintballs(reader: VirtualFileLineReader) -> void:
 		var line: String = reader.get_line()
 		if line.empty() and reader.eof_reached():
 			break
-		if line.begins_with("[") or line.begins_with("#2"):
+		if line.begins_with("["):
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -520,6 +520,10 @@ func parse_paintballs(reader: VirtualFileLineReader) -> void:
 		var outline: int = int(split_line[8].get_string())
 		var texture: int = int(split_line[10].get_string())
 		var anchored: int = int(split_line[11].get_string()) if split_line.size() > 11 else 0
+
+		if base < 0:
+			print("[WARNING] lnz_parser: negative paintball base ball index ", base, " skipped")
+			continue
 
 		var paintball: PaintBallData = PaintBallData.new(base, diameter, position, color, outline_color, outline, fuzz, 0, texture, anchored)
 		var pb_array: Array = self.paintballs.get(base, [])
@@ -542,6 +546,9 @@ func parse_moves(reader: VirtualFileLineReader) -> void:
 		if split_line.size() < 4:
 			continue
 		var base: int = int(split_line[0].get_string())
+		if base < 0:
+			print("[WARNING] lnz_parser: negative move base ball index ", base, " skipped")
+			continue
 		var position: Vector3 = Vector3(
 			int(split_line[1].get_string()),
 			int(split_line[2].get_string()),
@@ -589,7 +596,7 @@ func get_whiskers(reader: VirtualFileLineReader) -> void:
 		return
 
 	while true:
-		var line: String = reader.get_line().dedent()
+		var line: String = reader.get_line().strip_edges()
 		if line.empty() and reader.eof_reached():
 			break
 		if line.begins_with("["):
@@ -800,6 +807,9 @@ func get_polygons(reader: VirtualFileLineReader) -> void:
 func get_ball_size_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "size"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_ball_size_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			balls[line.ball].size = line.size
 		elif addballs.has(line.ball):
@@ -810,6 +820,9 @@ func get_ball_size_override(reader: VirtualFileLineReader) -> void:
 func get_color_info_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "color", "group", "texture"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_color_info_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "color_index" in ball_data:
@@ -834,6 +847,9 @@ func get_color_info_override(reader: VirtualFileLineReader) -> void:
 func get_outline_color_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "outline_color"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_outline_color_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "outline_color_index" in ball_data:
@@ -850,6 +866,9 @@ func get_outline_color_override(reader: VirtualFileLineReader) -> void:
 func get_fuzz_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "fuzz"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_fuzz_override: negative ball index ", line.ball, " skipped")
+			continue
 		if balls.has(line.ball):
 			var ball_data: BallData = balls[line.ball]
 			if "fuzz" in ball_data:
@@ -864,6 +883,9 @@ func get_fuzz_override(reader: VirtualFileLineReader) -> void:
 func get_add_ball_override(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_lines(reader, ["ball", "x", "y", "z"])
 	for line in parsed_lines:
+		if line.ball < 0:
+			print("[WARNING] lnz_parser: get_add_ball_override: negative ball index ", line.ball, " skipped")
+			continue
 		if addballs.has(line.ball):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
 		else:

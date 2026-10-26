@@ -1571,6 +1571,7 @@ func test_hide_ball_state_synchronization():
 	# Verify that hiding/unhiding a ball updates both the internal tracking 
 	# state and the visual node's hidden property correctly.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
+	dog_gen._vis_mgr.init(dog_gen)
 	
 	# Mock a 3D visual node with the expected set_hidden interface
 	var mock_visual_node = autofree(Node.new())
@@ -1600,6 +1601,7 @@ func test_is_special_ball_detection():
 	# Verify that is_special_ball correctly identifies balls belonging to 
 	# non-zero add_groups, while excluding non-addballs or group 0.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
+	dog_gen._vis_mgr.init(dog_gen)
 	
 	# Mock the dictionary that LnzParser normally provides to dictate add_groups
 	var mock_lnz = autofree(LnzParser.new(""))

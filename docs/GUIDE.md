@@ -8,6 +8,10 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 
 Keep up-to-date on new beta versions of LnzLive by downloading the [**LnzLive Launcher**](https://github.com/tabbzi/LnzLive/releases/tag/launcher-v1.0) which automatically checks for new releases and allows you to change your installed version of LnzLive to any release or preview version. 
 
+### Web Version
+
+The web version of LnzLive Petz & Babyz beta can be accessed at [tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive). Note that there may be limitations on clipboard access and file I/O compared to desktop version. 
+
 ### Loading LNZ into the Text Editor
 
 > Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in [Deus Hex](https://petzhexing.weebly.com/deus-hex.html), [LNZ Pro](https://www.sherlocksoftware.org/page.php?id=14), or another resource editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
@@ -82,6 +86,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `CTRL` + `H` | **Design - Horizontal**: Activate H-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `V` | **Design - Vertical**: Activate V-line tool in Design canvas |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
+| **Paintball Mode** | `SHIFT` + left-click (on palette) | **Multi-Pick Color**: Append clicked palette color to comma-separated Color list |
 | **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
@@ -314,6 +319,15 @@ Pops open a numbered preview of the paletted color index matching whichever game
 
 Toggle and view variations across LNZ sections, if present.
 
+LnzLive supports LNZ variation blocks (`#1`, `#2.A`, etc). The Variation Viewer displays a tree of all variation blocks found in the loaded LNZ. You can toggle individual variations on or off, and toggle "Global" variants that apply across all configurations. When a variation is toggled, the 3D model updates to reflect the combined active variations.
+
+To work with variations:
+
+1. Load an LNZ file that contains variation blocks (`#N` to next `#N` or closed with `##`).
+2. Open the Variation Viewer from the left sidebar.
+3. Toggle checkboxes to enable/disable specific variations.
+4. The model will update automatically as you toggle variations.
+
 #### Color Swap
 
 The "Color Swap" option opens the Recolor Mode where you can find Color Swap, functions that can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
@@ -397,7 +411,7 @@ In the Standard tab, you control the properties of individual paintballs as they
 
 **Diameter:** Set a minimum and maximum range of diameter for random sizing or tapering freelines. Toggle `Pixel Size` checkbox to compute diameter of paintballz on ballz needed to achieve visual pixel diameter.
 
-**Sampled LNZ Properties:** Use comma-separated lists or ranges (e.g., `1,2,5-10`) to cycle through or randomize colors and textures.
+**Sampled LNZ Properties:** Use comma-separated lists or ranges (e.g., `1,2,5-10`) to cycle through or randomize colors and textures. Click a swatch in the palette picker to set the Color field, or hold `SHIFT` while clicking swatches to append multiple colors to the comma-separated list.
 
 **Placement Modes:**
 
@@ -475,7 +489,7 @@ Coming soon!
 
 ![Texture Editor icon](../resources/icons/ico_tab_texture_2x.png)
 
-TBD
+The Texture Editor allows you to edit texture files (.bmp) loaded in Local Textures. It provides a pixel canvas. This is useful for creating custom textures or modifying existing ones.
 
 ##### Tutorial: Texture Editor
 
@@ -499,6 +513,15 @@ Special ballz refers to transient ballz like tears in Babyz that do not usually 
 - **Hide Ballz:** Right-click a ball and select "Hide Ballz" from the Tools Menu to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!). Hidden balls can be restored from the Render menu.
 
 - **Unhide Ballz:** Open the Render menu and click "Unhide Ballz" to restore all hidden balls at once.
+
+### Export
+
+- **Export OBJ 3D Model:** Experimental feature to export a 3D model of the loaded LNZ and animation frame! Your mileage may vary.
+- **Export to Clothes CLZ:** Prepare clothes LNZ from all addballz and linez attached to a ball that can be copied to a `.clo` game file.
+
+### Shader Settings
+
+The Shader Settings dialog (accessible via `File > Shader Settings`) allows you to adjust rendering parameters that affect how ballz, linez, and paintballz are rendered in the viewport. Changes to shader settings are applied in real-time and persist across sessions via the user settings config file.
 
 ### Export
 
@@ -536,6 +559,18 @@ Use these controls to preview and navigate animations:
 ### T-Pose Toggle
 
 Forces the model into a symmetric T-pose using animation frame 0, ignoring the current animation. Useful for symmetric editing.
+
+### Export OBJ 3D Model
+
+The Export OBJ 3D Model feature generates a Wavefront `.obj` mesh file from the current 3D viewport state.
+
+**How it works:**
+
+1. Load an LNZ file and navigate to the desired animation frame.
+2. Go to `Export > Export OBJ 3D Model`.
+3. Choose a save location for the `.obj` file.
+
+> **Note:** This is an experimental feature. The exported mesh may not perfectly match in-game rendering due to differences in billboard rendering, shader effects, and texture mapping. The export captures the current visual state of the model including all active variations and animation frames.
 
 ## Visual editing
 
@@ -586,6 +621,13 @@ The Copy-Mirror tool can be used to mirror changes over the X axis. When selecte
 
 The Export to Clothes CLZ tool will prepare clothes LNZ from all addballz and linez attached to the target ball that can be copied to a `.clo` game file.
 
+**How it works:**
+
+1. Hover or select the root base ball that clothing addballz are attached to.
+2. Right-click to open the Tools Menu and select "Export to Clothes CLZ".
+3. The tool collects all addballz and linez parented to the target ball.
+4. The prepared CLZ-formatted LNZ is written to the clipboard, ready to be pasted into a `.clo` file.
+
 ### Hide Ballz
 
 Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
@@ -609,6 +651,20 @@ Right-click a ball to jump directly to its LNZ entry by ball number.
 ## Backups
 
 Destructive tools like `Color Swap` and `Copy-Mirror` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive creates a rolling backup rotation of the 3 most recent backups (`{filename}_backup_1.lnz`, `{filename}_backup_2.lnz`, `{filename}_backup_3.lnz`).
+
+## Important Notes
+
+### Color Index 0 Warning
+
+In P.F. Magic games, color index 0 renders as black in most contexts but white in others. LnzLive's randomization functions exclude color index 0 by default.
+
+### LNZ Delimiters
+
+LNZ files may use different delimiters (comma-space `, `, comma `,`, tab `\t`, or space ` `). LnzLive auto-detects the delimiter style when parsing and preserves it when writing.
+
+### Valid LNZ
+
+P.F. Magic games are flexible with what constitutes valid LNZ. There is no canonical order or organization enforced by the games. LnzLive parses whatever valid LNZ it can find, but the order of entries (especially `[Project Ball]` entries) matters for how ballz get placed and influence each other.
 
 ## Textures and Palettes
 

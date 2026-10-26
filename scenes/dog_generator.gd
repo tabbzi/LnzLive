@@ -124,6 +124,7 @@ var is_babyz_mode = false
 var _animation_container = null
 
 var current_palette_texture = null
+var _cached_custom_palette: Array = []
 
 signal animation_loaded(num_of_frames)
 signal bhd_loaded(num_of_animations)
@@ -850,6 +851,11 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 	current_palette_texture = pal_texture
 
+	if lnz_info.palette != null and lnz_info.palette != "":
+		_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
+	else:
+		_cached_custom_palette = []
+
 	var base_balls_temp = {}
 	for b in balls:
 		# Create a fresh copy of the BallData so apply_sizes doesn't ruin the original animation data
@@ -915,6 +921,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		lnz_info.no_texture_rotate
 	)
 
+	# TBD: Determine whether redundant
 	for key in ball_map:
 		var node = ball_map[key]
 		if is_instance_valid(node) and node is Spatial:
@@ -1072,8 +1079,8 @@ func _build_from_section(val, variation_id):
 func load_texture(texture_filename: String, preloader: ResourcePreloader, custom_lnz_palette: Array = []):
 	return _tex_mgr.load_texture(texture_filename, preloader, is_babyz_mode, custom_lnz_palette)
 
-func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = []):
-	return _tex_mgr.load_texture_from_list(texture_id, texture_list, custom_lnz_palette)
+func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = [], is_babyz_mode: bool = false):
+	return _tex_mgr.load_texture_from_list(texture_id, texture_list, custom_lnz_palette, is_babyz_mode)
 
 func clear_texture_cache_for(filename: String):
 	_tex_mgr.clear_texture_cache_for(filename)
@@ -1178,7 +1185,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 	node.fuzz_amount = fuzz_to_amount(data.fuzz)
 	node.palette = palette
 	if data.texture_id >= 0 and data.texture_id < texture_list.size():
-		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette)
+		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette, is_babyz_mode)
 		if tex:
 			node.texture = tex
 			var tex_info = texture_list[data.texture_id]
@@ -1204,7 +1211,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var t_start = OS.get_ticks_msec()
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
@@ -1519,7 +1526,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	var t_start = OS.get_ticks_msec()
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	#print("[INFO] dog_generator: generate_polygons: generating polygons")
 	#print("[INFO] dog_generator: generate_polygons: polygon data size:", polygon_data.size())
@@ -1554,6 +1561,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 					+ str(polygon.ball4)
 				)
 			)
+			i += 1
 			continue
 
 		#print("[INFO] dog_generator: generate_polygons: creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
@@ -1566,6 +1574,9 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 			parent.add_child(visual_polygon)
 			visual_polygon.set_owner(root)
 		else:
+			if not polygons_map.has(i):
+				i += 1
+				continue
 			visual_polygon = polygons_map[i]
 
 		# Set positions for the polygon's 4 vertices
@@ -1582,7 +1593,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 				and polygon.texture_id != null
 				and not str(polygon.texture_id).empty()
 			):
-				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list, active_custom_palette)
+				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list, active_custom_palette, is_babyz_mode)
 			else:
 				# If no texture is defined, default to first ball
 				visual_polygon.texture = point1.texture
@@ -1770,6 +1781,7 @@ func generate_whiskers(new_create: bool):
 	if lnz.whisker_connections.empty():
 		return
 
+	var whiskers = get_tree().get_nodes_in_group("whisker_lines")
 	var i = 0
 	for connection in lnz.whisker_connections:
 		var start_node = ball_map.get(connection.start)
@@ -1793,7 +1805,6 @@ func generate_whiskers(new_create: bool):
 			visual_line.r_color_index = start_node.color_index
 			visual_line.line_widths = Vector2(start_node.ball_size, 1.0)
 		else:
-			var whiskers = get_tree().get_nodes_in_group("whisker_lines")
 			if i < whiskers.size():
 				visual_line = whiskers[i]
 
@@ -1874,7 +1885,7 @@ func restore_ball_visual_states(ball_nos: Array):
 	if lnz == null:
 		return
 
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	for b_no in ball_nos:
 		var visual_node = ball_map.get(b_no)
@@ -1893,7 +1904,7 @@ func restore_ball_visual_states(ball_nos: Array):
 		visual_node.fuzz_amount = fuzz_to_amount(data.fuzz)
 
 		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
-			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list, active_custom_palette)
+			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list, active_custom_palette, is_babyz_mode)
 			var tex_info = lnz.texture_list[data.texture_id]
 			visual_node.transparent_color = tex_info.transparent_color
 			if tex_info.has("texture_size") and tex_info.texture_size != null:
@@ -1926,11 +1937,6 @@ func _index_ball_to_feature(map: Dictionary, ball_no: int, index: int):
 func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 	var base_ball_dict = all_ball_dict.balls
 	var addball_dict = all_ball_dict.addballs
-	var addballs_by_base = {}
-	for ab in addball_dict.values():
-		var ar = addballs_by_base.get(ab.base, [])
-		ar.append(ab)
-		addballs_by_base[ab.base] = ar
 
 	var legs
 	var body_ext
@@ -2039,8 +2045,12 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# body
 	var special_ball = body_ext[0]
+	if not base_ball_dict.has(special_ball):
+		return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 	for ball_no in body_ext:
 		if ball_no == special_ball:
+			continue
+		if not base_ball_dict.has(ball_no):
 			continue
 		var ball = base_ball_dict[ball_no]
 		ball.position.z += lnz.body_extension * 2
@@ -2048,16 +2058,21 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# face
 	var head_ball_key = head_ext[0]
+	if not base_ball_dict.has(head_ball_key):
+		return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 	var head_rot = base_ball_dict[head_ball_key].rotation
 	for ball_no in face_ext:
+		if not base_ball_dict.has(ball_no):
+			continue
 		var ball = base_ball_dict[ball_no]
 		ball.position.z -= lnz.face_extension
 
 	# head enlargement
 	var head_pos = base_ball_dict[head_ball_key].position
 	for ball_no in head_ext:
+		if not base_ball_dict.has(ball_no):
+			continue
 		var ball = base_ball_dict[ball_no]
-		var addballs = addballs_by_base.get(ball_no, [])
 		if ball_no != head_ball_key:
 			var mod_v = ball.position - head_pos
 			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
@@ -2068,8 +2083,12 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# feet
 	for foot_group in foot_ext:
+		if not base_ball_dict.has(foot_group[0]):
+			continue
 		var foot_pos = base_ball_dict[foot_group[0]].position
 		for ball_no in foot_group:
+			if not base_ball_dict.has(ball_no):
+				continue
 			var ball = base_ball_dict[ball_no]
 			if ball_no != foot_group[0]:
 				var mod_v = ball.position - foot_pos
@@ -2083,20 +2102,29 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 
 	# ears
 	for base_ball_no in ear_ext:
+		if not base_ball_dict.has(base_ball_no):
+			continue
 		var base_ball = base_ball_dict[base_ball_no]
 		for k in ear_ext[base_ball_no]:
+			if not base_ball_dict.has(k):
+				continue
 			var ear_ball = base_ball_dict[k]
 			var vector_from_base = ear_ball.position - base_ball.position
 			vector_from_base *= (lnz.ear_extension / 100.0)
 			ear_ball.position = base_ball.position + vector_from_base
-		#for addball in addballs_by_base.get(ball_no, []):
-		#	addball.position *= (lnz.ear_extension / 100.0)
 
 	return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
 
 func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 	var base_ball_dict = all_ball_dict.balls
 	var lnz_balls = lnz.balls
+
+	var moves_by_ball: Dictionary = {}
+	for m in lnz.moves:
+		var arr = moves_by_ball.get(m.ball_no, [])
+		arr.append(m)
+		moves_by_ball[m.ball_no] = arr
+
 	for k in base_ball_dict:
 		var v: BallData = lnz_balls.get(k)
 		var b: BallData = base_ball_dict.get(k)
@@ -2111,12 +2139,12 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		b.outline = v.outline
 		b.fuzz = v.fuzz
 
-		for m in lnz.moves:
-			if m.ball_no == k:
+		if moves_by_ball.has(k):
+			for m in moves_by_ball[k]:
 				var move_base = b
 				var rot = move_base.rotation
-				if m.relative_to:
-					rot = base_ball_dict.get(m.relative_to).rotation
+				if m.relative_to != null and base_ball_dict.has(m.relative_to):
+					rot = base_ball_dict[m.relative_to].rotation
 				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
 		b.texture_id = v.texture_id
 		b.color_index = v.color_index
@@ -2631,7 +2659,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	node.palette = current_palette_texture
 	
 	if addball_data.texture_id >= 0:
-		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list, active_custom_palette)
+		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list, active_custom_palette, is_babyz_mode)
 		if tex:
 			node.texture = tex
 	else:
