@@ -1474,10 +1474,7 @@ func add_texture_entry(line_content: String) -> void:
 			continue
 		insert_line = i
 	
-	cursor_set_line(insert_line + 1)
-	cursor_set_column(0)
-	select(insert_line + 1, 0, insert_line + 1, 0)
-	insert_text_at_cursor(line_content + "\n")
+	_insert_text_at_cursor_at_line(insert_line + 1, line_content + "\n")
 	cursor_set_line(insert_line + 1)
 
 func get_current_section_name() -> String:
