@@ -99,6 +99,38 @@ var z_shade_slope: int = 100
 
 var file_path: String
 
+func reset_parsed_data() -> void:
+	balls.clear()
+	lines.clear()
+	polygons.clear()
+	addballs.clear()
+	paintballs.clear()
+	omissions.clear()
+	project_ball.clear()
+	moves.clear()
+	texture_list.clear()
+	custom_eyes.clear()
+	whisker_connections.clear()
+	no_texture_rotate.clear()
+	quadrant_balls.clear()
+	addball_raw_to_ball_map.clear()
+
+	scales = Vector2(255, 255)
+	eyelid_color = 244
+	leg_extensions = Vector2(0, 0)
+	body_extension = 0
+	face_extension = 0
+	ear_extension = 0
+	head_enlargement = Vector2(100, 0)
+	foot_enlargement = Vector2(100, 0)
+	palette = null
+
+	eyelash_lengths.clear()
+	eyelash_angle = 0
+	eyelash_spacing = 0
+	eyelash_color = -1
+	z_shade_slope = 100
+
 func _init(file_path: String) -> void:
 	if file_path == null:
 		return

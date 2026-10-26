@@ -27,6 +27,10 @@ var _surface_materials: Array = []
 const DEFAULT_PALETTE = LnzLiveUtils.DEFAULT_PALETTE
 const BABYZ_PALETTE = LnzLiveUtils.BABYZ_PALETTE
 
+func _exit_tree() -> void:
+	entries.clear()
+	_surface_materials.clear()
+
 func _ready():
 	if has_node("MeshInstance") and is_instance_valid(get_node("MeshInstance")):
 		set_species(species, is_babyz_mode)

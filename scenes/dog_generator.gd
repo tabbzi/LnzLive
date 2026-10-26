@@ -474,6 +474,31 @@ func _on_OptionButton_file_saved(file_name):
 	generate_pet(file_name)
 
 
+func unload_lnz_model() -> void:
+	if is_instance_valid(pet_view) and pet_view.has_node("variation_tree"):
+		var vt = pet_view.get_node("variation_tree")
+		if is_instance_valid(vt):
+			if "lnz_parser" in vt:
+				vt.lnz_parser = null
+			if "_sections_map" in vt:
+				vt._sections_map = null
+
+	if lnz != null:
+		lnz.paintballs.clear()
+		lnz.balls.clear()
+		lnz.addballs.clear()
+		lnz.lines.clear()
+		lnz.polygons.clear()
+		lnz.sections_map.clear()
+		lnz.addball_raw_to_ball_map.clear()
+		lnz = null
+
+	ball_map.clear()
+	paintball_map.clear()
+	polygons_map.clear()
+	lines_map.clear()
+
+
 ### MODEL GENERATION ###
 # generate_pet
 # set_skip_next_rebuild
@@ -492,6 +517,10 @@ func generate_pet(file_path):
 	var full_rebuild = not _skip_next_rebuild
 	_skip_next_rebuild = false
 
+	var is_switching_files = (file_path != last_loaded_filepath)
+	if is_switching_files:
+		unload_lnz_model()
+
 	var lnz_info = LnzParser.new(file_path)
 	if not _validate_lnz_file(lnz_info):
 		print("[ERROR] dog_generator: generate_pet: LNZ file validation failed, aborting load of: " + file_path)
@@ -502,15 +531,7 @@ func generate_pet(file_path):
 	lnz = lnz_info
 	lnz.get_species()
 
-	if file_path != last_loaded_filepath:
-
-		_clear_paintball_state_on_model_load()
-
-		# TBD: May be helpful to clear caches when switching models (not on every reload)
-		# clear_texture_cache()
-		# _atlas_textures.clear()
-		# _orig_lnz_pos.clear()
-		# _orig_world_pos.clear()
+	if is_switching_files:
 
 		last_loaded_filepath = file_path
 		_clear_hidden_state_lists()
@@ -682,28 +703,8 @@ func clear_lnz_data(keep_visuals: bool = false):
 		lines_map.clear()
 
 func recompose_model():
-	# Clear LNZ data structures
-	# lnz.balls.clear()
-	# lnz.paintballs.clear()
-	# lnz.lines.clear()
-	# lnz.addballs.clear()
-	# lnz.omissions.clear()
-	# lnz.project_ball.clear()
-	# lnz.polygons.clear()
-	# lnz.moves.clear()
-	# lnz.texture_list.clear()
-	# lnz.custom_eyes.clear()
-	# lnz.whisker_connections.clear()
-	# lnz.no_texture_rotate.clear()
-	# lnz.quadrant_balls.clear()
-
-	# Load temporary LNZ and validate
-	var temp_lnz = LnzParser.new(lnz.file_path)
-	if temp_lnz == null:
-		print("[ERROR] dog_generator: recompose_model: failed to create temp LNZ parser for: " + lnz.file_path)
-		return
-
-	temp_lnz.get_species()
+	lnz.reset_parsed_data()
+	lnz.get_species()
 
 	var ordered_sections = [
 		"Texture List",
@@ -765,60 +766,32 @@ func recompose_model():
 		if current_variation_config.has(section):
 			var method = section_methods[section]
 			var sec_cfg = current_variation_config[section]
-			var reader = temp_lnz.compile_section(section, sec_cfg)
-			temp_lnz.call(method, reader)
+			var reader = lnz.compile_section(section, sec_cfg)
+			lnz.call(method, reader)
 
 	if current_variation_config.has("Paint Ballz"):
 		var pb_cfg = current_variation_config["Paint Ballz"]
-		temp_lnz.parse_paintballs(temp_lnz.compile_section("Paint Ballz", pb_cfg))
+		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_cfg))
 
 	if current_variation_config.has("Move"):
 		var move_cfg = current_variation_config["Move"]
-		temp_lnz.parse_moves(temp_lnz.compile_section("Move", move_cfg))
+		lnz.parse_moves(lnz.compile_section("Move", move_cfg))
 
 	if current_variation_config.has("Project Ball"):
 		var pball_cfg = current_variation_config["Project Ball"]
-		temp_lnz.get_project_balls(temp_lnz.compile_section("Project Ball", pball_cfg))
+		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_cfg))
 
 	# Cat without [Whiskers] section: apply default whisker connections
-	if temp_lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
-		var defaults = KeyBallsData.get_default_whisker_connections(temp_lnz.species)
+	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
+		var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
 		for conn in defaults:
-			temp_lnz.whisker_connections.append(conn)
+			lnz.whisker_connections.append(conn)
 
-	if not _validate_parsed_lnz_data(temp_lnz):
-		print("[ERROR] dog_generator: recompose_model: temp LNZ validation failed, old model preserved")
+	if not _validate_parsed_lnz_data(lnz):
+		print("[ERROR] dog_generator: recompose_model: LNZ validation failed, old model preserved")
 		if console_log:
-			console_log.log_message("Model recomposition failed: temp LNZ validation failed")
+			console_log.log_message("Model recomposition failed: LNZ validation failed")
 		return
-
-	lnz.balls = temp_lnz.balls
-	lnz.paintballs = temp_lnz.paintballs
-	lnz.lines = temp_lnz.lines
-	lnz.addballs = temp_lnz.addballs
-	lnz.omissions = temp_lnz.omissions
-	lnz.project_ball = temp_lnz.project_ball
-	lnz.polygons = temp_lnz.polygons
-	lnz.moves = temp_lnz.moves
-	lnz.texture_list = temp_lnz.texture_list
-	lnz.custom_eyes = temp_lnz.custom_eyes
-	lnz.whisker_connections = temp_lnz.whisker_connections
-	lnz.no_texture_rotate = temp_lnz.no_texture_rotate
-	lnz.quadrant_balls = temp_lnz.quadrant_balls
-	lnz.scales = temp_lnz.scales
-	lnz.eyelid_color = temp_lnz.eyelid_color
-	lnz.leg_extensions = temp_lnz.leg_extensions
-	lnz.body_extension = temp_lnz.body_extension
-	lnz.face_extension = temp_lnz.face_extension
-	lnz.ear_extension = temp_lnz.ear_extension
-	lnz.head_enlargement = temp_lnz.head_enlargement
-	lnz.foot_enlargement = temp_lnz.foot_enlargement
-	lnz.palette = temp_lnz.palette
-	lnz.eyelash_lengths = temp_lnz.eyelash_lengths
-	lnz.eyelash_angle = temp_lnz.eyelash_angle
-	lnz.eyelash_spacing = temp_lnz.eyelash_spacing
-	lnz.eyelash_color = temp_lnz.eyelash_color
-	lnz.z_shade_slope = temp_lnz.z_shade_slope
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
@@ -904,12 +877,6 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		new_create,
 		lnz_info.no_texture_rotate
 	)
-
-	# TBD: Determine whether redundant
-	for key in ball_map:
-		var node = ball_map[key]
-		if is_instance_valid(node) and node is Spatial:
-			node.force_update_transform()
 
 	if new_create:
 		_finish_dependent_geometry(new_create)
