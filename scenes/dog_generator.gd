@@ -1774,6 +1774,7 @@ func generate_whiskers(new_create: bool):
 	if lnz.whisker_connections.empty():
 		return
 
+	var whiskers = get_tree().get_nodes_in_group("whisker_lines")
 	var i = 0
 	for connection in lnz.whisker_connections:
 		var start_node = ball_map.get(connection.start)
@@ -1797,7 +1798,6 @@ func generate_whiskers(new_create: bool):
 			visual_line.r_color_index = start_node.color_index
 			visual_line.line_widths = Vector2(start_node.ball_size, 1.0)
 		else:
-			var whiskers = get_tree().get_nodes_in_group("whisker_lines")
 			if i < whiskers.size():
 				visual_line = whiskers[i]
 
