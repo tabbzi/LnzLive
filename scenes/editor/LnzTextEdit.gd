@@ -269,17 +269,92 @@ func _load_file(filepath: String, user_flag: bool):
 	if contents.strip_edges().empty() and self.text.strip_edges().empty():
 		return
 
-	self.filepath = filepath
-	is_user_file = user_flag
+	var active_edit = self
+	if get_line_count() > 5000:
+		active_edit = _replace_textedit_node()
 
-	_set_text_preserve(contents)
-	_last_saved_text = self.text
-	_has_unsaved_changes = false
-	initialize_history()
-	if is_instance_valid(pet_view) and pet_view.has_method("_update_unapplied_changes_label"):
-		pet_view._update_unapplied_changes_label()
+	active_edit.filepath = filepath
+	active_edit.is_user_file = user_flag
+
+	active_edit._set_text_preserve(contents)
+	active_edit._last_saved_text = active_edit.text
+	active_edit._has_unsaved_changes = false
+	active_edit.initialize_history()
+	if is_instance_valid(active_edit.pet_view) and active_edit.pet_view.has_method("_update_unapplied_changes_label"):
+		active_edit.pet_view._update_unapplied_changes_label()
 
 	print("[TIME] LnzTextEdit: _load_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
+
+
+func _replace_textedit_node() -> TextEdit:
+	var parent = get_parent()
+	if not is_instance_valid(parent):
+		return self
+
+	var child_idx = get_index()
+	var script = get_script()
+
+	var new_node = TextEdit.new()
+	new_node.size_flags_horizontal = size_flags_horizontal
+	new_node.size_flags_vertical = size_flags_vertical
+	new_node.rect_min_size = rect_min_size
+	new_node.theme = theme
+	new_node.syntax_highlighting = syntax_highlighting
+	new_node.show_line_numbers = show_line_numbers
+	new_node.highlight_all_occurrences = highlight_all_occurrences
+	new_node.highlight_current_line = highlight_current_line
+	new_node.smooth_scrolling = smooth_scrolling
+	new_node.v_scroll_speed = v_scroll_speed
+	new_node.wrap_enabled = wrap_enabled
+
+	var font_ovr = get("custom_fonts/font")
+	if font_ovr:
+		new_node.set("custom_fonts/font", font_ovr)
+	for prop in get_property_list():
+		var pname: String = prop["name"]
+		if pname.begins_with("custom_colors/") or pname.begins_with("custom_styles/") or pname.begins_with("custom_constants/"):
+			var val = get(pname)
+			if val != null:
+				new_node.set(pname, val)
+
+	self.name = "LnzTextEdit_dying"
+	new_node.name = "LnzTextEdit"
+	new_node.set_script(script)
+
+	parent.add_child(new_node)
+	parent.move_child(new_node, child_idx)
+
+	for sig in get_signal_list():
+		var sig_name: String = sig["name"]
+		for conn in get_signal_connection_list(sig_name):
+			if conn["target"] != self and is_instance_valid(conn["target"]):
+				if not new_node.is_connected(sig_name, conn["target"], conn["method"]):
+					new_node.connect(sig_name, conn["target"], conn["method"], conn["binds"], conn["flags"])
+
+	var root = get_tree().root
+	_rebind_incoming_signals_recursive(root, self, new_node)
+
+	if is_instance_valid(pet_view) and "lnz_text_edit" in pet_view:
+		pet_view.lnz_text_edit = new_node
+
+	for item in history_stack:
+		item.full_text = ""
+	history_stack.clear()
+
+	parent.remove_child(self)
+	queue_free()
+	return new_node
+
+
+func _rebind_incoming_signals_recursive(node: Node, old_target: Object, new_target: Object) -> void:
+	for sig in node.get_signal_list():
+		var sig_name: String = sig["name"]
+		for conn in node.get_signal_connection_list(sig_name):
+			if conn["target"] == old_target:
+				if not node.is_connected(sig_name, new_target, conn["method"]):
+					node.connect(sig_name, new_target, conn["method"], conn["binds"], conn["flags"])
+	for child in node.get_children():
+		_rebind_incoming_signals_recursive(child, old_target, new_target)
 
 
 func _on_example_file_selected(filepath):
@@ -950,11 +1025,20 @@ func _set_text_preserve(new_text: String):
 	var old_h = get_h_scroll()
 	var old_l = cursor_get_line()
 	var old_c = cursor_get_column()
+
+	set_block_signals(true)
+	clear_colors()
+	clear_undo_history()
 	text = new_text
+	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406), false)
+	add_color_region(";","",Color(0.168627, 0.45098, 0.45098), false)
+	var max_l = max(0, get_line_count() - 1)
+	cursor_set_line(min(old_l, max_l))
+	cursor_set_column(old_c)
 	set_v_scroll(old_v)
 	set_h_scroll(old_h)
-	cursor_set_line(old_l)
-	cursor_set_column(old_c)
+	set_block_signals(false)
+
 	_update_section_bookmarks()
 	_has_unsaved_changes = true
 
