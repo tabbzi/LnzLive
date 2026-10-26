@@ -124,6 +124,7 @@ var is_babyz_mode = false
 var _animation_container = null
 
 var current_palette_texture = null
+var _cached_custom_palette: Array = []
 
 signal animation_loaded(num_of_frames)
 signal bhd_loaded(num_of_animations)
@@ -850,6 +851,11 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 	current_palette_texture = pal_texture
 
+	if lnz_info.palette != null and lnz_info.palette != "":
+		_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
+	else:
+		_cached_custom_palette = []
+
 	var base_balls_temp = {}
 	for b in balls:
 		# Create a fresh copy of the BallData so apply_sizes doesn't ruin the original animation data
@@ -915,6 +921,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		lnz_info.no_texture_rotate
 	)
 
+	# TBD: Determine whether redundant
 	for key in ball_map:
 		var node = ball_map[key]
 		if is_instance_valid(node) and node is Spatial:
@@ -1204,7 +1211,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var t_start = OS.get_ticks_msec()
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
@@ -1519,7 +1526,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	var t_start = OS.get_ticks_msec()
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	#print("[INFO] dog_generator: generate_polygons: generating polygons")
 	#print("[INFO] dog_generator: generate_polygons: polygon data size:", polygon_data.size())
@@ -1878,7 +1885,7 @@ func restore_ball_visual_states(ball_nos: Array):
 	if lnz == null:
 		return
 
-	var active_custom_palette = _resolve_custom_palette_for_lnz()
+	var active_custom_palette = _cached_custom_palette
 
 	for b_no in ball_nos:
 		var visual_node = ball_map.get(b_no)
