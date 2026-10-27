@@ -465,6 +465,19 @@ func _on_Distribution_item_selected(index: int) -> void:
 			num_spots_edit.value = new_val
 
 
+func _get_ball_weight(ball_id: int) -> float:
+	var w: float = 0.1
+	if "ball_map" in pet_node and pet_node.ball_map.has(ball_id):
+		var vb = pet_node.ball_map.get(ball_id)
+		if is_instance_valid(vb):
+			if "current_radius" in vb: return max(0.1, float(vb.current_radius))
+			elif "ball_size" in vb and vb.ball_size > 0: return max(0.1, float(vb.ball_size))
+			elif "scale" in vb and vb.scale.x > 0: return max(0.1, float(vb.scale.x))
+	if pet_node.lnz and pet_node.lnz.balls.has(ball_id):
+		return max(0.1, abs(float(pet_node.lnz.balls[ball_id].size)))
+	return w
+	
+
 func _on_RandomizeButton_pressed() -> void:
 	var properties: Dictionary = get_properties()
 	
@@ -509,14 +522,19 @@ func _on_RandomizeButton_pressed() -> void:
 		seed(base_seed + (b_idx * 13)) 
 		var num_spots: int = int(properties["num_spots"])
 		var spots_per_ball: int = 0
-		if properties.get("size_adaptive", false) and pet_node and pet_node.lnz and pet_node.lnz.balls:
+		
+		if properties.get("size_adaptive", false) and pet_node:
 			var total_w: float = 0.0
+			
 			for id in affected_ballz:
-				if pet_node.lnz.balls.has(id): total_w += pet_node.lnz.balls[id].size
-			var current_w: float = 1.0
-			if pet_node.lnz.balls.has(affected_ballz[b_idx]): current_w = pet_node.lnz.balls[affected_ballz[b_idx]].size
-			if total_w > 0: spots_per_ball = int(round((current_w / total_w) * num_spots))
-			else: spots_per_ball = num_spots / affected_ballz.size()
+				total_w += _get_ball_weight(id)
+				
+			var current_w: float = _get_ball_weight(affected_ballz[b_idx])
+			
+			if total_w > 0: 
+				spots_per_ball = int(round((current_w / total_w) * num_spots))
+			else: 
+				spots_per_ball = num_spots / affected_ballz.size()
 		else:
 			spots_per_ball = num_spots / affected_ballz.size()
 			if b_idx < (num_spots % affected_ballz.size()):
