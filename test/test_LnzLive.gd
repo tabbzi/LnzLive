@@ -2193,7 +2193,7 @@ func test_lnz_text_resolve_recolor():
 	result = lnz_text._resolve_recolor("10", true, [rule], info, "")
 	assert_eq(result, "20", "Outline recolor should return after_color when balls_outline is true and before_color matches.")
 
-	# Test 5: ramp recolor
+	# Test 5: ramp recolor (same decade)
 	var ramp_rule = {
 		"before_color": "60",
 		"after_color": "50",
@@ -2207,9 +2207,6 @@ func test_lnz_text_resolve_recolor():
 	assert_eq(result, "50", "Ramp recolor with identical before/after should return after_color.")
 
 	# Test 6: ramp with offset (62 -> 55 means offset within base group)
-	# get_ramp_color works within base groups of 10: 60s base.
-	# current=60, before_base=(62/10)*10=60, current_base=(60/10)*10=60 → match
-	# after_base=(55/10)*10=50, offset=60-60=0 → returns "50"
 	var ramp_offset_rule = {
 		"before_color": "62",
 		"after_color": "55",
@@ -2236,6 +2233,87 @@ func test_lnz_text_resolve_recolor():
 	# Test 8: before_texture mismatch should skip
 	result = lnz_text._resolve_recolor("10", false, [tex_rule], info, "9")
 	assert_null(result, "Rule with before_texture should skip when current texture does not match.")
+
+	# Test 9: Ramp Decade Mismatch (Current color in different decade than rule)
+	# Rule is for 60s (before_color=62). Current color is 15 (10s).
+	# _is_same_decade(15, 62) should be false. Exact match also false.
+	var ramp_mismatch_rule = {
+		"before_color": "62",
+		"after_color": "55",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": true
+	}
+	result = lnz_text._resolve_recolor("15", false, [ramp_mismatch_rule], info, "")
+	assert_null(result, "Ramp recolor should return null if current color is in a different decade than before_color.")
+
+	# Test 10: Empty Before Color (Global Match)
+	# If before_color is empty, it should match any input color.
+	var global_rule = {
+		"before_color": "",
+		"after_color": "99",
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	result = lnz_text._resolve_recolor("10", false, [global_rule], info, "")
+	assert_eq(result, "99", "Rule with empty before_color should match any color (Global Swap).")
+
+	# Test 11: Empty Before Color with Texture Constraint
+	# Global color match, but specific texture required.
+	var global_tex_rule = {
+		"before_color": "",
+		"after_color": "99",
+		"before_texture": "5",
+		"after_texture": "",
+		"is_ramp": false
+	}
+	result = lnz_text._resolve_recolor("10", false, [global_tex_rule], info, "5")
+	assert_eq(result, "99", "Global color rule should match if texture also matches.")
+
+	result = lnz_text._resolve_recolor("10", false, [global_tex_rule], info, "6")
+	assert_null(result, "Global color rule should NOT match if texture does not match.")
+
+	# Test 12: Ramp with Texture Constraint (OFFSET PRESERVING)
+	# Rule: Before=60, After=50. 
+	# Current Color: 62 (Offset 2 in 60s).
+	# Correct Logic: Target Base (50) + Offset (2) = 52.
+	var ramp_tex_rule = {
+		"before_color": "60", # Decade 60s
+		"after_color": "50",  # Target Base 50
+		"before_texture": "3",
+		"after_texture": "",
+		"is_ramp": true
+	}
+	
+	# Current color 62 (same decade as 60), Texture 3 (matches)
+	result = lnz_text._resolve_recolor("62", false, [ramp_tex_rule], info, "3")
+	assert_eq(result, "52", "Ramp rule should preserve offset: 62 (offset 2) -> 50 base + 2 = 52.")
+
+	# Current color 62 (same decade as 60), Texture 4 (mismatch)
+	result = lnz_text._resolve_recolor("62", false, [ramp_tex_rule], info, "4")
+	assert_null(result, "Ramp rule should NOT match if texture does not match.")
+
+	# Test 13: Outline Ramp Logic (OFFSET PRESERVING)
+	info["balls_fill"] = false
+	info["balls_outline"] = true
+	
+	var outline_ramp_rule = {
+		"before_color": "20", # Decade 20s, Base 20
+		"after_color": "30",  # Target Base 30
+		"before_texture": "",
+		"after_texture": "",
+		"is_ramp": true
+	}
+	
+	# Current outline color 25 (Offset 5 in 20s)
+	# Correct Logic: Target Base (30) + Offset (5) = 35.
+	result = lnz_text._resolve_recolor("25", true, [outline_ramp_rule], info, "")
+	assert_eq(result, "35", "Outline ramp should preserve offset: 25 (offset 5) -> 30 base + 5 = 35.")
+
+	# Current outline color 15 (different decade - 10s vs 20s)
+	result = lnz_text._resolve_recolor("15", true, [outline_ramp_rule], info, "")
+	assert_null(result, "Outline ramp recolor should return null for different decades.")
 
 
 func test_lnz_text_apply_recolor_rules_to_parts():
