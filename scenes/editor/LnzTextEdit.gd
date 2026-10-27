@@ -4396,27 +4396,52 @@ func _apply_recolor_rules_to_parts(parts: Array, recolor_rules: Array, color_idx
 
 	var current_texture = ""
 	if texture_idx != -1 and texture_idx < parts.size():
-		current_texture = parts[texture_idx]
+		current_texture = str(parts[texture_idx])
 
-	var current_color = parts[color_idx]
+	var current_color = str(parts[color_idx])
+	
 	var new_color = _resolve_recolor(current_color, false, recolor_rules, info_dict, current_texture)
 	if new_color != null:
 		updates[color_idx] = new_color
-		# Check for texture change on the matching rule
+
+	if texture_idx != -1 and texture_idx < parts.size():
 		for r in recolor_rules:
-			var tm = r.before_texture.empty() or r.before_texture == current_texture
-			if tm and not r.is_ramp and not r.before_color.empty() and not r.after_color.empty():
-				if r.before_color == current_color and not r.after_texture.empty():
-					if texture_idx != -1: updates[texture_idx] = r.after_texture
-				break
+			var color_matches = false
+			if r.before_color.empty():
+				color_matches = true
+			else:
+				if str(r.before_color) == current_color:
+					color_matches = true
+				elif r.is_ramp and _is_same_decade(current_color, str(r.before_color)):
+					color_matches = true
+
+			var texture_matches = false
+			if r.before_texture.empty():
+				texture_matches = true
+			else:
+				if str(r.before_texture) == current_texture:
+					texture_matches = true
+
+			if color_matches and texture_matches:
+				if not r.after_texture.empty() and str(r.after_texture) != current_texture:
+					updates[texture_idx] = r.after_texture
+					break
 
 	if outline_idx != -1 and outline_idx < parts.size():
-		var current_outline = parts[outline_idx]
+		var current_outline = str(parts[outline_idx])
 		var new_outline = _resolve_recolor(current_outline, true, recolor_rules, info_dict, current_texture)
 		if new_outline != null:
 			updates[outline_idx] = new_outline
 
 	return updates
+
+func _is_same_decade(color_a_str: String, color_b_str: String) -> bool:
+	if not color_a_str.is_valid_integer() or not color_b_str.is_valid_integer():
+		return false
+	
+	var a = int(color_a_str) / 10
+	var b = int(color_b_str) / 10
+	return a == b
 
 func _apply_multi_color_recolor(parts: Array, recolor_rules: Array, color_indices: Array, info_dict) -> Dictionary:
 	var updates = {}
