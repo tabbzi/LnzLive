@@ -385,6 +385,7 @@ func _ready() -> void:
 	move_mode_settings_instance.connect("lock_all", self, "_on_lock_all")
 	move_mode_settings_instance.connect("unlock_all", self, "_on_unlock_all")
 	move_mode_settings_instance.connect("select_locked_balls_by_ids", self, "_on_select_locked_balls_by_ids")
+	move_mode_settings_instance.connect("duplicate_selection", self, "_duplicate_selected_addballz")
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
@@ -2706,6 +2707,13 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
 		return
 
+	# Move Mode: Duplicate Selection (CTRL+D)
+	if HotkeyManager and HotkeyManager.is_action_pressed("move_duplicate_selection"):
+		if move_mode and not selected_balls.empty():
+			_duplicate_selected_addballz()
+			get_tree().set_input_as_handled()
+			return
+
 	if event.scancode == KEY_SPACE:
 		if event.pressed:
 			_space_pan_active = true
@@ -3534,6 +3542,81 @@ func _on_unselect_all() -> void:
 	for b in to_update:
 		if is_instance_valid(b) and "ball_no" in b:
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
+
+func _duplicate_selected_addballz() -> void:
+	if selected_balls.empty():
+		return
+
+	var max_base: int = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+
+	var balls_to_clone: Array = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if b.ball_no >= max_base:
+				balls_to_clone.append(b)
+
+	if balls_to_clone.empty():
+		print("[WARNING] PetViewContainer: No addballs to duplicate in selection (base balls excluded).")
+		return
+
+	var addballs_data: Array = []
+	var nudge: Vector3 = Vector3(20, -20, 20)
+
+	for i in range(balls_to_clone.size()):
+		var old_id: int = balls_to_clone[i].ball_no
+		var ref_ball: Spatial = find_visual_ball_by_no(old_id)
+		if not is_instance_valid(ref_ball):
+			continue
+
+		var props: Dictionary = {}
+
+		if is_instance_valid(pet_node) and pet_node.lnz and pet_node.lnz.addballs.has(old_id):
+			var ab = pet_node.lnz.addballs[old_id]
+			props["target_base_ball"] = ab.base
+			props["position"] = ab.position
+			props["size"] = ab.size
+			props["fuzz"] = ab.fuzz
+			props["color"] = ab.color_index
+			props["outline_color"] = ab.outline_color_index
+			props["outline"] = ab.outline
+			props["bodyarea"] = ab.body_area
+			props["texture_id"] = ab.texture_id
+			props["anchor_ball"] = ab.anchor_ball
+		else:
+			props["target_base_ball"] = ref_ball.base_ball_no if ref_ball.has("base_ball_no") and ref_ball.base_ball_no != -1 else 0
+			props["position"] = nudge
+			props["size"] = int(round(ref_ball.ball_size))
+			props["fuzz"] = 0
+			props["color"] = ref_ball.color_index if ref_ball.has("color_index") else 0
+			props["outline_color"] = ref_ball.outline_color_index if ref_ball.has("outline_color_index") else 0
+			props["outline"] = ref_ball.old_outline if ref_ball.has("old_outline") else 0
+			props["bodyarea"] = 1
+			props["texture_id"] = -1
+
+		props["position"] = props["position"] + nudge
+		props["old_ball_no"] = old_id
+		addballs_data.append(props)
+
+	if is_instance_valid(lnz_text_edit):
+		lnz_text_edit.batch_duplicate_addballz_and_linez(addballs_data)
+
+	if is_instance_valid(pet_node):
+		pet_node.set_skip_next_rebuild(false)
+		pet_node.generate_pet(pet_node.last_loaded_filepath)
+
+	_on_unselect_all()
+
+	var new_visual_balls: Array = []
+	for ci in range(addballs_data.size()):
+		var new_id: int = max_base + pet_node.lnz.addballs.size() - addballs_data.size() + ci
+		var visual_ball: Spatial = find_visual_ball_by_no(new_id)
+		if is_instance_valid(visual_ball):
+			selected_balls.append(visual_ball)
+			visual_ball.apply_outline_state(visual_ball.OutlineState.ACTIVE_SELECTED)
+			new_visual_balls.append(visual_ball)
 
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()

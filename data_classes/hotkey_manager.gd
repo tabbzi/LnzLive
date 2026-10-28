@@ -139,6 +139,7 @@ var default_bindings: Dictionary = {
 	"move_nudge_value_down": { "scancode": KEY_DOWN, "ctrl": false, "shift": false, "alt": false, "meta": false },
 	"move_mini_undo": { "scancode": KEY_Z, "ctrl": true, "shift": true, "alt": false, "meta": false },
 	"move_mini_redo": { "scancode": KEY_X, "ctrl": true, "shift": true, "alt": false, "meta": false },
+	"move_duplicate_selection": { "scancode": KEY_D, "ctrl": true, "shift": false, "alt": false, "meta": false },
 
 	# === Paintball Mode ===
 	"paint_draw": { "scancode": BUTTON_LEFT, "ctrl": false, "shift": false, "alt": false, "meta": false },
@@ -233,7 +234,8 @@ var action_groups: Dictionary = {
 		"move_lock_ball", "move_unlock_all", "move_set_pivot", "move_scale_group", "move_group_pan",
 		"move_nudge_positive", "move_nudge_positive_alt", "move_nudge_negative", "move_nudge_negative_alt",
 		"move_nudge_value_up", "move_nudge_value_down",
-		"move_mini_undo", "move_mini_redo"
+		"move_mini_undo", "move_mini_redo",
+		"move_duplicate_selection"
 	],
 	"Paintball Mode": [
 		"paint_draw", "paint_eraser", "paint_freeline",
@@ -349,6 +351,7 @@ var action_display_names: Dictionary = {
 	"move_nudge_value_down": "Dec Nudge Amount X/Y/Z +",
 	"move_mini_undo": "Mini-History Undo",
 	"move_mini_redo": "Mini-History Redo",
+	"move_duplicate_selection": "Duplicate Selection",
 	"paint_draw": "Draw Paintball",
 	"paint_eraser": "Eraser",
 	"paint_freeline": "Freeline",

@@ -104,6 +104,7 @@ signal file_backed_up()
 signal create_polygon
 
 signal ball_number_changed(ball_no)
+signal duplicated_addballs(new_ball_ids)
 
 var max_move_head = 60
 const MIRROR_TOLERANCE: float = 3.0
@@ -3612,6 +3613,102 @@ func create_line(start_ball, end_ball, silent: bool = false):
 		
 	if not silent:
 		save_file(true)
+
+func batch_duplicate_addballz_and_linez(addballs_data: Array) -> void:
+	if addballs_data.empty():
+		return
+
+	save_backup()
+
+	var max_base: int = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+	var current_addball_count: int = 0
+	if is_instance_valid(pet_node) and pet_node.lnz:
+		current_addball_count = pet_node.lnz.addballs.size()
+
+	var old_to_new_id_map: Dictionary = {}
+	for i in range(addballs_data.size()):
+		var old_id: int = addballs_data[i].get("old_ball_no", 0)
+		var new_id: int = max_base + current_addball_count + i
+		old_to_new_id_map[old_id] = new_id
+
+	var addball_lines: Array = []
+	for props in addballs_data:
+		var delim: String = " "
+		var ab_bounds = get_section_bounds("[Add Ball]")
+		if not ab_bounds.empty():
+			delim = _detect_delimiter(ab_bounds.start, ab_bounds.end)
+
+		var fields = [
+			str(props.get("target_base_ball", 0)),
+			str(int(props.get("position", Vector3.ZERO).x)),
+			str(int(props.get("position", Vector3.ZERO).y)),
+			str(int(props.get("position", Vector3.ZERO).z)),
+			str(props.get("color", 0)),
+			str(props.get("outline_color", 0)),
+			"0",
+			str(props.get("fuzz", 0)),
+			"0",
+			str(props.get("outline", 0)),
+			str(props.get("size", 20)),
+			str(props.get("bodyarea", 1)),
+			"0",
+			str(props.get("texture_id", -1)),
+			str(props.get("anchor_ball", -1))
+		]
+		addball_lines.append(_join_array(fields, delim))
+
+	var linez_lines: Array = []
+	var linez_bounds = get_section_bounds("[Linez]")
+	if not linez_bounds.empty():
+		# Only scan the base [Linez] section, skip #N variation blocks
+		for i in range(linez_bounds.start, linez_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.begins_with("#"):
+				continue
+			if line.empty() or line.begins_with(";") or line.begins_with("["):
+				continue
+			var parts = split_line(line)
+			if parts.size() < 2:
+				continue
+			var s: int = parts[0].to_int()
+			var e: int = parts[1].to_int()
+			var s_in_map: bool = s in old_to_new_id_map
+			var e_in_map: bool = e in old_to_new_id_map
+			if s_in_map and e_in_map:
+				var mirror_parts = Array(parts)
+				mirror_parts[0] = str(old_to_new_id_map[s])
+				mirror_parts[1] = str(old_to_new_id_map[e])
+				linez_lines.append(_join_array(mirror_parts, " "))
+			elif s_in_map and not e_in_map:
+				var mirror_parts = Array(parts)
+				mirror_parts[0] = str(old_to_new_id_map[s])
+				linez_lines.append(_join_array(mirror_parts, " "))
+			elif e_in_map and not s_in_map:
+				var mirror_parts = Array(parts)
+				mirror_parts[1] = str(old_to_new_id_map[e])
+				linez_lines.append(_join_array(mirror_parts, " "))
+
+	if not addball_lines.empty():
+		var ab_bounds = get_section_bounds("[Add Ball]")
+		if not ab_bounds.empty():
+			var insert_line = _find_insertion_line(ab_bounds.start, ab_bounds.end)
+			var text_to_insert = _join_array(addball_lines, "\n") + "\n"
+			_insert_text_at_cursor_at_line(insert_line, text_to_insert)
+
+	if not linez_lines.empty():
+		var l_bounds = get_section_bounds("[Linez]")
+		if not l_bounds.empty():
+			var insert_line = _find_insertion_line(l_bounds.start, l_bounds.end)
+			var text_to_insert = _join_array(linez_lines, "\n") + "\n"
+			_insert_text_at_cursor_at_line(insert_line, text_to_insert)
+
+	save_file(true)
+	commit_full_snapshot("Duplicated Addballz")
+
+	var new_ball_ids: Array = []
+	for i in range(addballs_data.size()):
+		new_ball_ids.append(max_base + current_addball_count + i)
+	emit_signal("duplicated_addballs", new_ball_ids)
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	select_ball(section, ball_no, is_addball, max_addball_no)

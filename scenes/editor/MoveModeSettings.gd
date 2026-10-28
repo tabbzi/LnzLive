@@ -19,6 +19,7 @@ signal apply_scale(factor, scale_dist, scale_size, pivot_id)
 signal lock_all
 signal unlock_all
 signal select_locked_balls_by_ids
+signal duplicate_selection
 
 var current_constraint_mode: String = "free" # free, x, y, z, xy, xz, yz
 
@@ -26,6 +27,7 @@ var _pending_move_count: int = 0
 
 onready var _apply_button: Button = find_node("ApplyButton")
 onready var _clear_button: Button = find_node("ClearButton")
+onready var _duplicate_button: Button = find_node("DuplicateButton")
 onready var _unselect_button: Button = find_node("UnselectButton")
 onready var _unselect_l: Button = find_node("UnselectL")
 onready var _unselect_c: Button = find_node("UnselectC")
@@ -74,6 +76,7 @@ func _ready() -> void:
 	
 	_apply_button.connect("pressed", self, "_on_ApplyButton_pressed")
 	_clear_button.connect("pressed", self, "_on_ClearButton_pressed")
+	_duplicate_button.connect("pressed", self, "_on_DuplicateButton_pressed")
 	_unselect_button.connect("pressed", self, "_on_UnselectButton_pressed")
 
 	_unselect_l.connect("pressed", self, "_on_UnselectSide_pressed", ["left"])
@@ -236,6 +239,9 @@ func _on_ApplyButton_pressed() -> void:
 
 func _on_ClearButton_pressed() -> void:
 	emit_signal("clear_moves")
+
+func _on_DuplicateButton_pressed() -> void:
+	emit_signal("duplicate_selection")
 
 func _update_move_buttons() -> void:
 	if _pending_move_count > 0:

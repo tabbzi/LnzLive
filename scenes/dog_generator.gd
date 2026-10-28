@@ -2697,6 +2697,75 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	print("[STATUS] Node: inject_single_addball: created addball #%d on base ball %d" % [ball_no, addball_data.base])
 	return true
 
+func inject_single_line(line_props: Dictionary) -> Spatial:
+	var start_ball_no: int = line_props.get("start_ball", 0)
+	var end_ball_no: int = line_props.get("end_ball", 0)
+	var start_node = ball_map.get(start_ball_no)
+	var end_node = ball_map.get(end_ball_no)
+	if not is_instance_valid(start_node) or not is_instance_valid(end_node):
+		printerr("[ERROR] inject_single_line: start ball %d or end ball %d not found" % [start_ball_no, end_ball_no])
+		return null
+
+	var root = get_root()
+	var parent = root.get_node("petholder/lines")
+	var visual_line = line_scene.instance()
+	visual_line.add_to_group("lines")
+
+	var start_pos = start_node.global_transform.origin
+	var target_pos = end_node.global_transform.origin
+	var distance = (target_pos - start_pos).length()
+	var middle_point = lerp(start_pos, target_pos, 0.5)
+
+	if target_pos == middle_point:
+		visual_line.global_transform.origin = middle_point
+		visual_line.rotation_degrees.x += 90
+		visual_line.scale.y = distance
+	else:
+		var look_at_direction = (target_pos - middle_point).normalized()
+		var up_vector = Vector3.UP
+		var dot = look_at_direction.dot(Vector3.UP)
+		if abs(dot) > 0.9999:
+			up_vector = Vector3.FORWARD
+		visual_line.look_at_from_position(middle_point, target_pos, up_vector)
+		visual_line.rotation_degrees.x += 90
+		visual_line.scale.y = distance
+
+	visual_line.texture = start_node.texture
+	visual_line.set_species(lnz.species, is_babyz_mode)
+	visual_line.set_render_flat_colors(render_flat_colors_global)
+	visual_line.transparent_color = start_node.transparent_color
+	visual_line.palette = start_node.palette
+	visual_line.full_outline = line_props.get("outline_type", 0)
+	visual_line.draw_order = line_props.get("draw_order", 0)
+
+	var color_idx = line_props.get("color", -1)
+	visual_line.color_index = color_idx if color_idx != -1 else start_node.color_index
+	var r_color_idx = line_props.get("right_outline_color", -1)
+	visual_line.r_color_index = r_color_idx if r_color_idx != -1 else start_node.color_index
+	var l_color_idx = line_props.get("left_outline_color", -1)
+	visual_line.l_color_index = l_color_idx if l_color_idx != -1 else start_node.color_index
+
+	visual_line.ball_world_pos1 = start_pos
+	visual_line.ball_world_pos2 = target_pos
+	visual_line.fuzz_amount = fuzz_to_amount(line_props.get("fuzz", 0))
+	var final_line_width = Vector2(start_node.ball_size, end_node.ball_size)
+	final_line_width = final_line_width * (Vector2(line_props.get("start_thickness", 0), line_props.get("end_thickness", 0)) / 100.0)
+	visual_line.line_widths = final_line_width
+
+	var special_line = (
+		is_special_ball(lnz.species, start_ball_no)
+		or is_special_ball(lnz.species, end_ball_no)
+	)
+	if special_line:
+		visual_line.add_to_group("special_balls")
+
+	parent.add_child(visual_line)
+	visual_line.set_owner(root)
+	apply_shader_settings(visual_line)
+
+	print("[STATUS] Node: inject_single_line: created line between %d and %d" % [start_ball_no, end_ball_no])
+	return visual_line
+
 func apply_extensions_for_addball(props: Dictionary, ball_no: int) -> AddBallData:
 	var anchor = props.get("anchor_ball", -1)
 	var addball = AddBallData.new(
