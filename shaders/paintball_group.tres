@@ -410,3 +410,19 @@ void vertex() {
 [resource]
 resource_local_to_scene = true
 shader = SubResource( 1 )
+shader_param/debug_mode = true
+shader_param/is_babyz_mode = false
+shader_param/should_quantize = false
+shader_param/palette_size = 256
+shader_param/render_flat_colors = false
+shader_param/base_world_position = null
+shader_param/base_ball_size = 1
+shader_param/transparency_on = true
+shader_param/is_atlas = false
+shader_param/atlas_rect = null
+shader_param/atlas_size = null
+shader_param/texture_size = Vector2( 256, 256 )
+shader_param/texture_size_raw = null
+shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
+shader_param/rotation = Vector3( 0, 0, 0 )
+shader_param/tiling_unit = 128.0
