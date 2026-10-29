@@ -125,6 +125,7 @@ var _animation_container = null
 
 var current_palette_texture = null
 var _cached_custom_palette: Array = []
+var _last_palette_cache_key: String = ""
 
 signal animation_loaded(num_of_frames)
 signal bhd_loaded(num_of_animations)
@@ -191,6 +192,11 @@ func _ready():
 		game_option_button.add_item("Petz")
 		game_option_button.add_item("Babyz")
 		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
+
+	connect("palette_changed", self, "_on_dog_generator_palette_changed")
+
+	if is_instance_valid(editor) and editor.has_signal("palettes_rescanned"):
+		editor.connect("palettes_rescanned", self, "_on_palettes_rescanned")
 
 func get_root():
 	if Engine.is_editor_hint():
@@ -320,6 +326,12 @@ func _on_GameSwitcher_item_selected(index):
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
+
+func _on_dog_generator_palette_changed(_palette_name = "") -> void:
+	_last_palette_cache_key = ""
+
+func _on_palettes_rescanned() -> void:
+	_last_palette_cache_key = ""
 
 func emit_ball_move(ball_no: int, new_position: Vector3):
 	_skip_next_rebuild = true
@@ -851,10 +863,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 	current_palette_texture = pal_texture
 
-	if lnz_info.palette != null and lnz_info.palette != "":
-		_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
-	else:
-		_cached_custom_palette = []
+	_update_cached_palette(lnz_info)
 
 	var base_balls_temp = {}
 	for b in balls:
@@ -1145,6 +1154,21 @@ func _resolve_custom_palette_for_lnz() -> Array:
 		return []
 
 	return LnzLiveUtils.extract_palette_from_rampimg(pal_texture)
+
+func _update_cached_palette(lnz_info: LnzParser) -> void:
+	var cache_key: String
+	if lnz_info.palette != null and lnz_info.palette != "":
+		cache_key = lnz_info.palette + "_" + str(is_babyz_mode)
+	else:
+		cache_key = "_none_" + "_" + str(is_babyz_mode)
+
+	if cache_key != _last_palette_cache_key:
+		if lnz_info.palette != null and lnz_info.palette != "":
+			_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(
+				LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
+		else:
+			_cached_custom_palette = []
+		_last_palette_cache_key = cache_key
 
 func _on_shader_rotation_mode_changed(mode: int) -> void:
 	_shader_rotation_mode = mode

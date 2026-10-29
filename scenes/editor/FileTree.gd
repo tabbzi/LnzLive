@@ -11,6 +11,7 @@ extends Tree
 signal example_file_selected(filepath)
 signal user_file_selected(filepath)
 signal palette_selected(fileprefix)
+signal palettes_rescanned
 signal backup_file
 
 enum ImportType { NONE, LNZ, TEXTURE, PALETTE }
@@ -617,6 +618,7 @@ func rescan_palettes(allow_bmp_conversion: bool = false) -> void:
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes(allow_bmp_conversion)
+	emit_signal("palettes_rescanned")
 
 func rescan_bases() -> void:
 	var was_collapsed: bool = true
