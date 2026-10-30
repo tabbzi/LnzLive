@@ -7,6 +7,8 @@ var _atlas_manifest = {}
 var _atlas_manifest_normalized = {}
 var _atlas_textures = {}
 var _perf_texture_load_time = 0
+var _path_cache: Dictionary = {}
+var _paths_cached: bool = false
 
 
 func init(atlas_manifest_data):
@@ -70,31 +72,14 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 			print("[WARNING] dog_generator: load_texture: texture atlas file not found: " + atlas_path)
 
 	print("[INFO] dog_generator: load_texture: loading individual texture: " + texture_filename)
-	var filename_variants = [
-		texture_filename, texture_filename.to_upper(), texture_filename.to_lower(),
-		base_name + "." + extension.to_upper(), base_name + "." + extension.to_lower(),
-		base_name.to_upper() + "." + extension, base_name.to_lower() + "." + extension,
-		base_name.to_upper() + "." + extension.to_upper(), base_name.to_lower() + "." + extension.to_lower()
-	]
 
-	var deduped = []
-	for v in filename_variants:
-		if not v in deduped:
-			deduped.append(v)
-	filename_variants = deduped
-
-	# ALL MODES + USER TEXTURE: exact 8-bit index parsing
 	if texture == null:
-		var loaded_path = ""
-		var dir = Directory.new()
-		for variant in filename_variants:
-			if dir.file_exists("user://resources/textures/" + variant):
-				loaded_path = "user://resources/textures/" + variant
-				break
-			elif dir.file_exists("res://resources/textures/" + variant):
-				loaded_path = "res://resources/textures/" + variant
-				break
-
+		if not _paths_cached:
+			_build_texture_path_cache("user://resources/textures")
+			_build_texture_path_cache("res://resources/textures")
+			_paths_cached = true
+			
+		var loaded_path = _path_cache.get(texture_filename.to_lower(), "")
 		if loaded_path != "":
 			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode, false, custom_lnz_palette)
 			if raw_bmp_data.has("data"):
@@ -106,19 +91,16 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 				texture = ImageTexture.new()
 				texture.create_from_image(img, 0)
 				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
-
-	# FALLBACK: native loader
-	if texture == null:
-		for variant in filename_variants:
-			var resource_path = "res://resources/textures/" + variant
-			var user_resource_path = "user://resources/textures/" + variant
-
-			if ResourceLoader.exists(resource_path):
-				texture = ResourceLoader.load(resource_path)
-				break
-			elif ResourceLoader.exists(user_resource_path):
-				texture = ResourceLoader.load(user_resource_path)
-				break
+			
+		# FALLBACK: native loader for PNGs, failed BMPs, or virtual res:// files
+		if texture == null:
+			var user_fallback = "user://resources/textures".plus_file(texture_filename)
+			var res_fallback = "res://resources/textures".plus_file(texture_filename)
+			
+			if ResourceLoader.exists(user_fallback):
+				texture = ResourceLoader.load(user_fallback)
+			elif ResourceLoader.exists(res_fallback):
+				texture = ResourceLoader.load(res_fallback)
 
 	# PRELOADER FALLBACK
 	if texture == null and preloader != null:
@@ -142,11 +124,42 @@ func load_texture_from_list(texture_id: int, texture_list: Array, preloader: Res
 	return null
 
 
-func clear_texture_cache_for(filename: String):
-	if _texture_cache.has(filename):
-		_texture_cache.erase(filename)
+func clear_texture_cache_for(filename: String) -> void:
+	var exact = filename
+	var lower = filename.to_lower()
+
+	if _texture_cache.has(exact):
+		_texture_cache.erase(exact)
+	if _texture_cache.has(lower):
+		_texture_cache.erase(lower)
+
+	# Force a path lookup on the next request
+	var base_key = lower.get_file().trim_suffix(".import")
+	if _path_cache.has(base_key):
+		_path_cache.erase(base_key)
 
 
 func clear_texture_cache():
 	_texture_cache.clear()
+	_path_cache.clear()
+	_paths_cached = false
 	print("[STATUS] dog_generator: clear_texture_cache: texture cache cleared for model refresh")
+
+
+func _build_texture_path_cache(base_dir: String, depth: int = 0) -> void:
+	if depth > 3: return
+	var dir = Directory.new()
+	if dir.open(base_dir) != OK: return
+	
+	dir.list_dir_begin(true, true)
+	var file_name = dir.get_next()
+	while file_name != "":
+		var full_path = base_dir.plus_file(file_name)
+		if dir.current_is_dir():
+			_build_texture_path_cache(full_path, depth + 1)
+		else:
+			var clean_filename = file_name.to_lower().trim_suffix(".import")
+			if not _path_cache.has(clean_filename):
+				_path_cache[clean_filename] = base_dir.plus_file(file_name.trim_suffix(".import"))
+		file_name = dir.get_next()
+	dir.list_dir_end()
