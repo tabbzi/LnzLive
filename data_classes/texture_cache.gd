@@ -121,7 +121,7 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 				break
 
 	# PRELOADER FALLBACK
-	if texture == null:
+	if texture == null and preloader != null:
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
@@ -131,14 +131,14 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 	return texture
 
 
-func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = [], is_babyz_mode: bool = false) -> Texture:
+func load_texture_from_list(texture_id: int, texture_list: Array, preloader: ResourcePreloader, custom_lnz_palette: Array = [], is_babyz_mode: bool = false) -> Texture:
 	if texture_id < 0 or texture_id >= texture_list.size():
 		return null
 
 	var tex_info = texture_list[texture_id]
 	if tex_info.has("filename"):
 		var texture_filename = tex_info.filename
-		return load_texture(texture_filename, null, is_babyz_mode, custom_lnz_palette)
+		return load_texture(texture_filename, preloader, is_babyz_mode, custom_lnz_palette)
 	return null
 
 
