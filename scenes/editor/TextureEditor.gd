@@ -982,11 +982,19 @@ func _on_SaveButton_pressed() -> void:
 
 	var root: Node = get_tree().get_root()
 	var editor: Node = root.get_node_or_null("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
-	
+	var pet_node: Node = LnzLiveUtils.get_pet_node(root)
+
+	if is_instance_valid(pet_node) and pet_node.has_method("clear_texture_cache_for"):
+		pet_node.clear_texture_cache_for(fname)
+
 	if editor and editor.has_method("rescan_textures"):
-		editor.rescan_textures(true)
+		editor.rescan_textures(false)
 	elif editor and editor.has_method("rescan"):
 		editor.rescan()
+
+	if is_instance_valid(pet_node) and pet_node.has_method("recompose_model"):
+		if pet_node.lnz:
+			pet_node.recompose_model()
 
 func save_indexed_bmp(path: String) -> void:
 	var f: File = File.new()
