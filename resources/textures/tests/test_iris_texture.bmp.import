@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/test_iris_texture.bmp-3a559fd9ec8121220ef432cfdae055bc.stex"
+
+[deps]
+
+source_file="res://resources/textures/tests/test_iris_texture.bmp"
+dest_files=[ "res://.import/test_iris_texture.bmp-3a559fd9ec8121220ef432cfdae055bc.stex" ]
+
+[params]
+

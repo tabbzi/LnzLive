@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/babyz_256x256_centered.bmp-33610d9e62211044881eeddf376584cf.stex"
+
+[deps]
+
+source_file="res://resources/textures/tests/babyz_256x256_centered.bmp"
+dest_files=[ "res://.import/babyz_256x256_centered.bmp-33610d9e62211044881eeddf376584cf.stex" ]
+
+[params]
+

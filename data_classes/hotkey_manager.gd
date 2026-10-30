@@ -487,10 +487,11 @@ func load_profile(name: String) -> bool:
 		print("[HotkeyManager] Profile '", name, "' not found.")
 		return false
 
-	user_bindings = {}
+	var new_bindings: Dictionary = {}
 	for action in profiles[name]:
-		user_bindings[action] = profiles[name][action].duplicate()
+		new_bindings[action] = profiles[name][action].duplicate()
 
+	user_bindings = new_bindings
 	_apply_bindings()
 	emit_signal("hotkeys_reloaded")
 	print("[HotkeyManager] Profile '", name, "' loaded.")

@@ -129,6 +129,7 @@ var _animation_container = null
 
 var current_palette_texture = null
 var _cached_custom_palette: Array = []
+var _last_palette_cache_key: String = ""
 
 signal animation_loaded(num_of_frames)
 signal bhd_loaded(num_of_animations)
@@ -195,6 +196,11 @@ func _ready():
 		game_option_button.add_item("Petz")
 		game_option_button.add_item("Babyz")
 		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
+
+	connect("palette_changed", self, "_on_dog_generator_palette_changed")
+
+	if is_instance_valid(editor) and editor.has_signal("palettes_rescanned"):
+		editor.connect("palettes_rescanned", self, "_on_palettes_rescanned")
 
 func get_root():
 	if Engine.is_editor_hint():
@@ -324,6 +330,12 @@ func _on_GameSwitcher_item_selected(index):
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
+
+func _on_dog_generator_palette_changed(_palette_name = "") -> void:
+	_last_palette_cache_key = ""
+
+func _on_palettes_rescanned() -> void:
+	_last_palette_cache_key = ""
 
 func emit_ball_move(ball_no: int, new_position: Vector3):
 	_skip_next_rebuild = true
@@ -828,10 +840,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 	current_palette_texture = pal_texture
 
-	if lnz_info.palette != null and lnz_info.palette != "":
-		_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
-	else:
-		_cached_custom_palette = []
+	_update_cached_palette(lnz_info)
 
 	var base_balls_temp = {}
 	for b in balls:
@@ -1030,8 +1039,8 @@ func _build_from_section(val, variation_id):
 func load_texture(texture_filename: String, preloader: ResourcePreloader, custom_lnz_palette: Array = []):
 	return _tex_mgr.load_texture(texture_filename, preloader, is_babyz_mode, custom_lnz_palette)
 
-func load_texture_from_list(texture_id: int, texture_list: Array, custom_lnz_palette: Array = [], is_babyz_mode: bool = false):
-	return _tex_mgr.load_texture_from_list(texture_id, texture_list, custom_lnz_palette, is_babyz_mode)
+func load_texture_from_list(texture_id: int, texture_list: Array, preloader: ResourcePreloader, custom_lnz_palette: Array = [], is_babyz_mode: bool = false):
+	return _tex_mgr.load_texture_from_list(texture_id, texture_list, preloader, custom_lnz_palette, is_babyz_mode)
 
 func clear_texture_cache_for(filename: String):
 	_tex_mgr.clear_texture_cache_for(filename)
@@ -1097,6 +1106,21 @@ func _resolve_custom_palette_for_lnz() -> Array:
 
 	return LnzLiveUtils.extract_palette_from_rampimg(pal_texture)
 
+func _update_cached_palette(lnz_info: LnzParser) -> void:
+	var cache_key: String
+	if lnz_info.palette != null and lnz_info.palette != "":
+		cache_key = lnz_info.palette + "_" + str(is_babyz_mode)
+	else:
+		cache_key = "_none_" + "_" + str(is_babyz_mode)
+
+	if cache_key != _last_palette_cache_key:
+		if lnz_info.palette != null and lnz_info.palette != "":
+			_cached_custom_palette = LnzLiveUtils.extract_palette_from_rampimg(
+				LnzLiveUtils.resolve_palette_resource(lnz_info.palette, is_babyz_mode, preloader))
+		else:
+			_cached_custom_palette = []
+		_last_palette_cache_key = cache_key
+
 func _on_shader_rotation_mode_changed(mode: int) -> void:
 	_shader_rotation_mode = mode
 
@@ -1136,7 +1160,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 	node.fuzz_amount = fuzz_to_amount(data.fuzz)
 	node.palette = palette
 	if data.texture_id >= 0 and data.texture_id < texture_list.size():
-		var tex = load_texture_from_list(data.texture_id, texture_list, custom_lnz_palette, is_babyz_mode)
+		var tex = load_texture_from_list(data.texture_id, texture_list, preloader, custom_lnz_palette, is_babyz_mode)
 		if tex:
 			node.texture = tex
 			var tex_info = texture_list[data.texture_id]
@@ -1615,7 +1639,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 				and polygon.texture_id != null
 				and not str(polygon.texture_id).empty()
 			):
-				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list, active_custom_palette, is_babyz_mode)
+				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list, preloader, active_custom_palette, is_babyz_mode)
 			else:
 				# If no texture is defined, default to first ball
 				visual_polygon.texture = point1.texture
@@ -1926,7 +1950,7 @@ func restore_ball_visual_states(ball_nos: Array):
 		visual_node.fuzz_amount = fuzz_to_amount(data.fuzz)
 
 		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
-			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list, active_custom_palette, is_babyz_mode)
+			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list, preloader, active_custom_palette, is_babyz_mode)
 			var tex_info = lnz.texture_list[data.texture_id]
 			visual_node.transparent_color = tex_info.transparent_color
 			if tex_info.has("texture_size") and tex_info.texture_size != null:
@@ -2681,7 +2705,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	node.palette = current_palette_texture
 	
 	if addball_data.texture_id >= 0:
-		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list, active_custom_palette, is_babyz_mode)
+		var tex = load_texture_from_list(addball_data.texture_id, lnz.texture_list, preloader, active_custom_palette, is_babyz_mode)
 		if tex:
 			node.texture = tex
 	else:

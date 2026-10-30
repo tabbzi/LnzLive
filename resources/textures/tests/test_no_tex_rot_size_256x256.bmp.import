@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/test_no_tex_rot_size_256x256.bmp-5588f0a9e2e366096d46a2a1f2beb9bb.stex"
+
+[deps]
+
+source_file="res://resources/textures/tests/test_no_tex_rot_size_256x256.bmp"
+dest_files=[ "res://.import/test_no_tex_rot_size_256x256.bmp-5588f0a9e2e366096d46a2a1f2beb9bb.stex" ]
+
+[params]
+

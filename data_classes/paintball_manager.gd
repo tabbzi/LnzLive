@@ -3,17 +3,10 @@ extends Reference
 ## Stateless paintball manager for dog_generator.gd that handles creation, removal, and visuals for paintballz
 
 var gen = null
-var _next_pb_uid: int = 1
 
 
 func init(generator_node):
 	gen = generator_node
-
-
-func allocate_paintball_uid() -> int:
-	var uid: int = _next_pb_uid
-	_next_pb_uid += 1
-	return uid
 
 
 func _create_paintball_instance(base_ball_node):
@@ -53,7 +46,7 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 	pb_visual_ball.palette = base_ball_node.palette
 
 	if pb_data.texture > -1:
-		var tex_pb = gen._tex_mgr.load_texture_from_list(pb_data.texture, gen.lnz.texture_list, active_custom_palette)
+		var tex_pb = gen._tex_mgr.load_texture_from_list(pb_data.texture, gen.lnz.texture_list, null, active_custom_palette, gen.is_babyz_mode)
 		if tex_pb:
 			pb_visual_ball.texture = tex_pb
 			if pb_data.texture < gen.lnz.texture_list.size():

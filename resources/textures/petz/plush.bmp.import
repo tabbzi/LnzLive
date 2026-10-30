@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/plush.bmp-03e6bb99638e7d728f7f6d7ec617f129.stex"
+
+[deps]
+
+source_file="res://resources/textures/petz/plush.bmp"
+dest_files=[ "res://.import/plush.bmp-03e6bb99638e7d728f7f6d7ec617f129.stex" ]
+
+[params]
+
