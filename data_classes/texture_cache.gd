@@ -75,9 +75,10 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 
 	if texture == null:
 		if not _paths_cached:
+			_paths_cached = true
+			
 			_build_texture_path_cache("user://resources/textures")
 			_build_texture_path_cache("res://resources/textures")
-			_paths_cached = true
 			
 		var loaded_path = _path_cache.get(texture_filename.to_lower(), "")
 		if loaded_path != "":
