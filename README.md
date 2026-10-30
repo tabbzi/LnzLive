@@ -39,6 +39,10 @@ The web version of LnzLive Petz & Babyz beta can be accessed here:
 
 [https://tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive)
 
+## Website
+
+Visit the LnzLive website at [https://tabbloza.com/lnzlive/](https://tabbloza.com/lnzlive/)
+
 ## Contribute
 
 We welcome contributions! Please see the [Developer Guide](docs/DEVELOPMENT.md) for setup instructions.
