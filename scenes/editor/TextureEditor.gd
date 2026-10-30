@@ -1325,7 +1325,7 @@ func apply_texture_bucket(ball_node: Node) -> void:
 		var custom_palette: Array = []
 		if is_instance_valid(dog_generator) and dog_generator.lnz and dog_generator.lnz.palette:
 			custom_palette = LnzLiveUtils.get_custom_palette_array(dog_generator, dog_generator.is_babyz_mode)
-		var tex: Texture = dog_generator.load_texture_from_list(texture_index, lnz_texture_list, custom_palette)
+		var tex: Texture = dog_generator.load_texture_from_list(texture_index, lnz_texture_list, get_tree().root.get_node_or_null("Root/ResourcePreloader"), custom_palette, dog_generator.is_babyz_mode)
 		if tex:
 			ball_node.texture = tex
 			var tex_info = lnz_texture_list[texture_index]
