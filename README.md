@@ -61,4 +61,4 @@ Feel free to save and share these buttons/stamps for linking to the latest relea
 https://github.com/tabbzi/LnzLive
 ```
 
-![stamp](RULnzLiving.gif) ![button](LnzLiveButton.gif)
+![stamp](RULnzLiving.gif) ![stamp](RULnzLiving2.gif) ![button](LnzLiveButton.gif) ![button](LnzLiveIcon.png)
