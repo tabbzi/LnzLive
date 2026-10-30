@@ -69,9 +69,7 @@ func delete_layer(layer_id: int, merge_to_below: bool = false) -> bool:
 	layers.remove(idx)
 
 	print("[STATUS] PaintballLayerManager: deleted layer %d" % layer_id)
-
 	emit_signal("layer_removed", layer_id)
-
 	return true
 
 
@@ -186,19 +184,25 @@ func get_active_layer_paintball_count() -> int:
 
 
 func clear_all_layers() -> void:
+	var layer_ids: Array = []
 	for layer in layers:
-		emit_signal("layer_cleared", layer.layer_id)
+		layer_ids.append(layer.layer_id)
 	layers.clear()
 	active_layer_id = -1
 	next_layer_id = 1
 	print("[STATUS] PaintballLayerManager: cleared all layers and layer structure")
+	for id in layer_ids:
+		emit_signal("layer_cleared", id)
 
 
 func clear_all_paintballs() -> void:
+	var layer_ids: Array = []
 	for layer in layers:
+		layer_ids.append(layer.layer_id)
 		layer.clear_paintballs()
-		emit_signal("layer_cleared", layer.layer_id)
 	print("[STATUS] PaintballLayerManager: cleared all paintballs (kept layer structure)")
+	for id in layer_ids:
+		emit_signal("layer_cleared", id)
 
 
 func remove_paintball_by_uid(uid: int) -> bool:

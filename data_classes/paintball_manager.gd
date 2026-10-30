@@ -3,17 +3,10 @@ extends Reference
 ## Stateless paintball manager for dog_generator.gd that handles creation, removal, and visuals for paintballz
 
 var gen = null
-var _next_pb_uid: int = 1
 
 
 func init(generator_node):
 	gen = generator_node
-
-
-func allocate_paintball_uid() -> int:
-	var uid: int = _next_pb_uid
-	_next_pb_uid += 1
-	return uid
 
 
 func _create_paintball_instance(base_ball_node):
