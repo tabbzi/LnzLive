@@ -101,9 +101,9 @@ func _ready() -> void:
 	
 	res_textures = create_item(root, INDEX_GAME_TEXTURES)
 	res_textures.set_text(0, "Game Textures")
-	
 	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
 	local_storage_textures.set_text(0, "User Textures")
+	local_storage_textures.set_metadata(0, user_file_location + "textures/")
 	
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
@@ -597,8 +597,10 @@ func rescan_textures(reload_model: bool = false) -> void:
 	if is_instance_valid(local_storage_textures):
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
+		local_storage_textures.free()
 	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
 	local_storage_textures.set_text(0, "User Textures")
+	local_storage_textures.set_metadata(0, user_file_location + "textures/")
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
@@ -614,6 +616,7 @@ func rescan_palettes(allow_bmp_conversion: bool = false) -> void:
 	if is_instance_valid(local_storage_palettes):
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
+		local_storage_palettes.free()
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
@@ -631,6 +634,7 @@ func rescan_bases() -> void:
 	if is_instance_valid(local_storage_bases):
 		was_collapsed = local_storage_bases.collapsed
 		root.remove_child(local_storage_bases)
+		local_storage_bases.free()
 	local_storage_bases = create_item(root, INDEX_BASE_LNZ)
 	local_storage_bases.set_text(0, "Base LNZ")
 	local_storage_bases.collapsed = was_collapsed
