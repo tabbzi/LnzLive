@@ -1156,7 +1156,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-15"
+text = "PB-beta-v1.4.8-preview-18"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1796,7 +1796,7 @@ margin_bottom = 40.0
 [node name="LineEdit" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
 margin_right = 110.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 0, 25 )
+rect_min_size = Vector2( 64, 25 )
 size_flags_horizontal = 3
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
@@ -1807,7 +1807,7 @@ placeholder_text = "color #"
 margin_top = 29.0
 margin_right = 110.0
 margin_bottom = 54.0
-rect_min_size = Vector2( 0, 25 )
+rect_min_size = Vector2( 64, 25 )
 size_flags_horizontal = 3
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
@@ -1884,7 +1884,7 @@ __meta__ = {
 [node name="GlobalFuzzAmount" type="LineEdit" parent="SceneRoot/FuzzPopup/VBoxContainer"]
 margin_right = 110.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 0, 45 )
+rect_min_size = Vector2( 64, 45 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
 placeholder_text = "fuzz amount"

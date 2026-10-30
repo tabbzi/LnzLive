@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/hair10.bmp-1cbefde5de1e1df931d0d8f09612328f.stex"
+
+[deps]
+
+source_file="res://resources/textures/petz/hair10.bmp"
+dest_files=[ "res://.import/hair10.bmp-1cbefde5de1e1df931d0d8f09612328f.stex" ]
+
+[params]
+

@@ -1,0 +1,34 @@
+[remap]
+
+importer="texture"
+type="StreamTexture"
+path="res://.import/SCRIBBLE_thumb.png-b4fbd84b15a935ed748b62d6864daa5d.stex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://resources/textures/wallpaper/SCRIBBLE_thumb.png"
+dest_files=[ "res://.import/SCRIBBLE_thumb.png-b4fbd84b15a935ed748b62d6864daa5d.stex" ]
+
+[params]
+
+compress/mode=0
+compress/lossy_quality=0.7
+compress/hdr_mode=0
+compress/bptc_ldr=0
+compress/normal_map=2
+flags/repeat=0
+flags/filter=false
+flags/mipmaps=false
+flags/anisotropic=false
+flags/srgb=0
+process/fix_alpha_border=false
+process/premult_alpha=false
+process/HDR_as_SRGB=false
+process/invert_color=false
+stream=false
+size_limit=0
+detect_3d=false
+svg/scale=1.0

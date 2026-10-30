@@ -1191,7 +1191,7 @@ static func setup_relative_width(control: Control, char_count: int = 3) -> void:
 		if sb:
 			style_pad = max(6.0, sb.get_minimum_size().x + 2.0)
 
-	var target_w: float = clamp(ceil(text_width + style_pad), 28.0, 64.0)
+	var target_w: float = clamp(ceil(text_width + style_pad), 28.0, 128.0)
 	control.rect_min_size.x = target_w
 	control.rect_size.x = target_w
 	control.set_meta("relative_char_count", char_count)

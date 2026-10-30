@@ -982,11 +982,19 @@ func _on_SaveButton_pressed() -> void:
 
 	var root: Node = get_tree().get_root()
 	var editor: Node = root.get_node_or_null("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
-	
+	var pet_node: Node = LnzLiveUtils.get_pet_node(root)
+
+	if is_instance_valid(pet_node) and pet_node.has_method("clear_texture_cache_for"):
+		pet_node.clear_texture_cache_for(fname)
+
 	if editor and editor.has_method("rescan_textures"):
-		editor.rescan_textures(true)
+		editor.rescan_textures(false)
 	elif editor and editor.has_method("rescan"):
 		editor.rescan()
+
+	if is_instance_valid(pet_node) and pet_node.has_method("recompose_model"):
+		if pet_node.lnz:
+			pet_node.recompose_model()
 
 func save_indexed_bmp(path: String) -> void:
 	var f: File = File.new()
@@ -1325,7 +1333,7 @@ func apply_texture_bucket(ball_node: Node) -> void:
 		var custom_palette: Array = []
 		if is_instance_valid(dog_generator) and dog_generator.lnz and dog_generator.lnz.palette:
 			custom_palette = LnzLiveUtils.get_custom_palette_array(dog_generator, dog_generator.is_babyz_mode)
-		var tex: Texture = dog_generator.load_texture_from_list(texture_index, lnz_texture_list, custom_palette)
+		var tex: Texture = dog_generator.load_texture_from_list(texture_index, lnz_texture_list, get_tree().root.get_node_or_null("Root/ResourcePreloader"), custom_palette, dog_generator.is_babyz_mode)
 		if tex:
 			ball_node.texture = tex
 			var tex_info = lnz_texture_list[texture_index]

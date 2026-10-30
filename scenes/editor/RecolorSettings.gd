@@ -5,12 +5,12 @@ signal apply_bucket(ball_no, properties)
 signal apply_batch_bucket(changes, write_to_overrides)
 signal apply_eye_colors(eye_colors_info)
 
-onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
-onready var swap_lines_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
+onready var swap_scroll = find_node("SwapScrollContainer")
+onready var swap_lines_container = find_node("RecolorLines")
 onready var bucket_container = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer
 onready var bucket_palette_grid: GridContainer = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/PaletteScroll/PaletteGrid
 
-onready var color_swap_check_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
+onready var color_swap_check_container = find_node("CheckContainer")
 
 onready var bucket_color_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorEdit
 onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineEdit
@@ -44,25 +44,23 @@ onready var firefly_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContain
 onready var randomize_eye_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2/RandomizeEyeButton
 onready var apply_eye_colors_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/EyeColorsContainer/EyeButtonRow2/ApplyEyeColorsButton
 
-onready var header_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header
+onready var header_container = find_node("Header")
+onready var advanced_toggle: CheckBox = find_node("AdvancedToggle")
+onready var advanced_section: VBoxContainer = find_node("AdvancedSection")
 
-onready var top_row = header_container.get_node("TopRow")
+onready var top_row = find_node("TopRow")
 onready var freq_edit: LineEdit = header_container.get_node("FreqRow").get_node_or_null("FreqEdit")
-onready var after_to_before_btn: Button = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/AfterToBeforeButton
+onready var after_to_before_btn: Button = find_node("AfterToBeforeButton")
 
-onready var middle_row = header_container.get_node("MiddleRow")
-onready var rand_after_btn: Button = header_container.get_node("TheoryRow").get_node_or_null("RandomizeAfterButton")
-onready var color_theory_select: OptionButton = header_container.get_node("TheoryRow").get_node_or_null("ColorTheorySelect")
-onready var theory_seed_picker: ColorPickerButton = middle_row.get_node_or_null("TheorySeedColor")
+onready var rand_after_btn: Button = find_node("RandomizeAfterButton")
+onready var color_theory_select: OptionButton = find_node("ColorTheorySelect")
+onready var theory_seed_picker: ColorPickerButton = find_node("TheorySeedColor")
 
-onready var bottom_row = header_container.get_node("BottomRow")
-onready var random_seed_check: CheckBox = bottom_row.get_node_or_null("RandomSeedCheckBox")
+onready var bottom_row = find_node("BottomRow")
 onready var natural_colors_check: CheckBox = bottom_row.get_node_or_null("NaturalColorsOnly")
 onready var texturable_only_check: CheckBox = bottom_row.get_node_or_null("TexturableOnly")
-onready var tex_list_check: CheckBox = header_container.get_node("TexListRow").get_node_or_null("TexListCheck")
-
-onready var check_container_2 = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2
-onready var nose_ballz_check: CheckBox = check_container_2.get_node_or_null("NoseBallz")
+onready var tex_list_check: CheckBox = bottom_row.get_node_or_null("TexListCheck")
+onready var nose_ballz_check: CheckBox = bottom_row.get_node_or_null("NoseBallz")
 
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
@@ -109,7 +107,7 @@ func _ready() -> void:
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
 
-	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
+	find_node("RecolorButton").connect("pressed", self, "_on_RecolorButton_pressed")
 
 	top_row.get_node("AddButton").connect("pressed", self, "_on_AddSwap_pressed")
 	top_row.get_node("ClearButton").connect("pressed", self, "_on_ClearSwap_pressed")
@@ -119,6 +117,11 @@ func _ready() -> void:
 	find_node("ExportButton").connect("pressed", self, "export_recolor_json")
 	find_node("ImportButton").connect("pressed", self, "_on_ImportPresetButton_pressed")
 
+	if is_instance_valid(advanced_toggle):
+		advanced_toggle.connect("toggled", self, "_on_advanced_toggle_toggled")
+		if is_instance_valid(advanced_section):
+			advanced_section.visible = advanced_toggle.pressed
+
 	if is_instance_valid(rand_after_btn):
 		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
 	
@@ -127,9 +130,6 @@ func _ready() -> void:
 	
 	if is_instance_valid(theory_seed_picker):
 		theory_seed_picker.connect("color_changed", self, "_on_theory_seed_changed")
-		
-	if is_instance_valid(random_seed_check):
-		random_seed_check.connect("toggled", self, "_on_random_seed_toggled")
 	
 	if is_instance_valid(nose_ballz_check):
 		nose_ballz_check.connect("toggled", self, "_on_nose_ballz_toggled")
@@ -175,9 +175,9 @@ func _on_global_font_updated() -> void:
 		LnzLiveUtils.setup_relative_width(freq_edit, 3)
 
 	var header_buttons: Array = [
-		top_row.get_node_or_null("AddButton") if is_instance_valid(top_row) else null,
-		top_row.get_node_or_null("ClearButton") if is_instance_valid(top_row) else null,
-		top_row.get_node_or_null("AutofillButton") if is_instance_valid(top_row) else null,
+		top_row.get_node_or_null("AddButton"),
+		top_row.get_node_or_null("ClearButton"),
+		top_row.get_node_or_null("AutofillButton"),
 		theory_seed_picker,
 		color_theory_select,
 		rand_after_btn
@@ -209,6 +209,11 @@ func _on_global_font_updated() -> void:
 			if is_instance_valid(le):
 				LnzLiveUtils.setup_relative_width(le, 3)
 	_on_bucket_scroll_resized()
+
+func _on_advanced_toggle_toggled(is_on: bool) -> void:
+	if is_instance_valid(advanced_section):
+		advanced_section.visible = is_on
+
 
 func _on_random_seed_toggled(is_on: bool) -> void:
 	pass
@@ -244,13 +249,13 @@ func _add_swap_line() -> Control:
 	LnzLiveUtils.setup_preview_wrapper(self, before_color, "BeforeColor_" + str(id))
 	LnzLiveUtils.setup_preview_wrapper(self, after_color, "AfterColor_" + str(id))
 	
-	LnzLiveUtils.setup_relative_width(before_color, 3)
-	LnzLiveUtils.setup_relative_width(after_color, 3)
+	LnzLiveUtils.setup_relative_width(before_color, 5)
+	LnzLiveUtils.setup_relative_width(after_color, 5)
 	
 	var before_texture = line.get_node("BeforeTexture")
 	var after_texture = line.get_node("AfterTexture")
-	LnzLiveUtils.setup_relative_width(before_texture, 3)
-	LnzLiveUtils.setup_relative_width(after_texture, 3)
+	LnzLiveUtils.setup_relative_width(before_texture, 5)
+	LnzLiveUtils.setup_relative_width(after_texture, 5)
 	
 	var remove_btn: Button = line.get_node_or_null("RemoveButton")
 	if remove_btn:
@@ -277,7 +282,7 @@ func _on_bucket_property_changed(new_text: String) -> void:
 	if pet_node and bucket_texture_edit.text != "":
 		var tex_idx: int = int(bucket_texture_edit.text)
 		if pet_node.lnz and pet_node.lnz.texture_list:
-			var tex: Texture = pet_node.load_texture_from_list(tex_idx, pet_node.lnz.texture_list, LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode))
+			var tex: Texture = pet_node.load_texture_from_list(tex_idx, pet_node.lnz.texture_list, get_tree().root.get_node_or_null("Root/ResourcePreloader"), LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode), pet_node.is_babyz_mode)
 			bucket_texture_icon.texture = tex
 	else:
 		bucket_texture_icon.texture = null
@@ -403,7 +408,7 @@ func queue_bucket_change(ball_node: Node) -> void:
 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
 			var tex_id = props.texture_id
 			if tex_id >= 0 and tex_id < pet_node.lnz.texture_list.size():
-				var tex: Texture = pet_node.load_texture_from_list(tex_id, pet_node.lnz.texture_list, LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode))
+				var tex: Texture = pet_node.load_texture_from_list(tex_id, pet_node.lnz.texture_list, get_tree().root.get_node_or_null("Root/ResourcePreloader"), LnzLiveUtils.get_custom_palette_array(pet_node, pet_node.is_babyz_mode), pet_node.is_babyz_mode)
 				if tex: 
 					ball_node.texture = tex
 					var tex_info = pet_node.lnz.texture_list[tex_id]
@@ -911,9 +916,6 @@ func _on_RandomizeAfter_pressed() -> void:
 		
 	var seed_color: Color = Color.white # Default to White
 	var use_random_seed: bool = false
-	
-	if is_instance_valid(random_seed_check):
-		use_random_seed = random_seed_check.pressed
 		
 	if is_instance_valid(theory_seed_picker):
 		# If using random seed, we ignore the picker
