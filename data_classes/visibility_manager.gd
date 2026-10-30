@@ -89,10 +89,9 @@ func is_special_ball(_species: int, ball_no: int) -> bool:
 
 
 func hide_ball(ball_no):
-	if not gen._hidden_balls.has(ball_no):
-		gen._hidden_balls.append(ball_no)
-		gen.emit_signal("hidden_balls_changed", gen._hidden_balls.size())
-
+	if gen._hidden_balls.has(ball_no):
+		return
+	gen._hidden_balls.append(ball_no)
 	_apply_hidden_state_to_visuals(ball_no)
 
 

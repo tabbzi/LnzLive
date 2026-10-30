@@ -770,9 +770,7 @@ func _process(_delta: float) -> void:
 
 	# HOTKEYS
 	if is_instance_valid(ball_label) and ball_label.visible:
-		var hovered_ball = highlighted_ball
-		if not hovered_ball or not is_instance_valid(hovered_ball):
-			hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
+		var hovered_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position()))
 		var hotkey_hint: String = _get_hotkey_hint_for_ball(hovered_ball)
 		footer = hotkey_hint
 

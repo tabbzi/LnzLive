@@ -11,6 +11,7 @@ extends Tree
 signal example_file_selected(filepath)
 signal user_file_selected(filepath)
 signal palette_selected(fileprefix)
+signal palettes_rescanned
 signal backup_file
 
 enum ImportType { NONE, LNZ, TEXTURE, PALETTE }
@@ -79,6 +80,7 @@ onready var menu_open_user_folder: Button = get_tree().root.get_node("Root/Scene
 onready var file_dialog: FileDialog = get_node("../FileDialog")
 
 var saved_subfolder_states: Dictionary = {}
+var _thumbnail_cache: Dictionary = {}
 
 func _ready() -> void:
 	var user_path: String = ProjectSettings.globalize_path("user://")
@@ -100,9 +102,9 @@ func _ready() -> void:
 	
 	res_textures = create_item(root, INDEX_GAME_TEXTURES)
 	res_textures.set_text(0, "Game Textures")
-	
 	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
 	local_storage_textures.set_text(0, "User Textures")
+	local_storage_textures.set_metadata(0, user_file_location + "textures/")
 	
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
@@ -596,8 +598,10 @@ func rescan_textures(reload_model: bool = false) -> void:
 	if is_instance_valid(local_storage_textures):
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
+		local_storage_textures.free()
 	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
 	local_storage_textures.set_text(0, "User Textures")
+	local_storage_textures.set_metadata(0, user_file_location + "textures/")
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
@@ -613,10 +617,12 @@ func rescan_palettes(allow_bmp_conversion: bool = false) -> void:
 	if is_instance_valid(local_storage_palettes):
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
+		local_storage_palettes.free()
 	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes(allow_bmp_conversion)
+	emit_signal("palettes_rescanned")
 
 func rescan_bases() -> void:
 	var was_collapsed: bool = true
@@ -629,6 +635,7 @@ func rescan_bases() -> void:
 	if is_instance_valid(local_storage_bases):
 		was_collapsed = local_storage_bases.collapsed
 		root.remove_child(local_storage_bases)
+		local_storage_bases.free()
 	local_storage_bases = create_item(root, INDEX_BASE_LNZ)
 	local_storage_bases.set_text(0, "Base LNZ")
 	local_storage_bases.collapsed = was_collapsed
@@ -737,80 +744,220 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 		if full_path == selected_filepath:
 			new_item.select(0)
 
+func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: int = 0) -> void:
+	if depth > MAX_RECURSION_DEPTH:
+		return
+
+	var dir: Directory = Directory.new()
+	if dir.open(path) != OK:
+		return
+
+	dir.list_dir_begin(true, true)
+	var filename: String = dir.get_next()
+
+	var folders: Array = []
+	var files: Array = []
+	var file_checker: File = File.new()
+
+	while filename != "":
+		if dir.current_is_dir():
+			folders.append({"name": filename, "time": 0})
+		elif filename.to_lower().ends_with(".bmp"):
+			var full_path: String = path.plus_file(filename)
+			var mod_time: int = file_checker.get_modified_time(full_path)
+			files.append({"name": filename, "path": full_path, "time": mod_time})
+		filename = dir.get_next()
+	dir.list_dir_end()
+
+	folders.sort_custom(self, "_sort_by_name")
+
+	if current_sort_mode == SortMode.ALPHABETICAL:
+		files.sort_custom(self, "_sort_by_name")
+	elif current_sort_mode == SortMode.MODIFIED_DATE:
+		files.sort_custom(self, "_sort_by_time")
+
+	for folder_data in folders:
+		var f_name: String = folder_data["name"]
+		var sub_path: String = path.plus_file(f_name)
+		var sub_item: TreeItem = create_item(parent_item)
+		sub_item.set_text(0, f_name)
+
+		var meta_path: String = sub_path + "/"
+		sub_item.set_metadata(0, meta_path)
+
+		if saved_subfolder_states.has(meta_path):
+			sub_item.set_collapsed(saved_subfolder_states[meta_path])
+		else:
+			sub_item.set_collapsed(true)
+
+		if depth < 1:
+			_scan_local_textures_recursive(sub_path, sub_item, depth + 1)
+
+	for file_data in files:
+		var f_name: String = file_data["name"]
+		var full_path: String = file_data["path"]
+		var mod_time: int = file_data["time"]
+
+		var new_item: TreeItem = create_item(parent_item)
+		new_item.set_text(0, f_name)
+		new_item.set_metadata(0, full_path)
+
+		if _thumbnail_cache.has(full_path) and _thumbnail_cache[full_path].time == mod_time:
+			var cached = _thumbnail_cache[full_path]
+			new_item.set_icon(0, cached.icon_tex)
+			new_item.set_text(0, cached.text)
+			var res_name: String = f_name.to_lower()
+			if is_instance_valid(preloader):
+				if preloader.has_resource(res_name): preloader.remove_resource(res_name)
+				preloader.add_resource(res_name, cached.full_tex)
+			continue
+
+		var validation: Dictionary = LnzLiveUtils.validate_8bit_bmp(full_path)
+
+		if not validation["valid"]:
+			new_item.set_text(0, f_name + " (INVALID: " + validation["reason"] + ")")
+		else:
+			var img: Image = Image.new()
+			var err: int = img.load(full_path, true, true)
+
+			if err == OK and img.get_width() > 0:
+				var full_tex: ImageTexture = ImageTexture.new()
+				full_tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
+
+				var res_name: String = f_name.to_lower()
+				if is_instance_valid(preloader) and preloader.has_resource(res_name):
+					preloader.remove_resource(res_name)
+				if is_instance_valid(preloader):
+					preloader.add_resource(res_name, full_tex)
+
+				var file: File = File.new()
+				var icon_err: int = -1
+				var icon_img: Image = null
+				var icon_tex: ImageTexture = null
+				if file.open(full_path, File.READ) == OK:
+					var buf: PoolByteArray = file.get_buffer(file.get_len())
+					file.close()
+
+					icon_img = Image.new()
+					icon_err = icon_img.load_bmp_from_buffer(buf)
+
+					if icon_err == OK and icon_img.get_width() > 0:
+						icon_img.convert(Image.FORMAT_RGBA8)
+						icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+
+						icon_tex = ImageTexture.new()
+						icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
+						new_item.set_icon(0, icon_tex)
+
+					buf.resize(0)
+
+					var final_text = f_name + " (" + str(img.get_width()) + "x" + str(img.get_height()) + ")"
+					new_item.set_text(0, final_text)
+
+					if icon_err == OK and icon_img.get_width() > 0:
+						_thumbnail_cache[full_path] = {
+							"time": mod_time,
+							"full_tex": full_tex,
+							"icon_tex": icon_tex,
+							"text": final_text
+						}
+			else:
+				new_item.set_text(0, f_name + " (LOAD FAILED)")
+
+
 func scan_local_textures() -> void:
 	print("[STATUS] FileTree: scan_local_textures: running")
 	var t_start: int = OS.get_ticks_msec()
 
 	var dir: Directory = Directory.new()
 	var textures_dir: String = user_file_location + "/textures"
-	if dir.open(textures_dir) != OK:
+	if not dir.dir_exists(textures_dir):
 		print("[WARNING] FileTree: scan_local_textures: directory not found, will create on texture import")
 		return
-	dir.list_dir_begin()
-	var filename: String = dir.get_next()
-	var file: File = File.new()
 
-	while filename != "":
-		if filename.to_lower().ends_with(".bmp"):
-			var full_path: String = textures_dir.plus_file(filename)
-			var new_item: TreeItem = create_item(local_storage_textures)
-			new_item.set_text(0, filename)
-			new_item.set_metadata(0, full_path)
+	_scan_local_textures_recursive(textures_dir, local_storage_textures, 0)
 
-			# Validate texture BMP file
-			var validation: Dictionary = LnzLiveUtils.validate_8bit_bmp(full_path)
-			
-			if not validation["valid"]:
-				new_item.set_text(0, filename + " (INVALID: " + validation["reason"] + ")")
-			else:
-				# Load full texture for the UI
-				var img: Image = Image.new()
-				var err: int = img.load(full_path, true, true)
-				
-				if err == OK and img.get_width() > 0:
-					# Create texture for model generation
-					var full_tex: ImageTexture = ImageTexture.new()
-					full_tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
-					
-					var res_name: String = filename.to_lower()
-					if preloader.has_resource(res_name):
-						preloader.remove_resource(res_name)
-					preloader.add_resource(res_name, full_tex)
-
-					# Load image for thumbnail
-					if file.open(full_path, File.READ) == OK:
-						var buf: PoolByteArray = file.get_buffer(file.get_len())
-						file.close()
-
-						var icon_img: Image = Image.new()
-						var icon_err: int = icon_img.load_bmp_from_buffer(buf)
-						
-						if icon_err == OK and icon_img.get_width() > 0:
-							var w: int = icon_img.get_width()
-							var h: int = icon_img.get_height()
-
-							icon_img.convert(Image.FORMAT_RGBA8)
-							icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
-
-							var icon_tex: ImageTexture = ImageTexture.new()
-							icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
-							new_item.set_icon(0, icon_tex)
-							
-						buf.resize(0)
-					
-					new_item.set_text(0, filename + " (" + str(img.get_width()) + "x" + str(img.get_height()) + ")")
-				else:
-					new_item.set_text(0, filename + " (LOAD FAILED)")
-
-		filename = dir.get_next()
-	dir.list_dir_end()
 	print("[STATUS] FileTree: scan_local_textures: complete")
 	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
+
+func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dictionary) -> void:
+	var dir: Directory = Directory.new()
+	if dir.open(path) != OK:
+		return
+		
+	dir.list_dir_begin(true, true)
+	var filename: String = dir.get_next()
+	
+	var folders: Array = []
+	var files: Array = []
+	
+	while filename != "":
+		if dir.current_is_dir():
+			folders.append(filename)
+		else:
+			files.append(filename)
+		filename = dir.get_next()
+	dir.list_dir_end()
+	
+	folders.sort()
+	files.sort()
+	
+	for f_name in folders:
+		var sub_path: String = path.plus_file(f_name)
+		var sub_item: TreeItem = create_item(parent_item)
+		sub_item.set_text(0, f_name)
+		sub_item.set_metadata(0, sub_path + "/")
+		sub_item.set_collapsed(true)
+		_scan_res_dir_recursive(sub_path, sub_item, manifest)
+		
+	var added_files: Dictionary = {}
+	for f_name in files:
+		var final_filename: String = ""
+		
+		if f_name.to_lower().ends_with(".bmp"):
+			final_filename = f_name
+		elif f_name.to_lower().ends_with(".bmp.import"):
+			final_filename = f_name.get_basename()
+
+		if final_filename != "" and not added_files.has(final_filename):
+			added_files[final_filename] = true
+			var full_path: String = path.plus_file(final_filename)
+
+			var new_item: TreeItem = create_item(parent_item)
+			new_item.set_text(0, final_filename)
+			new_item.set_metadata(0, full_path)
+
+			var thumb_path: String = full_path.get_basename() + "_thumb.png"
+			if ResourceLoader.exists(thumb_path):
+				var thumb = load(thumb_path)
+				if is_instance_valid(thumb):
+					new_item.set_icon(0, thumb)
+			else:
+				var lookup_key: String = final_filename.get_basename()
+				if not manifest.has(lookup_key) and manifest.has(lookup_key.to_lower()):
+					lookup_key = lookup_key.to_lower()
+					
+				if manifest.has(lookup_key):
+					var entry: Dictionary = manifest[lookup_key]
+					var atlas_file: String = entry.get("petz_atlas", entry.get("atlas", ""))
+					if atlas_file != "":
+						if atlas_file.to_lower().ends_with(".bmp"):
+							atlas_file = atlas_file.get_basename() + ".png"
+						
+						var atlas_path: String = "res://resources/texture_atlas/" + atlas_file
+						if ResourceLoader.exists(atlas_path):
+							var atlas_tex = load(atlas_path)
+							var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
+							var icon_tex: AtlasTexture = AtlasTexture.new()
+							icon_tex.atlas = atlas_tex
+							icon_tex.region = region
+							new_item.set_icon(0, icon_tex)
+
 
 func scan_res_textures() -> void:
 	print("[STATUS] FileTree: scan_res_textures: running")
 	var t_start: int = OS.get_ticks_msec()
-	var processed: Array = []
+	var manifest: Dictionary = {}
 	var textures_dir: String = "res://resources/textures"
 	
 	var atlas_manifest_path: String = "res://resources/texture_atlas/atlas_manifest.json"
@@ -819,73 +966,11 @@ func scan_res_textures() -> void:
 		var result = JSON.parse(f.get_as_text())
 		f.close()
 		if result.error == OK:
-			var manifest: Dictionary = result.result
-			print("[STATUS] FileTree: scan_res_textures: loading texture atlas")
+			manifest = result.result
+			print("[STATUS] FileTree: scan_res_textures: loaded texture atlas manifest")
 
-			var sorted_keys: Array = manifest.keys()
-			sorted_keys.sort()
-			
-			for key in sorted_keys:
-				var entry: Dictionary = manifest[key]
-				var texture_name: String = key
-				if !texture_name.to_lower().ends_with(".bmp"):
-					texture_name += ".bmp"
-				
-				processed.append(texture_name)
-				
-				var new_item: TreeItem = create_item(res_textures)
-				new_item.set_text(0, texture_name)
-				new_item.set_metadata(0, textures_dir.plus_file(texture_name))
-				
-				var thumb_path: String = textures_dir.plus_file(texture_name.get_basename() + "_thumb.png")
-				
-				if ResourceLoader.exists(thumb_path):
-					var thumb: StreamTexture = ResourceLoader.load(thumb_path)
-					new_item.set_icon(0, thumb)
-				else:
-					var atlas_file: String = entry["atlas"]
-					if atlas_file.to_lower().ends_with(".bmp"):
-						atlas_file = atlas_file.get_basename() + ".png"
-					var atlas_path: String = "res://resources/texture_atlas/" + atlas_file
-					
-					if ResourceLoader.exists(atlas_path):
-						var atlas_tex: ImageTexture = ResourceLoader.load(atlas_path)
-						var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
-						var icon_tex: AtlasTexture = AtlasTexture.new()
-						icon_tex.atlas = atlas_tex
-						icon_tex.region = region
-						new_item.set_icon(0, icon_tex)
+	_scan_res_dir_recursive(textures_dir, res_textures, manifest)
 
-	var dir: Directory = Directory.new()
-	if dir.open(textures_dir) == OK:
-		dir.list_dir_begin()
-		var filename: String = dir.get_next()
-
-		while filename != "":
-			var final_filename: String = ""
-			
-			if filename.to_lower().ends_with(".bmp"):
-				final_filename = filename
-			elif filename.to_lower().ends_with(".bmp.import"):
-				final_filename = filename.get_basename()
-
-			if final_filename != "" and not final_filename in processed:
-				processed.append(final_filename)
-				var full_path: String = textures_dir.plus_file(final_filename)
-
-				var new_item: TreeItem = create_item(res_textures)
-				new_item.set_text(0, final_filename)
-				new_item.set_metadata(0, full_path)
-
-				var thumb_path: String = full_path.get_basename() + "_thumb.png"
-				
-				if ResourceLoader.exists(thumb_path):
-					var thumb_tex: ImageTexture = load(thumb_path)
-					if thumb_tex:
-						new_item.set_icon(0, thumb_tex)
-
-			filename = dir.get_next()
-		dir.list_dir_end()
 	print("[STATUS] FileTree: scan_res_textures: complete")
 	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
@@ -1134,11 +1219,11 @@ func _on_Tree_item_rmb_selected(position: Vector2) -> void:
 			elif id == RmbAction.EXPORT_FILE:
 				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Export File
 			elif id == RmbAction.NEW_FOLDER:
-				$ItemPopupMenu.set_item_disabled(i, !is_local_file) # New Folder
+				$ItemPopupMenu.set_item_disabled(i, !(is_local_file or is_user_texture)) # New Folder
 			elif id == RmbAction.MOVE_TO:
-				$ItemPopupMenu.set_item_disabled(i, !is_local_file) # Move To...
+				$ItemPopupMenu.set_item_disabled(i, !(is_local_file or is_user_texture)) # Move To...
 			elif id == RmbAction.DUPLICATE:
-				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Duplicate
+				$ItemPopupMenu.set_item_disabled(i, !(is_local_file or is_user_texture) or is_dir) # Duplicate
 			elif id == RmbAction.ADD_TO_BASES:
 				$ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Add to Bases
 			elif id == RmbAction.ADD_TO_TEXTURE_LIST:
@@ -1227,7 +1312,12 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		new_folder_dialog.popup_centered(Vector2(250, 100))
 		
 	elif id == RmbAction.MOVE_TO: # Move To
-		_populate_move_dropdown()
+		var is_tex_move = false
+		var items: Array = get_all_selected()
+		if items.size() > 0:
+			if str(items[0].get_metadata(0)).find("/textures/") != -1:
+				is_tex_move = true
+		_populate_move_dropdown(is_tex_move)
 		move_dialog.popup_centered(Vector2(300, 100))
 		
 	elif id == RmbAction.DUPLICATE: # Duplicate
@@ -1565,20 +1655,31 @@ func set_expanded_states(states: Dictionary) -> void:
 	if states.has("Subfolders"):
 		saved_subfolder_states = states.get("Subfolders")
 
-func _populate_move_dropdown() -> void:
+func _populate_move_dropdown(is_texture: bool = false) -> void:
 	move_dropdown.clear()
-	move_dropdown.add_item("Root (user://resources/)")
-	move_dropdown.set_item_metadata(0, user_file_location) 
 	
-	var dirs: Array = []
-	_get_all_subdirs(user_file_location, dirs)
+	var base_dir: String = user_file_location
+	if is_texture:
+		base_dir = user_file_location.plus_file("textures")
+		move_dropdown.add_item("Root (user://resources/textures/)")
+	else:
+		move_dropdown.add_item("Root (user://resources/)")
+		
+	move_dropdown.set_item_metadata(0, base_dir) 
 	
-	var idx: int = 1
-	for d in dirs:
-		var display_name: String = d.replace(user_file_location, "")
-		move_dropdown.add_item(display_name)
-		move_dropdown.set_item_metadata(idx, d)
-		idx += 1
+	var dir: Directory = Directory.new()
+	if dir.open(base_dir) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name: String = dir.get_next()
+		var idx: int = 1
+		while file_name != "":
+			if dir.current_is_dir():
+				var full_path: String = base_dir.plus_file(file_name)
+				move_dropdown.add_item(file_name)
+				move_dropdown.set_item_metadata(idx, full_path + "/")
+				idx += 1
+			file_name = dir.get_next()
+		dir.list_dir_end()
 
 func _get_all_subdirs(path: String, out_array: Array, depth: int = 0) -> void:
 	if depth > MAX_RECURSION_DEPTH:
@@ -1621,7 +1722,7 @@ func _on_NewFolderDialog_confirmed() -> void:
 	var dir: Directory = Directory.new()
 	
 	if not dir.dir_exists(new_dir_path):
-		dir.make_dir(new_dir_path)
+		dir.make_dir_recursive(new_dir_path)
 		
 	for item in items:
 		var raw_meta = item.get_metadata(0)
@@ -1639,7 +1740,14 @@ func _on_NewFolderDialog_confirmed() -> void:
 		
 		dir.rename(clean_meta, new_dir_path.plus_file(item_name))
 			
-	rescan(null)
+	if base_dir.find("/textures/") != -1:
+		rescan_textures()
+	elif base_dir.find("/palettes/") != -1:
+		rescan_palettes()
+	elif base_dir.find("/bases/") != -1:
+		rescan_bases()
+	else:
+		rescan(null)
 
 func _on_MoveFileDialog_confirmed() -> void:
 	var items: Array = get_all_selected()
@@ -1678,7 +1786,14 @@ func _on_MoveFileDialog_confirmed() -> void:
 				last_lnz_path = new_path
 			
 	if any_moved:
-		rescan(null)
+		if target_dir.find("/textures/") != -1:
+			rescan_textures()
+		elif target_dir.find("/palettes/") != -1:
+			rescan_palettes()
+		elif target_dir.find("/bases/") != -1:
+			rescan_bases()
+		else:
+			rescan(last_lnz_path if last_lnz_path != "" else null)
 
 func _sort_by_name(a: Dictionary, b: Dictionary) -> bool:
 	return a["name"].to_lower() < b["name"].to_lower()
