@@ -1,0 +1,13 @@
+[remap]
+
+importer="PetzTexture"
+type="StreamTexture"
+path="res://.import/stripe14.bmp-8caf026684d915b1c931e613b4d111bb.stex"
+
+[deps]
+
+source_file="res://resources/textures/petz/stripe14.bmp"
+dest_files=[ "res://.import/stripe14.bmp-8caf026684d915b1c931e613b4d111bb.stex" ]
+
+[params]
+

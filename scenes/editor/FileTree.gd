@@ -809,10 +809,84 @@ func scan_local_textures() -> void:
 	print("[STATUS] FileTree: scan_local_textures: complete")
 	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
+func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dictionary) -> void:
+	var dir: Directory = Directory.new()
+	if dir.open(path) != OK:
+		return
+		
+	dir.list_dir_begin(true, true)
+	var filename: String = dir.get_next()
+	
+	var folders: Array = []
+	var files: Array = []
+	
+	while filename != "":
+		if dir.current_is_dir():
+			folders.append(filename)
+		else:
+			files.append(filename)
+		filename = dir.get_next()
+	dir.list_dir_end()
+	
+	folders.sort()
+	files.sort()
+	
+	for f_name in folders:
+		var sub_path: String = path.plus_file(f_name)
+		var sub_item: TreeItem = create_item(parent_item)
+		sub_item.set_text(0, f_name)
+		sub_item.set_metadata(0, sub_path + "/")
+		sub_item.set_collapsed(true)
+		_scan_res_dir_recursive(sub_path, sub_item, manifest)
+		
+	var added_files: Dictionary = {}
+	for f_name in files:
+		var final_filename: String = ""
+		
+		if f_name.to_lower().ends_with(".bmp"):
+			final_filename = f_name
+		elif f_name.to_lower().ends_with(".bmp.import"):
+			final_filename = f_name.get_basename()
+
+		if final_filename != "" and not added_files.has(final_filename):
+			added_files[final_filename] = true
+			var full_path: String = path.plus_file(final_filename)
+
+			var new_item: TreeItem = create_item(parent_item)
+			new_item.set_text(0, final_filename)
+			new_item.set_metadata(0, full_path)
+
+			var thumb_path: String = full_path.get_basename() + "_thumb.png"
+			if ResourceLoader.exists(thumb_path):
+				var thumb = load(thumb_path)
+				if is_instance_valid(thumb):
+					new_item.set_icon(0, thumb)
+			else:
+				var lookup_key: String = final_filename.get_basename()
+				if not manifest.has(lookup_key) and manifest.has(lookup_key.to_lower()):
+					lookup_key = lookup_key.to_lower()
+					
+				if manifest.has(lookup_key):
+					var entry: Dictionary = manifest[lookup_key]
+					var atlas_file: String = entry.get("petz_atlas", entry.get("atlas", ""))
+					if atlas_file != "":
+						if atlas_file.to_lower().ends_with(".bmp"):
+							atlas_file = atlas_file.get_basename() + ".png"
+						
+						var atlas_path: String = "res://resources/texture_atlas/" + atlas_file
+						if ResourceLoader.exists(atlas_path):
+							var atlas_tex = load(atlas_path)
+							var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
+							var icon_tex: AtlasTexture = AtlasTexture.new()
+							icon_tex.atlas = atlas_tex
+							icon_tex.region = region
+							new_item.set_icon(0, icon_tex)
+
+
 func scan_res_textures() -> void:
 	print("[STATUS] FileTree: scan_res_textures: running")
 	var t_start: int = OS.get_ticks_msec()
-	var processed: Array = []
+	var manifest: Dictionary = {}
 	var textures_dir: String = "res://resources/textures"
 	
 	var atlas_manifest_path: String = "res://resources/texture_atlas/atlas_manifest.json"
@@ -821,73 +895,11 @@ func scan_res_textures() -> void:
 		var result = JSON.parse(f.get_as_text())
 		f.close()
 		if result.error == OK:
-			var manifest: Dictionary = result.result
-			print("[STATUS] FileTree: scan_res_textures: loading texture atlas")
+			manifest = result.result
+			print("[STATUS] FileTree: scan_res_textures: loaded texture atlas manifest")
 
-			var sorted_keys: Array = manifest.keys()
-			sorted_keys.sort()
-			
-			for key in sorted_keys:
-				var entry: Dictionary = manifest[key]
-				var texture_name: String = key
-				if !texture_name.to_lower().ends_with(".bmp"):
-					texture_name += ".bmp"
-				
-				processed.append(texture_name)
-				
-				var new_item: TreeItem = create_item(res_textures)
-				new_item.set_text(0, texture_name)
-				new_item.set_metadata(0, textures_dir.plus_file(texture_name))
-				
-				var thumb_path: String = textures_dir.plus_file(texture_name.get_basename() + "_thumb.png")
-				
-				if ResourceLoader.exists(thumb_path):
-					var thumb: StreamTexture = ResourceLoader.load(thumb_path)
-					new_item.set_icon(0, thumb)
-				else:
-					var atlas_file: String = entry["atlas"]
-					if atlas_file.to_lower().ends_with(".bmp"):
-						atlas_file = atlas_file.get_basename() + ".png"
-					var atlas_path: String = "res://resources/texture_atlas/" + atlas_file
-					
-					if ResourceLoader.exists(atlas_path):
-						var atlas_tex: ImageTexture = ResourceLoader.load(atlas_path)
-						var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
-						var icon_tex: AtlasTexture = AtlasTexture.new()
-						icon_tex.atlas = atlas_tex
-						icon_tex.region = region
-						new_item.set_icon(0, icon_tex)
+	_scan_res_dir_recursive(textures_dir, res_textures, manifest)
 
-	var dir: Directory = Directory.new()
-	if dir.open(textures_dir) == OK:
-		dir.list_dir_begin()
-		var filename: String = dir.get_next()
-
-		while filename != "":
-			var final_filename: String = ""
-			
-			if filename.to_lower().ends_with(".bmp"):
-				final_filename = filename
-			elif filename.to_lower().ends_with(".bmp.import"):
-				final_filename = filename.get_basename()
-
-			if final_filename != "" and not final_filename in processed:
-				processed.append(final_filename)
-				var full_path: String = textures_dir.plus_file(final_filename)
-
-				var new_item: TreeItem = create_item(res_textures)
-				new_item.set_text(0, final_filename)
-				new_item.set_metadata(0, full_path)
-
-				var thumb_path: String = full_path.get_basename() + "_thumb.png"
-				
-				if ResourceLoader.exists(thumb_path):
-					var thumb_tex: ImageTexture = load(thumb_path)
-					if thumb_tex:
-						new_item.set_icon(0, thumb_tex)
-
-			filename = dir.get_next()
-		dir.list_dir_end()
 	print("[STATUS] FileTree: scan_res_textures: complete")
 	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
