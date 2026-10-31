@@ -162,10 +162,28 @@ margin_right = 430.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 
-[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+[node name="BallPickingModeHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 250.0
 margin_right = 430.0
-margin_bottom = 254.0
+margin_bottom = 274.0
+
+[node name="Label" type="Label" parent="VBoxContainer/BallPickingModeHBox"]
+margin_top = 5.0
+margin_right = 213.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+text = "Ball Picking Mode:"
+
+[node name="PickingModeOptionButton" type="OptionButton" parent="VBoxContainer/BallPickingModeHBox"]
+margin_left = 217.0
+margin_right = 430.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+margin_top = 282.0
+margin_right = 430.0
+margin_bottom = 286.0
 
 [node name="AppendDimsHBox" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 264.0

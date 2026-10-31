@@ -11,6 +11,7 @@ signal max_history_changed(new_val)
 signal texture_path_changed(new_path)
 signal append_dimensions_changed(enabled)
 signal transparent_color_changed(new_val)
+signal ball_picking_mode_changed(new_mode)
 
 onready var delimiter_option: OptionButton = $VBoxContainer/DelimiterHBox/OptionButton
 onready var bg_color_picker: ColorPickerButton = $VBoxContainer/BgColorHBox/ColorPickerButton
@@ -21,6 +22,7 @@ onready var stretch_aspect_option: OptionButton = $VBoxContainer/StretchAspectHB
 onready var append_dims_check: CheckBox = $VBoxContainer/AppendDimsHBox/AppendDimsCheckBox
 onready var texture_path_edit: LineEdit = $VBoxContainer/TexturePathHBox/TexturePathEdit
 onready var transparent_color_spin: SpinBox = $VBoxContainer/TransparentColorHBox/TransparentColorSpin
+onready var picking_mode_option: OptionButton = $VBoxContainer/BallPickingModeHBox/PickingModeOptionButton
 
 var delimiter_map: Dictionary = {
 	0: "comma_space",
@@ -52,6 +54,7 @@ func _ready() -> void:
 	append_dims_check.connect("toggled", self, "_on_append_dims_toggled")
 	texture_path_edit.connect("text_changed", self, "_on_texture_path_changed")
 	transparent_color_spin.connect("value_changed", self, "_on_transparent_color_changed")
+	picking_mode_option.connect("item_selected", self, "_on_ball_picking_mode_selected")
 
 func _setup_options() -> void:
 	delimiter_option.clear()
@@ -84,7 +87,10 @@ func _setup_options() -> void:
 	stretch_aspect_option.add_item("Keep Height", SceneTree.STRETCH_ASPECT_KEEP_HEIGHT)
 	stretch_aspect_option.add_item("Expand", SceneTree.STRETCH_ASPECT_EXPAND)
 
-func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_append_dims: bool, current_texture_path: String = "\\resource\\textures\\", current_transparent_color: int = 0) -> void:
+	picking_mode_option.add_item("Geometric Depth", 0)
+	picking_mode_option.add_item("Visual Depth", 1)
+
+func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_append_dims: bool, current_texture_path: String = "\\resource\\textures\\", current_transparent_color: int = 0, current_picking_mode: int = 1) -> void:
 	var delim_idx: int = reverse_delimiter_map.get(current_delim_name, 5)
 
 	if delimiter_option.is_item_disabled(delim_idx):
@@ -105,6 +111,8 @@ func init_settings(current_delim_name: String, current_bg_color: Color, current_
 	texture_path_edit.text = current_texture_path
 
 	transparent_color_spin.value = current_transparent_color
+
+	_select_option_by_id(picking_mode_option, current_picking_mode)
 
 func _select_option_by_id(opt_btn: OptionButton, id: int) -> void:
 	for i in range(opt_btn.get_item_count()):
@@ -140,3 +148,6 @@ func _on_append_dims_toggled(enabled: float) -> void:
 
 func _on_transparent_color_changed(value: float) -> void:
 	emit_signal("transparent_color_changed", int(value))
+
+func _on_ball_picking_mode_selected(index: int) -> void:
+	emit_signal("ball_picking_mode_changed", picking_mode_option.get_item_id(index))

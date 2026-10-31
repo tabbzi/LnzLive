@@ -89,6 +89,9 @@ const TAB_RESET_THRESHOLD_PIXELS: float = 15.0
 enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR }
 var current_mode: int = Mode.NONE
 
+enum BallPickingMode { GEOMETRIC_DEPTH, VISUAL_DEPTH }
+var ball_picking_mode: int = BallPickingMode.VISUAL_DEPTH
+
 var input_is_paused: bool = false
 
 var last_selected = null
@@ -2059,24 +2062,15 @@ func _gui_input(event: InputEvent) -> void:
 		and not is_instance_valid(_last_selected_by_tab)
 	):
 		var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+		var hit_ball = get_intended_ball(screen_pos)
 
-		var from: Vector3 = camera.project_ray_origin(screen_pos)
-		var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 950
-		# Skip paintball colliders so hover reaches the underlying ball
-		var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
-		var result: Dictionary = camera.get_world().direct_space_state.intersect_ray(
-			from, to, paintball_nodes, 0x7FFFFFFF, false, true
-		)
-
-		if result:
+		if hit_ball:
 			ball_label.show()
 			deal_with_last_selected()
-			
-			var hit_ball = result.collider.get_parent()
-			
+
 			if hit_ball.has_method("set_select_mode_active"):
 				hit_ball.select_mode_active = true
-				
+
 			hit_ball._on_Area_mouse_entered()
 			last_selected = hit_ball
 		else:
@@ -3243,9 +3237,19 @@ func _update_selected_ballz_from_affected_text(settings_instance) -> void:
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
-
 	var space_state = camera.get_world().direct_space_state
 	var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
+
+	if ball_picking_mode == BallPickingMode.GEOMETRIC_DEPTH:
+		var result: Dictionary = space_state.intersect_ray(from, to, paintball_nodes, 1, false, true)
+		if result and result.collider:
+			var parent: Node = result.collider.get_parent()
+			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
+					return null
+				return parent
+		return null
+
 	var exclude_list = paintball_nodes.duplicate()
 	var hit_balls = []
 
@@ -3254,7 +3258,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 		if result and result.collider:
 			var parent: Node = result.collider.get_parent()
 			exclude_list.append(result.collider)
-			
+
 			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
 				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
 					continue
@@ -3271,15 +3275,16 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	for ball in hit_balls:
 		var local_pos = camera.global_transform.affine_inverse().xform(ball.global_transform.origin)
 		var depth: float = -local_pos.z
-		
+
 		var z_add_val = 0.0
 		var mi = ball.get_node_or_null("MeshInstance")
 		if mi and mi.material_override and mi.material_override is ShaderMaterial:
 			var param = mi.material_override.get_shader_param("z_add")
-			if param != null: z_add_val = float(param)
+			if param != null: 
+				z_add_val = float(param)
 		elif "z_add" in ball: 
 			z_add_val = float(ball.z_add)
-			
+
 		depth -= z_add_val * 0.001
 
 		if depth < min_depth:

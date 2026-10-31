@@ -49,6 +49,7 @@ var stretch_mode: int = SceneTree.STRETCH_MODE_2D
 var stretch_aspect: int = SceneTree.STRETCH_ASPECT_EXPAND
 var default_texture_path: String = "\\resource\\textures\\"
 var default_transparent_color: int = 0
+var ball_picking_mode: int = 1
 
 func _ready() -> void:
 	var global_theme: Theme = Theme.new()
@@ -90,6 +91,7 @@ func _ready() -> void:
 		settings_dialog.connect("texture_path_changed", self, "_on_texture_path_changed")
 		settings_dialog.connect("append_dimensions_changed", self, "_on_append_dimensions_changed")
 		settings_dialog.connect("transparent_color_changed", self, "_on_transparent_color_changed")
+		settings_dialog.connect("ball_picking_mode_changed", self, "_on_ball_picking_mode_changed")
 
 	_hotkey_dialog = get_tree().root.get_node_or_null("SceneRoot/HotkeySettingsDialog")
 	if _hotkey_dialog:
@@ -105,7 +107,7 @@ func _on_toggle_ref_image_btn_pressed() -> void:
 		ref_settings.toggle_reference_image()
 
 func _on_user_settings_pressed() -> void:
-	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, append_dimensions, default_texture_path, default_transparent_color)
+	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, append_dimensions, default_texture_path, default_transparent_color, ball_picking_mode)
 	settings_dialog.popup_centered()
 
 func _on_hotkey_settings_pressed() -> void:
@@ -145,6 +147,12 @@ func _on_append_dimensions_changed(enabled) -> void:
 
 func _on_transparent_color_changed(new_val) -> void:
 	default_transparent_color = int(new_val)
+	save_settings()
+
+func _on_ball_picking_mode_changed(new_mode: int) -> void:
+	ball_picking_mode = new_mode
+	if is_instance_valid(pet_view_container):
+		pet_view_container.ball_picking_mode = ball_picking_mode
 	save_settings()
 
 func _on_window_size_changed() -> void:
@@ -195,6 +203,7 @@ func save_settings() -> void:
 	config.set_value("TexturePaths", "default_texture_path", default_texture_path)
 	config.set_value("LNZOptions", "append_dimensions", append_dimensions)
 	config.set_value("LNZOptions", "default_transparent_color", default_transparent_color)
+	config.set_value("Display", "ball_picking_mode", ball_picking_mode)
 
 	if file_tree and file_tree.has_method("get_expanded_states"):
 		file_tree_expanded_sections = file_tree.get_expanded_states()
@@ -274,6 +283,10 @@ func load_settings() -> void:
 		append_dimensions = config.get_value("LNZOptions", "append_dimensions", false)
 
 		default_transparent_color = config.get_value("LNZOptions", "default_transparent_color", 0)
+
+		ball_picking_mode = config.get_value("Display", "ball_picking_mode", 1)
+		if is_instance_valid(pet_view_container):
+			pet_view_container.ball_picking_mode = ball_picking_mode
 
 	else:
 		OS.center_window()
