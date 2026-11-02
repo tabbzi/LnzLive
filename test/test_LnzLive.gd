@@ -623,6 +623,20 @@ func test_lnz_parse_paintballs_invalid_length():
 	assert_true(parser.paintballs.has(1), "Should successfully parse the valid paintball.")
 	assert_eq(parser.paintballs[1].size(), 1, "Should gracefully skip the invalid short line without throwing index errors.")
 
+func test_lnz_parse_paintballs_scientific_notation():
+	var content = "[Paint Ballz]\n1 2 1.5e2 3.0E1 0.5e-1 100 0 5 1 10 0"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Paint Ballz", [])
+	
+	parser.parse_paintballs(reader)
+	
+	assert_true(parser.paintballs.has(1), "Should successfully parse the paintball with scientific notation.")
+	assert_eq(parser.paintballs[1].size(), 1, "Should parse exactly 1 paintball.")
+	assert_almost_eq(parser.paintballs[1][0].position.x, 150.0, 0.01, "X should be 1.5e2 = 150.")
+	assert_almost_eq(parser.paintballs[1][0].position.y, 30.0, 0.01, "Y should be 3.0E1 = 30.")
+	assert_almost_eq(parser.paintballs[1][0].position.z, 0.05, 0.01, "Z should be 0.5e-1 = 0.05.")
+
 func test_lnz_get_whiskers_standard_parsing():
 	# Verify that whisker connections are parsed correctly from start/end indices.
 	var content = "[Whiskers]\n10 11\n12 13"
