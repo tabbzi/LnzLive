@@ -17,6 +17,7 @@ onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/B
 onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
 onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
 onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
+onready var bucket_group_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/GroupEdit
 onready var bucket_no_texture_rotate_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/NoTextureRotateCheck
 onready var bucket_apply_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton
 onready var bucket_clear_button = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton
@@ -103,6 +104,7 @@ func _ready() -> void:
 	_setup_grid_preview(bucket_outline_edit, bucket_outline_icon, "BucketOutline")
 
 	bucket_texture_edit.connect("text_changed", self, "_on_bucket_property_changed")
+	bucket_group_edit.connect("text_changed", self, "_on_bucket_property_changed")
 
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
@@ -374,11 +376,23 @@ func queue_bucket_change(ball_node: Node) -> void:
 	if bucket_fuzz_edit.text != "": props["fuzz"] = int(bucket_fuzz_edit.text)
 	if bucket_texture_edit.text != "": props["texture_id"] = int(bucket_texture_edit.text)
 
+	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
+	if bucket_group_edit.text != "" and bucket_group_edit.text.is_valid_integer():
+		props["group"] = int(bucket_group_edit.text)
+	else:
+		if pet_node and pet_node.lnz:
+			var lnz_group: int = -1
+			if pet_node.lnz.balls.has(ball_no):
+				lnz_group = pet_node.lnz.balls[ball_no].group
+			elif pet_node.lnz.addballs.has(ball_no):
+				lnz_group = pet_node.lnz.addballs[ball_no].group
+			if lnz_group != -1:
+				props["_lnz_group"] = lnz_group
+
 	var checkbox_on = false
 	if is_instance_valid(bucket_no_texture_rotate_check):
 		checkbox_on = bucket_no_texture_rotate_check.pressed
 	
-	var pet_node: Node = LnzLiveUtils.get_pet_node(get_tree().root)
 	var original_tile_texture = false
 	if pet_node and pet_node.lnz:
 		original_tile_texture = not pet_node.lnz.no_texture_rotate.has(ball_no)

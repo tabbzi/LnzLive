@@ -2935,7 +2935,7 @@ func _on_recolor_settings_apply_batch_bucket(changes, write_to_overrides) -> voi
 	if is_instance_valid(lnz_text_edit):
 		lnz_text_edit.apply_batch_presets(changes, write_to_overrides)
 
-func _update_unapplied_changes_label(_unused = null) -> void:
+func _update_unapplied_changes_label(_unused1 = null, _unused2 = null) -> void:
 	var total = 0
 	if is_instance_valid(lnz_text_edit):
 		if lnz_text_edit.has_unsaved_text_changes():

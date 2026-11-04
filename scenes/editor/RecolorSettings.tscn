@@ -266,13 +266,39 @@ custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="TextureIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
-margin_left = 446.0
-margin_top = 124.0
-margin_right = 470.0
-margin_bottom = 151.0
-rect_min_size = Vector2( 24, 24 )
-expand = true
-stretch_mode = 6
+	margin_left = 446.0
+	margin_top = 124.0
+	margin_right = 470.0
+	margin_bottom = 151.0
+	rect_min_size = Vector2( 24, 24 )
+	expand = true
+	stretch_mode = 6
+
+[node name="LabelG" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+	margin_top = 160.0
+	margin_right = 84.0
+	margin_bottom = 177.0
+	custom_fonts/font = SubResource( 5 )
+	text = "Group:"
+
+[node name="GroupEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+	margin_left = 88.0
+	margin_top = 155.0
+	margin_right = 442.0
+	margin_bottom = 182.0
+	size_flags_horizontal = 3
+	custom_fonts/font = SubResource( 5 )
+	max_length = 3
+	placeholder_text = "e.g. 1"
+
+[node name="GroupIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+	margin_left = 446.0
+	margin_top = 155.0
+	margin_right = 470.0
+	margin_bottom = 182.0
+	rect_min_size = Vector2( 24, 24 )
+	expand = true
+	stretch_mode = 6
 
 [node name="NoTextureRotateCheck" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 219.0

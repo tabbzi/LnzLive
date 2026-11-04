@@ -2553,32 +2553,44 @@ func _apply_bucket_to_overrides(changes: Dictionary):
 
 	for ball_no in changes:
 		var props = changes[ball_no]
-		var is_addball = ball_no >= KeyBallsData.max_base_ball_num
-		var raw_ball_no = ball_no if not is_addball else ball_no - KeyBallsData.max_base_ball_num
 
 		if props.has("color_index"):
-			color_info_entries.append({
-				"ball": raw_ball_no,
-				"color": props.color_index,
-				"group": props.get("group", -1),
-				"texture": props.get("texture_id", -1)
-			})
+			var has_group: bool = props.has("group")
+			var has_texture: bool = props.has("texture_id") and props.texture_id != -1
+			var group_val: int = -1
+			var texture_val: int = -1
+
+			if has_texture:
+				texture_val = props.texture_id
+
+			if has_group:
+				group_val = props.group
+			elif props.has("_lnz_group"):
+				group_val = props["_lnz_group"]
+
+			var entry: Dictionary = {"ball": ball_no, "color": props.color_index}
+			if has_texture:
+				entry["group"] = group_val
+				entry["texture"] = texture_val
+			elif has_group:
+				entry["group"] = group_val
+			color_info_entries.append(entry)
 
 		if props.has("outline_color_index"):
 			outline_color_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"outline_color": props.outline_color_index
 			})
 
 		if props.has("fuzz"):
 			fuzz_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"fuzz": props.fuzz
 			})
 
 		if props.has("size"):
 			ball_size_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"size": props.size
 			})
 
@@ -2611,12 +2623,24 @@ func _write_override_section(section_name: String, entries: Array, entry_type: S
 
 		match entry_type:
 			"color_info":
-				line_txt = "%d%s%d%s%d%s%d" % [
-					entry.ball, delim,
-					entry.color, delim,
-					entry.group, delim,
-					entry.texture
-				]
+				if entry.has("texture"):
+					line_txt = "%d%s%d%s%d%s%d" % [
+						entry.ball, delim,
+						entry.color, delim,
+						entry.group, delim,
+						entry.texture
+					]
+				elif entry.has("group"):
+					line_txt = "%d%s%d%s%d" % [
+						entry.ball, delim,
+						entry.color, delim,
+						entry.group
+					]
+				else:
+					line_txt = "%d%s%d" % [
+						entry.ball, delim,
+						entry.color
+					]
 			"outline_color":
 				line_txt = "%d%s%d" % [
 					entry.ball, delim,
