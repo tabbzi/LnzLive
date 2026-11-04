@@ -2611,11 +2611,30 @@ func _apply_bucket_to_overrides(changes: Dictionary):
 
 
 func _write_override_section(section_name: String, entries: Array, entry_type: String, batch_comment: String):
-	var bounds = _ensure_section_exists(section_name)
+	var bounds = get_section_bounds(section_name)
+	var section_new: bool = bounds.empty()
+	if section_new:
+		bounds = _ensure_section_exists(section_name)
+	else:
+		bounds = _ensure_section_exists(section_name)
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var insert_at = _find_insertion_line(bounds.start, bounds.end)
 
+	var header_comment: String = ""
+	if section_new:
+		match entry_type:
+			"color_info":
+				header_comment = "; ball, color, group, texture"
+			"outline_color":
+				header_comment = "; ball, outline_color"
+			"fuzz":
+				header_comment = "; ball, fuzz"
+			"ball_size":
+				header_comment = "; ball, size"
+
 	var lines_to_insert: Array = []
+	if section_new and header_comment != "":
+		lines_to_insert.append(header_comment)
 	lines_to_insert.append(batch_comment)
 
 	for entry in entries:
