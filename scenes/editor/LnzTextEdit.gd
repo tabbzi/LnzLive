@@ -3128,7 +3128,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var scale_delta = 1.0
 		if data.has("new_size") and data.has("orig_size") and data.orig_size > 0:
 			scale_delta = float(data.new_size) / float(data.orig_size)
-			var size_dif = pet_view.get_absolute_lnz_size(1.0, pet_view.find_visual_ball_by_no(ball_no), pet_node)
+			var size_dif = pet_view.get_absolute_lnz_size(data.new_size, pet_view.find_visual_ball_by_no(ball_no), pet_node)
 			size_changes[ball_no] = size_dif
 
 		var basis_delta = Basis.IDENTITY

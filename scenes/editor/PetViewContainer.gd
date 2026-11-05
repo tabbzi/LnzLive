@@ -982,22 +982,22 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 			if ab != null and ab.anchor_ball > -1:
 				var anchor_id: int = ab.anchor_ball
 				is_anchored = true
-				if pet_node.ball_map.has(anchor_id) and is_instance_valid(pet_node.ball_map[anchor_id]):
-					bhd_size = int(round(pet_node.ball_map[anchor_id].ball_size))
-				elif anchor_id < pet_node.bhd.ball_sizes.size():
-					var anchor_pre: float = float(pet_node.bhd.ball_sizes[anchor_id])
+				if anchor_id < pet_node.bhd.ball_sizes.size():
+					bhd_size = pet_node.bhd.ball_sizes[anchor_id]
 					if pet_node.lnz.balls.has(anchor_id):
-						anchor_pre += float(pet_node.lnz.balls[anchor_id].size)
+						bhd_size += pet_node.lnz.balls[anchor_id].size
+					
 					var head_ext: Array = KeyBallsData.get_head_ext(pet_node.lnz.species)
 					var foot_ext: Array = KeyBallsData.get_foot_ext(pet_node.lnz.species)
 					if anchor_id in head_ext:
-						anchor_pre = floor(anchor_pre * (pet_node.lnz.head_enlargement.x / 100.0)) + pet_node.lnz.head_enlargement.y
+						enl_x = pet_node.lnz.head_enlargement.x
+						enl_y = pet_node.lnz.head_enlargement.y
 					else:
 						for foot_group in foot_ext:
 							if anchor_id in foot_group:
-								anchor_pre = floor(anchor_pre * (pet_node.lnz.foot_enlargement.x / 100.0)) + pet_node.lnz.foot_enlargement.y
+								enl_x = pet_node.lnz.foot_enlargement.x
+								enl_y = pet_node.lnz.foot_enlargement.y
 								break
-					bhd_size = int(LnzLiveUtils.lnz_to_visual_size_snapped(anchor_pre, pet_node.lnz.scales[1]))
 
 
 	return {
@@ -3415,7 +3415,7 @@ func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_nod
 	var engine_scale: float = pet_node.lnz.scales[1]
 
 	return LnzLiveUtils.visual_size_to_lnz_size(
-		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+		raw_target_visual, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 	)
 
 func _isolate_target_ball(target_ball: Spatial) -> void:
