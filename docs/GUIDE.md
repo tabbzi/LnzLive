@@ -10,7 +10,7 @@ Keep up-to-date on new beta versions of LnzLive by downloading the [**LnzLive La
 
 ### Loading LNZ into the Text Editor
 
-> Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in [Deus Hex](https://petzhexing.weebly.com/deus-hex.html), [LNZ Pro](https://www.sherlocksoftware.org/page.php?id=14), or another resource editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
+> Note: Use `File > Import Pet` for `.pet` files or `File > Import Breed` for `.dog` and `.cat` files, including in the browser. Choose an embedded LNZ when prompted (adult/juvenile for pets). The extracted text opens as a new `.lnz` file in Local Storage; existing files receive a numeric suffix. Source game files are unchanged. Export the edited LNZ and use a resource editor such as [LNZ Pro](https://www.sherlocksoftware.org/page.php?id=14) to put it back into the game file. Pets without cached LNZ and older unsupported formats cannot be imported.
 
 You can load LNZ data in several ways:
 
@@ -192,6 +192,8 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 ### File
 
 - **Import LNZ**: Load `.lnz` or `.txt` files containing LNZ data into Local Storage.
+- **Import Pet**: Extract cached adult or juvenile LNZ from a `.pet` file.
+- **Import Breed**: Extract a selected LNZ resource from a `.dog` or `.cat` file.
 - **Import Texture**: Load `.bmp` files into Local Textures. Shows thumbnail preview and dimensions.
 - **Import Palette:** Load `.bmp` palette or `.png` color ramp files into Local Palettes. Shows thumbnail preview and double-click to apply.
 - **Reference Image:** Configure reference image overlays (background, popup, position, scale).

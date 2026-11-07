@@ -4,6 +4,8 @@ extends HBoxContainer
 
 enum FileMenu {
 	IMPORT_LNZ,
+	IMPORT_PET,
+	IMPORT_BREED,
 	IMPORT_TEXTURE,
 	IMPORT_PALETTE,
 	OPEN_USER_FOLDER,
@@ -100,6 +102,8 @@ func _setup_file_menu() -> void:
 	var popup: PopupMenu = file_menu_btn.get_popup()
 	_style_popup(popup)
 	popup.add_item("Import LNZ", FileMenu.IMPORT_LNZ)
+	popup.add_item("Import Pet", FileMenu.IMPORT_PET)
+	popup.add_item("Import Breed", FileMenu.IMPORT_BREED)
 	popup.add_item("Import Texture", FileMenu.IMPORT_TEXTURE)
 	popup.add_item("Import Palette", FileMenu.IMPORT_PALETTE)
 	popup.add_item("Open User Folder", FileMenu.OPEN_USER_FOLDER)
@@ -233,6 +237,10 @@ func _on_file_menu_id_pressed(id: int) -> void:
 	match id:
 		FileMenu.IMPORT_LNZ:
 			$FileOptionButton/PopupPanel/FileOptionContainer/MenuImportLNZ.emit_signal("pressed")
+		FileMenu.IMPORT_PET:
+			scene_root.get_node("HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree").import_binary_lnz(true)
+		FileMenu.IMPORT_BREED:
+			scene_root.get_node("HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree").import_binary_lnz(false)
 		FileMenu.IMPORT_TEXTURE:
 			$FileOptionButton/PopupPanel/FileOptionContainer/MenuImportTexture.emit_signal("pressed")
 		FileMenu.IMPORT_PALETTE:

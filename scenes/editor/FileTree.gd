@@ -13,7 +13,7 @@ signal user_file_selected(filepath)
 signal palette_selected(fileprefix)
 signal backup_file
 
-enum ImportType { NONE, LNZ, TEXTURE, PALETTE }
+enum ImportType { NONE, LNZ, TEXTURE, PALETTE, PET, BREED }
 var current_import_type: int = ImportType.NONE
 
 enum SortMode { ALPHABETICAL, MODIFIED_DATE }
@@ -119,6 +119,7 @@ func _ready() -> void:
 	menu_open_user_folder.connect("pressed", self, "_on_OpenUserFolder_pressed")
 
 	file_dialog.connect("files_selected", self, "_on_FileDialog_files_selected")
+	file_dialog.connect("file_selected", self, "_on_FileDialog_file_selected")
 	file_dialog.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.rect_min_size = Vector2(400, 400)
@@ -339,6 +340,15 @@ func _on_FileDialog_files_selected(paths: Array) -> void:
 		rescan_palettes()
 
 func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = false) -> String:
+	if current_import_type in [ImportType.PET, ImportType.BREED]:
+		var source: File = File.new()
+		if source.open(selected_path, File.READ) != OK:
+			_binary_import_error("Could not read " + selected_path.get_file())
+			return ""
+		var bytes: PoolByteArray = source.get_buffer(source.get_len())
+		source.close()
+		_extract_binary_lnz(bytes, selected_path.get_file())
+		return ""
 	var file_extension: String = selected_path.get_extension().to_lower()
 	var dest_dir: String = ""
 	
@@ -444,6 +454,9 @@ func _on_web_file_upload_popup_confirmed() -> void:
 		return
 		
 	var file_name: String = JavaScript.eval("window.fileUploadData.name")
+	if current_import_type in [ImportType.PET, ImportType.BREED]:
+		_extract_binary_lnz(file_blob, file_name)
+		return
 	var file_extension: String = file_name.get_extension().to_lower()
 	
 
@@ -1567,3 +1580,70 @@ func _on_RescanButton_pressed() -> void:
 	rescan_textures(true) 
 	rescan_palettes()
 	rescan_bases()
+
+# Binary sources are read only. Extracted text enters the normal user LNZ flow.
+func import_binary_lnz(pet: bool) -> void:
+	current_import_type = ImportType.PET if pet else ImportType.BREED
+	if OS.has_feature("HTML5"):
+		web_file_dialog(".pet" if pet else ".dog,.cat")
+		return
+	pet_view_container.input_is_paused = true
+	file_dialog.clear_filters()
+	file_dialog.add_filter("*.pet ; Pet Files" if pet else "*.dog,*.cat ; Breed Files")
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.popup_centered()
+
+func _binary_import_error(message: String) -> void:
+	var dialog: AcceptDialog = AcceptDialog.new()
+	dialog.window_title = "Import LNZ"
+	dialog.dialog_text = message
+	add_child(dialog)
+	dialog.connect("popup_hide", dialog, "queue_free")
+	dialog.popup_centered()
+
+func _extract_binary_lnz(bytes: PoolByteArray, filename: String) -> void:
+	var importer = preload("res://data_classes/lnz_importer.gd").new()
+	var entries: Array = importer.extract(bytes, current_import_type == ImportType.PET)
+	if entries.empty():
+		_binary_import_error(importer.error)
+		return
+	if entries.size() == 1:
+		_save_binary_lnz(entries[0].text, filename.get_basename())
+		return
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Choose LNZ to import"
+	var choice: OptionButton = OptionButton.new()
+	for entry in entries:
+		choice.add_item(entry.name)
+	dialog.add_child(choice)
+	add_child(dialog)
+	dialog.connect("confirmed", self, "_binary_lnz_chosen", [choice, entries, filename.get_basename()])
+	dialog.connect("popup_hide", dialog, "queue_free")
+	dialog.popup_centered(Vector2(420, 110))
+
+func _binary_lnz_chosen(choice: OptionButton, entries: Array, basename: String) -> void:
+	var entry: Dictionary = entries[choice.selected]
+	_save_binary_lnz(entry.text, basename + "_" + str(choice.selected + 1))
+
+func _save_binary_lnz(contents: String, basename: String) -> void:
+	var dir: Directory = Directory.new()
+	if dir.make_dir_recursive(user_file_location) != OK and not dir.dir_exists(user_file_location):
+		_binary_import_error("Could not create the user LNZ folder.")
+		return
+	var path: String = user_file_location.plus_file(basename + ".lnz")
+	var suffix: int = 2
+	while dir.file_exists(path):
+		path = user_file_location.plus_file(basename + "_" + str(suffix) + ".lnz")
+		suffix += 1
+	var output: File = File.new()
+	if output.open(path, File.WRITE) != OK:
+		_binary_import_error("Could not save extracted LNZ text.")
+		return
+	output.store_string(contents)
+	var write_error: int = output.get_error()
+	output.close()
+	if write_error != OK:
+		dir.remove(path)
+		_binary_import_error("Could not write extracted LNZ text.")
+		return
+	rescan_with_extension("lnz", path)
