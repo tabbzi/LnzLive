@@ -31,13 +31,17 @@ For full instructions, see the [User Guide](docs/GUIDE.md)!
 
 The launcher helps you keep up-to-date on the latest releases. You can download the executable here:
 
-[https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe](https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe)
+[https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe](https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.2.exe)
 
 ## Browser
 
 The web version of LnzLive Petz & Babyz beta can be accessed here:
 
 [https://tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive)
+
+## Website
+
+Visit the LnzLive Petz & Babyz website at [https://tabbloza.com/lnzlive/](https://tabbloza.com/lnzlive/)
 
 ## Contribute
 
@@ -51,10 +55,11 @@ This app is in development. Expect crashes and visual bugs. Directly loading gam
 
 ## Link to LnzLive
 
-Feel free to save and share these buttons/stamps for linking to the latest release of LnzLive:
+Feel free to save and share these buttons/stamps for linking to this forked repository or the LnzLive Petz & Babyz website:
 
 ```
 https://github.com/tabbzi/LnzLive
+https://tabbloza.com/lnzlive/
 ```
 
-![stamp](RULnzLiving.gif) ![button](LnzLiveButton.gif)
+![stamp](RULnzLiving.gif) ![stamp](RULnzLiving2.gif) ![button](LnzLiveButton.gif) ![button](LnzLiveIcon.png)
