@@ -15,18 +15,18 @@ signal ball_picking_mode_changed(new_mode)
 signal warn_linez_limit_changed(new_val)
 signal use_defaults_changed(new_val)
 
-onready var delimiter_option: OptionButton = $VBoxContainer/DelimiterHBox/OptionButton
-onready var bg_color_picker: ColorPickerButton = $VBoxContainer/BgColorHBox/ColorPickerButton
-onready var shrink_spinbox: SpinBox = $VBoxContainer/ShrinkHBox/SpinBox
-onready var max_history_spinbox: SpinBox = $VBoxContainer/MaxHistoryHBox/SpinBox
-onready var stretch_mode_option: OptionButton = $VBoxContainer/StretchModeHBox/OptionButton
-onready var stretch_aspect_option: OptionButton = $VBoxContainer/StretchAspectHBox/OptionButton
-onready var append_dims_check: CheckBox = $VBoxContainer/AppendDimsHBox/AppendDimsCheckBox
-onready var texture_path_edit: LineEdit = $VBoxContainer/TexturePathHBox/TexturePathEdit
-onready var transparent_color_spin: SpinBox = $VBoxContainer/TransparentColorHBox/TransparentColorSpin
-onready var picking_mode_option: OptionButton = $VBoxContainer/BallPickingModeHBox/PickingModeOptionButton
-onready var warn_linez_limit_check: CheckBox = $VBoxContainer/WarnLinezLimitHBox/WarnLinezLimitCheckBox
-onready var use_defaults_check: CheckBox = $VBoxContainer/UseDefaultsHBox/UseDefaultsCheckBox
+onready var delimiter_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/DelimiterHBox/OptionButton
+onready var bg_color_picker: ColorPickerButton = $VBoxContainer/ScrollContainer/VBoxContainer/BgColorHBox/ColorPickerButton
+onready var shrink_spinbox: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/ShrinkHBox/SpinBox
+onready var max_history_spinbox: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/MaxHistoryHBox/SpinBox
+onready var stretch_mode_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/StretchModeHBox/OptionButton
+onready var stretch_aspect_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/StretchAspectHBox/OptionButton
+onready var append_dims_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/AppendDimsHBox/AppendDimsCheckBox
+onready var texture_path_edit: LineEdit = $VBoxContainer/ScrollContainer/VBoxContainer/TexturePathHBox/TexturePathEdit
+onready var transparent_color_spin: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TransparentColorHBox/TransparentColorSpin
+onready var picking_mode_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/BallPickingModeHBox/PickingModeOptionButton
+onready var warn_linez_limit_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/WarnLinezLimitHBox/WarnLinezLimitCheckBox
+onready var use_defaults_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/UseDefaultsHBox/UseDefaultsCheckBox
 
 var delimiter_map: Dictionary = {
 	0: "comma_space",
