@@ -75,8 +75,13 @@ func _update_ball_label(ball_no: int) -> void:
 					at_limit = true
 			
 			if at_limit:
-				display_text += " (AT LIMIT)"
-				ball_label.add_color_override("font_color", Color.red)
+				var settings: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
+				var warn_limit: bool = settings.get("warn_for_linez_limit", true)
+				if warn_limit:
+					display_text += " (AT LIMIT)"
+					ball_label.add_color_override("font_color", Color.red)
+				else:
+					ball_label.add_color_override("font_color", Color.white)
 			else:
 				ball_label.add_color_override("font_color", Color.white)
 			

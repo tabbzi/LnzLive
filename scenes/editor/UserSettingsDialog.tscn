@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://scenes/editor/UserSettingsDialog.gd" type="Script" id=1]
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=2]
+[ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="Font" id=3]
 
 [node name="UserSettingsDialog" type="WindowDialog"]
 visible = true
@@ -222,9 +223,51 @@ size_flags_horizontal = 3
 text = "\\resource\\textures\\"
 
 [node name="TransparentColorHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 356.0
-margin_right = 430.0
-margin_bottom = 380.0
+	margin_top = 356.0
+	margin_right = 430.0
+	margin_bottom = 380.0
+
+[node name="WarnLinezLimitHBox" type="HBoxContainer" parent="VBoxContainer"]
+	margin_top = 366.0
+	margin_right = 430.0
+	margin_bottom = 390.0
+
+[node name="Label" type="Label" parent="VBoxContainer/WarnLinezLimitHBox"]
+	margin_top = 5.0
+	margin_right = 213.0
+	margin_bottom = 19.0
+	size_flags_horizontal = 3
+	text = "Warn for Linez Limit:"
+
+[node name="WarnLinezLimitCheckBox" type="CheckBox" parent="VBoxContainer/WarnLinezLimitHBox"]
+	margin_left = 217.0
+	margin_right = 430.0
+	margin_bottom = 24.0
+	size_flags_horizontal = 3
+	pressed = true
+
+[node name="UseDefaultsHBox" type="HBoxContainer" parent="VBoxContainer"]
+	margin_top = 396.0
+	margin_right = 430.0
+	margin_bottom = 420.0
+
+[node name="Label" type="Label" parent="VBoxContainer/UseDefaultsHBox"]
+	margin_top = 5.0
+	margin_right = 213.0
+	margin_bottom = 19.0
+	size_flags_horizontal = 3
+	text = "Use Defaults for Created Addballz + Linez:"
+
+[node name="UseDefaultsCheckBox" type="CheckBox" parent="VBoxContainer/UseDefaultsHBox"]
+	margin_left = 217.0
+	margin_right = 430.0
+	margin_bottom = 24.0
+	size_flags_horizontal = 3
+
+[node name="TransparentColorHBox" type="HBoxContainer" parent="VBoxContainer"]
+	margin_top = 426.0
+	margin_right = 430.0
+	margin_bottom = 450.0
 
 [node name="Label" type="Label" parent="VBoxContainer/TransparentColorHBox"]
 margin_top = 5.0

@@ -159,6 +159,12 @@ func _ready():
 	_update_section_bookmarks()
 	_setup_set_column_popup()
 
+	var wrap_data: Dictionary = LnzLiveUtils.load_config("EditorSettings", "user://settings.cfg")
+	wrap_enabled = wrap_data.get("wrap_enabled", false)
+	var wrap_btn = get_node_or_null("../HBoxContainer/AutowrapButton")
+	if wrap_btn:
+		wrap_btn.text = "Wrap: On" if wrap_enabled else "Wrap: Off"
+
 func _setup_context_menu():
 	var menu = get_menu()
 	if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
@@ -924,6 +930,8 @@ func _on_AutowrapButton_pressed():
 		button.text = "Wrap: On"
 	else:
 		button.text = "Wrap: Off"
+	var values = {"wrap_enabled": self.wrap_enabled}
+	LnzLiveUtils.save_config("EditorSettings", values, "user://settings.cfg")
 	update() # Force a redraw just in case
 
 func _on_FindReplaceButton_pressed():
@@ -3593,6 +3601,23 @@ func create_line(start_ball, end_ball, silent: bool = false):
 	var line_mode_settings = pet_view.line_mode_settings_instance
 	var props = line_mode_settings.get_properties()
 
+	var settings_cfg: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
+	var use_defaults: bool = settings_cfg.get("use_defaults_created_addballz", false)
+
+	if use_defaults:
+		props.start_thickness = 100
+		props.end_thickness = 100
+		props.left_outline_color = -1
+		props.right_outline_color = -1
+		props.apply_start_thick = true
+		props.apply_end_thick = true
+		props.apply_left_outline = true
+		props.apply_right_outline = true
+		
+		var visual_ball = pet_view.find_visual_ball_by_no(start_ball)
+		if is_instance_valid(visual_ball):
+			props.fuzz = visual_ball.fuzz_amount
+
 	var line_updated = false
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -3915,6 +3940,9 @@ func _on_ToolsMenu_create_addball(reference_ball, also_connect_line := false):
 	create_addball(reference_ball, also_connect_line)
 
 func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dictionary:
+	var settings: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
+	var use_defaults: bool = settings.get("use_defaults_created_addballz", false)
+	
 	var props = {
 		"target_base_ball": reference_ball.ball_no,
 		"size": 20,
@@ -3996,6 +4024,10 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		props.bodyarea = KeyBallsData.bodyarea_map[props.target_base_ball]
 	else:
 		print("[WARNING] LnzTextEdit: _gather_addball_properties: Missing bodyarea for ball %d. Defaulting to 1." % props.target_base_ball)
+
+	if use_defaults:
+		props.fuzz = reference_ball.fuzz_amount
+		props.outline_color = -1
 
 	return props
 
