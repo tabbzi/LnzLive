@@ -1054,7 +1054,7 @@ font = SubResource( 8 )
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
 margin_left = 104.0
 margin_right = 759.0
-margin_bottom = 105.0
+margin_bottom = 130.0
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
@@ -1074,8 +1074,8 @@ __meta__ = {
 [node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
 margin_top = 30.0
 margin_right = 655.0
-	margin_bottom = 130.0
-	rect_min_size = Vector2( 475, 100 )
+margin_bottom = 130.0
+rect_min_size = Vector2( 475, 100 )
 custom_fonts/font = SubResource( 10 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."
@@ -1153,7 +1153,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-20"
+text = "PB-beta-v1.4.8-preview-21"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
