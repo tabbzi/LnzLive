@@ -169,6 +169,8 @@ func undock_panel(panel: Control) -> void:
 		get_tree().root.add_child(floating_layer)
 
 	floating_layer.add_child(panel)
+	panel.show()
+	panel.raise()
 
 	if panel.has_method("set_docked"):
 		panel.set_docked(false)

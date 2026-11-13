@@ -100,6 +100,7 @@ func _gui_input(event: InputEvent) -> void:
 				drag_start = get_global_mouse_position() - rect_global_position
 			else:
 				dragging = false
+				rect_global_position = _get_clamped_position()
 				save_position()
 				
 	elif event is InputEventMouseMotion and dragging:
@@ -116,6 +117,7 @@ func _on_resize_grip_input(event: InputEvent) -> void:
 				drag_start = get_global_mouse_position()
 			else:
 				dragging = false
+				rect_global_position = _get_clamped_position()
 				save_position()
 	elif event is InputEventMouseMotion and dragging:
 		var delta: Vector2 = get_global_mouse_position() - drag_start
@@ -145,8 +147,16 @@ func _on_viewport_resized() -> void:
 func _get_clamped_position() -> Vector2:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var panel_size: Vector2 = get_panel_size()
-	var new_x: float = clamp(rect_global_position.x, 0, max(0, viewport_size.x - panel_size.x))
-	var new_y: float = clamp(rect_global_position.y, 0, max(0, viewport_size.y - panel_size.y))
+	if panel_size.x <= 0.0:
+		panel_size.x = rect_min_size.x
+	if panel_size.y <= 0.0:
+		panel_size.y = rect_min_size.y
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = Vector2(1024, 768)
+	var max_x: float = max(0, viewport_size.x - panel_size.x)
+	var max_y: float = max(0, viewport_size.y - panel_size.y)
+	var new_x: float = clamp(rect_global_position.x, 0.0, max_x)
+	var new_y: float = clamp(rect_global_position.y, 0.0, max_y)
 	return Vector2(new_x, new_y)
 
 func _on_dock_button_pressed() -> void:
@@ -175,9 +185,19 @@ func set_docked(docked: bool) -> void:
 		size_flags_vertical = SIZE_EXPAND_FILL
 	else:
 		set_anchors_and_margins_preset(Control.PRESET_TOP_LEFT)
-		rect_size = rect_min_size
+		
+		if original_rect_size.x <= 0 or original_rect_size.y <= 0:
+			original_rect_size = Vector2(380, 600)
+		
+		if rect_min_size.x > 0 and rect_min_size.y > 0:
+			rect_size = rect_min_size
+		else:
+			rect_size = original_rect_size
+			
 		_show_resize_grip()
-		restore_position(_default_position())
+		
+		# Rely purely on call_deferred to safely restore coordinates on the next frame
+		call_deferred("restore_position", _default_position())
 
 	update_buttons()
 
