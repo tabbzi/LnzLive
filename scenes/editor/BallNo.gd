@@ -1,25 +1,38 @@
 extends Label
 ## BallNo.gd
 ## Displays the current ball number and associated name information
+## or other LNZ info at the top of the text editor
 
 onready var ball_label: Label = self
 onready var lnz_edit: Node = get_node("../../LnzTextEdit")
 
 func _update_ball_label(ball_no: int) -> void:
-	# Hide label if ball number is invalid
+	var current_section: String = lnz_edit.get_current_section_name()
+	
+	if current_section == "[Texture List]":
+		var line_idx: int = lnz_edit.cursor_get_line()
+		var bounds = lnz_edit.get_section_bounds("[Texture List]")
+		var texture_idx: int = 0
+		if not bounds.empty():
+			var start = bounds.start
+			for i in range(start, line_idx):
+				var check_line = lnz_edit.get_line(i).strip_edges()
+				if not check_line.empty() and not check_line.begins_with(";"):
+					texture_idx += 1
+		ball_label.text = "Texture #" + str(texture_idx)
+		ball_label.add_color_override("font_color", Color.white)
+		ball_label.visible = true
+		return
+
 	if ball_no == -1:
 		ball_label.visible = false
 		return
-
-	var current_section: String = lnz_edit.get_current_section_name()
 	
-	# Handle specific sections where line context is relevant
 	if current_section == "[Linez]":
 		var line_idx: int = lnz_edit.cursor_get_line()
 		var line_text: String = lnz_edit.get_line(line_idx).strip_edges()
 		var parts: Array = lnz_edit.split_line(line_text)
 		
-		# Ensure parts array has enough elements
 		if parts.size() >= 2:
 			var b1: int = int(parts[0])
 			var b2: int = int(parts[1])
