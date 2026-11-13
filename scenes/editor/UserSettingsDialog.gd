@@ -13,7 +13,7 @@ signal append_dimensions_changed(enabled)
 signal transparent_color_changed(new_val)
 signal ball_picking_mode_changed(new_mode)
 signal warn_linez_limit_changed(new_val)
-signal use_defaults_changed(new_val)
+signal use_linez_defaults_changed(new_val)
 
 onready var delimiter_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/DelimiterHBox/OptionButton
 onready var bg_color_picker: ColorPickerButton = $VBoxContainer/ScrollContainer/VBoxContainer/BgColorHBox/ColorPickerButton
@@ -26,7 +26,7 @@ onready var texture_path_edit: LineEdit = $VBoxContainer/ScrollContainer/VBoxCon
 onready var transparent_color_spin: SpinBox = $VBoxContainer/ScrollContainer/VBoxContainer/TransparentColorHBox/TransparentColorSpin
 onready var picking_mode_option: OptionButton = $VBoxContainer/ScrollContainer/VBoxContainer/BallPickingModeHBox/PickingModeOptionButton
 onready var warn_linez_limit_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/WarnLinezLimitHBox/WarnLinezLimitCheckBox
-onready var use_defaults_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/UseDefaultsHBox/UseDefaultsCheckBox
+onready var use_linez_defaults_check: CheckBox = $VBoxContainer/ScrollContainer/VBoxContainer/UseLinezDefaultsHBox/UseLinezDefaultsCheckBox
 
 var delimiter_map: Dictionary = {
 	0: "comma_space",
@@ -60,7 +60,7 @@ func _ready() -> void:
 	transparent_color_spin.connect("value_changed", self, "_on_transparent_color_changed")
 	picking_mode_option.connect("item_selected", self, "_on_ball_picking_mode_selected")
 	warn_linez_limit_check.connect("toggled", self, "_on_warn_linez_limit_toggled")
-	use_defaults_check.connect("toggled", self, "_on_use_defaults_toggled")
+	use_linez_defaults_check.connect("toggled", self, "_on_use_linez_defaults_toggled")
 
 func _setup_options() -> void:
 	delimiter_option.clear()
@@ -96,7 +96,7 @@ func _setup_options() -> void:
 	picking_mode_option.add_item("Geometric Depth", 0)
 	picking_mode_option.add_item("Visual Depth", 1)
 
-func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_append_dims: bool, current_texture_path: String = "\\resource\\textures\\", current_transparent_color: int = 0, current_picking_mode: int = 1, current_warn_linez_limit: bool = true, current_use_defaults: bool = false) -> void:
+func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int, current_append_dims: bool, current_texture_path: String = "\\resource\\textures\\", current_transparent_color: int = 0, current_picking_mode: int = 1, current_warn_linez_limit: bool = true, current_use_linez_defaults: bool = false) -> void:
 	var delim_idx: int = reverse_delimiter_map.get(current_delim_name, 5)
 
 	if delimiter_option.is_item_disabled(delim_idx):
@@ -121,7 +121,7 @@ func init_settings(current_delim_name: String, current_bg_color: Color, current_
 	_select_option_by_id(picking_mode_option, current_picking_mode)
 
 	warn_linez_limit_check.pressed = current_warn_linez_limit
-	use_defaults_check.pressed = current_use_defaults
+	use_linez_defaults_check.pressed = current_use_linez_defaults
 
 func _select_option_by_id(opt_btn: OptionButton, id: int) -> void:
 	for i in range(opt_btn.get_item_count()):
@@ -164,5 +164,5 @@ func _on_ball_picking_mode_selected(index: int) -> void:
 func _on_warn_linez_limit_toggled(enabled: float) -> void:
 	emit_signal("warn_linez_limit_changed", enabled > 0)
 
-func _on_use_defaults_toggled(enabled: float) -> void:
-	emit_signal("use_defaults_changed", enabled > 0)
+func _on_use_linez_defaults_toggled(enabled: float) -> void:
+	emit_signal("use_linez_defaults_changed", enabled > 0)

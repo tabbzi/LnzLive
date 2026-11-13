@@ -3631,21 +3631,24 @@ func create_line(start_ball, end_ball, silent: bool = false):
 	var props = line_mode_settings.get_properties()
 
 	var settings_cfg: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
-	var use_defaults: bool = settings_cfg.get("use_defaults_created_addballz", false)
+	var use_linez_defaults: bool = settings_cfg.get("use_linez_defaults_created_addballz", false)
 
-	if use_defaults:
+	if use_linez_defaults:
 		props.start_thickness = 100
 		props.end_thickness = 100
+		props.color = -1
 		props.left_outline_color = -1
 		props.right_outline_color = -1
 		props.apply_start_thick = true
 		props.apply_end_thick = true
+		props.apply_color = true
 		props.apply_left_outline = true
 		props.apply_right_outline = true
 		
 		var visual_ball = pet_view.find_visual_ball_by_no(start_ball)
 		if is_instance_valid(visual_ball):
 			props.fuzz = visual_ball.fuzz_amount
+			props.apply_fuzz = true
 
 	var line_updated = false
 	for i in range(start_line, end_line):
@@ -4003,7 +4006,7 @@ func _on_ToolsMenu_create_addball(reference_ball, also_connect_line := false):
 
 func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dictionary:
 	var settings: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
-	var use_defaults: bool = settings.get("use_defaults_created_addballz", false)
+	var use_linez_defaults: bool = settings.get("use_linez_defaults_created_addballz", false)
 	
 	var props = {
 		"target_base_ball": reference_ball.ball_no,
@@ -4086,10 +4089,6 @@ func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dict
 		props.bodyarea = KeyBallsData.bodyarea_map[props.target_base_ball]
 	else:
 		print("[WARNING] LnzTextEdit: _gather_addball_properties: Missing bodyarea for ball %d. Defaulting to 1." % props.target_base_ball)
-
-	if use_defaults:
-		props.fuzz = reference_ball.fuzz_amount
-		props.outline_color = -1
 
 	return props
 

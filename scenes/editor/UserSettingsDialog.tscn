@@ -277,19 +277,19 @@ max_value = 255.0
 	size_flags_horizontal = 3
 	pressed = true
 
-[node name="UseDefaultsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="UseLinezDefaultsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 	margin_top = 396.0
 	margin_right = 430.0
 	margin_bottom = 420.0
 
-[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/UseDefaultsHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/UseLinezDefaultsHBox"]
 	margin_top = 5.0
 	margin_right = 213.0
 	margin_bottom = 19.0
 	size_flags_horizontal = 3
-	text = "Use Defaults for Created Addballz + Linez:"
+	text = "Use Defaults for New Linez:"
 
-[node name="UseDefaultsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/UseDefaultsHBox"]
+[node name="UseLinezDefaultsCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/UseLinezDefaultsHBox"]
 	margin_left = 217.0
 	margin_right = 430.0
 	margin_bottom = 24.0

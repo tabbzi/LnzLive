@@ -51,7 +51,7 @@ var default_texture_path: String = "\\resource\\textures\\"
 var default_transparent_color: int = 0
 var ball_picking_mode: int = 1
 var warn_for_linez_limit: bool = true
-var use_defaults_created_addballz: bool = false
+var use_linez_defaults_created_addballz: bool = false
 
 func _ready() -> void:
 	var global_theme: Theme = Theme.new()
@@ -95,7 +95,7 @@ func _ready() -> void:
 		settings_dialog.connect("transparent_color_changed", self, "_on_transparent_color_changed")
 		settings_dialog.connect("ball_picking_mode_changed", self, "_on_ball_picking_mode_changed")
 		settings_dialog.connect("warn_linez_limit_changed", self, "_on_warn_linez_limit_changed")
-		settings_dialog.connect("use_defaults_changed", self, "_on_use_defaults_changed")
+		settings_dialog.connect("use_linez_defaults_changed", self, "_on_use_linez_defaults_changed")
 
 	_hotkey_dialog = get_tree().root.get_node_or_null("SceneRoot/HotkeySettingsDialog")
 	if _hotkey_dialog:
@@ -111,7 +111,7 @@ func _on_toggle_ref_image_btn_pressed() -> void:
 		ref_settings.toggle_reference_image()
 
 func _on_user_settings_pressed() -> void:
-	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, append_dimensions, default_texture_path, 		default_transparent_color, ball_picking_mode, warn_for_linez_limit, use_defaults_created_addballz)
+	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect, append_dimensions, default_texture_path, 		default_transparent_color, ball_picking_mode, warn_for_linez_limit, use_linez_defaults_created_addballz)
 	settings_dialog.popup_centered()
 
 func _on_hotkey_settings_pressed() -> void:
@@ -163,8 +163,8 @@ func _on_warn_linez_limit_changed(new_val: bool) -> void:
 	warn_for_linez_limit = new_val
 	save_settings()
 
-func _on_use_defaults_changed(new_val: bool) -> void:
-	use_defaults_created_addballz = new_val
+func _on_use_linez_defaults_changed(new_val: bool) -> void:
+	use_linez_defaults_created_addballz = new_val
 	save_settings()
 
 func _on_window_size_changed() -> void:
@@ -217,7 +217,7 @@ func save_settings() -> void:
 	config.set_value("LNZOptions", "default_transparent_color", default_transparent_color)
 	config.set_value("Display", "ball_picking_mode", ball_picking_mode)
 	config.set_value("UserSettings", "warn_for_linez_limit", warn_for_linez_limit)
-	config.set_value("UserSettings", "use_defaults_created_addballz", use_defaults_created_addballz)
+	config.set_value("UserSettings", "use_linez_defaults_created_addballz", use_linez_defaults_created_addballz)
 
 	if file_tree and file_tree.has_method("get_expanded_states"):
 		file_tree_expanded_sections = file_tree.get_expanded_states()
@@ -303,7 +303,7 @@ func load_settings() -> void:
 			pet_view_container.ball_picking_mode = ball_picking_mode
 
 		warn_for_linez_limit = config.get_value("UserSettings", "warn_for_linez_limit", true)
-		use_defaults_created_addballz = config.get_value("UserSettings", "use_defaults_created_addballz", false)
+		use_linez_defaults_created_addballz = config.get_value("UserSettings", "use_linez_defaults_created_addballz", false)
 
 	else:
 		OS.center_window()
