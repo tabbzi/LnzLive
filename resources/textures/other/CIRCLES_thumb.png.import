@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CALI5.bmp-1ad71fdf41089d5bee48a88352c1c4ea.stex"
+path="res://.import/CIRCLES_thumb.png-4cecee2f0373084e1f11ae2654d7141a.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CALI5.bmp"
-dest_files=[ "res://.import/CALI5.bmp-1ad71fdf41089d5bee48a88352c1c4ea.stex" ]
+source_file="res://resources/textures/other/CIRCLES_thumb.png"
+dest_files=[ "res://.import/CIRCLES_thumb.png-4cecee2f0373084e1f11ae2654d7141a.stex" ]
 
 [params]
 

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/COW.bmp-025431de7b034a98dd33f5cb478b5c65.stex"
+path="res://.import/FLOWER.bmp-0f6d35d2ceb95ddb08441fde513fbb34.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/COW.bmp"
-dest_files=[ "res://.import/COW.bmp-025431de7b034a98dd33f5cb478b5c65.stex" ]
+source_file="res://resources/textures/other/FLOWER.bmp"
+dest_files=[ "res://.import/FLOWER.bmp-0f6d35d2ceb95ddb08441fde513fbb34.stex" ]
 
 [params]
 

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/GROOVY.bmp-fa3406e67c42c3159843239354054696.stex"
+path="res://.import/GROOVY_thumb.png-d742f56cd8f1a387a2e87a79c70ad3f3.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/GROOVY.bmp"
-dest_files=[ "res://.import/GROOVY.bmp-fa3406e67c42c3159843239354054696.stex" ]
+source_file="res://resources/textures/other/GROOVY_thumb.png"
+dest_files=[ "res://.import/GROOVY_thumb.png-d742f56cd8f1a387a2e87a79c70ad3f3.stex" ]
 
 [params]
 

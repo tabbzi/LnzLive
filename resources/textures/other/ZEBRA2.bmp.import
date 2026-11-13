@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CHAINMAIL1_thumb.png-a8537cb7c5924c1ed6ee14e034d35b51.stex"
+path="res://.import/ZEBRA2.bmp-75b45c3fa9050c5b4d1f75bd3bf8330d.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CHAINMAIL1_thumb.png"
-dest_files=[ "res://.import/CHAINMAIL1_thumb.png-a8537cb7c5924c1ed6ee14e034d35b51.stex" ]
+source_file="res://resources/textures/other/ZEBRA2.bmp"
+dest_files=[ "res://.import/ZEBRA2.bmp-75b45c3fa9050c5b4d1f75bd3bf8330d.stex" ]
 
 [params]
 
