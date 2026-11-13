@@ -1095,6 +1095,12 @@ func _on_LoadButton_pressed() -> void:
 		elif dir.file_exists("res://resources/textures/" + v):
 			loaded_path = "res://resources/textures/" + v
 			break
+	
+	if loaded_path == "":
+		for base in ["user://resources/textures", "res://resources/textures"]:
+			loaded_path = _find_file_recursive(base, variants)
+			if loaded_path != "":
+				break
 
 	var raw_bmp_data: Dictionary = {}
 	if loaded_path != "":
@@ -1135,6 +1141,13 @@ func _on_LoadButton_pressed() -> void:
 			elif ResourceLoader.exists("res://resources/textures/" + v):
 				loaded_tex = ResourceLoader.load("res://resources/textures/" + v)
 				break
+		
+		if loaded_tex == null:
+			for base in ["user://resources/textures", "res://resources/textures"]:
+				var found_path: String = _find_file_recursive(base, variants)
+				if found_path != "" and ResourceLoader.exists(found_path):
+					loaded_tex = ResourceLoader.load(found_path)
+					break
 				
 		if loaded_tex == null:
 			var preloader: ResourcePreloader = get_tree().root.get_node_or_null("Root/ResourcePreloader")
@@ -1422,3 +1435,29 @@ func _on_filename_line_edit_text_changed(new_text: String) -> void:
 
 func _on_NoTextureRotateCheckBox_toggled(_button_pressed: bool) -> void:
 	pass
+
+func _find_file_recursive(base_path: String, search_names: Array) -> String:
+	var dir: Directory = Directory.new()
+	if dir.open(base_path) != OK:
+		return ""
+	
+	dir.list_dir_begin(true, true)
+	var filename: String = dir.get_next()
+	
+	while filename != "":
+		var full_path: String = base_path.plus_file(filename)
+		if dir.current_is_dir():
+			var result: String = _find_file_recursive(full_path, search_names)
+			if result != "":
+				dir.list_dir_end()
+				return result
+		else:
+			var lower_filename: String = filename.to_lower()
+			for v in search_names:
+				if v.to_lower() == lower_filename:
+					dir.list_dir_end()
+					return full_path
+		filename = dir.get_next()
+	
+	dir.list_dir_end()
+	return ""

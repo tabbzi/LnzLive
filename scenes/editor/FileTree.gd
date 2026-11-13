@@ -1787,7 +1787,7 @@ func _on_MoveFileDialog_confirmed() -> void:
 			
 	if any_moved:
 		if target_dir.find("/textures/") != -1:
-			rescan_textures()
+			rescan_textures(true)
 		elif target_dir.find("/palettes/") != -1:
 			rescan_palettes()
 		elif target_dir.find("/bases/") != -1:
