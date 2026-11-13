@@ -2448,6 +2448,7 @@ func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
 	parts.append(_get_hotkey_display("select_jump_move") + " or " + _get_hotkey_display("select_jump_move_alt") + ": [Move]")
 	parts.append(_get_hotkey_display("select_jump_project") + " or " + _get_hotkey_display("select_jump_project_alt") + ": [Project Ball]")
 	parts.append(_get_hotkey_display("select_jump_line") + " or " + _get_hotkey_display("select_jump_line_alt") + ": [Line]")
+	parts.append(_get_hotkey_display("select_jump_paintball") + ": [Paint Ballz]")
 	var result: String = ""
 	for i in range(parts.size()):
 		result += parts[i]

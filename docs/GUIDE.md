@@ -65,6 +65,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `X` or `M` | Jumps to the `[Move]` entries involving hovered ball |
 | **Select Mode** | `C` or `P` | Jumps to the `[Project Ball]` entries involving hovered ball |
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
+| **Select Mode** | `J` | Cycles through `[Paint Ballz]` entries for hovered ball |
 | **Select Mode** | `N` or `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
 | **Select Mode** | `DELETE` | Omit (if base ballz) or delete (if add ballz) hovered ball |
@@ -359,6 +360,7 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
+- **J**: cycle through `[Paint Ballz]` entries for this ball in the text editor.
 
 #### Recolor Mode
 

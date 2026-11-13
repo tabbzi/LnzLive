@@ -1074,8 +1074,8 @@ __meta__ = {
 [node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
 margin_top = 30.0
 margin_right = 655.0
-margin_bottom = 105.0
-rect_min_size = Vector2( 475, 75 )
+	margin_bottom = 130.0
+	rect_min_size = Vector2( 475, 100 )
 custom_fonts/font = SubResource( 10 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."

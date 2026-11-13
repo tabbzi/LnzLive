@@ -1363,6 +1363,35 @@ func find_line_in_linez_section(ball_no, start_from = -1):
 func find_line_in_paintball_section(ball_no, start_from = -1):
 	return _find_line_in_section_with_match("[Paint Ballz]", ball_no, "_paintball_match_fn", start_from)
 
+func find_nth_paintball_line(ball_no: int, nth: int) -> int:
+	var bounds = get_section_bounds("[Paint Ballz]")
+	if bounds.empty():
+		return -1
+	var header_idx = bounds.get("header", -1)
+	if header_idx == -1:
+		return -1
+	var start_of_section = header_idx + 1
+	var found = 0
+	var i = 0
+	while true:
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count():
+			break
+		var line = get_line(current_line_idx)
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["):
+			break
+		if stripped.empty() or stripped.begins_with(";"):
+			i += 1
+			continue
+		var parts = split_line(line)
+		if parts.size() > 0 and parts[0] == str(ball_no):
+			if found == nth:
+				return current_line_idx
+			found += 1
+		i += 1
+	return -1
+
 func _linez_match_fn(parts: Array, ball_no) -> bool:
 	return parts.size() >= 2 and (parts[0] == str(ball_no) or parts[1] == str(ball_no))
 
@@ -3732,6 +3761,39 @@ func select_ball(section, ball_no, is_addball, max_addball_no):
 	cursor_set_line(actual_start_point)
 	cursor_set_column(0)
 	center_viewport_to_cursor()
+
+var _current_paintball_ball_no: int = -1
+var _current_paintball_index: int = 0
+
+func select_paintball(ball_no: int, flash: bool = false) -> void:
+	if not is_instance_valid(pet_node) or not is_instance_valid(pet_node.lnz):
+		return
+	var pb_data = pet_node.lnz.get("paintballs")
+	if not pb_data or not pb_data.has(ball_no):
+		return
+	var paintballs = pet_node.lnz.paintballs[ball_no]
+	if paintballs.size() == 0:
+		return
+	if _current_paintball_ball_no != ball_no:
+		_current_paintball_ball_no = ball_no
+		_current_paintball_index = 0
+	else:
+		_current_paintball_index += 1
+		if _current_paintball_index >= paintballs.size():
+			_current_paintball_index = 0
+	var line_no = find_nth_paintball_line(ball_no, _current_paintball_index)
+	if line_no != -1:
+		cursor_set_line(line_no)
+		cursor_set_column(0)
+		center_viewport_to_cursor()
+	# Flash the base ball if requested
+	if flash and is_instance_valid(pet_node) and pet_node.ball_map.has(ball_no):
+		var ball_node = pet_node.ball_map[ball_no]
+		if is_instance_valid(ball_node):
+			ball_node.flash()
+
+func get_current_paintball_index() -> int:
+	return _current_paintball_index
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	resize_ball(ball_no, size_dif)

@@ -46,7 +46,8 @@ enum ToolsAction {
 	APPLY_FUZZ = 12,
 	COPY_COLORS = 13,
 	BALL_INFO = 14,
-	CLEAR_PAINTBALLZ = 15
+	CLEAR_PAINTBALLZ = 15,
+	JUMP_PAINTBALL = 16
 }
 
 var dog_generator: Node = null
@@ -73,6 +74,7 @@ func _ready() -> void:
 	add_item("Apply Global Fuzz", ToolsAction.APPLY_FUZZ)
 	add_item("Copy Ballz Colors to Clipboard", ToolsAction.COPY_COLORS)
 	add_item("Ball Info", ToolsAction.BALL_INFO)
+	add_item("Jump to Paintball", ToolsAction.JUMP_PAINTBALL)
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 	
@@ -327,16 +329,23 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 					lnz_text_edit.select_ball(0, ball_no, is_addball, -1)
 			return
 
+		ToolsAction.JUMP_PAINTBALL: # Jump to paintball
+			if is_ball_selected:
+				var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+				if is_instance_valid(lnz_text_edit):
+					lnz_text_edit.select_paintball(ball_no)
+			return
+
 		ToolsAction.CLEAR_PAINTBALLZ: # Clear Paintballz
 			if is_ball_selected:
 				emit_signal("clear_ball_paintballz", ball_no)
 
 
 func _on_ToolsMenu_about_to_show() -> void:
-	while get_item_count() > 15:
+	while get_item_count() > 16:
 		remove_item(get_item_count() - 1)
 
-	for i in range(14):
+	for i in range(15):
 		set_item_disabled(i, false)
 
 	var ball_no: int = -1
@@ -371,8 +380,16 @@ func _on_ToolsMenu_about_to_show() -> void:
 
 	if is_ball_selected:
 		set_item_text(get_item_index(ToolsAction.BALL_INFO), "Jump to #%d (%s)" % [ball_no, b_name])
+		var pb_count = 0
+		if is_instance_valid(dog_generator) and dog_generator.paintball_map.has(ball_no):
+			pb_count = dog_generator.paintball_map[ball_no].size()
+		if pb_count > 0:
+			set_item_text(get_item_index(ToolsAction.JUMP_PAINTBALL), "Jump to Paintball (#%d: %d)" % [ball_no, pb_count])
+		else:
+			set_item_text(get_item_index(ToolsAction.JUMP_PAINTBALL), "No Paintballz on #%d" % ball_no)
 	else:
 		set_item_text(get_item_index(ToolsAction.BALL_INFO), "No Ballz Selected")
+		set_item_text(get_item_index(ToolsAction.JUMP_PAINTBALL), "No Paintballz Selected")
 
 	var option_text: String = ""
 
@@ -471,6 +488,18 @@ func _on_ToolsMenu_about_to_show() -> void:
 	idx = get_item_index(ToolsAction.COPY_COLORS)
 	set_item_text(idx, "Copy Ballz Colors to Clipboard")
 
+	idx = get_item_index(ToolsAction.JUMP_PAINTBALL)
+	if is_ball_selected:
+		var pb_count = 0
+		if is_instance_valid(dog_generator) and dog_generator.paintball_map.has(ball_no):
+			pb_count = dog_generator.paintball_map[ball_no].size()
+		if pb_count > 0:
+			set_item_disabled(idx, false)
+		else:
+			set_item_disabled(idx, true)
+	else:
+		set_item_disabled(idx, true)
+
 	# Clear Paintballz
 	idx = get_item_index(ToolsAction.CLEAR_PAINTBALLZ)
 	set_item_disabled(idx, !is_ball_selected)
@@ -487,10 +516,11 @@ func _on_ToolsMenu_about_to_show() -> void:
 			ToolsAction.HIDE_BALLZ,
 			ToolsAction.COPY_COLORS,
 			ToolsAction.BALL_INFO,
-			ToolsAction.CLEAR_PAINTBALLZ
+			ToolsAction.CLEAR_PAINTBALLZ,
+			ToolsAction.JUMP_PAINTBALL
 		]
 		
-		for i in range(15):
+		for i in range(16):
 			var item_id: int = get_item_id(i)
 			if not item_id in allowed_ids:
 				set_item_disabled(i, true)
