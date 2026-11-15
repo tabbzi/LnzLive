@@ -2,6 +2,13 @@ extends DraggablePanel
 ## MoveModeSettings.gd
 ## Manages panel UI and logic for Move Mode
 
+## SECTIONS:
+##	SETUP & INITIALIZATION
+##	TOOLS / BUTTONS
+##	SIGNAL CALLBACKS
+##	SETTINGS UI
+##	STATES & HELPERS
+
 signal apply_moves
 signal clear_moves
 signal unselect_all
@@ -70,6 +77,13 @@ onready var _locked_ballz: Control = find_node("LockedBallz")
 var _constraint_buttons: Array = []
 
 const _mirror_axes: Array = ["MirrorX", "MirrorY", "MirrorZ"]
+
+### SETUP & INITIALIZATION ###
+# _ready
+# _setup_group_buttons
+# _connect_settings_signals
+# load_settings
+# save_settings
 
 func _ready() -> void:
 	restore_position(_default_position())
@@ -149,14 +163,6 @@ func _ready() -> void:
 	if _unlock_all_btn:
 		_unlock_all_btn.connect("pressed", self, "_on_UnlockAll_pressed")
 
-func _read_mirror_state() -> Vector3:
-	return Vector3(
-		-1.0 if _mirror_x and _mirror_x.pressed else 1.0,
-		-1.0 if _mirror_y and _mirror_y.pressed else 1.0,
-		-1.0 if _mirror_z and _mirror_z.pressed else 1.0
-	)
-
-
 func _setup_group_buttons() -> void:
 	var groups: Array = ["Head", "Body", "Legs", "Tail", "Ears", "Eyes"]
 	for g in groups:
@@ -164,209 +170,6 @@ func _setup_group_buttons() -> void:
 		if btn:
 			if not btn.is_connected("pressed", self, "_on_group_btn_pressed"):
 				btn.connect("pressed", self, "_on_group_btn_pressed", [g])
-
-
-func set_queued_count(count: int) -> void:
-	_pending_move_count = count
-	if _queued_label:
-		_queued_label.text = "Queued Moves: " + str(count)
-	_update_move_buttons()
-
-func get_constraints() -> Dictionary:
-	var res: Dictionary = {"x": false, "y": false, "z": false}
-	
-	match current_constraint_mode:
-		"LockX":
-			res.y = true
-			res.z = true
-		"LockY":
-			res.x = true
-			res.z = true
-		"LockZ":
-			res.x = true
-			res.y = true
-		"LockXY":
-			res.z = true
-		"LockXZ":
-			res.y = true
-		"LockYZ":
-			res.x = true
-		"Free":
-			pass
-			
-	return res
-
-func get_mirror_vector() -> Vector3:
-	return _read_mirror_state()
-
-func is_mirror_x_active() -> bool:
-	return _mirror_x.pressed if _mirror_x else false
-
-func is_use_pivot_active() -> bool:
-	return _use_pivot_cb.pressed if _use_pivot_cb else false
-
-func get_pivot_ball_id() -> int:
-	if _pivot_ball and _use_pivot_cb and _use_pivot_cb.pressed:
-		return int(_pivot_ball.value)
-	return -1
-
-func change_nudge_value(axis: String, delta: float) -> void:
-	var sb: SpinBox = null
-	if axis == "x": sb = _nudge_x
-	elif axis == "y": sb = _nudge_y
-	elif axis == "z": sb = _nudge_z
-	if sb:
-		sb.value += delta
-
-func apply_nudge_axis(axis: String, dirsign: float) -> void:
-	var sb: SpinBox = null
-	if axis == "x": sb = _nudge_x
-	elif axis == "y": sb = _nudge_y
-	elif axis == "z": sb = _nudge_z
-	if sb:
-		var amount = sb.value * dirsign
-		var vector := Vector3.ZERO
-		if axis == "x": vector.x = amount
-		elif axis == "y": vector.y = amount
-		elif axis == "z": vector.z = amount
-		emit_signal("nudge_selection", vector)
-
-func update_selected_balls_text(ball_ids: Array) -> void:
-	if _affected_ballz and not _affected_ballz.has_focus():
-		LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
-
-func update_locked_balls_text(ball_ids: Array) -> void:
-	if _locked_ballz and not _locked_ballz.has_focus():
-		LnzLiveUtils.update_ball_text(_locked_ballz, ball_ids)
-
-func update_pivot_max(max_balls: int) -> void:
-	if _pivot_ball:
-		_pivot_ball.max_value = max(0, max_balls - 1)
-
-
-func _on_group_btn_pressed(group_name: String) -> void:
-	emit_signal("select_group", group_name)
-
-func _on_ApplyButton_pressed() -> void:
-	emit_signal("apply_moves")
-
-func _on_ClearButton_pressed() -> void:
-	emit_signal("clear_moves")
-
-func _on_DuplicateButton_pressed() -> void:
-	emit_signal("duplicate_selection")
-
-func _update_move_buttons() -> void:
-	if _pending_move_count > 0:
-		_apply_button.text = "Apply (%d)" % _pending_move_count
-	else:
-		_apply_button.text = "Apply"
-	
-	if _clear_button:
-		_clear_button.disabled = _pending_move_count == 0
-
-func _on_UnselectButton_pressed() -> void:
-	emit_signal("unselect_all")
-
-func _on_UnselectSide_pressed(side: String) -> void:
-	emit_signal("unselect_side", side)
-
-func _on_LockAll_pressed() -> void:
-	emit_signal("lock_all")
-
-func _on_UnlockAll_pressed() -> void:
-	emit_signal("unlock_all")
-
-func _on_LockedBallz_text_entered(new_text: String) -> void:
-	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
-	emit_signal("select_locked_balls_by_ids", ids)
-	if _locked_ballz:
-		_locked_ballz.release_focus()
-
-func _on_LockedBallz_text_changed(new_text: String) -> void:
-	if _locked_ballz and _locked_ballz.has_focus():
-		return
-	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
-	emit_signal("select_locked_balls_by_ids", ids)
-func _on_constraint_selected(selected_name: String) -> void:
-	current_constraint_mode = selected_name
-	
-	for i in range(_constraint_buttons.size()):
-		var c: String = ["Free", "LockX", "LockY", "LockZ", "LockXY", "LockXZ", "LockYZ"][i]
-		if _constraint_buttons[i]:
-			_constraint_buttons[i].pressed = (c == selected_name)
-
-	if not _is_loading_settings:
-		save_settings()
-
-func _on_Align_pressed(axis: String) -> void:
-	emit_signal("align_selection", axis, _align_mode_option.selected)
-
-func _on_Snap_pressed(axis: String, direction: int) -> void:
-	emit_signal("snap_selection", axis, direction)
-
-func _on_ApplyNudge_pressed() -> void:
-	var dx: float = _nudge_x.value if _nudge_x else 0.0
-	var dy: float = _nudge_y.value if _nudge_y else 0.0
-	var dz: float = _nudge_z.value if _nudge_z else 0.0
-	emit_signal("nudge_selection", Vector3(dx, dy, dz))
-
-func _on_ApplyRotate_pressed() -> void:
-	var roll: float = _rotate_roll.value if _rotate_roll else 0.0
-	var pitch: float = _rotate_pitch.value if _rotate_pitch else 0.0
-	var yaw: float = _rotate_yaw.value if _rotate_yaw else 0.0
-	
-	var pivot_id: int = -1
-	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
-		pivot_id = int(_pivot_ball.value)
-	
-	emit_signal("rotate_selection", Vector3(pitch, yaw, roll), pivot_id)
-
-func _on_ApplyScale_pressed() -> void:
-	var factor: float = max(0.01, _scale_factor.value if _scale_factor else 1.0)
-	var scale_dist: bool = _scale_dist.pressed if _scale_dist else true
-	var scale_size: bool = _scale_size.pressed if _scale_size else true
-
-	var pivot_id: int = -1
-	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
-		pivot_id = int(_pivot_ball.value)
-
-	emit_signal("apply_scale", factor, scale_dist, scale_size, pivot_id)
-
-func _on_Flip_pressed(axis: String) -> void:
-	var vec: Vector3 = Vector3.ONE
-	if axis == "x": vec.x = -1.0
-	elif axis == "y": vec.y = -1.0
-	elif axis == "z": vec.z = -1.0
-	
-	var pivot_id: int = -1
-	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
-		pivot_id = int(_pivot_ball.value)
-	
-	emit_signal("flip_selection", vec, pivot_id)
-
-func set_pivot_ball(id: int) -> void:
-	if _pivot_ball and _use_pivot_cb:
-		_pivot_ball.value = id
-		_use_pivot_cb.pressed = true
-		emit_signal("pivot_changed")
-
-func _on_AffectedBallz_text_entered(new_text: String) -> void:
-	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
-	emit_signal("select_balls_by_ids", ids)
-	if _affected_ballz:
-		_affected_ballz.release_focus()
-
-func _on_AffectedBallz_text_changed(new_text: String) -> void:
-	if _affected_ballz and _affected_ballz.has_focus():
-		return
-	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
-	emit_signal("select_balls_by_ids", ids)
-
-func _on_pivot_ui_changed(_arg = null) -> void:
-	emit_signal("pivot_changed")
-	if not _is_loading_settings:
-		save_settings()
 
 func _connect_settings_signals() -> void:
 	_align_mode_option.connect("item_selected", self, "_on_setting_changed")
@@ -388,11 +191,6 @@ func _connect_settings_signals() -> void:
 
 	if _reset_defaults:
 		_reset_defaults.connect("pressed", self, "_on_reset_defaults_pressed")
-
-func _on_setting_changed(_arg = null) -> void:
-	if _is_loading_settings:
-		return
-	save_settings()
 
 func save_settings() -> void:
 	var values: Dictionary = {}
@@ -448,6 +246,152 @@ func load_settings() -> void:
 
 	_is_loading_settings = false
 
+
+### TOOLS / BUTTONS ###
+# _on_ApplyButton_pressed
+# _on_ClearButton_pressed
+# _on_DuplicateButton_pressed
+# _on_Align_pressed
+# _on_Snap_pressed
+# _on_ApplyNudge_pressed
+# _on_ApplyRotate_pressed
+# _on_ApplyScale_pressed
+# _on_Flip_pressed
+
+func _on_ApplyButton_pressed() -> void:
+	emit_signal("apply_moves")
+
+func _on_ClearButton_pressed() -> void:
+	emit_signal("clear_moves")
+
+func _on_DuplicateButton_pressed() -> void:
+	emit_signal("duplicate_selection")
+
+func _on_Align_pressed(axis: String) -> void:
+	emit_signal("align_selection", axis, _align_mode_option.selected)
+
+func _on_Snap_pressed(axis: String, direction: int) -> void:
+	emit_signal("snap_selection", axis, direction)
+
+func _on_ApplyNudge_pressed() -> void:
+	var dx: float = _nudge_x.value if _nudge_x else 0.0
+	var dy: float = _nudge_y.value if _nudge_y else 0.0
+	var dz: float = _nudge_z.value if _nudge_z else 0.0
+	emit_signal("nudge_selection", Vector3(dx, dy, dz))
+
+func _on_ApplyRotate_pressed() -> void:
+	var roll: float = _rotate_roll.value if _rotate_roll else 0.0
+	var pitch: float = _rotate_pitch.value if _rotate_pitch else 0.0
+	var yaw: float = _rotate_yaw.value if _rotate_yaw else 0.0
+	
+	var pivot_id: int = -1
+	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
+		pivot_id = int(_pivot_ball.value)
+	
+	emit_signal("rotate_selection", Vector3(pitch, yaw, roll), pivot_id)
+
+func _on_ApplyScale_pressed() -> void:
+	var factor: float = max(0.01, _scale_factor.value if _scale_factor else 1.0)
+	var scale_dist: bool = _scale_dist.pressed if _scale_dist else true
+	var scale_size: bool = _scale_size.pressed if _scale_size else true
+
+	var pivot_id: int = -1
+	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
+		pivot_id = int(_pivot_ball.value)
+
+	emit_signal("apply_scale", factor, scale_dist, scale_size, pivot_id)
+
+func _on_Flip_pressed(axis: String) -> void:
+	var vec: Vector3 = Vector3.ONE
+	if axis == "x": vec.x = -1.0
+	elif axis == "y": vec.y = -1.0
+	elif axis == "z": vec.z = -1.0
+	
+	var pivot_id: int = -1
+	if _use_pivot_cb and _use_pivot_cb.pressed and _pivot_ball:
+		pivot_id = int(_pivot_ball.value)
+	
+	emit_signal("flip_selection", vec, pivot_id)
+
+
+### SIGNAL CALLBACKS ###
+# _on_UnselectButton_pressed
+# _on_UnselectSide_pressed
+# _on_group_btn_pressed
+# _on_LockAll_pressed
+# _on_UnlockAll_pressed
+# _on_LockedBallz_text_entered
+# _on_LockedBallz_text_changed
+# _on_AffectedBallz_text_entered
+# _on_AffectedBallz_text_changed
+# _on_constraint_selected
+
+func _on_UnselectButton_pressed() -> void:
+	emit_signal("unselect_all")
+
+func _on_UnselectSide_pressed(side: String) -> void:
+	emit_signal("unselect_side", side)
+
+func _on_group_btn_pressed(group_name: String) -> void:
+	emit_signal("select_group", group_name)
+
+func _on_LockAll_pressed() -> void:
+	emit_signal("lock_all")
+
+func _on_UnlockAll_pressed() -> void:
+	emit_signal("unlock_all")
+
+func _on_LockedBallz_text_entered(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_locked_balls_by_ids", ids)
+	if _locked_ballz:
+		_locked_ballz.release_focus()
+
+func _on_LockedBallz_text_changed(new_text: String) -> void:
+	if _locked_ballz and _locked_ballz.has_focus():
+		return
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_locked_balls_by_ids", ids)
+
+func _on_constraint_selected(selected_name: String) -> void:
+	current_constraint_mode = selected_name
+	
+	for i in range(_constraint_buttons.size()):
+		var c: String = ["Free", "LockX", "LockY", "LockZ", "LockXY", "LockXZ", "LockYZ"][i]
+		if _constraint_buttons[i]:
+			_constraint_buttons[i].pressed = (c == selected_name)
+
+	if not _is_loading_settings:
+		save_settings()
+
+func _on_AffectedBallz_text_entered(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+	if _affected_ballz:
+		_affected_ballz.release_focus()
+
+func _on_AffectedBallz_text_changed(new_text: String) -> void:
+	if _affected_ballz and _affected_ballz.has_focus():
+		return
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+
+
+### SETTINGS UI ###
+# _on_pivot_ui_changed
+# _on_setting_changed
+# _on_reset_defaults_pressed
+
+func _on_pivot_ui_changed(_arg = null) -> void:
+	emit_signal("pivot_changed")
+	if not _is_loading_settings:
+		save_settings()
+
+func _on_setting_changed(_arg = null) -> void:
+	if _is_loading_settings:
+		return
+	save_settings()
+
 func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = true
 
@@ -476,3 +420,119 @@ func _on_reset_defaults_pressed() -> void:
 
 	_is_loading_settings = false
 	save_settings()
+
+
+### STATES & HELPERS ###
+# set_queued_count
+# _update_move_buttons
+# update_selected_balls_text
+# update_locked_balls_text
+# update_pivot_max
+# get_constraints
+# get_mirror_vector
+# is_mirror_x_active
+# is_use_pivot_active
+# get_pivot_ball_id
+# set_pivot_ball
+# change_nudge_value
+# apply_nudge_axis
+# _read_mirror_state
+
+func set_queued_count(count: int) -> void:
+	_pending_move_count = count
+	if _queued_label:
+		_queued_label.text = "Queued Moves: " + str(count)
+	_update_move_buttons()
+
+func _update_move_buttons() -> void:
+	if _pending_move_count > 0:
+		_apply_button.text = "Apply (%d)" % _pending_move_count
+	else:
+		_apply_button.text = "Apply"
+	
+	if _clear_button:
+		_clear_button.disabled = _pending_move_count == 0
+
+func update_selected_balls_text(ball_ids: Array) -> void:
+	if _affected_ballz and not _affected_ballz.has_focus():
+		LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
+
+func update_locked_balls_text(ball_ids: Array) -> void:
+	if _locked_ballz and not _locked_ballz.has_focus():
+		LnzLiveUtils.update_ball_text(_locked_ballz, ball_ids)
+
+func update_pivot_max(max_balls: int) -> void:
+	if _pivot_ball:
+		_pivot_ball.max_value = max(0, max_balls - 1)
+
+func get_constraints() -> Dictionary:
+	var res: Dictionary = {"x": false, "y": false, "z": false}
+	
+	match current_constraint_mode:
+		"LockX":
+			res.y = true
+			res.z = true
+		"LockY":
+			res.x = true
+			res.z = true
+		"LockZ":
+			res.x = true
+			res.y = true
+		"LockXY":
+			res.z = true
+		"LockXZ":
+			res.y = true
+		"LockYZ":
+			res.x = true
+		"Free":
+			pass
+			
+	return res
+
+func get_mirror_vector() -> Vector3:
+	return _read_mirror_state()
+
+func is_mirror_x_active() -> bool:
+	return _mirror_x.pressed if _mirror_x else false
+
+func is_use_pivot_active() -> bool:
+	return _use_pivot_cb.pressed if _use_pivot_cb else false
+
+func get_pivot_ball_id() -> int:
+	if _pivot_ball and _use_pivot_cb and _use_pivot_cb.pressed:
+		return int(_pivot_ball.value)
+	return -1
+
+func set_pivot_ball(id: int) -> void:
+	if _pivot_ball and _use_pivot_cb:
+		_pivot_ball.value = id
+		_use_pivot_cb.pressed = true
+		emit_signal("pivot_changed")
+
+func change_nudge_value(axis: String, delta: float) -> void:
+	var sb: SpinBox = null
+	if axis == "x": sb = _nudge_x
+	elif axis == "y": sb = _nudge_y
+	elif axis == "z": sb = _nudge_z
+	if sb:
+		sb.value += delta
+
+func apply_nudge_axis(axis: String, dirsign: float) -> void:
+	var sb: SpinBox = null
+	if axis == "x": sb = _nudge_x
+	elif axis == "y": sb = _nudge_y
+	elif axis == "z": sb = _nudge_z
+	if sb:
+		var amount = sb.value * dirsign
+		var vector := Vector3.ZERO
+		if axis == "x": vector.x = amount
+		elif axis == "y": vector.y = amount
+		elif axis == "z": vector.z = amount
+		emit_signal("nudge_selection", vector)
+
+func _read_mirror_state() -> Vector3:
+	return Vector3(
+		-1.0 if _mirror_x and _mirror_x.pressed else 1.0,
+		-1.0 if _mirror_y and _mirror_y.pressed else 1.0,
+		-1.0 if _mirror_z and _mirror_z.pressed else 1.0
+	)
