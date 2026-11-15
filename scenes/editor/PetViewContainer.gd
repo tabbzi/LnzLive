@@ -3777,7 +3777,7 @@ func _commit_box_selection() -> void:
 	# ])
 
 
-# HISTORY
+# HISTORY & STATE
 # _capture_pending_state_snapshot
 # _record_move_history_entry
 # _restore_move_snapshot
@@ -3930,7 +3930,7 @@ func _record_move_end_state(action_name: String) -> void:
 
 	print("[TIME] PetViewContainer: _record_move_end_state took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-# HELPERS
+# MOVE HELPERS
 # _flatten_symmetry_dict
 # _begin_auto_move_for_ball
 # schedule_autodrag_for_addball
@@ -4892,29 +4892,65 @@ func _restore_preset_selection(ids: Array) -> void:
 
 
 ### MOVE MODE ###
-# _on_move_mode_clear
-# _update_pivot_limit
-# _track_pending_move
-# _on_move_mode_apply
+
+# INPUTS & HELPERS
+# _initialize_move_drag
+# _handle_move_mode_gui_input
+# _handle_group_pan_input
+# _handle_move_nudge_key_input
+# _begin_auto_move_for_ball
+# schedule_autodrag_for_addball
+# _wait_for_addball_then_autodrag
+
+# SELECT / LOCK / GROUP
+# _update_selected_ballz_in_settings
+# _on_select_balls_by_ids
+# _on_unselect_all
+# _on_unselect_side
+# _on_move_mode_select_group
+# _has_selected_ancestor
+# _on_lock_all
+# _on_unlock_all
+# _toggle_lock_ball
+# _unlock_all_balls
+# _on_select_locked_balls_by_ids
+# _sync_locked_balls_to_visuals
+# _is_ball_locked
+# update_locked_ballz_text
+
+# SPATIAL / MATH / MIRROR
 # _on_align_selection
 # _align_ball_list
-# _get_axis_val
 # _on_snap_selection
 # _snap_ball_list_to_target
 # _on_nudge_selection
-# _on_move_mode_select_group
-# _apply_eye_iris_binding
-# _apply_mirror_move
-# _apply_mirror_scale
-# _get_rotation_pivot_origin
+# _apply_translation_to_selection
 # _on_rotate_selection
 # _on_flip_selection
 # _on_apply_scale
-# _on_pivot_changed
-# _toggle_lock_ball
-# _unlock_all_balls
-# _is_ball_locked
-# _handle_group_pan_input
+# _get_axis_val
+# _apply_axis_constraints
+# _get_rotation_pivot_origin
+# _restore_ball_basis_and_mesh_scale
+# _apply_mirror_move
+# _apply_mirror_scale
+# _get_unselected_mirror_partners
+# _apply_eye_iris_binding
+
+# APPLY / CLEAR / TRACK
+# _on_move_mode_apply
+# _on_move_mode_clear
+# _track_pending_move
+# _track_pending_move_on_selection
+# _record_move_start_state
+# _record_move_end_state
+# _capture_pending_state_snapshot
+# _record_move_history_entry
+# _restore_move_snapshot
+# _undo_queued_move
+# _redo_queued_move
+# _duplicate_selected_addballz
+# _on_randomize_moves
 
 func _on_move_mode_clear() -> void:
 	var all_balls: Array = _get_all_visual_balls()
