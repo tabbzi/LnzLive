@@ -5241,15 +5241,7 @@ func _apply_mirror_move(balls_moved: Array, delta: Vector3) -> void:
 		if not "ball_no" in b:
 			continue
 
-		var addballz_base_selected: bool = false
-		var p: Node = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in balls_moved:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
-		if addballz_base_selected:
+		if _has_selected_ancestor(b, balls_moved):
 			var partner_id_check: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 			if partner_id_check != -1 and partner_id_check != b.ball_no:
 				var partner_visual: Spatial = find_visual_ball_by_no(partner_id_check)
@@ -5339,15 +5331,8 @@ func _on_rotate_selection(rotation_degrees: Vector3, pivot_id: int) -> void:
 
 	for b in selected_balls:
 		if is_instance_valid(b):
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if addballz_base_selected:
+			if _has_selected_ancestor(b):
+				_track_pending_move(b)
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
@@ -5380,15 +5365,7 @@ func _on_flip_selection(axis_vector: Vector3, pivot_id: int) -> void:
 
 	for b in selected_balls:
 		if is_instance_valid(b):
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if addballz_base_selected:
+			if _has_selected_ancestor(b):
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
@@ -5524,6 +5501,14 @@ func _is_ball_locked(ball: Spatial) -> bool:
 	if not is_instance_valid(ball) or not "ball_no" in ball:
 		return false
 	return ball.ball_no in locked_balls
+
+func _has_selected_ancestor(ball: Spatial, group: Array = selected_balls) -> bool:
+	var p: Node = ball.get_parent()
+	while is_instance_valid(p) and p != get_tree().root:
+		if p in group:
+			return true
+		p = p.get_parent()
+	return false
 
 func _apply_axis_constraints(delta: Vector3) -> Vector3:
 	var constraints: Dictionary = {}
