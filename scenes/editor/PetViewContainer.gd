@@ -4994,21 +4994,8 @@ func _on_align_selection(axis: String, mode: int) -> void:
 
 	_align_ball_list(selected_balls, axis, mode)
 
-	if move_mode_settings_instance.is_mirror_x_active():
-		var mirrored_group: Array = []
-
-		for b in selected_balls:
-			var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
-
-			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
-
-				if (
-					partner_visual
-					and not (partner_visual in selected_balls)
-					and not (partner_visual in mirrored_group)
-				):
-					mirrored_group.append(partner_visual)
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group: Array = _get_unselected_mirror_partners(selected_balls)
 
 		if not mirrored_group.empty():
 			var target_mode: int = mode
@@ -5105,19 +5092,8 @@ func _on_snap_selection(axis: String, direction: int) -> void:
 
 	_snap_ball_list_to_target(selected_balls, axis, direction, target_val)
 
-	if move_mode_settings_instance.is_mirror_x_active():
-		var mirrored_group: Array = []
-		for b in selected_balls:
-			var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
-			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
-				if (
-					partner_visual
-					and not (partner_visual in selected_balls)
-					and not (partner_visual in mirrored_group)
-				):
-					mirrored_group.append(partner_visual)
-
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group: Array = _get_unselected_mirror_partners(selected_balls)
 		if not mirrored_group.empty():
 			_snap_ball_list_to_target(mirrored_group, axis, direction, target_val)
 
@@ -5509,6 +5485,23 @@ func _has_selected_ancestor(ball: Spatial, group: Array = selected_balls) -> boo
 			return true
 		p = p.get_parent()
 	return false
+
+func _get_unselected_mirror_partners(balls: Array) -> Array:
+	var mirrored_group: Array = []
+	for b in balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+		var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
+		if partner_id != -1 and partner_id != b.ball_no:
+			var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
+			if (
+				is_instance_valid(partner_visual)
+				and not _is_ball_locked(partner_visual)
+				and not (partner_visual in balls)
+				and not (partner_visual in mirrored_group)
+			):
+				mirrored_group.append(partner_visual)
+	return mirrored_group
 
 func _apply_axis_constraints(delta: Vector3) -> Vector3:
 	var constraints: Dictionary = {}
