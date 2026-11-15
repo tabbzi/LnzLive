@@ -5193,19 +5193,10 @@ func _apply_translation_to_selection(delta: Vector3) -> void:
 		if is_instance_valid(b):
 			if _is_ball_locked(b):
 				continue
-
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if not addballz_base_selected:
-				b.global_transform.origin += delta
-
-			# Record for undo/redo
+			if _has_selected_ancestor(b):
+				_track_pending_move(b)
+				continue
+			b.global_transform.origin += delta
 			_track_pending_move(b)
 
 	if move_mode_settings_instance.is_mirror_x_active():
