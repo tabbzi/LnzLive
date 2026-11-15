@@ -107,6 +107,7 @@ boot_splash/image="res://launcher/images/launcher_roll_still1.png"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0.168627, 0.45098, 0.45098, 1 )
 config/icon="res://LnzLiveIcon.png"
+config/macos_native_icon="res://AppIcon.icns"
 
 [autoload]
 
