@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/COW_thumb.png-ebae72bf17355a02f41e077dac19e74c.stex"
+path="res://.import/ZEBRA.bmp-7e2caff0705fdc793aef4a7d0b40f566.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/COW_thumb.png"
-dest_files=[ "res://.import/COW_thumb.png-ebae72bf17355a02f41e077dac19e74c.stex" ]
+source_file="res://resources/textures/other/ZEBRA.bmp"
+dest_files=[ "res://.import/ZEBRA.bmp-7e2caff0705fdc793aef4a7d0b40f566.stex" ]
 
 [params]
 

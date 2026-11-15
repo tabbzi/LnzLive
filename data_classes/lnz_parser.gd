@@ -104,7 +104,7 @@ func _init(file_path: String) -> void:
 		return
 	
 	self.file_path = file_path
-	r.compile("[-.\\d]+")
+	r.compile("[-.\\deE]+")
 	str_r.compile("[\\S]+")
 	
 	var file: File = File.new()

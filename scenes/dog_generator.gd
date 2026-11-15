@@ -917,8 +917,8 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = {balls = collated_data, addballs = addballs, paintballs = paintballs}
 	collated_data = munge_balls(collated_data, lnz_info)
 	collated_data = apply_extensions(collated_data, lnz_info)
-	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data = _apply_anchor_ball_sizes(collated_data)
+	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
 
 	generate_balls(

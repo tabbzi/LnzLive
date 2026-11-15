@@ -39,6 +39,10 @@ The web version of LnzLive Petz & Babyz beta can be accessed here:
 
 [https://tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive)
 
+## Website
+
+Visit the LnzLive Petz & Babyz website at [https://tabbloza.com/lnzlive/](https://tabbloza.com/lnzlive/)
+
 ## Contribute
 
 We welcome contributions! Please see the [Developer Guide](docs/DEVELOPMENT.md) for setup instructions.
@@ -51,10 +55,11 @@ This app is in development. Expect crashes and visual bugs. Directly loading gam
 
 ## Link to LnzLive
 
-Feel free to save and share these buttons/stamps for linking to the latest release of LnzLive:
+Feel free to save and share these buttons/stamps for linking to this forked repository or the LnzLive Petz & Babyz website:
 
 ```
 https://github.com/tabbzi/LnzLive
+https://tabbloza.com/lnzlive/
 ```
 
-![stamp](RULnzLiving.gif) ![button](LnzLiveButton.gif)
+![stamp](RULnzLiving.gif) ![stamp](RULnzLiving2.gif) ![button](LnzLiveButton.gif) ![button](LnzLiveIcon.png)

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/GROOVY2.bmp-18d57be55454b8693c5984d926098f9b.stex"
+path="res://.import/CHAINMAIL2.bmp-4a516fabd1d670b5193d063213809d08.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/GROOVY2.bmp"
-dest_files=[ "res://.import/GROOVY2.bmp-18d57be55454b8693c5984d926098f9b.stex" ]
+source_file="res://resources/textures/other/CHAINMAIL2.bmp"
+dest_files=[ "res://.import/CHAINMAIL2.bmp-4a516fabd1d670b5193d063213809d08.stex" ]
 
 [params]
 

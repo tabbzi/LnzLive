@@ -160,6 +160,12 @@ func _ready():
 	_update_section_bookmarks()
 	_setup_set_column_popup()
 
+	var wrap_data: Dictionary = LnzLiveUtils.load_config("EditorSettings", "user://settings.cfg")
+	wrap_enabled = wrap_data.get("wrap_enabled", false)
+	var wrap_btn = get_node_or_null("../HBoxContainer/AutowrapButton")
+	if wrap_btn:
+		wrap_btn.text = "Wrap: On" if wrap_enabled else "Wrap: Off"
+
 func _setup_context_menu():
 	var menu = get_menu()
 	if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
@@ -925,6 +931,8 @@ func _on_AutowrapButton_pressed():
 		button.text = "Wrap: On"
 	else:
 		button.text = "Wrap: Off"
+	var values = {"wrap_enabled": self.wrap_enabled}
+	LnzLiveUtils.save_config("EditorSettings", values, "user://settings.cfg")
 	update() # Force a redraw just in case
 
 func _on_FindReplaceButton_pressed():
@@ -1355,6 +1363,35 @@ func find_line_in_linez_section(ball_no, start_from = -1):
 
 func find_line_in_paintball_section(ball_no, start_from = -1):
 	return _find_line_in_section_with_match("[Paint Ballz]", ball_no, "_paintball_match_fn", start_from)
+
+func find_nth_paintball_line(ball_no: int, nth: int) -> int:
+	var bounds = get_section_bounds("[Paint Ballz]")
+	if bounds.empty():
+		return -1
+	var header_idx = bounds.get("header", -1)
+	if header_idx == -1:
+		return -1
+	var start_of_section = header_idx + 1
+	var found = 0
+	var i = 0
+	while true:
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count():
+			break
+		var line = get_line(current_line_idx)
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["):
+			break
+		if stripped.empty() or stripped.begins_with(";"):
+			i += 1
+			continue
+		var parts = split_line(line)
+		if parts.size() > 0 and parts[0] == str(ball_no):
+			if found == nth:
+				return current_line_idx
+			found += 1
+		i += 1
+	return -1
 
 func _linez_match_fn(parts: Array, ball_no) -> bool:
 	return parts.size() >= 2 and (parts[0] == str(ball_no) or parts[1] == str(ball_no))
@@ -2554,32 +2591,44 @@ func _apply_bucket_to_overrides(changes: Dictionary):
 
 	for ball_no in changes:
 		var props = changes[ball_no]
-		var is_addball = ball_no >= KeyBallsData.max_base_ball_num
-		var raw_ball_no = ball_no if not is_addball else ball_no - KeyBallsData.max_base_ball_num
 
 		if props.has("color_index"):
-			color_info_entries.append({
-				"ball": raw_ball_no,
-				"color": props.color_index,
-				"group": props.get("group", -1),
-				"texture": props.get("texture_id", -1)
-			})
+			var has_group: bool = props.has("group")
+			var has_texture: bool = props.has("texture_id") and props.texture_id != -1
+			var group_val: int = -1
+			var texture_val: int = -1
+
+			if has_texture:
+				texture_val = props.texture_id
+
+			if has_group:
+				group_val = props.group
+			elif props.has("_lnz_group"):
+				group_val = props["_lnz_group"]
+
+			var entry: Dictionary = {"ball": ball_no, "color": props.color_index}
+			if has_texture:
+				entry["group"] = group_val
+				entry["texture"] = texture_val
+			elif has_group:
+				entry["group"] = group_val
+			color_info_entries.append(entry)
 
 		if props.has("outline_color_index"):
 			outline_color_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"outline_color": props.outline_color_index
 			})
 
 		if props.has("fuzz"):
 			fuzz_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"fuzz": props.fuzz
 			})
 
 		if props.has("size"):
 			ball_size_entries.append({
-				"ball": raw_ball_no,
+				"ball": ball_no,
 				"size": props.size
 			})
 
@@ -2600,11 +2649,30 @@ func _apply_bucket_to_overrides(changes: Dictionary):
 
 
 func _write_override_section(section_name: String, entries: Array, entry_type: String, batch_comment: String):
-	var bounds = _ensure_section_exists(section_name)
+	var bounds = get_section_bounds(section_name)
+	var section_new: bool = bounds.empty()
+	if section_new:
+		bounds = _ensure_section_exists(section_name)
+	else:
+		bounds = _ensure_section_exists(section_name)
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var insert_at = _find_insertion_line(bounds.start, bounds.end)
 
+	var header_comment: String = ""
+	if section_new:
+		match entry_type:
+			"color_info":
+				header_comment = "; ball, color, group, texture"
+			"outline_color":
+				header_comment = "; ball, outline_color"
+			"fuzz":
+				header_comment = "; ball, fuzz"
+			"ball_size":
+				header_comment = "; ball, size"
+
 	var lines_to_insert: Array = []
+	if section_new and header_comment != "":
+		lines_to_insert.append(header_comment)
 	lines_to_insert.append(batch_comment)
 
 	for entry in entries:
@@ -2612,12 +2680,24 @@ func _write_override_section(section_name: String, entries: Array, entry_type: S
 
 		match entry_type:
 			"color_info":
-				line_txt = "%d%s%d%s%d%s%d" % [
-					entry.ball, delim,
-					entry.color, delim,
-					entry.group, delim,
-					entry.texture
-				]
+				if entry.has("texture"):
+					line_txt = "%d%s%d%s%d%s%d" % [
+						entry.ball, delim,
+						entry.color, delim,
+						entry.group, delim,
+						entry.texture
+					]
+				elif entry.has("group"):
+					line_txt = "%d%s%d%s%d" % [
+						entry.ball, delim,
+						entry.color, delim,
+						entry.group
+					]
+				else:
+					line_txt = "%d%s%d" % [
+						entry.ball, delim,
+						entry.color
+					]
 			"outline_color":
 				line_txt = "%d%s%d" % [
 					entry.ball, delim,
@@ -3086,7 +3166,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var scale_delta = 1.0
 		if data.has("new_size") and data.has("orig_size") and data.orig_size > 0:
 			scale_delta = float(data.new_size) / float(data.orig_size)
-			var size_dif = pet_view.get_absolute_lnz_size(1.0, pet_view.find_visual_ball_by_no(ball_no), pet_node)
+			var size_dif = pet_view.get_absolute_lnz_size(data.new_size, pet_view.find_visual_ball_by_no(ball_no), pet_node)
 			size_changes[ball_no] = size_dif
 
 		var basis_delta = Basis.IDENTITY
@@ -3551,6 +3631,26 @@ func create_line(start_ball, end_ball, silent: bool = false):
 	var line_mode_settings = pet_view.line_mode_settings_instance
 	var props = line_mode_settings.get_properties()
 
+	var settings_cfg: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
+	var use_linez_defaults: bool = settings_cfg.get("use_linez_defaults_created_addballz", false)
+
+	if use_linez_defaults:
+		props.start_thickness = 100
+		props.end_thickness = 100
+		props.color = -1
+		props.left_outline_color = -1
+		props.right_outline_color = -1
+		props.apply_start_thick = true
+		props.apply_end_thick = true
+		props.apply_color = true
+		props.apply_left_outline = true
+		props.apply_right_outline = true
+		
+		var visual_ball = pet_view.find_visual_ball_by_no(start_ball)
+		if is_instance_valid(visual_ball):
+			props.fuzz = visual_ball.fuzz_amount
+			props.apply_fuzz = true
+
 	var line_updated = false
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -3730,13 +3830,22 @@ func select_ball(section, ball_no, is_addball, max_addball_no):
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 			target_section_name = "[Add Ball]"
 		else:
-			actual_start_point = find_line_in_move_section(ball_no)
+			var move_bounds = get_section_bounds("[Move]")
+			var move_start = move_bounds.get("start", -1)
+			var start_from = current_line if move_start != -1 and current_line >= move_start else -1
+			actual_start_point = find_line_in_move_section(ball_no, start_from)
 			target_section_name = "[Move]"
 	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no)
+		var project_bounds = get_section_bounds("[Project Ball]")
+		var project_start = project_bounds.get("start", -1)
+		var start_from = current_line if project_start != -1 and current_line >= project_start else -1
+		actual_start_point = find_line_in_project_section(ball_no, start_from)
 		target_section_name = "[Project Ball]"
 	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no)
+		var linez_bounds = get_section_bounds("[Linez]")
+		var linez_start = linez_bounds.get("start", -1)
+		var start_from = current_line if linez_start != -1 and current_line >= linez_start else -1
+		actual_start_point = find_line_in_linez_section(ball_no, start_from)
 		target_section_name = "[Linez]"
 	
 	if actual_start_point == -1:
@@ -3752,6 +3861,39 @@ func select_ball(section, ball_no, is_addball, max_addball_no):
 	cursor_set_line(actual_start_point)
 	cursor_set_column(0)
 	center_viewport_to_cursor()
+
+var _current_paintball_ball_no: int = -1
+var _current_paintball_index: int = 0
+
+func select_paintball(ball_no: int, flash: bool = false) -> void:
+	if not is_instance_valid(pet_node) or not is_instance_valid(pet_node.lnz):
+		return
+	var pb_data = pet_node.lnz.get("paintballs")
+	if not pb_data or not pb_data.has(ball_no):
+		return
+	var paintballs = pet_node.lnz.paintballs[ball_no]
+	if paintballs.size() == 0:
+		return
+	if _current_paintball_ball_no != ball_no:
+		_current_paintball_ball_no = ball_no
+		_current_paintball_index = 0
+	else:
+		_current_paintball_index += 1
+		if _current_paintball_index >= paintballs.size():
+			_current_paintball_index = 0
+	var line_no = find_nth_paintball_line(ball_no, _current_paintball_index)
+	if line_no != -1:
+		cursor_set_line(line_no)
+		cursor_set_column(0)
+		center_viewport_to_cursor()
+	# Flash the base ball if requested
+	if flash and is_instance_valid(pet_node) and pet_node.ball_map.has(ball_no):
+		var ball_node = pet_node.ball_map[ball_no]
+		if is_instance_valid(ball_node):
+			ball_node.flash()
+
+func get_current_paintball_index() -> int:
+	return _current_paintball_index
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	resize_ball(ball_no, size_dif)
@@ -3960,6 +4102,9 @@ func _on_ToolsMenu_create_addball(reference_ball, also_connect_line := false):
 	create_addball(reference_ball, also_connect_line)
 
 func _gather_addball_properties(reference_ball, addball_data, ball_data) -> Dictionary:
+	var settings: Dictionary = LnzLiveUtils.load_config("UserSettings", "user://settings.cfg")
+	var use_linez_defaults: bool = settings.get("use_linez_defaults_created_addballz", false)
+	
 	var props = {
 		"target_base_ball": reference_ball.ball_no,
 		"size": 20,

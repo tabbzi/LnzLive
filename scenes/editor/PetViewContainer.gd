@@ -89,6 +89,9 @@ const TAB_RESET_THRESHOLD_PIXELS: float = 15.0
 enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR }
 var current_mode: int = Mode.NONE
 
+enum BallPickingMode { GEOMETRIC_DEPTH, VISUAL_DEPTH }
+var ball_picking_mode: int = BallPickingMode.VISUAL_DEPTH
+
 var input_is_paused: bool = false
 
 var last_selected = null
@@ -980,22 +983,22 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 			if ab != null and ab.anchor_ball > -1:
 				var anchor_id: int = ab.anchor_ball
 				is_anchored = true
-				if pet_node.ball_map.has(anchor_id) and is_instance_valid(pet_node.ball_map[anchor_id]):
-					bhd_size = int(round(pet_node.ball_map[anchor_id].ball_size))
-				elif anchor_id < pet_node.bhd.ball_sizes.size():
-					var anchor_pre: float = float(pet_node.bhd.ball_sizes[anchor_id])
+				if anchor_id < pet_node.bhd.ball_sizes.size():
+					bhd_size = pet_node.bhd.ball_sizes[anchor_id]
 					if pet_node.lnz.balls.has(anchor_id):
-						anchor_pre += float(pet_node.lnz.balls[anchor_id].size)
+						bhd_size += pet_node.lnz.balls[anchor_id].size
+					
 					var head_ext: Array = KeyBallsData.get_head_ext(pet_node.lnz.species)
 					var foot_ext: Array = KeyBallsData.get_foot_ext(pet_node.lnz.species)
 					if anchor_id in head_ext:
-						anchor_pre = floor(anchor_pre * (pet_node.lnz.head_enlargement.x / 100.0)) + pet_node.lnz.head_enlargement.y
+						enl_x = pet_node.lnz.head_enlargement.x
+						enl_y = pet_node.lnz.head_enlargement.y
 					else:
 						for foot_group in foot_ext:
 							if anchor_id in foot_group:
-								anchor_pre = floor(anchor_pre * (pet_node.lnz.foot_enlargement.x / 100.0)) + pet_node.lnz.foot_enlargement.y
+								enl_x = pet_node.lnz.foot_enlargement.x
+								enl_y = pet_node.lnz.foot_enlargement.y
 								break
-					bhd_size = int(LnzLiveUtils.lnz_to_visual_size_snapped(anchor_pre, pet_node.lnz.scales[1]))
 
 
 	return {
@@ -2060,24 +2063,15 @@ func _gui_input(event: InputEvent) -> void:
 		and not is_instance_valid(_last_selected_by_tab)
 	):
 		var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+		var hit_ball = get_intended_ball(screen_pos)
 
-		var from: Vector3 = camera.project_ray_origin(screen_pos)
-		var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 950
-		# Skip paintball colliders so hover reaches the underlying ball
-		var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
-		var result: Dictionary = camera.get_world().direct_space_state.intersect_ray(
-			from, to, paintball_nodes, 0x7FFFFFFF, false, true
-		)
-
-		if result:
+		if hit_ball:
 			ball_label.show()
 			deal_with_last_selected()
-			
-			var hit_ball = result.collider.get_parent()
-			
+
 			if hit_ball.has_method("set_select_mode_active"):
 				hit_ball.select_mode_active = true
-				
+
 			hit_ball._on_Area_mouse_entered()
 			last_selected = hit_ball
 		else:
@@ -2455,6 +2449,7 @@ func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
 	parts.append(_get_hotkey_display("select_jump_move") + " or " + _get_hotkey_display("select_jump_move_alt") + ": [Move]")
 	parts.append(_get_hotkey_display("select_jump_project") + " or " + _get_hotkey_display("select_jump_project_alt") + ": [Project Ball]")
 	parts.append(_get_hotkey_display("select_jump_line") + " or " + _get_hotkey_display("select_jump_line_alt") + ": [Line]")
+	parts.append(_get_hotkey_display("select_jump_paintball") + ": [Paint Ballz]")
 	var result: String = ""
 	for i in range(parts.size()):
 		result += parts[i]
@@ -2949,7 +2944,7 @@ func _on_recolor_settings_apply_batch_bucket(changes, write_to_overrides) -> voi
 	if is_instance_valid(lnz_text_edit):
 		lnz_text_edit.apply_batch_presets(changes, write_to_overrides)
 
-func _update_unapplied_changes_label(_unused = null) -> void:
+func _update_unapplied_changes_label(_unused1 = null, _unused2 = null) -> void:
 	var total = 0
 	if is_instance_valid(lnz_text_edit):
 		if lnz_text_edit.has_unsaved_text_changes():
@@ -3251,9 +3246,19 @@ func _update_selected_ballz_from_affected_text(settings_instance) -> void:
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
-
 	var space_state = camera.get_world().direct_space_state
 	var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
+
+	if ball_picking_mode == BallPickingMode.GEOMETRIC_DEPTH:
+		var result: Dictionary = space_state.intersect_ray(from, to, paintball_nodes, 1, false, true)
+		if result and result.collider:
+			var parent: Node = result.collider.get_parent()
+			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
+					return null
+				return parent
+		return null
+
 	var exclude_list = paintball_nodes.duplicate()
 	var hit_balls = []
 
@@ -3262,7 +3267,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 		if result and result.collider:
 			var parent: Node = result.collider.get_parent()
 			exclude_list.append(result.collider)
-			
+
 			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
 				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
 					continue
@@ -3279,15 +3284,16 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	for ball in hit_balls:
 		var local_pos = camera.global_transform.affine_inverse().xform(ball.global_transform.origin)
 		var depth: float = -local_pos.z
-		
+
 		var z_add_val = 0.0
 		var mi = ball.get_node_or_null("MeshInstance")
 		if mi and mi.material_override and mi.material_override is ShaderMaterial:
 			var param = mi.material_override.get_shader_param("z_add")
-			if param != null: z_add_val = float(param)
+			if param != null: 
+				z_add_val = float(param)
 		elif "z_add" in ball: 
 			z_add_val = float(ball.z_add)
-			
+
 		depth -= z_add_val * 0.001
 
 		if depth < min_depth:
@@ -3418,7 +3424,7 @@ func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_nod
 	var engine_scale: float = pet_node.lnz.scales[1]
 
 	return LnzLiveUtils.visual_size_to_lnz_size(
-		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+		raw_target_visual, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 	)
 
 func _isolate_target_ball(target_ball: Spatial) -> void:

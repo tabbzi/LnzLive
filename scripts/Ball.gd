@@ -394,6 +394,13 @@ func _input(event: InputEvent) -> void:
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.LINE)
 					return
+			if HotkeyManager.is_action_pressed("select_jump_paintball"):
+				if not event.alt and not event.control:
+					get_tree().set_input_as_handled()
+					var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+					if is_instance_valid(lnz_text_edit):
+						lnz_text_edit.select_paintball(ball_no, true)
+					return
 			if HotkeyManager.is_action_pressed("select_delete_ball"):
 				get_tree().set_input_as_handled()
 				emit_signal("delete_ball", ball_no)
@@ -414,6 +421,11 @@ func _input(event: InputEvent) -> void:
 		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.LINE)
+		elif event.scancode == KEY_J and not event.alt and not event.control and not event.shift:
+			get_tree().set_input_as_handled()
+			var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+			if is_instance_valid(lnz_text_edit):
+				lnz_text_edit.select_paintball(ball_no, true)
 		elif event.scancode == KEY_DELETE:
 			get_tree().set_input_as_handled()
 			emit_signal("delete_ball", ball_no)
