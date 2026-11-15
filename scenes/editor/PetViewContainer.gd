@@ -5199,7 +5199,7 @@ func _apply_translation_to_selection(delta: Vector3) -> void:
 			b.global_transform.origin += delta
 			_track_pending_move(b)
 
-	if move_mode_settings_instance.is_mirror_x_active():
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 		_apply_mirror_move(selected_balls, delta)
 
 func _on_nudge_selection(vector: Vector3) -> void:
