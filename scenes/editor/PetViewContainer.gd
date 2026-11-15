@@ -1339,38 +1339,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 			if prev_intersect:
 				var delta: Vector3 = drag_current_pos - prev_intersect
-
-				var constraints: Dictionary = move_mode_settings_instance.get_constraints()
-
-				var constrain_x: bool = false
-				var constrain_y: bool = false
-				var constrain_z: bool = false
-
-				if HotkeyManager:
-					constrain_x = Input.is_action_pressed("axis_lock_x") if InputMap.has_action("axis_lock_x") else Input.is_key_pressed(KEY_X)
-					constrain_y = Input.is_action_pressed("axis_lock_y") if InputMap.has_action("axis_lock_y") else Input.is_key_pressed(KEY_Y)
-					constrain_z = Input.is_action_pressed("axis_lock_z") if InputMap.has_action("axis_lock_z") else Input.is_key_pressed(KEY_Z)
-				else:
-					constrain_x = Input.is_key_pressed(KEY_X)
-					constrain_y = Input.is_key_pressed(KEY_Y)
-					constrain_z = Input.is_key_pressed(KEY_Z)
-
-				var final_lock_x: bool = constraints.x
-				var final_lock_y: bool = constraints.y
-				var final_lock_z: bool = constraints.z
-
-				if constrain_x or constrain_y or constrain_z:
-					final_lock_x = not constrain_x
-					final_lock_y = not constrain_y
-					final_lock_z = not constrain_z
-
-				if final_lock_x:
-					delta.x = 0
-				if final_lock_y:
-					delta.y = 0
-				if final_lock_z:
-					delta.z = 0
-
+				delta = _apply_axis_constraints(delta)
 				_apply_translation_to_selection(delta)
 
 		return true
@@ -5559,6 +5528,39 @@ func _is_ball_locked(ball: Spatial) -> bool:
 		return false
 	return ball.ball_no in locked_balls
 
+func _apply_axis_constraints(delta: Vector3) -> Vector3:
+	var constraints: Dictionary = {}
+	if is_instance_valid(move_mode_settings_instance):
+		constraints = move_mode_settings_instance.get_constraints()
+
+	var final_lock_x: bool = constraints.x
+	var final_lock_y: bool = constraints.y
+	var final_lock_z: bool = constraints.z
+
+	if HotkeyManager:
+		var constrain_x: bool = Input.is_action_pressed("axis_lock_x") if InputMap.has_action("axis_lock_x") else false
+		var constrain_y: bool = Input.is_action_pressed("axis_lock_y") if InputMap.has_action("axis_lock_y") else false
+		var constrain_z: bool = Input.is_action_pressed("axis_lock_z") if InputMap.has_action("axis_lock_z") else false
+		if constrain_x or constrain_y or constrain_z:
+			final_lock_x = not constrain_x
+			final_lock_y = not constrain_y
+			final_lock_z = not constrain_z
+	else:
+		if Input.is_key_pressed(KEY_X):
+			final_lock_x = false
+		if Input.is_key_pressed(KEY_Y):
+			final_lock_y = false
+		if Input.is_key_pressed(KEY_Z):
+			final_lock_z = false
+
+	if final_lock_x:
+		delta.x = 0
+	if final_lock_y:
+		delta.y = 0
+	if final_lock_z:
+		delta.z = 0
+
+	return delta
 func _handle_group_pan_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
@@ -5597,29 +5599,8 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 
 		if current_intersect and prev_intersect:
 			var delta: Vector3 = current_intersect - prev_intersect
-
-			# Apply axis/plane constraints
-			var constrain_x: bool = Input.is_key_pressed(KEY_X)
-			var constrain_y: bool = Input.is_key_pressed(KEY_Y)
-			var constrain_z: bool = Input.is_key_pressed(KEY_Z)
-
-			if constrain_x or constrain_y or constrain_z:
-				if not constrain_x:
-					delta.x = 0
-				if not constrain_y:
-					delta.y = 0
-				if not constrain_z:
-					delta.z = 0
-
-			for b in selected_balls:
-				if is_instance_valid(b):
-					if _is_ball_locked(b):
-						continue
-					b.global_transform.origin += delta
-					_track_pending_move(b)
-
-			if move_mode_settings_instance.is_mirror_x_active():
-				_apply_mirror_move(selected_balls, delta)
+			delta = _apply_axis_constraints(delta)
+			_apply_translation_to_selection(delta)
 
 		return true
 
