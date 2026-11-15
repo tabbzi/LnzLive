@@ -3882,7 +3882,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 func resize_ball(ball_no: int, size_dif: int):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var moved_ball_node = pet_node.ball_map.get(ball_no) if is_instance_valid(pet_node) else null
-	var is_addball = ball_no > max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
+	var is_addball = ball_no >= max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
 
 	var section_tag = "[Ballz Info]"
 	var size_field_index = 5  # 6th field is size
@@ -3958,7 +3958,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var moved_ball_node = pet_node.ball_map.get(ball_no) if is_instance_valid(pet_node) else null
-	var is_addball = ball_no > max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
+	var is_addball = ball_no >= max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
 
 	var section_tag = "[Move]"
 	if is_addball:
@@ -4262,7 +4262,7 @@ func _on_Node_omit_ball(ball_no: int):
 
 func delete_ball(ball_no: int):
 	save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 	if is_addball:
 		var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		if line_no != -1:
@@ -4435,7 +4435,7 @@ func batch_delete_balls(ball_ids: Array) -> void:
 	for ball_no in ball_ids:
 		if ball_no < 0:
 			continue
-		var is_addball = ball_no > KeyBallsData.max_base_ball_num
+		var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 		if is_addball:
 			var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 			if line_no != -1:
