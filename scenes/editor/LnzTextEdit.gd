@@ -3263,7 +3263,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 			elif had_old_anchor:
 				for i in range(move_start, move_end):
 					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
+					if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 					var parts = split_line(raw)
 					if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 						if parts.size() >= 5:
@@ -3277,7 +3277,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 				# Find and update active line
 				for i in range(move_start, move_end):
 					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
+					if raw == "" or raw.begins_with(";") or raw.begins_with("#"): continue
 					var parts = split_line(raw)
 					if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 						if not parts[1].is_valid_float() or not parts[2].is_valid_float() or not parts[3].is_valid_float():
