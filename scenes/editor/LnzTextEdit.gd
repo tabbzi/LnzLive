@@ -106,7 +106,7 @@ signal create_polygon
 signal ball_number_changed(ball_no)
 signal duplicated_addballs(new_ball_ids)
 
-var max_move_head = 60
+var max_move_head = 25
 const MIRROR_TOLERANCE: float = 3.0
 
 enum FilterMode { EXCLUDE, INCLUDE }
@@ -3216,7 +3216,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
 				var ny = int(round(parts[2].to_float() + lnz_delta.y))
 				var nz = int(round(parts[3].to_float() + lnz_delta.z))
-				if parts.size() >= 5 and head_id != -1 and (abs(ny) > 25 or abs(nz) > 25):
+				if parts.size() >= 5 and head_id != -1 and (abs(ny) > max_move_head or abs(nz) > max_move_head):
 					old_anchor_lines.append({line_idx = i, old_text = get_line(i).strip_edges()})
 				break
 	
