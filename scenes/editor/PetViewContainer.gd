@@ -1292,6 +1292,8 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 			var engine_scale: float = pet_node.lnz.scales[1]
 			for b_no in _scale_group_initial_data:
+				if b_no >= KeyBallsData.max_base_ball_num:
+					continue
 				var b: Spatial = find_visual_ball_by_no(b_no)
 				if not is_instance_valid(b):
 					continue
