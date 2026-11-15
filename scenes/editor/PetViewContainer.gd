@@ -3850,7 +3850,8 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
 	_update_unapplied_changes_label()
 
 func _cap_history_arrays() -> void:
@@ -4933,7 +4934,8 @@ func _on_move_mode_clear() -> void:
 				b.set_ball_size(move_data.orig_size)
 
 	pending_moves.clear()
-	move_mode_settings_instance.set_queued_count(0)
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.set_queued_count(0)
 
 	for b in all_balls:
 		if not "ball_no" in b:
@@ -5112,6 +5114,8 @@ func _on_snap_selection(axis: String, direction: int) -> void:
 	if selected_balls.empty():
 		return
 
+	_record_move_start_state()
+
 	var all_balls: Array = _get_all_visual_balls()
 	var target_val: float = 0.0
 	var first: bool = true
@@ -5142,6 +5146,9 @@ func _on_snap_selection(axis: String, direction: int) -> void:
 		var mirrored_group: Array = _get_unselected_mirror_partners(selected_balls)
 		if not mirrored_group.empty():
 			_snap_ball_list_to_target(mirrored_group, axis, direction, target_val)
+
+	_record_move_end_state("Snap " + axis)
+	_update_unapplied_changes_label()
 
 func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, target_val: float) -> void:
 	var selection_extreme: float = 0.0
@@ -5644,7 +5651,7 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_ALT):
 		_group_panning = true
 		_group_pan_start_pos = event.position
-		# Capture the current world position of the first selected ball as reference
+		_record_move_start_state()
 		if selected_balls.size() > 0 and is_instance_valid(selected_balls[0]):
 			_group_pan_start_origin = selected_balls[0].global_transform.origin
 		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
@@ -5654,6 +5661,8 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 	if _group_panning and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
 		_group_panning = false
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		_update_unapplied_changes_label()
+		_record_move_end_state("Group Pan")
 		return true
 
 	# Handle group pan drag
