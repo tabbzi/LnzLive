@@ -3289,9 +3289,12 @@ func apply_batch_moves(pending_moves: Dictionary):
 						parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
 						
 						if head_group.has(ball_no) and head_id != -1:
-							if abs(parts[2].to_float()) > 25 or abs(parts[3].to_float()) > 25:
+							if abs(parts[2].to_float()) > max_move_head or abs(parts[3].to_float()) > max_move_head:
+								var comment_part = parts.pop_back()
 								parts.resize(5)
 								parts[4] = str(head_id)
+								if not comment_part.empty():
+									parts.append(comment_part)
 						
 						set_line(i, _join_array(parts, delim))
 						updated = true
