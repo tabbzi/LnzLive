@@ -140,7 +140,8 @@ CTRL + click-and-drag to box select
 ALT + click to pick a pivot anchor
 ALT+SHIFT + click-drag to resize group of ballz
 Q = lock/unlock hovered ball (yellow outline)
-SHIFT + drag = pan selected group (with selection active)"
+SHIFT + drag = pan selected group (with selection active)
+CTRL + D = duplicate selected addballz + linez"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 137.0
@@ -201,9 +202,10 @@ margin_bottom = 150.0
 alignment = 1
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
-margin_left = 129.0
-margin_right = 185.0
+margin_left = 83.0
+margin_right = 139.0
 margin_bottom = 25.0
+hint_tooltip = "Apply all pending changes"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
@@ -213,9 +215,10 @@ custom_fonts/font = SubResource( 7 )
 text = "Apply"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
-margin_left = 189.0
-margin_right = 244.0
+margin_left = 143.0
+margin_right = 198.0
 margin_bottom = 25.0
+hint_tooltip = "Clear all pending changes"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
@@ -225,9 +228,10 @@ custom_fonts/font = SubResource( 7 )
 text = "Clear"
 
 [node name="DuplicateButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
-margin_left = 248.0
-margin_right = 354.0
+margin_left = 202.0
+margin_right = 290.0
 margin_bottom = 25.0
+hint_tooltip = "Duplicate (CTRL+D) currently selected addballz + linez"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
@@ -237,9 +241,10 @@ custom_fonts/font = SubResource( 7 )
 text = "Duplicate"
 
 [node name="UnselectButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
-margin_left = 248.0
-margin_right = 354.0
+margin_left = 294.0
+margin_right = 400.0
 margin_bottom = 25.0
+hint_tooltip = "Unselect all ballz"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
@@ -255,21 +260,23 @@ margin_bottom = 179.0
 alignment = 1
 
 [node name="LockAllButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LockButtons"]
-margin_left = 161.0
-margin_right = 230.0
+margin_left = 134.0
+margin_right = 257.0
 margin_bottom = 25.0
+hint_tooltip = "Lock selected ballz from changing"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = SubResource( 7 )
-text = "Lock All"
+text = "Lock Selection"
 
 [node name="UnlockAllButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/LockButtons"]
-margin_left = 234.0
-margin_right = 322.0
+margin_left = 261.0
+margin_right = 349.0
 margin_bottom = 25.0
+hint_tooltip = "Unlock all ballz"
 custom_styles/hover = SubResource( 5 )
 custom_styles/pressed = SubResource( 5 )
 custom_styles/focus = SubResource( 6 )
