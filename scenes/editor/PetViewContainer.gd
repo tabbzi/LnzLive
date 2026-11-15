@@ -5373,7 +5373,6 @@ func _on_rotate_selection(rotation_degrees: Vector3, pivot_id: int) -> void:
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
-			var current_basis: Basis = b.global_transform.basis
 			_track_pending_move(b)
 
 			var rel_pos: Vector3 = current_pos - pivot_origin
@@ -5406,7 +5405,6 @@ func _on_flip_selection(axis_vector: Vector3, pivot_id: int) -> void:
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
-			var current_basis: Basis = b.global_transform.basis
 
 			if not pending_moves.has(b.ball_no):
 				_track_pending_move(b)
