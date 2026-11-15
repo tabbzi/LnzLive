@@ -202,6 +202,14 @@ func get_mirror_vector() -> Vector3:
 func is_mirror_x_active() -> bool:
 	return _mirror_x.pressed if _mirror_x else false
 
+func is_use_pivot_active() -> bool:
+	return _use_pivot_cb.pressed if _use_pivot_cb else false
+
+func get_pivot_ball_id() -> int:
+	if _pivot_ball and _use_pivot_cb and _use_pivot_cb.pressed:
+		return int(_pivot_ball.value)
+	return -1
+
 func change_nudge_value(axis: String, delta: float) -> void:
 	var sb: SpinBox = null
 	if axis == "x": sb = _nudge_x
