@@ -3320,35 +3320,34 @@ func apply_batch_moves(pending_moves: Dictionary):
 		else:
 			if add_start != -1:
 				var delim = _detect_delimiter(add_start, add_end)
-				var idx = ball_no - KeyBallsData.max_base_ball_num
-				var count = 0
-				for i in range(add_start, add_end):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					if count == idx:
-						var parts = split_line(raw)
-						if parts.size() >= 4:
-							var applied_rel = false
-							var moved_ball_node = pet_node.ball_map.get(ball_no)
-							
-							if is_instance_valid(moved_ball_node) and "base_ball_no" in moved_ball_node:
-								var base_ball_node = pet_node.ball_map.get(moved_ball_node.base_ball_no)
-								if is_instance_valid(base_ball_node):
-									var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
-									var new_rel = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
-									parts[1] = str(int(round(new_rel.x)))
-									parts[2] = str(int(round(new_rel.y)))
-									parts[3] = str(int(round(new_rel.z)))
-									applied_rel = true
+				var line_idx = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+				if line_idx != -1:
+					var parts = split_line(get_line(line_idx))
+					if parts.size() >= 4:
+						var applied_rel = false
+						var moved_ball_node = pet_node.ball_map.get(ball_no)
+						
+						if is_instance_valid(moved_ball_node) and "base_ball_no" in moved_ball_node:
+							var base_ball_node = pet_node.ball_map.get(moved_ball_node.base_ball_no)
+							if is_instance_valid(base_ball_node):
+								var local_rel: Vector3 = base_ball_node.to_local(moved_ball_node.global_transform.origin)
+								var new_lnz_pos: Vector3 = LnzLiveUtils.world_to_lnz_delta(
+									local_rel,
+									pet_node.pixel_world_size,
+									pet_node.lnz.scales.x
+								)
+								parts[1] = str(int(round(new_lnz_pos.x)))
+								parts[2] = str(int(round(new_lnz_pos.y)))
+								parts[3] = str(int(round(new_lnz_pos.z)))
+								applied_rel = true
 
-							if not applied_rel:
-								parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
-								parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
-								parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
-								
-							set_line(i, _join_array(parts, delim))
-						break
-					count += 1
+						if not applied_rel:
+							parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+							parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+							parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+							
+						var updates = {1: parts[1], 2: parts[2], 3: parts[3]}
+						_modify_line_parts(line_idx, add_start, add_end, updates)
 	
 	save_file(true)
 	commit_full_snapshot("Batch Moved/Rotated/Scaled Ballz/Paintballz")
