@@ -3793,6 +3793,8 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 		if pending_moves.has(b.ball_no):
 			var data: Dictionary = pending_moves[b.ball_no]
 			b.global_transform.origin = data.new_pos
+			if data.has("new_basis"):
+				_restore_ball_basis_and_mesh_scale(b, data.new_basis)
 			if data.has("new_size"):
 				b.set_ball_size(data.new_size)
 			b.apply_outline_state(get_visual_state_for_ball(b))
@@ -4878,6 +4880,9 @@ func _on_move_mode_clear() -> void:
 
 			b.global_transform.origin = move_data.orig_pos
 
+			if move_data.has("orig_basis"):
+				_restore_ball_basis_and_mesh_scale(b, move_data.orig_basis)
+
 			if move_data.has("orig_size"):
 				b.set_ball_size(move_data.orig_size)
 
@@ -5405,15 +5410,7 @@ func _on_flip_selection(axis_vector: Vector3, pivot_id: int) -> void:
 			b.global_transform.basis = scale_basis * b.global_transform.basis
 
 			if scale_basis.determinant() < 0:
-				var mesh_instance: MeshInstance = b.get_node_or_null("MeshInstance")
-				if mesh_instance:
-					mesh_instance.scale.x *= -1.0
-
-				for child in b.get_children():
-					if child.is_in_group("paintballs"):
-						var pb_mesh: MeshInstance = child.get_node_or_null("MeshInstance")
-						if pb_mesh:
-							pb_mesh.scale.x *= -1.0
+				_restore_ball_basis_and_mesh_scale(b, b.global_transform.basis)
 
 	for b in selected_balls:
 		if is_instance_valid(b):
@@ -5561,6 +5558,27 @@ func _apply_axis_constraints(delta: Vector3) -> Vector3:
 		delta.z = 0
 
 	return delta
+
+func _restore_ball_basis_and_mesh_scale(b: Spatial, target_basis: Basis) -> void:
+	b.global_transform.basis = target_basis
+	var scale_sign: float = 1.0
+	if target_basis.determinant() >= 0:
+		scale_sign = 1.0
+	else:
+		scale_sign = -1.0
+
+	var mesh_instance: MeshInstance = b.get_node_or_null("MeshInstance")
+	if mesh_instance and is_instance_valid(mesh_instance):
+		var abs_scale: float = abs(mesh_instance.scale.x)
+		mesh_instance.scale.x = scale_sign * abs_scale
+
+	for child in b.get_children():
+		if child.is_in_group("paintballs"):
+			var pb_mesh: MeshInstance = child.get_node_or_null("MeshInstance")
+			if pb_mesh and is_instance_valid(pb_mesh):
+				var abs_scale: float = abs(pb_mesh.scale.x)
+				pb_mesh.scale.x = scale_sign * abs_scale
+
 func _handle_group_pan_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
