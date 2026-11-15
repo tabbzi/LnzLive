@@ -5057,11 +5057,15 @@ func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 		for b in ball_list:
 			if not "ball_no" in b:
 				continue
+			if _is_ball_locked(b):
+				continue
 			sum += _get_axis_val(b, axis)
 		reference_val = sum / ball_list.size()
 	else:
 		for b in ball_list:
 			if not "ball_no" in b:
+				continue
+			if _is_ball_locked(b):
 				continue
 			var val: float = _get_axis_val(b, axis)
 			if first:
@@ -5077,6 +5081,8 @@ func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 
 	for b in ball_list:
 		if not "ball_no" in b:
+			continue
+		if _is_ball_locked(b):
 			continue
 		if axis == "x":
 			b.global_transform.origin.x = reference_val
@@ -5148,6 +5154,8 @@ func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, t
 	for b in ball_list:
 		if not "ball_no" in b:
 			continue
+		if _is_ball_locked(b):
+			continue
 		var val: float = _get_axis_val(b, axis)
 
 		if first:
@@ -5168,6 +5176,8 @@ func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, t
 
 	for b in ball_list:
 		if not "ball_no" in b:
+			continue
+		if _is_ball_locked(b):
 			continue
 		if axis == "y":
 			b.global_transform.origin.y += offset
@@ -5298,6 +5308,8 @@ func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_
 
 		var mb: Spatial = find_visual_ball_by_no(partner_id)
 		if not is_instance_valid(mb):
+			continue
+		if _is_ball_locked(mb):
 			continue
 
 		if scale_dist:
@@ -5460,6 +5472,10 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 				break
 			p = p.get_parent()
 
+		if b.ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		if _is_ball_locked(b):
+			continue
 		if scale_dist:
 			if not addballz_base_selected:
 				var current_pos: Vector3 = b.global_transform.origin
