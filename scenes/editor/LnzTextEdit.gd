@@ -3353,43 +3353,24 @@ func apply_batch_moves(pending_moves: Dictionary):
 func _apply_batch_sizes(size_changes: Dictionary):
 	var ballz_bounds = get_section_bounds("[Ballz Info]")
 	var add_bounds = get_section_bounds("[Add Ball]")
-
-	var ballz_start = ballz_bounds.get("start", -1)
-	var ballz_end = ballz_bounds.get("end", -1)
-
-	var add_start = add_bounds.get("start", -1)
-	var add_end = add_bounds.get("end", -1)
+	var max_base = KeyBallsData.max_base_ball_num
 
 	for ball_no in size_changes.keys():
 		var size_val = size_changes[ball_no]
-
-		if ball_no < KeyBallsData.max_base_ball_num:
-			if ballz_start != -1:
-				var count = 0
-				for i in range(ballz_start, ballz_end):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					if count == ball_no:
-						var parts = split_line(raw)
-						if parts.size() > 5:
-							parts[5] = str(size_val)
-							set_line(i, _join_array(parts, " "))
-						break
-					count += 1
+		if ball_no < max_base:
+			if not ballz_bounds.empty():
+				var line_idx = find_line_in_ball_section(ball_no)
+				if line_idx != -1:
+					var parts = split_line(get_line(line_idx))
+					if parts.size() > 5:
+						_modify_line_parts(line_idx, ballz_bounds.start, ballz_bounds.end, {5: str(size_val)})
 		else:
-			if add_start != -1:
-				var idx = ball_no - KeyBallsData.max_base_ball_num
-				var count = 0
-				for i in range(add_start, add_end):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					if count == idx:
-						var parts = split_line(raw)
-						if parts.size() > 10:
-							parts[10] = str(size_val)
-							set_line(i, _join_array(parts, " "))
-						break
-					count += 1
+			if not add_bounds.empty():
+				var line_idx = find_line_in_addball_section(ball_no - max_base)
+				if line_idx != -1:
+					var parts = split_line(get_line(line_idx))
+					if parts.size() > 10:
+						_modify_line_parts(line_idx, add_bounds.start, add_bounds.end, {10: str(size_val)})
 
 func set_batch_moves(moves_dict: Dictionary):
 	if moves_dict.empty():
