@@ -21,7 +21,7 @@ signal unlock_all
 signal select_locked_balls_by_ids
 signal duplicate_selection
 
-var current_constraint_mode: String = "free" # free, x, y, z, xy, xz, yz
+var current_constraint_mode: String = "Free" # free, x, y, z, xy, xz, yz
 
 var _pending_move_count: int = 0
 
