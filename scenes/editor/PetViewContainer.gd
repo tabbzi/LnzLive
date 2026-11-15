@@ -113,6 +113,7 @@ var drag_start_pos: Vector2 = Vector2()
 
 var _scale_group_pivot: Vector3 = Vector3.ZERO
 var _scale_group_initial_data: Dictionary = {}
+var _scale_mirror_initial_data: Dictionary = {}
 
 var _group_panning: bool = false
 var _group_pan_start_pos: Vector2 = Vector2.ZERO
@@ -1074,25 +1075,32 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 	is_resizing = resizing
 
 	if resizing:
-		#_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
 		_scale_group_pivot = _get_rotation_pivot_origin(
 			int(pivot_ball_spinbox.value) if use_pivot_check_box.pressed else -1
 		)
 
 		_scale_group_initial_data.clear()
+		_scale_mirror_initial_data.clear()
+		_record_move_start_state()
 		for b in selected_balls:
 			if is_instance_valid(b):
 				_scale_group_initial_data[b.ball_no] = {
 					"pos": b.global_transform.origin, "size": b.ball_size
 				}
-				if move_mode_settings_instance.is_mirror_x_active():
+				if not pet_node._orig_world_pos.has(b.ball_no):
+					pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+				_track_pending_move(b)
+				if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 					var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 					if partner_id != -1 and partner_id != b.ball_no:
 						var mb: Spatial = find_visual_ball_by_no(partner_id)
-						if mb:
-							_scale_group_initial_data[partner_id] = {
+						if mb and not _scale_mirror_initial_data.has(partner_id):
+							_scale_mirror_initial_data[partner_id] = {
 								"pos": mb.global_transform.origin, "size": mb.ball_size
 							}
+							if not pet_node._orig_world_pos.has(partner_id):
+								pet_node._orig_world_pos[partner_id] = mb.global_transform.origin
+							_track_pending_move(mb)
 		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 	else:
 		_record_move_start_state()
@@ -1265,6 +1273,22 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 									):
 										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
+					if was_resizing and is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+						for partner_id in _scale_mirror_initial_data:
+							var mb: Spatial = find_visual_ball_by_no(partner_id)
+							if is_instance_valid(mb) and not pending_moves.has(partner_id):
+								pending_moves[partner_id] = {
+									"orig_pos": _scale_mirror_initial_data[partner_id].pos,
+									"new_pos": mb.global_transform.origin,
+									"orig_size": _scale_mirror_initial_data[partner_id].size,
+									"new_size": mb.ball_size,
+									"orig_basis": mb.global_transform.basis,
+									"new_basis": mb.global_transform.basis
+								}
+							elif is_instance_valid(mb):
+								pending_moves[partner_id]["new_pos"] = mb.global_transform.origin
+								pending_moves[partner_id]["new_size"] = mb.ball_size
+
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
 					_update_unapplied_changes_label()
 					_record_move_end_state("Drag Move")
@@ -1313,7 +1337,29 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				)
 				b.set_ball_size(snapped_visual)
 
-			if move_mode_settings_instance.is_mirror_x_active():
+			for b_no in _scale_group_initial_data:
+				if b_no < KeyBallsData.max_base_ball_num:
+					continue
+				var b: Spatial = find_visual_ball_by_no(b_no)
+				if not is_instance_valid(b):
+					continue
+
+				var initial: Dictionary = _scale_group_initial_data[b_no]
+
+				var offset_from_pivot: Vector3 = initial.pos - _scale_group_pivot
+				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
+
+				var target_visual: float = clamp(initial["size"] * scale_factor, 1.0, 500.0)
+				var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b_no)
+				var is_addball: bool = sizing_info.is_addball
+				var bhd_s: int = sizing_info.bhd_size
+
+				var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+					target_visual, is_addball, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+				)
+				b.set_ball_size(snapped_visual)
+
+			if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 				_apply_mirror_scale(
 					selected_balls, scale_factor, true, true, _scale_group_pivot, true
 				)
@@ -5227,11 +5273,9 @@ func _apply_mirror_move(balls_moved: Array, delta: Vector3) -> void:
 
 		var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 		if partner_id != -1 and partner_id != b.ball_no:
-			# Find visual ball for partner
 			var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
 			if partner_visual and not (partner_visual in selected_balls):
 				var mirrored_delta: Vector3 = delta * mirror_mult
-
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
 
@@ -5239,6 +5283,16 @@ func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_
 	var selected_nos: Dictionary = {}
 	for b in targets:
 		selected_nos[b.ball_no] = true
+
+	var mirror_pivot: Vector3 = Vector3(-pivot_origin.x, pivot_origin.y, pivot_origin.z)
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_use_pivot_active():
+		var pivot_id: int = move_mode_settings_instance.get_pivot_ball_id()
+		if pivot_id != -1:
+			var pivot_ball: Spatial = find_visual_ball_by_no(pivot_id)
+			if is_instance_valid(pivot_ball):
+				var mirror_partner: Spatial = find_visual_ball_by_no(lnz_text_edit.find_mirrored_ball(pivot_id))
+				if is_instance_valid(mirror_partner):
+					mirror_pivot = mirror_partner.global_transform.origin
 
 	for b in targets:
 		if not is_instance_valid(b):
@@ -5254,20 +5308,29 @@ func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_
 		if _is_ball_locked(mb):
 			continue
 
+		var mirror_start_pos: Vector3 = mb.global_transform.origin
+		if is_interactive and _scale_mirror_initial_data.has(partner_id):
+			mirror_start_pos = _scale_mirror_initial_data[partner_id].pos
+		elif not is_interactive and not pet_node._orig_world_pos.has(partner_id):
+			pet_node._orig_world_pos[partner_id] = mirror_start_pos
+
 		if scale_dist:
-			var start_pos: Vector3 = mb.global_transform.origin
-
-			if is_interactive and _scale_group_initial_data.has(partner_id):
-				start_pos = _scale_group_initial_data[partner_id].pos
-			elif not is_interactive:
-				if not pet_node._orig_world_pos.has(partner_id):
-					pet_node._orig_world_pos[partner_id] = start_pos
-
-			var rel_pos: Vector3 = start_pos - pivot_origin
-			mb.global_transform.origin = pivot_origin + (rel_pos * factor)
+			var rel_pos: Vector3 = mirror_start_pos - mirror_pivot
+			mb.global_transform.origin = mirror_pivot + (rel_pos * factor)
 
 		if scale_size:
-			mb.set_ball_size(b.ball_size)
+			var initial_size: float = mb.ball_size
+			if is_interactive and _scale_mirror_initial_data.has(partner_id):
+				initial_size = _scale_mirror_initial_data[partner_id].size
+			var target_visual: float = clamp(initial_size * factor, 1.0, 500.0)
+			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, partner_id)
+			var is_ab: bool = sizing_info.is_addball
+			var bhd_s: int = sizing_info.bhd_size
+			var engine_scale: float = pet_node.lnz.scales[1]
+			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+			)
+			mb.set_ball_size(snapped_visual)
 
 		_track_pending_move(mb)
 
@@ -5382,38 +5445,23 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 	for b in selected_balls:
 		if not is_instance_valid(b):
 			continue
-
-		var addballz_base_selected: bool = false
-		var p: Node = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in selected_balls:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
 		if b.ball_no >= KeyBallsData.max_base_ball_num:
 			continue
 		if _is_ball_locked(b):
 			continue
 		if scale_dist:
-			if not addballz_base_selected:
-				var current_pos: Vector3 = b.global_transform.origin
-				var rel_pos: Vector3 = current_pos - pivot_origin
-				var new_rel_pos: Vector3 = rel_pos * factor
-				var new_pos: Vector3 = pivot_origin + new_rel_pos
-
-				if not pet_node._orig_world_pos.has(b.ball_no):
-					pet_node._orig_world_pos[b.ball_no] = current_pos
-
-				var delta: Vector3 = new_pos - current_pos
-				b.global_transform.origin = new_pos
-
-				_apply_eye_iris_binding(b, delta)
-
+			var current_pos: Vector3 = b.global_transform.origin
+			var rel_pos: Vector3 = current_pos - pivot_origin
+			var new_rel_pos: Vector3 = rel_pos * factor
+			var new_pos: Vector3 = pivot_origin + new_rel_pos
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos
+			var delta: Vector3 = new_pos - current_pos
+			b.global_transform.origin = new_pos
+			_apply_eye_iris_binding(b, delta)
 		if scale_size:
 			var original_s: float = b.ball_size
-			var target_visual: float = original_s * factor
-			target_visual = clamp(target_visual, 1.0, 500.0)
+			var target_visual: float = clamp(original_s * factor, 1.0, 500.0)
 			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b.ball_no)
 			var is_ab: bool = sizing_info.is_addball
 			var bhd_s: int = sizing_info.bhd_size
@@ -5423,16 +5471,46 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 			)
 			b.set_ball_size(snapped_visual)
 
-			pass
+	_track_pending_move_on_selection()
 
 	for b in selected_balls:
-		if is_instance_valid(b):
-			_track_pending_move(b)
+		if not is_instance_valid(b):
+			continue
+		if b.ball_no < KeyBallsData.max_base_ball_num:
+			continue
+		if _is_ball_locked(b):
+			continue
+		if scale_dist:
+			var current_pos: Vector3 = b.global_transform.origin
+			var rel_pos: Vector3 = current_pos - pivot_origin
+			var new_rel_pos: Vector3 = rel_pos * factor
+			var new_pos: Vector3 = pivot_origin + new_rel_pos
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos
+			b.global_transform.origin = new_pos
+		if scale_size:
+			var original_s: float = b.ball_size
+			var target_visual: float = clamp(original_s * factor, 1.0, 500.0)
+			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b.ball_no)
+			var is_ab: bool = sizing_info.is_addball
+			var bhd_s: int = sizing_info.bhd_size
+			var engine_scale: float = pet_node.lnz.scales[1]
+			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+			)
+			b.set_ball_size(snapped_visual)
 
-	if move_mode_settings_instance.is_mirror_x_active():
+	_track_pending_move_on_selection()
+
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 		_apply_mirror_scale(selected_balls, factor, scale_dist, scale_size, pivot_origin)
 
 	_record_move_end_state("Scale")
+
+func _track_pending_move_on_selection() -> void:
+	for b in selected_balls:
+		if is_instance_valid(b) and not _is_ball_locked(b):
+			_track_pending_move(b)
 
 func _on_pivot_changed() -> void:
 	var all_balls: Array = _get_all_visual_balls()

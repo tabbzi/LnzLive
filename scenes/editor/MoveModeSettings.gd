@@ -323,7 +323,7 @@ func _on_ApplyRotate_pressed() -> void:
 	emit_signal("rotate_selection", Vector3(pitch, yaw, roll), pivot_id)
 
 func _on_ApplyScale_pressed() -> void:
-	var factor: float = _scale_factor.value if _scale_factor else 1.0
+	var factor: float = max(0.01, _scale_factor.value if _scale_factor else 1.0)
 	var scale_dist: bool = _scale_dist.pressed if _scale_dist else true
 	var scale_size: bool = _scale_size.pressed if _scale_size else true
 
