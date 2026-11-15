@@ -5060,6 +5060,7 @@ func _on_align_selection(axis: String, mode: int) -> void:
 func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 	var reference_val: float = 0.0
 	var first: bool = true
+	var valid_count: int = 0
 
 	if mode == 1:
 		var sum: float = 0.0
@@ -5069,7 +5070,9 @@ func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 			if _is_ball_locked(b):
 				continue
 			sum += _get_axis_val(b, axis)
-		reference_val = sum / ball_list.size()
+			valid_count += 1
+		if valid_count > 0:
+			reference_val = sum / valid_count
 	else:
 		for b in ball_list:
 			if not "ball_no" in b:
@@ -5522,8 +5525,11 @@ func _toggle_lock_ball(ball: Spatial) -> void:
 		locked_balls.erase(ball_no)
 	else:
 		locked_balls.append(ball_no)
+		if ball in selected_balls:
+			selected_balls.erase(ball)
 	_sync_locked_balls_to_visuals()
 	update_locked_ballz_text(locked_balls)
+	_update_selected_ballz_in_settings()
 
 func _unlock_all_balls() -> void:
 	locked_balls.clear()
@@ -5680,12 +5686,17 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 
 
 func _on_lock_all() -> void:
+	var to_remove: Array = []
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:
 			if not b.ball_no in locked_balls:
 				locked_balls.append(b.ball_no)
+				to_remove.append(b)
+	for b in to_remove:
+		selected_balls.erase(b)
 	_sync_locked_balls_to_visuals()
 	update_locked_ballz_text(locked_balls)
+	_update_selected_ballz_in_settings()
 
 func _on_unlock_all() -> void:
 	_unlock_all_balls()
@@ -5696,6 +5707,14 @@ func _on_select_locked_balls_by_ids(ids: Array) -> void:
 	else:
 		locked_balls = ids.duplicate()
 	_sync_locked_balls_to_visuals()
+	var to_remove: Array = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if b.ball_no in locked_balls:
+				to_remove.append(b)
+	for b in to_remove:
+		selected_balls.erase(b)
+	_update_selected_ballz_in_settings()
 
 func update_locked_ballz_text(ball_ids: Array) -> void:
 	if is_instance_valid(move_mode_settings_instance):
