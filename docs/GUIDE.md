@@ -98,6 +98,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
 | **Move Mode** | `Q` | **Lock/Unlock** hovered ball (yellow outline) |
 | **Move Mode** | `CTRL` + `Q` | **Unlock All** locked ballz |
+| **Move Mode** | `CTRL` + `D` | **Duplicate** selected addballz + linez |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `ALT` + `SHIFT` + `left-click drag`| Scale/Resize selected group of ballz |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
