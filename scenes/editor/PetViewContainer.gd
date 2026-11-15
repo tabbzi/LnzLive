@@ -5627,37 +5627,5 @@ func _on_select_locked_balls_by_ids(ids: Array) -> void:
 	_sync_locked_balls_to_visuals()
 
 func update_locked_ballz_text(ball_ids: Array) -> void:
-	if not is_instance_valid(move_mode_settings_instance):
-		return
-	var locked_node = move_mode_settings_instance.find_node("LockedBallz")
-	if not locked_node:
-		return
-	if ball_ids.empty():
-		locked_node.text = ""
-		return
-	var sorted_ids: Array = ball_ids.duplicate()
-	sorted_ids.sort()
-	var start: int = sorted_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-	for i in range(1, sorted_ids.size()):
-		var curr: int = sorted_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-	var s: String = ""
-	for i in range(ranges.size()):
-		if i > 0:
-			s += ","
-		s += str(ranges[i])
-	locked_node.text = s
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.update_locked_balls_text(ball_ids)

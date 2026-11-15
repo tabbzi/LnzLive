@@ -224,7 +224,12 @@ func apply_nudge_axis(axis: String, dirsign: float) -> void:
 		emit_signal("nudge_selection", vector)
 
 func update_selected_balls_text(ball_ids: Array) -> void:
-	LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
+	if _affected_ballz and not _affected_ballz.has_focus():
+		LnzLiveUtils.update_ball_text(_affected_ballz, ball_ids)
+
+func update_locked_balls_text(ball_ids: Array) -> void:
+	if _locked_ballz and not _locked_ballz.has_focus():
+		LnzLiveUtils.update_ball_text(_locked_ballz, ball_ids)
 
 func update_pivot_max(max_balls: int) -> void:
 	if _pivot_ball:
@@ -271,6 +276,8 @@ func _on_LockedBallz_text_entered(new_text: String) -> void:
 		_locked_ballz.release_focus()
 
 func _on_LockedBallz_text_changed(new_text: String) -> void:
+	if _locked_ballz and _locked_ballz.has_focus():
+		return
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_locked_balls_by_ids", ids)
 func _on_constraint_selected(selected_name: String) -> void:
@@ -343,6 +350,8 @@ func _on_AffectedBallz_text_entered(new_text: String) -> void:
 		_affected_ballz.release_focus()
 
 func _on_AffectedBallz_text_changed(new_text: String) -> void:
+	if _affected_ballz and _affected_ballz.has_focus():
+		return
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_balls_by_ids", ids)
 
