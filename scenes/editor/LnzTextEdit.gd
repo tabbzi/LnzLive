@@ -2463,7 +2463,7 @@ func write_project_ball_section(projections: Array):
 func _apply_preset_to_ball(ball_no, properties, do_save = true):
 	if do_save:
 		save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Ballz Info]"
 	if is_addball:
