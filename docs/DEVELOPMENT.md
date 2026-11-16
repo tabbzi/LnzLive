@@ -71,7 +71,7 @@ product_name: LnzLive Petz & Babyz
 file_description: A visual editor for P.F. Magic game files!
 ```
 
-The following settings for Resources in export pabel are also required:
+The following settings for Resources in export panel are also required:
 
 ```
 export_mode: Export all resources in the project
@@ -402,15 +402,15 @@ Currently, the data model that LnzLive builds from LNZ is temporary, and  the on
 
 The `.lnz` text file is the only thing that matters. The 3D viewport is just a visualization of that text. Never try to save changes directly to the 3D nodes and hope they stick. Always ensure your changes are serialized back to the `LnzTextEdit` script. If the text doesn't update, the visual change is temporary and will vanish on reload.
 
-### Check the Godot 3.2 documentation and use built-in linter
+### Check the Godot 3.5.2 documentation and use built-in linter
 
-LnzLive is basically locked to Godot version 3.2, unless someone is willing to take on migrating to Godot 4, which would be admirable but masochistic. The custom Godot engine is compiled for Windows and provided in `engine/godot.zip`, but you can compile from source in  from [mnemoli/godot-petz](https://github.com/mnemoli/godot-petz/ or [Draconizations/godot-petz](https://github.com/Draconizations/godot-petz/).
+When in doubt, check out the [Godot 3.5 docs](https://docs.godotengine.org/en/3.5/)!
 
 If you use code assistants, then anticipate that these will likely spit out Godot 4 syntax that just won't work for Godot 3. Notably, Godot 3 does not use `@onready`, `await`, or typed signals (`signal name(arg: Type)`).
 
 The Godot editor has a good built-in linter when you use its script editor, but you can also install Godot Tools extension for VSCode. Just keep in mind that for the linter to work outside of the editor, the editor needs to be open.
 
-When in doubt, check out the [Godot 3.5 docs](https://docs.godotengine.org/en/3.5/)!
+LnzLive is basically locked to Godot version 3.x, unless someone is willing to take on migrating to Godot 4, which would be admirable but masochistic.
 
 ## Helpers and utilities are your friend
 
@@ -476,6 +476,6 @@ Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/inde
    - Click the "Run All" button. GUT will automatically find your script and execute all functions starting with `test_`.
 
 ## Helpful Links
-- [**Godot 3.2 Docs**](https://docs.godotengine.org/en/3.2/)
+- [**Godot 3.5 Docs**](https://docs.godotengine.org/en/3.5/)
 - [**GUT Docs**](https://gut.readthedocs.io/en/godot_3x/index.html)
 - [**LnzLive Task Tracker**](https://github.com/users/tabbzi/projects/3)

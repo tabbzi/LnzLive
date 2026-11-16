@@ -71,3 +71,14 @@ https://tabbloza.com/lnzlive/
 ```
 
 ![stamp](RULnzLiving.gif) ![stamp](RULnzLiving2.gif) ![button](LnzLiveButton.gif) ![button](LnzLiveIcon.png)
+
+## Credits
+
+Thanks to everyone who has contributed to LnzLive including...
+
+- [mnemoli](https://github.com/mnemoli/) created LnzLive
+- [tabbzi](https://github.com/tabbzi/) maintaining Petz & Babyz edition
+- [Draconizations](https://github.com/Draconizations/) enabled palettes
+- [bedalton](https://github.com/bedalton) enabled cross-platform and texture add-on for standard Godot 3.5.2 engine
+
+...and all users who have provided feedback and bug reports!
