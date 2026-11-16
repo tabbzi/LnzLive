@@ -2457,3 +2457,60 @@ func test_keyballs_build_bodyarea_map_cat():
 	
 	assert_true(KeyBallsData.bodyarea_map.size() > 0, "Bodyarea map should be populated.")
 	assert_true(KeyBallsData.bodyarea_map.has(0), "Should have entry for ball 0.")
+
+
+func test_viewport_scroll_and_gesture_zoom():
+	var original_scale: Vector2 = pet_view.tex.rect_scale
+	pet_view.tex.rect_scale = Vector2.ONE
+	var wheel = InputEventMouseButton.new()
+	wheel.button_index = BUTTON_WHEEL_UP
+	wheel.pressed = true
+	wheel.factor = 0.5
+	pet_view._gui_input(wheel)
+	assert_almost_eq(pet_view.tex.rect_scale.x, sqrt(pet_view.ZOOM_STEP), 0.0001)
+	wheel.pressed = false
+	pet_view._gui_input(wheel)
+	assert_almost_eq(pet_view.tex.rect_scale.x, sqrt(pet_view.ZOOM_STEP), 0.0001, "Wheel release must not zoom twice")
+	var pan = InputEventPanGesture.new()
+	pan.delta = Vector2(0, 0.5)
+	pet_view._gui_input(pan)
+	assert_almost_eq(pet_view.tex.rect_scale.x, 1.0, 0.0001)
+	pan.delta = Vector2(2, 0)
+	pet_view._gui_input(pan)
+	assert_almost_eq(pet_view.tex.rect_scale.x, 1.0, 0.0001, "Horizontal scroll must not zoom")
+	var pinch = InputEventMagnifyGesture.new()
+	pinch.factor = 1.5
+	pet_view._gui_input(pinch)
+	assert_almost_eq(pet_view.tex.rect_scale.x, 1.5, 0.0001)
+	pet_view.tex.rect_scale = original_scale
+
+func test_shortcut_modifiers():
+	var key = InputEventKey.new()
+	assert_false(LnzLiveUtils.shortcut_modifier(key))
+	key.control = true
+	assert_true(LnzLiveUtils.shortcut_modifier(key))
+	key.control = false
+	key.command = true
+	assert_true(LnzLiveUtils.shortcut_modifier(key))
+
+
+func test_first_zoom_preserves_mirrored_viewport_scale():
+	var original_scale: Vector2 = pet_view.tex.rect_scale
+	# _ready() mirrors the viewport horizontally; zoom must retain that sign.
+	pet_view.tex.rect_scale = Vector2(-1.0, 1.0)
+	var wheel = InputEventMouseButton.new()
+	wheel.button_index = BUTTON_WHEEL_UP
+	wheel.pressed = true
+	wheel.factor = 1.0
+	pet_view._gui_input(wheel)
+	assert_almost_eq(pet_view.tex.rect_scale.x, -pet_view.ZOOM_STEP, 0.0001)
+	assert_almost_eq(pet_view.tex.rect_scale.y, pet_view.ZOOM_STEP, 0.0001)
+	wheel.button_index = BUTTON_WHEEL_DOWN
+	pet_view._gui_input(wheel)
+	assert_almost_eq(pet_view.tex.rect_scale.x, -1.0, 0.0001)
+	assert_almost_eq(pet_view.tex.rect_scale.y, 1.0, 0.0001)
+	# Preserve both axes when starting from an existing custom scale.
+	pet_view.tex.rect_scale = Vector2(-2.0, 3.0)
+	pet_view._zoom_view(1.5)
+	assert_eq(pet_view.tex.rect_scale, Vector2(-3.0, 4.5))
+	pet_view.tex.rect_scale = original_scale

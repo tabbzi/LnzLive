@@ -375,7 +375,7 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 
 	if current_import_type == ImportType.PALETTE:
 		var img: Image = Image.new()
-		var err: int = img.load(selected_path, false, false)
+		var err: int = preload("res://scripts/petz_image.gd").load_image(img, selected_path, false, false)
 		if err == OK:
 			if img.get_height() != 1:
 				print("[ERROR] FileTree: _on_FileDialog_file_selected: palette PNG " + selected_path.get_file() + " is not 1 pixel high, skipping")
@@ -767,7 +767,7 @@ func scan_local_textures() -> void:
 			else:
 				# Load full texture for the UI
 				var img: Image = Image.new()
-				var err: int = img.load(full_path, true, true)
+				var err: int = preload("res://scripts/petz_image.gd").load_image(img, full_path, true, true)
 				
 				if err == OK and img.get_width() > 0:
 					# Create texture for model generation
@@ -785,7 +785,7 @@ func scan_local_textures() -> void:
 						file.close()
 
 						var icon_img: Image = Image.new()
-						var icon_err: int = icon_img.load_bmp_from_buffer(buf)
+						var icon_err: int = preload("res://scripts/petz_image.gd").load_bmp(icon_img, buf)
 						
 						if icon_err == OK and icon_img.get_width() > 0:
 							var w: int = icon_img.get_width()
@@ -912,7 +912,7 @@ func scan_local_palettes() -> void:
 			new_item.set_metadata(0, full_path)
 			
 			var img: Image = Image.new()
-			var err: int = img.load(full_path, true, true)
+			var err: int = preload("res://scripts/petz_image.gd").load_image(img, full_path, true, true)
 			
 			if err == OK:
 				var tex: ImageTexture = ImageTexture.new()

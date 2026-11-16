@@ -636,25 +636,28 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 # _on_menu_id_pressed
 
 func _unhandled_key_input(event):
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
+	if not event.pressed or event.echo or event.alt or not LnzLiveUtils.shortcut_modifier(event):
+		return
+
+	if event.scancode == KEY_S:
 		save_file(false)
-
-	if Input.is_key_pressed(KEY_CONTROL) and not event.shift and event.pressed:
-		if event.scancode == KEY_Z:
-			undo_visual_edit() # Ctrl+Z
-		elif event.scancode == KEY_Y:
-			redo_visual_edit() # Ctrl+Y
-
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
+	elif event.scancode == KEY_Z and not event.shift:
+		undo_visual_edit()
+	elif (event.scancode == KEY_Y and not event.shift) or (
+		event.scancode == KEY_Z and event.shift and OS.get_name() == "OSX" and event.command
+	):
+		redo_visual_edit()
+	elif event.scancode == KEY_F:
 		find_panel.visible = not find_panel.visible
 		self.readonly = find_panel.visible
-
 		if find_panel.visible:
 			var search_input = find_panel.get_node("VBoxContainer/LineEdit")
 			if search_input:
 				search_input.grab_focus()
-
 		_setup_context_menu()
+	else:
+		return
+	get_tree().set_input_as_handled()
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed:
@@ -678,7 +681,7 @@ func _on_LnzTextEdit_gui_input(event):
 				accept_event()
 				get_tree().set_input_as_handled()
 
-		elif event.control and event.scancode == KEY_Q:
+		elif LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_Q:
 			var ball_no = get_current_ball_index()
 			var current_line_idx = cursor_get_line()
 			

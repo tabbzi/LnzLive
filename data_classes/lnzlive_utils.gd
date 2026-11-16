@@ -9,6 +9,14 @@ const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
 const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
 const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
 
+# Godot maps command to Ctrl on Windows/Linux and Command on macOS.
+# Keep physical Ctrl available on macOS for existing tool controls.
+static func shortcut_modifier(event: InputEventWithModifiers) -> bool:
+	return event.control or event.command
+
+static func shortcut_modifier_pressed() -> bool:
+	return Input.is_key_pressed(KEY_CONTROL) or (OS.get_name() == "OSX" and Input.is_key_pressed(KEY_META))
+
 static func parse_number_list(s: String, allow_negatives: bool = false) -> Array:
 	var result: Array = []
 	var parts: PoolStringArray = s.split(",", false)

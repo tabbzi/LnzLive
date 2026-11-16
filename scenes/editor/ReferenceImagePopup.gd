@@ -41,7 +41,7 @@ func update_config_reference_image(config_data: Dictionary) -> void:
 
 	if config_data.get("path", "") != "" and config_data.get("show_popup", false):
 		var image: Image = Image.new()
-		var err: int = image.load(config_data.path, false, false)
+		var err: int = preload("res://scripts/petz_image.gd").load_image(image, config_data.path, false, false)
 		if err == OK:
 			var tex: ImageTexture = ImageTexture.new()
 			tex.create_from_image(image)

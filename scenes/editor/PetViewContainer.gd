@@ -461,7 +461,7 @@ func _update_reference_image_bg() -> void:
 			bg.texture = null
 		
 		var image: Image = Image.new()
-		var err: int = image.load(current_path, false, false)
+		var err: int = preload("res://scripts/petz_image.gd").load_image(image, current_path, false, false)
 		if err == OK:
 			var texture: ImageTexture = ImageTexture.new()
 			texture.create_from_image(image)
@@ -654,7 +654,7 @@ func _process(_delta: float) -> void:
 	elif paintball_mode:
 		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode: bool = paintball_settings_instance.find_node("EraserCheckBox").pressed
-		var temp_eraser_active: bool = Input.is_key_pressed(KEY_CONTROL)
+		var temp_eraser_active: bool = LnzLiveUtils.shortcut_modifier_pressed()
 		var is_design_mode: bool = paintball_settings_instance.is_design_mode_active()
 
 		if delete_mode:
@@ -733,7 +733,7 @@ func _process(_delta: float) -> void:
 		#update() # AXIS GIZMO
 
 	else:
-		if Input.is_key_pressed(KEY_CONTROL):
+		if LnzLiveUtils.shortcut_modifier_pressed():
 			body = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
 		elif Input.is_key_pressed(KEY_SHIFT):
 			body = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
@@ -974,7 +974,7 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 func _handle_box_selection(event: InputEvent) -> bool:
 	if (
 		not (move_mode or preset_mode or auto_paintballer_mode)
-		or not Input.is_key_pressed(KEY_CONTROL)
+		or not LnzLiveUtils.shortcut_modifier_pressed()
 	):
 		return false
 
@@ -1096,10 +1096,10 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 				if hover:
 					# Locked balls cannot be selected or moved
-					if _is_ball_locked(hover) and not Input.is_key_pressed(KEY_CONTROL):
+					if _is_ball_locked(hover) and not LnzLiveUtils.shortcut_modifier_pressed():
 						return true
 
-					if Input.is_key_pressed(KEY_CONTROL):
+					if LnzLiveUtils.shortcut_modifier_pressed():
 						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
@@ -1401,7 +1401,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		if event is InputEventMouseButton and event.pressed:
 			if event.button_index == BUTTON_WHEEL_UP:
 				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (UP)")
-				if event.control:
+				if LnzLiveUtils.shortcut_modifier(event):
 					design_scale_multiplier += 0.1
 				else:
 					design_rotation_angle += 0.1
@@ -1409,7 +1409,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				return true
 			elif event.button_index == BUTTON_WHEEL_DOWN:
 				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (DOWN)")
-				if event.control:
+				if LnzLiveUtils.shortcut_modifier(event):
 					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
 				else:
 					design_rotation_angle -= 0.1
@@ -1476,8 +1476,8 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		#var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
-		var delete_mode: bool = eraser_check_box.pressed or Input.is_key_pressed(KEY_CONTROL)
+		#var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or LnzLiveUtils.shortcut_modifier_pressed()
+		var delete_mode: bool = eraser_check_box.pressed or LnzLiveUtils.shortcut_modifier_pressed()
 
 		if delete_mode:
 			print("[STATUS] PetViewContainer: attempted eraser click")
@@ -1536,6 +1536,16 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 	return false
 
+func _zoom_view(factor: float) -> void:
+	if factor <= 0.0:
+		return
+	tex.rect_pivot_offset = tex.rect_size / 2.0
+	var current_zoom: float = abs(tex.rect_scale.x)
+	if is_zero_approx(current_zoom):
+		return
+	var target_zoom: float = clamp(current_zoom * factor, 0.01, 100.0)
+	tex.rect_scale *= target_zoom / current_zoom
+
 func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
 		return
@@ -1583,15 +1593,21 @@ func _gui_input(event: InputEvent) -> void:
 		tools_menu.popup()
 		return
 
-	# Zoom view using mouse wheel:
-	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
-		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale /= ZOOM_STEP
+	# macOS precise scrolling arrives as a pan gesture rather than wheel buttons.
+	if event is InputEventPanGesture:
+		_zoom_view(pow(ZOOM_STEP, -event.delta.y))
+		accept_event()
 		return
-	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
-		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale *= ZOOM_STEP
+	if event is InputEventMagnifyGesture:
+		_zoom_view(event.factor)
+		accept_event()
 		return
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == BUTTON_WHEEL_DOWN or event.button_index == BUTTON_WHEEL_UP:
+			var direction: float = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
+			_zoom_view(pow(ZOOM_STEP, direction * event.factor))
+			accept_event()
+			return
 
 	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if (
@@ -1760,8 +1776,8 @@ func _gui_input(event: InputEvent) -> void:
 		elif Input.is_mouse_button_pressed(BUTTON_LEFT):
 			var motion: Vector2 = event.relative
 			camera_holder.rotation.x += motion.y * 0.01
-			#camera_holder.rotation.y += motion.x * -0.01
-			camera_holder.rotation.y -= motion.x * -0.01
+			# The viewport is mirrored horizontally, so yaw follows positive mouse motion.
+			camera_holder.rotation.y += motion.x * 0.01
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
@@ -1934,7 +1950,7 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				get_tree().set_input_as_handled()
 				return true
 
-	if not event.control and not event.alt and not event.shift:
+	if not LnzLiveUtils.shortcut_modifier(event) and not event.alt and not event.shift:
 		if _is_text_input_focused(event):
 			return false
 		match event.scancode:
@@ -2016,7 +2032,7 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 func _is_text_input_focused(event: InputEventKey) -> bool:
 	var focus_owner: Node = get_focus_owner()
 	if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
-		if event.control or event.alt or event.shift:
+		if LnzLiveUtils.shortcut_modifier(event) or event.alt or event.shift:
 			return false
 		return true
 	return false
@@ -2231,7 +2247,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 
 	if event is InputEventKey:
-		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
+		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_META, KEY_ALT]:
 			mark_ui_dirty()
 
 	if event is InputEventKey and event.pressed and event.scancode == KEY_N:
@@ -2241,8 +2257,8 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			return
 
 	# Mini-history for Paintball and Move modes
-	if event is InputEventKey and event.pressed and event.control and event.shift:
-		if event.scancode == KEY_Z:  # Undo
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.shift:
+		if event.scancode == KEY_Z and not (OS.get_name() == "OSX" and event.command):  # Undo
 			if paintball_mode:
 				_undo_queued_paintball()
 				get_tree().set_input_as_handled()
@@ -2264,14 +2280,14 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if _handle_move_nudge_key_input(event):
 		return
 
-	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_H:
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_H:
 		get_tree().set_input_as_handled()
 		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
 			pet_node.unhide_all_balls()
 		return
 
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
-	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
 		if last_selected_is_valid():
 			tools_menu.selected_visual_ball = last_selected
@@ -2286,7 +2302,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 
 	# Move Mode ball lock: Q to toggle lock on hovered ball, CTRL+Q to unlock all
 	if move_mode and event.pressed and not event.alt:
-		if event.control:
+		if LnzLiveUtils.shortcut_modifier(event):
 			if event.scancode == KEY_Q:
 				_unlock_all_balls()
 				get_tree().set_input_as_handled()
@@ -4389,7 +4405,7 @@ func _on_nudge_selection(vector: Vector3) -> void:
 	_record_move_end_state("Nudge")
 
 func _on_move_mode_select_group(group_name: String) -> void:
-	if not Input.is_key_pressed(KEY_CONTROL):
+	if not LnzLiveUtils.shortcut_modifier_pressed():
 		_on_unselect_all()
 
 	var balls_to_select: Array = KeyBallsData.get_group_balls(group_name)

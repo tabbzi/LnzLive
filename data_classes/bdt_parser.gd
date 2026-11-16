@@ -17,13 +17,13 @@ func _init(filename: String, frame_indexes: Array, balls_num: int):
 		var tag = file.get_16()
 		var balls = []
 		for ball in balls_num:
-			var x = file.get_s16()
-			var y = file.get_s16()
-			var z = file.get_s16()
-			var rot1 = file.get_s8()
-			var rot2 = file.get_s8()
-			var rot3 = file.get_s8()
-			var _tag3 = file.get_s8()
+			var x = _read_s16(file)
+			var y = _read_s16(file)
+			var z = _read_s16(file)
+			var rot1 = _read_s8(file)
+			var rot2 = _read_s8(file)
+			var rot3 = _read_s8(file)
+			var _tag3 = _read_s8(file)
 			balls.append(
 				{
 					tag = tag,
@@ -33,3 +33,13 @@ func _init(filename: String, frame_indexes: Array, balls_num: int):
 			)
 		frames.append(balls)
 	file.close()
+
+# Stock Godot File exposes unsigned reads only. BDT coordinates and rotations
+# use two's-complement signed integers; preserve the full negative ranges.
+static func _read_s16(file: File) -> int:
+	var value: int = file.get_16()
+	return value - 65536 if value >= 32768 else value
+
+static func _read_s8(file: File) -> int:
+	var value: int = file.get_8()
+	return value - 256 if value >= 128 else value

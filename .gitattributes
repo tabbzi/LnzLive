@@ -1,1 +1,31 @@
+# Default: do not convert line endings unless explicitly specified
 * -text
+
+# Godot engine text files must use LF across all platforms
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.shader text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.json text eol=lf
+*.cfg text eol=lf
+
+# Petz / Babyz LNZ files use CRLF for compatibility with original Windows tools
+*.lnz text eol=crlf
+
+# Binary files
+*.png binary
+*.icns binary
+*.ico binary
+*.bmp binary
+*.gif binary
+*.ase binary
+*.bdt binary
+*.bhd binary
+*.pal binary
+*.ttf binary
+*.fnt binary
+*.exe binary
+*.64 binary
+*.zip binary

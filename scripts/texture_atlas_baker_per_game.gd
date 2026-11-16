@@ -42,7 +42,7 @@ func _run():
 			
 			# HYBRID LOAD: Get BOTH the Godot RGB Image and the Raw Binary Data
 			var img = Image.new()
-			var err = img.load(full_path, false, false)
+			var err = preload("res://scripts/petz_image.gd").load_image(img, full_path, false, false)
 			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(full_path)
 			
 			if err == OK and raw_bmp_data.has("data"):
@@ -153,7 +153,7 @@ func _run():
 func _load_palette_colors(path: String) -> Array:
 	var colors = []
 	var img = Image.new()
-	if img.load(path, false, false) == OK:
+	if preload("res://scripts/petz_image.gd").load_image(img, path, false, false) == OK:
 		img.lock()
 		for i in range(256):
 			if i < img.get_width():

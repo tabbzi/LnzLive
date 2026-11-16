@@ -25,7 +25,7 @@ func _run():
 			
 			var img = Image.new()
 
-			var err = img.load(full_path, false, false)
+			var err = preload("res://scripts/petz_image.gd").load_image(img, full_path, false, false)
 			
 			if err == OK:
 				img.resize(32, 32, Image.INTERPOLATE_NEAREST)

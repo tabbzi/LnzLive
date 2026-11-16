@@ -30,6 +30,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 ### Controls
 
+On macOS, Command can replace Ctrl for shortcuts and tool modifiers. Use Cmd+Z to undo and Cmd+Shift+Z (or Cmd+Y) to redo committed edits. Queued Paintball/Move undo remains Ctrl+Shift+Z; queued redo also accepts Cmd+Shift+X. Mouse wheel scrolling, two-finger vertical scrolling, and pinch gestures zoom the viewport.
+
 | Context | Input / Hotkey | Action |
 | :--- | :--- | :--- |
 | **Viewport** | `wheel up` / `wheel down` | Zoom View In / Out |

@@ -24,7 +24,7 @@ func _run():
 			var img = Image.new()
 			var full_path = TEXTURE_PATH + file_name
 			
-			var err = img.load(full_path, false, false)
+			var err = preload("res://scripts/petz_image.gd").load_image(img, full_path, false, false)
 			
 			if err == OK:
 				var size_key = str(img.get_width()) + "x" + str(img.get_height())

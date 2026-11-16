@@ -4,7 +4,7 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 
 ## Contributing to LnzLive
 
-We welcome contributions of all sizes! If you're new to the codebase, the best way to start is to familiarize yourself with the **Pipeline** and **Logic** below. LnzLive is built using a custom version of the Godot 3.2 game engine, which can be found in `engine/godot.zip`, and can be exported using the export templates included under `export/` for executable (`windows`) or web (`javascript`) versions. Most logic is written in GDScript (`.gd`) and uses custom shaders (`.tres`) to emulate the aesthetic of the original P.F. Magic games. Contributors are welcome to extend to other languages supported by Godot, though, especially if inclusion will help optimize the program!
+We welcome contributions of all sizes! If you're new to the codebase, the best way to start is to familiarize yourself with the **Pipeline** and **Logic** below. LnzLive now runs on stock Godot 3.5.3 Standard on macOS, Windows, and Linux. The enabled `addons/petz_texture/` plugin and `scripts/petz_image.gd` replace the indexed BMP features of the historical Godot 3.2.4 beta fork in `engine/godot.zip`. Use official 3.5.3 export templates instead of the bundled custom templates. Most logic is written in GDScript (`.gd`) and uses custom shaders (`.tres`) to emulate the aesthetic of the original P.F. Magic games. Contributors are welcome to extend to other languages supported by Godot, though, especially if inclusion will help optimize the program!
 
 ### Where to Begin?
 
@@ -32,11 +32,11 @@ Before starting a new task, open your terminal in the project folder and type:
 
 #### 5. **Open LnzLive in Godot**
 
-Navigate to where LnzLive repository has been cloned (probably `Documents/GitHub/LnzLive`) and copy and extract the contents of `engine/godot.zip` somewhere else on your computer. This is the custom Godot engine executable. Open Godot using this executable, and load the LnzLive folder. You can test that the program works as expected by pressing `F5` in the editor.
+Download [Godot 3.5.3 Standard](https://godotengine.org/download/archive/3.5.3-stable/) for your platform and import the repository's `project.godot`. Let imports finish; the Petz Texture plugin is enabled in the project configuration. Restart once if first-import resources are reported missing. Press `F5` to run. See the README for cache and generated-file guidance.
 
 #### 6. **???**
 
-Start making changes! Be sure to refer to the [Godot 3.2 docs](https://docs.godotengine.org/en/3.2/) and not newer versions of Godot like Godot 4, which has undergone major changes. Don't even try opening LnzLive into Godot 4 engine, it is futile. Unless you have a lot of fortitude to port it...
+Start making changes! Be sure to refer to the [Godot 3.5 docs](https://docs.godotengine.org/en/3.5/) and not newer versions of Godot like Godot 4, which has undergone major changes. Don't even try opening LnzLive into Godot 4 engine, it is futile. Unless you have a lot of fortitude to port it...
 
 #### 7. **Save Your Work (Commit & Push)**
 
@@ -54,7 +54,7 @@ Try to break your new feature, and any other functionalities of LnzLive that you
 
 #### 9. **Export LnzLive**
 
-Export LnzLive to Windows (`.exe`), Linux (x11 64-bit executable), and web (HTML/JS that can be packaged into a `.zip` archive for itch.io) using the export templates (release and debug versions) generously compiled and provided by [Draconizations/godot-petz](https://github.com/Draconizations/godot-petz/releases/tag/v0.1.0) and copied to the `export/` folder. 
+Export with the official Godot 3.5.3 templates matching your editor. The historical custom templates in `export/` belong to the old engine and should not be used with stock 3.5.3.
 
 Recommended export Options matching releases need to be manually set in Godot editor:
 
@@ -295,7 +295,7 @@ If you use code assistants, then anticipate that these will likely spit out Godo
 
 The Godot editor has a good built-in linter when you use its script editor, but you can also install Godot Tools extension for VSCode. Just keep in mind that for the linter to work outside of the editor, the editor needs to be open.
 
-When in doubt, check out the [Godot 3.2 docs](https://docs.godotengine.org/en/3.2/)!
+When in doubt, check out the [Godot 3.5 docs](https://docs.godotengine.org/en/3.5/)!
 
 ## Helpers and utilities are your friend
 
