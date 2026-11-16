@@ -744,7 +744,7 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 		if full_path == selected_filepath:
 			new_item.select(0)
 
-func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: int = 0) -> void:
+func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: int = 0, visited_paths: Dictionary = {}) -> void:
 	if depth > MAX_RECURSION_DEPTH:
 		return
 
@@ -766,6 +766,7 @@ func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: 
 			var full_path: String = path.plus_file(filename)
 			var mod_time: int = file_checker.get_modified_time(full_path)
 			files.append({"name": filename, "path": full_path, "time": mod_time})
+			visited_paths[full_path] = true
 		filename = dir.get_next()
 	dir.list_dir_end()
 
@@ -791,7 +792,7 @@ func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: 
 			sub_item.set_collapsed(true)
 
 		if depth < 1:
-			_scan_local_textures_recursive(sub_path, sub_item, depth + 1)
+			_scan_local_textures_recursive(sub_path, sub_item, depth + 1, visited_paths)
 
 	for file_data in files:
 		var f_name: String = file_data["name"]
@@ -806,63 +807,70 @@ func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: 
 			var cached = _thumbnail_cache[full_path]
 			new_item.set_icon(0, cached.icon_tex)
 			new_item.set_text(0, cached.text)
-			var res_name: String = f_name.to_lower()
-			if is_instance_valid(preloader):
-				if preloader.has_resource(res_name): preloader.remove_resource(res_name)
-				preloader.add_resource(res_name, cached.full_tex)
 			continue
 
-		var validation: Dictionary = LnzLiveUtils.validate_8bit_bmp(full_path)
+		var file: File = File.new()
+		if file.open(full_path, File.READ) != OK:
+			new_item.set_text(0, f_name + " (OPEN FAILED)")
+			continue
 
-		if not validation["valid"]:
-			new_item.set_text(0, f_name + " (INVALID: " + validation["reason"] + ")")
-		else:
-			var img: Image = Image.new()
-			var err: int = preload("res://scripts/petz_image.gd").load_image(img, full_path, true, true)
+		var buf_size: int = file.get_len()
+		var buf: PoolByteArray = file.get_buffer(buf_size)
+		file.close()
 
-			if err == OK and img.get_width() > 0:
-				var full_tex: ImageTexture = ImageTexture.new()
-				full_tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
+		if buf_size < 54:
+			new_item.set_text(0, f_name + " (TOO SMALL)")
+			continue
 
-				var res_name: String = f_name.to_lower()
-				if is_instance_valid(preloader) and preloader.has_resource(res_name):
-					preloader.remove_resource(res_name)
-				if is_instance_valid(preloader):
-					preloader.add_resource(res_name, full_tex)
+		if buf[0] != 66 or buf[1] != 77:
+			new_item.set_text(0, f_name + " (NOT BMP)")
+			continue
 
-				var file: File = File.new()
-				var icon_err: int = -1
-				var icon_img: Image = null
-				var icon_tex: ImageTexture = null
-				if file.open(full_path, File.READ) == OK:
-					var buf: PoolByteArray = file.get_buffer(file.get_len())
-					file.close()
+		var header_size_val: int = 0
+		var pixel_offset_val: int = 0
+		var raw_w: int = 0
+		var raw_h: int = 0
+		var bpp_val: int = 0
 
-					icon_img = Image.new()
-					icon_err = preload("res://scripts/petz_image.gd").load_bmp(icon_img, buf)
+		pixel_offset_val = buf[10] | (buf[11] << 8) | (buf[12] << 16) | (buf[13] << 24)
+		header_size_val = buf[14] | (buf[15] << 8) | (buf[16] << 16) | (buf[17] << 24)
 
-					if icon_err == OK and icon_img.get_width() > 0:
-						icon_img.convert(Image.FORMAT_RGBA8)
-						icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+		if header_size_val == 12:
+			raw_w = buf[16] | (buf[17] << 8)
+			raw_h = buf[18] | (buf[19] << 8)
+			bpp_val = buf[24] | (buf[25] << 8)
+		elif header_size_val >= 40:
+			raw_w = buf[18] | (buf[19] << 8) | (buf[20] << 16) | (buf[21] << 24)
+			raw_h = buf[22] | (buf[23] << 8) | (buf[24] << 16) | (buf[25] << 24)
+			bpp_val = buf[28] | (buf[29] << 8)
 
-						icon_tex = ImageTexture.new()
-						icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
-						new_item.set_icon(0, icon_tex)
+		if bpp_val != 8:
+			new_item.set_text(0, f_name + " (NOT 8BIT)")
+			continue
 
-					buf.resize(0)
+		if raw_w <= 0 or abs(raw_h) <= 0:
+			new_item.set_text(0, f_name + " (BAD DIMS)")
+			continue
 
-					var final_text = f_name + " (" + str(img.get_width()) + "x" + str(img.get_height()) + ")"
-					new_item.set_text(0, final_text)
+		var icon_img: Image = Image.new()
+		var icon_err: int = preload("res://scripts/petz_image.gd").load_bmp(icon_img, buf, false, false)
 
-					if icon_err == OK and icon_img.get_width() > 0:
-						_thumbnail_cache[full_path] = {
-							"time": mod_time,
-							"full_tex": full_tex,
-							"icon_tex": icon_tex,
-							"text": final_text
-						}
-			else:
-				new_item.set_text(0, f_name + " (LOAD FAILED)")
+		var final_text = f_name + " (" + str(raw_w) + "x" + str(abs(raw_h)) + ")"
+		var icon_tex: ImageTexture = null
+
+		if icon_err == OK and icon_img.get_width() > 0:
+			icon_img.convert(Image.FORMAT_RGBA8)
+			icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+
+			icon_tex = ImageTexture.new()
+			icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
+			new_item.set_icon(0, icon_tex)
+
+		_thumbnail_cache[full_path] = {
+			"time": mod_time,
+			"icon_tex": icon_tex,
+			"text": final_text
+		}
 
 
 func scan_local_textures() -> void:
@@ -875,12 +883,17 @@ func scan_local_textures() -> void:
 		print("[WARNING] FileTree: scan_local_textures: directory not found, will create on texture import")
 		return
 
-	_scan_local_textures_recursive(textures_dir, local_storage_textures, 0)
+	var visited_paths: Dictionary = {}
+	_scan_local_textures_recursive(textures_dir, local_storage_textures, 0, visited_paths)
+
+	for cache_key in _thumbnail_cache.keys():
+		if not visited_paths.has(cache_key):
+			_thumbnail_cache.erase(cache_key)
 
 	print("[STATUS] FileTree: scan_local_textures: complete")
 	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dictionary) -> void:
+func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dictionary, atlas_tex_cache: Dictionary = {}) -> void:
 	var dir: Directory = Directory.new()
 	if dir.open(path) != OK:
 		return
@@ -908,7 +921,7 @@ func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dict
 		sub_item.set_text(0, f_name)
 		sub_item.set_metadata(0, sub_path + "/")
 		sub_item.set_collapsed(true)
-		_scan_res_dir_recursive(sub_path, sub_item, manifest)
+		_scan_res_dir_recursive(sub_path, sub_item, manifest, atlas_tex_cache)
 		
 	var added_files: Dictionary = {}
 	for f_name in files:
@@ -946,12 +959,18 @@ func _scan_res_dir_recursive(path: String, parent_item: TreeItem, manifest: Dict
 						
 						var atlas_path: String = "res://resources/texture_atlas/" + atlas_file
 						if ResourceLoader.exists(atlas_path):
-							var atlas_tex = load(atlas_path)
-							var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
-							var icon_tex: AtlasTexture = AtlasTexture.new()
-							icon_tex.atlas = atlas_tex
-							icon_tex.region = region
-							new_item.set_icon(0, icon_tex)
+							var atlas_tex = null
+							if atlas_tex_cache.has(atlas_path):
+								atlas_tex = atlas_tex_cache[atlas_path]
+							else:
+								atlas_tex = ResourceLoader.load(atlas_path)
+								atlas_tex_cache[atlas_path] = atlas_tex
+							if atlas_tex:
+								var region: Rect2 = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
+								var icon_tex: AtlasTexture = AtlasTexture.new()
+								icon_tex.atlas = atlas_tex
+								icon_tex.region = region
+								new_item.set_icon(0, icon_tex)
 
 
 func scan_res_textures() -> void:
@@ -969,7 +988,8 @@ func scan_res_textures() -> void:
 			manifest = result.result
 			print("[STATUS] FileTree: scan_res_textures: loaded texture atlas manifest")
 
-	_scan_res_dir_recursive(textures_dir, res_textures, manifest)
+	var atlas_tex_cache: Dictionary = {}
+	_scan_res_dir_recursive(textures_dir, res_textures, manifest, atlas_tex_cache)
 
 	print("[STATUS] FileTree: scan_res_textures: complete")
 	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")

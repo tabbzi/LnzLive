@@ -28,9 +28,10 @@ func _build_atlas_manifest_lookup():
 
 func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_palette: Array = []) -> Texture:
 	var t_start = OS.get_ticks_msec()
-	if _texture_cache.has(texture_filename):
+	var cache_key = texture_filename.to_lower()
+	if _texture_cache.has(cache_key):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-		return _texture_cache[texture_filename]
+		return _texture_cache[cache_key]
 
 	var texture = null
 	var base_name = texture_filename.get_basename()
@@ -66,7 +67,7 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 			texture.atlas = atlas_tex
 			texture.region = region
 
-			_texture_cache[texture_filename] = texture
+			_texture_cache[cache_key] = texture
 			print("[INFO] dog_generator: load_texture: loaded atlas texture: " + texture_filename)
 			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 			return texture
@@ -100,8 +101,9 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 			var candidates: Array = []
 			if loaded_path != "":
 				candidates.append(loaded_path)
-			candidates.append("user://resources/textures".plus_file(texture_filename))
-			candidates.append("res://resources/textures".plus_file(texture_filename))
+			else:
+				candidates.append("user://resources/textures".plus_file(texture_filename))
+				candidates.append("res://resources/textures".plus_file(texture_filename))
 			for candidate in candidates:
 				if candidate == "":
 					continue
@@ -119,7 +121,7 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
-	_texture_cache[texture_filename] = texture
+	_texture_cache[cache_key] = texture
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 
 	return texture
@@ -139,11 +141,14 @@ func load_texture_from_list(texture_id: int, texture_list: Array, preloader: Res
 func clear_texture_cache_for(filename: String) -> void:
 	var exact = filename
 	var lower = filename.to_lower()
+	var file_lower = filename.get_file().to_lower()
 
 	if _texture_cache.has(exact):
 		_texture_cache.erase(exact)
 	if _texture_cache.has(lower):
 		_texture_cache.erase(lower)
+	if _texture_cache.has(file_lower):
+		_texture_cache.erase(file_lower)
 
 	# Force a path lookup on the next request
 	var base_key = lower.get_file().trim_suffix(".import")
