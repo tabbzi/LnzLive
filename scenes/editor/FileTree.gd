@@ -997,6 +997,7 @@ func scan_res_textures() -> void:
 func scan_local_palettes(allow_bmp_conversion: bool = false) -> void:
 	print("[STATUS] FileTree: scan_local_palettes: running")
 	var t_start: int = OS.get_ticks_msec()
+	LnzLiveUtils.clear_palette_cache()
 	var dir2: Directory = Directory.new()
 	if not dir2.dir_exists(user_file_location + "/palettes"):
 		print("[WARNING] FileTree: scan_local_palettes: directory not found")

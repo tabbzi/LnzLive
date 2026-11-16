@@ -765,7 +765,7 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 
 static func extract_palette_from_rampimg(tex: Texture, use_cache: bool = true) -> Array:
 	if use_cache and tex != null and tex.get("resource_path") != "":
-		var cache_key = "palette_extract_" + str(tex.resource_path)
+		var cache_key: String = "palette_extract_" + str(hash(tex.resource_path))
 		if Engine.has_meta(cache_key):
 			return Engine.get_meta(cache_key)
 	var img: Image = tex.get_data()
@@ -778,9 +778,17 @@ static func extract_palette_from_rampimg(tex: Texture, use_cache: bool = true) -
 	for i in range(256):
 		pal.append(img.get_pixel(i, 0))
 	img.unlock()
-	if use_cache:
-		Engine.set_meta("palette_extract_" + str(tex.resource_path), pal)
+	if use_cache and tex != null and tex.get("resource_path") != "":
+		Engine.set_meta("palette_extract_" + str(hash(tex.resource_path)), pal)
 	return pal
+
+static func clear_palette_cache() -> void:
+	var keys_to_remove = []
+	for key in Engine.get_meta_list():
+		if str(key).begins_with("palette_extract_"):
+			keys_to_remove.append(key)
+	for key in keys_to_remove:
+		Engine.remove_meta(key)
 
 static func get_texture_load_action(bmp_palette: Array, default_palette: Array, custom_lnz_palette: Array = []) -> Dictionary:
 	var default_diff: float = verify_palette_compatibility(bmp_palette, default_palette)

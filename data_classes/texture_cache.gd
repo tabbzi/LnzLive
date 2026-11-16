@@ -28,7 +28,9 @@ func _build_atlas_manifest_lookup():
 
 func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_palette: Array = []) -> Texture:
 	var t_start = OS.get_ticks_msec()
-	var cache_key = texture_filename.to_lower()
+	var cache_key = texture_filename.to_lower() + "_babyz" if is_babyz_mode else texture_filename.to_lower()
+	if custom_lnz_palette.size() > 0:
+		cache_key = cache_key + "_custom"
 	if _texture_cache.has(cache_key):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 		return _texture_cache[cache_key]
@@ -139,19 +141,19 @@ func load_texture_from_list(texture_id: int, texture_list: Array, preloader: Res
 
 
 func clear_texture_cache_for(filename: String) -> void:
-	var exact = filename
-	var lower = filename.to_lower()
-	var file_lower = filename.get_file().to_lower()
+	var lower: String = filename.to_lower()
+	var file_lower: String = filename.get_file().to_lower()
+	var keys_to_erase: Array = []
+	
+	for k in _texture_cache.keys():
+		var k_str: String = str(k)
+		if k_str.begins_with(lower) or k_str.begins_with(file_lower):
+			keys_to_erase.append(k)
+			
+	for k in keys_to_erase:
+		_texture_cache.erase(k)
 
-	if _texture_cache.has(exact):
-		_texture_cache.erase(exact)
-	if _texture_cache.has(lower):
-		_texture_cache.erase(lower)
-	if _texture_cache.has(file_lower):
-		_texture_cache.erase(file_lower)
-
-	# Force a path lookup on the next request
-	var base_key = lower.get_file().trim_suffix(".import")
+	var base_key: String = file_lower.trim_suffix(".import")
 	if _path_cache.has(base_key):
 		_path_cache.erase(base_key)
 
