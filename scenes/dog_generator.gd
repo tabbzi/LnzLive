@@ -1466,7 +1466,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					entry.tile_texture = not lnz.no_texture_rotate.has(key)
 					entry.transparent_color = 0
 					if pb_data.texture_id >= 0 and pb_data.texture_id < texture_list.size():
-						var tex = load_texture_from_list(pb_data.texture_id, texture_list, active_custom_palette, is_babyz_mode)
+						var tex = load_texture_from_list(pb_data.texture_id, texture_list, preloader, active_custom_palette, is_babyz_mode)
 						if tex:
 							entry.has_texture = true
 							entry.texture = tex
