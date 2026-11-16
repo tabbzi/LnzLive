@@ -62,7 +62,7 @@ func _should_display(event: InputEventKey, key_str: String) -> bool:
 	var is_text_input: bool = (focus_owner is TextEdit or focus_owner is LineEdit)
 	
 	if is_text_input:
-		if event.control or event.alt or event.shift:
+		if event.control or event.command or event.meta or event.alt or event.shift:
 			return true
 			
 		return _is_special_key(event.scancode) 
@@ -92,6 +92,8 @@ func _get_combo_string(event: InputEventKey) -> String:
 	if event.control or KEY_CONTROL in active_keys: 
 		if not "CTRL" in parts: 
 			parts.append("CTRL")
+	if event.meta or KEY_META in active_keys:
+		parts.append("CMD" if OS.get_name() == "OSX" else "META")
 	if event.alt or KEY_ALT in active_keys: 
 		if not "ALT" in parts: 
 			parts.append("ALT")
@@ -119,6 +121,7 @@ func _get_combo_string(event: InputEventKey) -> String:
 func _get_key_name(scancode: int) -> String:
 	match scancode:
 		KEY_CONTROL: return "CTRL"
+		KEY_META: return "CMD" if OS.get_name() == "OSX" else "META"
 		KEY_ALT: return "ALT"
 		KEY_SHIFT: return "SHIFT"
 		KEY_TAB: return "TAB"
@@ -127,4 +130,4 @@ func _get_key_name(scancode: int) -> String:
 			return OS.get_scancode_string(scancode).to_upper() 
 
 func _is_modifier(scancode: int) -> bool:
-	return scancode == KEY_CONTROL or scancode == KEY_SHIFT or scancode == KEY_ALT
+	return scancode == KEY_META or scancode == KEY_CONTROL or scancode == KEY_SHIFT or scancode == KEY_ALT

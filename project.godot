@@ -79,7 +79,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/palette_grid.gd"
 }, {
-"base": "Node",
+"base": "Reference",
 "class": "PolyData",
 "language": "GDScript",
 "path": "res://data_classes/polygon_data.gd"
@@ -119,6 +119,7 @@ boot_splash/image="res://launcher/images/launcher_roll_still1.png"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0.168627, 0.45098, 0.45098, 1 )
 config/icon="res://LnzLiveIcon.png"
+config/macos_native_icon="res://AppIcon.icns"
 
 [autoload]
 
@@ -143,7 +144,7 @@ window/stretch/shrink=1.5
 
 [editor_plugins]
 
-enabled=PoolStringArray( "gut" )
+enabled=PoolStringArray( "petz_texture", "gut" )
 
 [global]
 

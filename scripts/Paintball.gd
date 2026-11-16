@@ -329,43 +329,43 @@ func _on_Area_mouse_exited():
 	
 func _input(event):
 	if event is InputEventKey and event.pressed and is_over and select_mode_active:
-		if event.scancode == KEY_SPACE and event.control:
+		if event.scancode == KEY_SPACE and LnzLiveUtils.shortcut_modifier(event):
 			return
 			
 		if HotkeyManager:
 			if HotkeyManager.is_action_pressed("select_jump_info") or HotkeyManager.is_action_pressed("select_jump_info_alt"):
-				if not event.alt and not event.control and ball_no != -1:
+				if not event.alt and not lnzliveutils.shortcut_modifier(event) and ball_no != -1:
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.BALL)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_move") or HotkeyManager.is_action_pressed("select_jump_move_alt"):
-				if not event.alt and not event.control and ball_no != -1:
+				if not event.alt and not lnzliveutils.shortcut_modifier(event) and ball_no != -1:
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.MOVE)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_project") or HotkeyManager.is_action_pressed("select_jump_project_alt"):
-				if not event.alt and not event.control and ball_no != -1:
+				if not event.alt and not lnzliveutils.shortcut_modifier(event) and ball_no != -1:
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_line") or HotkeyManager.is_action_pressed("select_jump_line_alt"):
-				if not event.alt and not event.control and ball_no != -1:
+				if not event.alt and not lnzliveutils.shortcut_modifier(event) and ball_no != -1:
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.LINE)
 					return
-		elif (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
+		elif (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.BALL)
-		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
+		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.MOVE)
-		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not event.control:
+		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
-		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
+		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			if ball_no != -1:
 				emit_signal("ball_selected", ball_no, Section.Section.LINE)

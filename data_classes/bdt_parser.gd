@@ -70,31 +70,31 @@ func _init(filename: String, frame_indexes: Array, balls_num: int):
 
 		var balls = []
 		for ball in balls_num:
-			var x = file.get_s16()
+			var x = _read_s16(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading ball x at frame ", frame_offset, " ball ", ball)
 				break
-			var y = file.get_s16()
+			var y = _read_s16(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading ball y at frame ", frame_offset, " ball ", ball)
 				break
-			var z = file.get_s16()
+			var z = _read_s16(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading ball z at frame ", frame_offset, " ball ", ball)
 				break
-			var rot1 = file.get_s8()
+			var rot1 = _read_s8(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading rot1 at frame ", frame_offset, " ball ", ball)
 				break
-			var rot2 = file.get_s8()
+			var rot2 = _read_s8(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading rot2 at frame ", frame_offset, " ball ", ball)
 				break
-			var rot3 = file.get_s8()
+			var rot3 = _read_s8(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading rot3 at frame ", frame_offset, " ball ", ball)
 				break
-			var _tag3 = file.get_s8()
+			var _tag3 = _read_s8(file)
 			if file.eof_reached():
 				print("[WARNING] BdtParser: EOF reading tag3 at frame ", frame_offset, " ball ", ball)
 				break
@@ -113,3 +113,13 @@ func _init(filename: String, frame_indexes: Array, balls_num: int):
 			print("[WARNING] BdtParser: incomplete frame at offset ", frame_offset, " (got ", balls.size(), " of ", balls_num, " balls)")
 
 	file.close()
+
+# Stock Godot File exposes unsigned reads only. BDT coordinates and rotations
+# use two's-complement signed integers; preserve the full negative ranges.
+static func _read_s16(file: File) -> int:
+	var value: int = file.get_16()
+	return value - 65536 if value >= 32768 else value
+
+static func _read_s8(file: File) -> int:
+	var value: int = file.get_8()
+	return value - 256 if value >= 128 else value

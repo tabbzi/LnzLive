@@ -7,6 +7,14 @@
 
 ![screenshot](screenshot.png)
 
+## Open the source project
+
+Use **Godot 3.5.3 Standard** ([macOS, Windows, and Linux downloads](https://godotengine.org/download/archive/3.5.3-stable/)). Import `project.godot`, let resource imports finish, and press **F5**. The bundled `engine/godot.zip` Windows executable is no longer required: the enabled Petz Texture plugin and GDScript image loader replace its indexed BMP features. Restart the editor if the first import reports missing resources before plugins finish loading.
+
+Do not convert this project to Godot 4. Godot 3 uses the ignored `.import/` cache; Godot 4 creates `.godot/` and `.uid` files and requires script and scene migration. Both cache directories are already ignored. Keep existing tracked `.import` sidecars: they select the Petz importer and retain texture settings. Godot 3.5.3 may refresh some import metadata and the script class cache in `project.godot`; review those changes separately from source edits.
+
+Use matching **3.5.3 export templates** when exporting, rather than the bundled custom templates. The launcher is a separate project.
+
 ## Quick Start
 
 For full instructions, see the [User Guide](docs/GUIDE.md)!
@@ -31,7 +39,7 @@ For full instructions, see the [User Guide](docs/GUIDE.md)!
 
 The launcher helps you keep up-to-date on the latest releases. You can download the executable here:
 
-[https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe](https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe)
+[https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe](https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.2.exe)
 
 ## Browser
 

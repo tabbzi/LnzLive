@@ -15,6 +15,14 @@ const PATH_TEXTEDIT = "Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelC
 const PATH_PETROOT = "Root/PetRoot/Node"
 const PATH_PETVIEW = "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
 
+# Godot maps command to Ctrl on Windows/Linux and Command on macOS.
+# Keep physical Ctrl available on macOS for existing tool controls.
+static func shortcut_modifier(event: InputEventWithModifiers) -> bool:
+	return event.control or event.command
+
+static func shortcut_modifier_pressed() -> bool:
+	return Input.is_key_pressed(KEY_CONTROL) or (OS.get_name() == "OSX" and Input.is_key_pressed(KEY_META))
+
 static func format_ball_ranges(ball_ids: Array) -> String:
 	if ball_ids.empty():
 		return ""

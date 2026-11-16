@@ -384,7 +384,7 @@ func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = fal
 
 	if current_import_type == ImportType.PALETTE:
 		var img: Image = Image.new()
-		var err: int = img.load(selected_path, false, false)
+		var err: int = preload("res://scripts/petz_image.gd").load_image(img, selected_path, false, false)
 		if err == OK:
 			if img.get_height() != 1:
 				print("[ERROR] FileTree: _on_FileDialog_file_selected: palette PNG " + selected_path.get_file() + " is not 1 pixel high, skipping")
@@ -818,7 +818,7 @@ func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: 
 			new_item.set_text(0, f_name + " (INVALID: " + validation["reason"] + ")")
 		else:
 			var img: Image = Image.new()
-			var err: int = img.load(full_path, true, true)
+			var err: int = preload("res://scripts/petz_image.gd").load_image(img, full_path, true, true)
 
 			if err == OK and img.get_width() > 0:
 				var full_tex: ImageTexture = ImageTexture.new()
@@ -839,7 +839,7 @@ func _scan_local_textures_recursive(path: String, parent_item: TreeItem, depth: 
 					file.close()
 
 					icon_img = Image.new()
-					icon_err = icon_img.load_bmp_from_buffer(buf)
+					icon_err = preload("res://scripts/petz_image.gd").load_bmp(icon_img, buf)
 
 					if icon_err == OK and icon_img.get_width() > 0:
 						icon_img.convert(Image.FORMAT_RGBA8)
@@ -1010,7 +1010,7 @@ func _process_palette_item(display_filename: String, full_path: String) -> void:
 	new_item.set_metadata(0, full_path)
 	
 	var img: Image = Image.new()
-	var err: int = img.load(full_path, true, true)
+	var err: int = preload("res://scripts/petz_image.gd").load_image(img, full_path, true, true)
 	
 	if err != OK:
 		new_item.set_text(0, display_filename + " (LOAD FAILED)")
