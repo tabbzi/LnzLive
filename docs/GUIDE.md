@@ -22,7 +22,7 @@ You can load LNZ data in several ways:
 *   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) directly into the text editor (right-hand panel).
 *   **Import from File:** Click `File > Import LNZ` to load a `.lnz` or `.txt` text file from your computer.
 
-To see your changes, click `Apply Changes` or save with `CTRL` + `S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
+To see your changes, click `Apply Changes` or save with `CTRL` + `S`. Your imported files will appear under `User LNZ` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
 
 ### Help! It crashes when I do X!
 
@@ -33,6 +33,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 ## User Interface Overview
 
 ### Controls
+
+On macOS, Command can replace Ctrl for shortcuts and tool modifiers. Use Cmd+Z to undo and Cmd+Shift+Z (or Cmd+Y) to redo committed edits. Queued Paintball/Move undo remains Ctrl+Shift+Z; queued redo also accepts Cmd+Shift+X. Mouse wheel scrolling, two-finger vertical scrolling, and pinch gestures zoom the viewport.
 
 | Context | Input / Hotkey | Action |
 | :--- | :--- | :--- |
@@ -65,6 +67,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `X` or `M` | Jumps to the `[Move]` entries involving hovered ball |
 | **Select Mode** | `C` or `P` | Jumps to the `[Project Ball]` entries involving hovered ball |
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
+| **Select Mode** | `J` | Cycles through `[Paint Ballz]` entries for hovered ball |
 | **Select Mode** | `N` or `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `H` | Hide hovered ball (visually, no LNZ changes) |
 | **Select Mode** | `DELETE` | Omit (if base ballz) or delete (if add ballz) hovered ball |
@@ -97,6 +100,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
 | **Move Mode** | `Q` | **Lock/Unlock** hovered ball (yellow outline) |
 | **Move Mode** | `CTRL` + `Q` | **Unlock All** locked ballz |
+| **Move Mode** | `CTRL` + `D` | **Duplicate** selected addballz + linez |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `ALT` + `SHIFT` + `left-click drag`| Scale/Resize selected group of ballz |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
@@ -132,13 +136,26 @@ LnzLive saves most settings made by the user into a config file `settings.cfg` t
 
 The file tree organizes your LNZ files, textures, and palettes.
 
-*   **Examples:** Contains preset LNZ files for you to explore and learn from.
-*   **Local Storage:** Stores LNZ files you have saved from the editor.
-*   **Local Textures:** Shows imported BMP texture files with a thumbnail preview and dimensions. This allows you to quickly see which textures you have available.
-*   **Base Textures:** Shows game textures built into LnzLive.
-*   **Local Palettes:** Shows imported palettes with a thumbnail preview. Double-click to apply a palette to the current model.
+*   **Example LNZ:** Contains preset LNZ files for you to explore and learn from.
+*   **User LNZ:** Stores LNZ files you have saved from the editor.
+*   **User Textures:** Shows imported BMP texture files with a thumbnail preview and dimensions. This allows you to quickly see which textures you have available.
+*   **Base LNZ:** Template LNZ files that you can load and edit. When you save changes, a new copy is created, keeping the original base file untouched so it can be used as a starting point for new hexes.
+*   **Game Textures:** Shows game textures built into LnzLive.
+*   **User Palettes:** Shows imported palettes with a thumbnail preview. Double-click to apply a palette to the current model.
 
-Right-click on a file in `Local Storage` for more options:
+#### Folders
+
+You can create folders within `User LNZ` and `User Textures` to organize your files. Right-click on any folder node (or the root of `User LNZ` / `User Textures`) and select **New Folder** to create a subfolder. Use the **Move To...** context menu option to move files between folders.
+
+#### Moving Files
+
+To move a file within the file tree, right-click the file and select **Move To...** to choose a destination folder.
+
+#### Scanning for New Files
+
+After adding files directly to your user folder via the file system (e.g., by placing files in `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures`), click the **Rescan** button (refresh icon) in the file tree toolbar to detect and load the new files. This updates the tree without needing to restart LnzLive.
+
+Right-click on a file in `User LNZ` for more options:
 
 *   **Delete:** Permanently removes the file.
 *   **Rename:** Changes the name of the file.
@@ -218,9 +235,9 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 
 ### File
 
-- **Import LNZ**: Load `.lnz` or `.txt` files containing LNZ data into Local Storage.
-- **Import Texture**: Load `.bmp` files into Local Textures. Shows thumbnail preview and dimensions.
-- **Import Palette:** Load `.bmp` palette or `.png` color ramp files into Local Palettes. Shows thumbnail preview and double-click to apply.
+-   **Import LNZ**: Load `.lnz` or `.txt` files containing LNZ data into User LNZ.
+-   **Import Texture**: Load `.bmp` files into User Textures. Shows thumbnail preview and dimensions.
+-   **Import Palette:** Load `.bmp` palette or `.png` color ramp files into User Palettes. Shows thumbnail preview and double-click to apply.
 - **Reference Image:** Configure reference image overlays (background, popup, position, scale).
 - **Shader Settings:** Adjust shader rendering parameters.
 - **Open User Folder:** Opens folder used to store local files including `.lnz` generated in LnzLive.
@@ -346,6 +363,7 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
+- **J**: cycle through `[Paint Ballz]` entries for this ball in the text editor.
 
 #### Recolor Mode
 
@@ -489,7 +507,7 @@ Coming soon!
 
 ![Texture Editor icon](../resources/icons/ico_tab_texture_2x.png)
 
-The Texture Editor allows you to edit texture files (.bmp) loaded in Local Textures. It provides a pixel canvas. This is useful for creating custom textures or modifying existing ones.
+The Texture Editor allows you to edit texture files (.bmp) loaded in User Textures. It provides a pixel canvas. This is useful for creating custom textures or modifying existing ones.
 
 ##### Tutorial: Texture Editor
 
@@ -668,7 +686,7 @@ P.F. Magic games are flexible with what constitutes valid LNZ. There is no canon
 
 ## Textures and Palettes
 
-Custom BMP files can be loaded from local storage by clicking "Import Texture" button. These should now appear under `Local Textures` in the file tree. You can now apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
+Custom BMP files can be loaded from local storage by clicking "Import Texture" button. These should now appear under `User Textures` in the file tree. You can now apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
 
 Similar to textures, custom palettes can be loaded from local storage, but need to be in a color ramp PNG format. You can convert your BMP palette image to a PNG in the format that LnzLive expects ahead of time using either of these web tools:
 
@@ -683,4 +701,4 @@ You can also add files directly for LnzLive to access from your file system:
 
 Click the "Open User Folder" button below the file tree or go to `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures` (you may have to create this folder).
 
-After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree. These will include a thumbnail preview! Custom textures will also report their dimensions in the File Tree.
+After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `User Textures` or `User Palettes` part of the file tree. These will include a thumbnail preview! Custom textures will also report their dimensions in the File Tree.

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CIRCLES.bmp-90894377088b7e6f98c6c9007443e34f.stex"
+path="res://.import/CHECKS_thumb.png-912034646ecb0829fb6c972ce547bb4d.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CIRCLES.bmp"
-dest_files=[ "res://.import/CIRCLES.bmp-90894377088b7e6f98c6c9007443e34f.stex" ]
+source_file="res://resources/textures/other/CHECKS_thumb.png"
+dest_files=[ "res://.import/CHECKS_thumb.png-912034646ecb0829fb6c972ce547bb4d.stex" ]
 
 [params]
 

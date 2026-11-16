@@ -15,6 +15,14 @@ const PATH_TEXTEDIT = "Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelC
 const PATH_PETROOT = "Root/PetRoot/Node"
 const PATH_PETVIEW = "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
 
+# Godot maps command to Ctrl on Windows/Linux and Command on macOS.
+# Keep physical Ctrl available on macOS for existing tool controls.
+static func shortcut_modifier(event: InputEventWithModifiers) -> bool:
+	return event.control or event.command
+
+static func shortcut_modifier_pressed() -> bool:
+	return Input.is_key_pressed(KEY_CONTROL) or (OS.get_name() == "OSX" and Input.is_key_pressed(KEY_META))
+
 static func format_ball_ranges(ball_ids: Array) -> String:
 	if ball_ids.empty():
 		return ""
@@ -283,46 +291,32 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 ### SIZE CONVERSIONS ###
 static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> int:
 	# Converts a visual float size back to a raw LNZ integer size
-	if is_anchored:
-		return int(round(target_visual - bhd_size))
-	
 	if engine_scale <= 0.0:
 		return 0
 	
 	var req_total: float = (target_visual / (engine_scale / 255.0)) + 2.0
-	
-	if not is_addball:
-		req_total = (req_total - enl_y) / (enl_x / 100.0)
+	req_total = (req_total - enl_y) / (enl_x / 100.0)
 		
 	return int(round(req_total - bhd_size))
 
 static func lnz_to_visual_size(lnz_size: int, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
 	# Converts a raw LNZ integer size to a visual float size
-	if is_anchored:
-		return max(1.0, float(bhd_size + lnz_size))
-	
 	if engine_scale <= 0.0:
 		return 0.0
 	
 	var total: float = lnz_size + bhd_size
-	if not is_addball:
-		total = total * (enl_x / 100.0) + enl_y
+	total = total * (enl_x / 100.0) + enl_y
 	return (total - 2.0) * (engine_scale / 255.0)
 
 static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0, is_anchored: bool = false) -> float:
 	# Takes a visual size, converts to LNZ, snaps to even, converts back to visual size, and returns snapped value
-	if is_anchored:
-		var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, true)
-		return max(1.0, float(bhd_size + final_lnz))
-	
 	if engine_scale <= 0.0:
 		return 0.0
 	
 	var final_lnz: int = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size, enl_x, enl_y, false)
 	var current_base_size: float = bhd_size + final_lnz
 	
-	if not is_addball:
-		current_base_size = floor(current_base_size * (enl_x / 100.0)) + enl_y
+	current_base_size = floor(current_base_size * (enl_x / 100.0)) + enl_y
 		
 	var offset: float = 2.0
 	var snapped: float = round((current_base_size - offset) * (engine_scale / 255.0))
@@ -572,15 +566,10 @@ static func get_texture_dimensions(path: String) -> Dictionary:
 	if path.begins_with("res://resources/textures/"):
 		var atlas_key: String = path.get_file().get_basename()
 		var manifest = _load_atlas_manifest()
-		if manifest.has(atlas_key):
-			result["width"] = manifest[atlas_key].get("w", 0)
-			result["height"] = manifest[atlas_key].get("h", 0)
+		if manifest.has(atlas_key.to_lower()):
+			result["width"] = manifest[atlas_key.to_lower()].get("w", 0)
+			result["height"] = manifest[atlas_key.to_lower()].get("h", 0)
 			return result
-		for key in manifest:
-			if key.to_lower() == atlas_key.to_lower():
-				result["width"] = manifest[key].get("w", 0)
-				result["height"] = manifest[key].get("h", 0)
-				return result
 	
 	if not path.begins_with("res://"):
 		return result
@@ -606,14 +595,22 @@ static func _load_atlas_manifest() -> Dictionary:
 		f.close()
 		var parsed = JSON.parse(json_text)
 		if parsed.result is Dictionary:
-			manifest = parsed.result
+			for key in parsed.result:
+				var lower_key = str(key).to_lower()
+				manifest[lower_key] = parsed.result[key]
 	elif ResourceLoader.exists(ATLAS_MANIFEST_PATH):
 		var res = ResourceLoader.load(ATLAS_MANIFEST_PATH)
 		if res is Dictionary:
-			manifest = res
+			for key in res:
+				var lower_key = str(key).to_lower()
+				manifest[lower_key] = res[key]
 
 	Engine.set_meta(cache_key, manifest)
 	return manifest
+
+static func clear_atlas_manifest_cache() -> void:
+	if Engine.has_meta("atlas_manifest_cache"):
+		Engine.remove_meta("atlas_manifest_cache")
 
 static func validate_8bit_bmp(path: String) -> Dictionary:
 	var f: File = File.new()
@@ -689,7 +686,15 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	if debug:
 		print("[DEBUG] BMP Import - Dumping first 5 palette entries for: ", path)
 		
-	for i in range(256):
+	f.seek(46)
+	var colors_used: int = f.get_32()
+	var palette_entry_count: int = colors_used if (colors_used > 0 and colors_used < 256) else 256
+	
+	f.seek(14 + _header_size)
+	var max_possible_entries: int = (pixel_offset - (14 + _header_size)) / 4
+	var palette_limit: int = min(palette_entry_count, max_possible_entries)
+	
+	for i in range(palette_limit):
 		var b: int = f.get_8()
 		var g: int = f.get_8()
 		var r: int = f.get_8()
@@ -714,18 +719,23 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 		
 	f.seek(pixel_offset)
 	var row_size: int = int((w + 3) / 4) * 4
+	var pixel_data_size: int = row_size * h
+	var raw_pixels: PoolByteArray = f.get_buffer(pixel_data_size)
+	f.close()
+	
 	var index_data: PoolByteArray = PoolByteArray()
 	index_data.resize(w * h)
 	
-	for i in range(h):
-		var y: int = (h - 1 - i) if is_bottom_up else i
-		var row_data: PoolByteArray = f.get_buffer(row_size)
-		for x in range(w):
-			if x < row_data.size():
-				index_data[y * w + x] = row_data[x]
-		row_data.resize(0)
-				
-	f.close()
+	if not is_bottom_up and row_size == w:
+		for i in range(pixel_data_size):
+			index_data[i] = raw_pixels[i]
+	else:
+		for i in range(h):
+			var y: int = (h - 1 - i) if is_bottom_up else i
+			var src_start: int = i * row_size
+			for x in range(w):
+				if x < row_size:
+					index_data[y * w + x] = raw_pixels[src_start + x]
 
 	var target_tex: Texture = BABYZ_PALETTE if is_babyz_mode else DEFAULT_PALETTE
 	var target_palette: Array = extract_palette_from_rampimg(target_tex)
@@ -753,7 +763,11 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 
 	return { "w": w, "h": h, "data": index_data }
 
-static func extract_palette_from_rampimg(tex: Texture) -> Array:
+static func extract_palette_from_rampimg(tex: Texture, use_cache: bool = true) -> Array:
+	if use_cache and tex != null and tex.get("resource_path") != "":
+		var cache_key = "palette_extract_" + str(tex.resource_path)
+		if Engine.has_meta(cache_key):
+			return Engine.get_meta(cache_key)
 	var img: Image = tex.get_data()
 	if img == null:
 		print("[ERROR] extract_palette_from_rampimg: Texture data is null!")
@@ -764,6 +778,8 @@ static func extract_palette_from_rampimg(tex: Texture) -> Array:
 	for i in range(256):
 		pal.append(img.get_pixel(i, 0))
 	img.unlock()
+	if use_cache:
+		Engine.set_meta("palette_extract_" + str(tex.resource_path), pal)
 	return pal
 
 static func get_texture_load_action(bmp_palette: Array, default_palette: Array, custom_lnz_palette: Array = []) -> Dictionary:
@@ -832,7 +848,10 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 		var col1: Color = bmp_palette[i]
 		for j in range(10, target_palette.size()):
 			var col2: Color = target_palette[j]
-			var d: float = pow(col1.r - col2.r, 2) + pow(col1.g - col2.g, 2) + pow(col1.b - col2.b, 2)
+			var dr: float = col1.r - col2.r
+			var dg: float = col1.g - col2.g
+			var db: float = col1.b - col2.b
+			var d: float = dr * dr + dg * dg + db * db
 			if d < min_dist:
 				min_dist = d
 				best_idx = j

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CIRCLES_thumb.png-7d1d53cbfa7a24b122ab9590d6aafabc.stex"
+path="res://.import/GROOVY2.bmp-c85cda1d670f4b1b50b69a8165e2e610.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CIRCLES_thumb.png"
-dest_files=[ "res://.import/CIRCLES_thumb.png-7d1d53cbfa7a24b122ab9590d6aafabc.stex" ]
+source_file="res://resources/textures/other/GROOVY2.bmp"
+dest_files=[ "res://.import/GROOVY2.bmp-c85cda1d670f4b1b50b69a8165e2e610.stex" ]
 
 [params]
 

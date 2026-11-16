@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CALI2.bmp-d040119a6bc9ab8ce979a0b096ab015b.stex"
+path="res://.import/CHECKS.bmp-2f93e7ea510d51dbce8d1fcd64323809.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CALI2.bmp"
-dest_files=[ "res://.import/CALI2.bmp-d040119a6bc9ab8ce979a0b096ab015b.stex" ]
+source_file="res://resources/textures/other/CHECKS.bmp"
+dest_files=[ "res://.import/CHECKS.bmp-2f93e7ea510d51dbce8d1fcd64323809.stex" ]
 
 [params]
 

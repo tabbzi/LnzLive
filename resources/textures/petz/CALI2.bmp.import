@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/CHAINMAIL2_thumb.png-6acd6367f0ce10f8d8193981fabdf022.stex"
+path="res://.import/CALI2.bmp-848a4316d6c09ffe83dc12dde1fbe2e1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/CHAINMAIL2_thumb.png"
-dest_files=[ "res://.import/CHAINMAIL2_thumb.png-6acd6367f0ce10f8d8193981fabdf022.stex" ]
+source_file="res://resources/textures/petz/CALI2.bmp"
+dest_files=[ "res://.import/CALI2.bmp-848a4316d6c09ffe83dc12dde1fbe2e1.stex" ]
 
 [params]
 

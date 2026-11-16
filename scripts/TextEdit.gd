@@ -17,7 +17,7 @@ func save_file():
 	file.store_string(text)
 
 func _unhandled_key_input(event):
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
+	if LnzLiveUtils.shortcut_modifier_pressed() and event.pressed and event.scancode == KEY_S:
 		save_file()
 		emit_signal("file_saved")
 		print("saved file")

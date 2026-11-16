@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/ZEBRA2.bmp-e1c9007878b7eea54b4383581433f8c8.stex"
+path="res://.import/CALI5.bmp-b2d13a3deae1f09aec3f3d00a0e9af51.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/ZEBRA2.bmp"
-dest_files=[ "res://.import/ZEBRA2.bmp-e1c9007878b7eea54b4383581433f8c8.stex" ]
+source_file="res://resources/textures/petz/CALI5.bmp"
+dest_files=[ "res://.import/CALI5.bmp-b2d13a3deae1f09aec3f3d00a0e9af51.stex" ]
 
 [params]
 

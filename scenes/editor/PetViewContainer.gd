@@ -89,6 +89,9 @@ const TAB_RESET_THRESHOLD_PIXELS: float = 15.0
 enum Mode { NONE, MOVE, PAINTBALL, LINE, PRESET, RECOLOR, PROJECT, AUTO_PAINTBALLER, TEXTURE_EDITOR }
 var current_mode: int = Mode.NONE
 
+enum BallPickingMode { GEOMETRIC_DEPTH, VISUAL_DEPTH }
+var ball_picking_mode: int = BallPickingMode.VISUAL_DEPTH
+
 var input_is_paused: bool = false
 
 var last_selected = null
@@ -110,6 +113,7 @@ var drag_start_pos: Vector2 = Vector2()
 
 var _scale_group_pivot: Vector3 = Vector3.ZERO
 var _scale_group_initial_data: Dictionary = {}
+var _scale_mirror_initial_data: Dictionary = {}
 
 var _group_panning: bool = false
 var _group_pan_start_pos: Vector2 = Vector2.ZERO
@@ -385,6 +389,7 @@ func _ready() -> void:
 	move_mode_settings_instance.connect("lock_all", self, "_on_lock_all")
 	move_mode_settings_instance.connect("unlock_all", self, "_on_unlock_all")
 	move_mode_settings_instance.connect("select_locked_balls_by_ids", self, "_on_select_locked_balls_by_ids")
+	move_mode_settings_instance.connect("duplicate_selection", self, "_duplicate_selected_addballz")
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
@@ -475,7 +480,7 @@ func _update_reference_image_bg() -> void:
 			bg.texture = null
 		
 		var image: Image = Image.new()
-		var err: int = image.load(current_path, false, false)
+		var err: int = preload("res://scripts/petz_image.gd").load_image(image, current_path, false, false)
 		if err == OK:
 			var texture: ImageTexture = ImageTexture.new()
 			texture.create_from_image(image)
@@ -673,10 +678,10 @@ func _process(_delta: float) -> void:
 		if HotkeyManager and InputMap.has_action("paint_eraser"):
 			var binding = HotkeyManager.get_binding("paint_eraser")
 			if not binding.empty():
-				if binding.get("ctrl", false) and Input.is_key_pressed(KEY_CONTROL): temp_eraser_active = true
+				if binding.get("ctrl", false) and LnzLiveUtils.shortcut_modifier_pressed(): temp_eraser_active = true
 				if binding.get("shift", false) and Input.is_key_pressed(KEY_SHIFT): temp_eraser_active = true
 				if binding.get("alt", false) and Input.is_key_pressed(KEY_ALT): temp_eraser_active = true
-		elif Input.is_key_pressed(KEY_CONTROL):
+		elif LnzLiveUtils.shortcut_modifier_pressed():
 			temp_eraser_active = true
 
 		var is_design_mode: bool = paintball_settings_instance.is_design_mode_active()
@@ -758,7 +763,7 @@ func _process(_delta: float) -> void:
 		#update() # AXIS GIZMO
 
 	else:
-		if Input.is_key_pressed(KEY_CONTROL):
+		if LnzLiveUtils.shortcut_modifier_pressed():
 			body = "Open Tools Menu (" + _get_hotkey_display("select_tools_menu") + ")\nApply and Save Changes (" + _get_hotkey_display("text_save") + ")\nFlash Ballz (" + _get_hotkey_display("global_flash_ballz") + ")"
 		elif Input.is_key_pressed(KEY_SHIFT):
 			body = "Move Ball (" + _get_hotkey_display("visual_move") + ")\nScale Ball (" + _get_hotkey_display("visual_scale") + ")"
@@ -979,22 +984,22 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 			if ab != null and ab.anchor_ball > -1:
 				var anchor_id: int = ab.anchor_ball
 				is_anchored = true
-				if pet_node.ball_map.has(anchor_id) and is_instance_valid(pet_node.ball_map[anchor_id]):
-					bhd_size = int(round(pet_node.ball_map[anchor_id].ball_size))
-				elif anchor_id < pet_node.bhd.ball_sizes.size():
-					var anchor_pre: float = float(pet_node.bhd.ball_sizes[anchor_id])
+				if anchor_id < pet_node.bhd.ball_sizes.size():
+					bhd_size = pet_node.bhd.ball_sizes[anchor_id]
 					if pet_node.lnz.balls.has(anchor_id):
-						anchor_pre += float(pet_node.lnz.balls[anchor_id].size)
+						bhd_size += pet_node.lnz.balls[anchor_id].size
+					
 					var head_ext: Array = KeyBallsData.get_head_ext(pet_node.lnz.species)
 					var foot_ext: Array = KeyBallsData.get_foot_ext(pet_node.lnz.species)
 					if anchor_id in head_ext:
-						anchor_pre = floor(anchor_pre * (pet_node.lnz.head_enlargement.x / 100.0)) + pet_node.lnz.head_enlargement.y
+						enl_x = pet_node.lnz.head_enlargement.x
+						enl_y = pet_node.lnz.head_enlargement.y
 					else:
 						for foot_group in foot_ext:
 							if anchor_id in foot_group:
-								anchor_pre = floor(anchor_pre * (pet_node.lnz.foot_enlargement.x / 100.0)) + pet_node.lnz.foot_enlargement.y
+								enl_x = pet_node.lnz.foot_enlargement.x
+								enl_y = pet_node.lnz.foot_enlargement.y
 								break
-					bhd_size = int(LnzLiveUtils.lnz_to_visual_size_snapped(anchor_pre, pet_node.lnz.scales[1]))
 
 
 	return {
@@ -1014,13 +1019,16 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	return global_pos - self.rect_global_position
 
 func _handle_box_selection(event: InputEvent) -> bool:
-	if not (move_mode or preset_mode or auto_paintballer_mode):
+	if (
+		not (move_mode or preset_mode or auto_paintballer_mode)
+		or not LnzLiveUtils.shortcut_modifier_pressed()
+	):
 		return false
 
 	var start_select: bool = false
 	if HotkeyManager and InputMap.has_action("global_box_select"):
 		start_select = HotkeyManager.is_exact_action(event, "global_box_select") and event.pressed
-	elif event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.control and event.pressed:
+	elif event is InputEventMouseButton and event.button_index == BUTTON_LEFT and LnzLiveUtils.shortcut_modifier(event) and event.pressed:
 		start_select = true
 
 	if start_select:
@@ -1070,25 +1078,32 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 	is_resizing = resizing
 
 	if resizing:
-		#_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
 		_scale_group_pivot = _get_rotation_pivot_origin(
 			int(pivot_ball_spinbox.value) if use_pivot_check_box.pressed else -1
 		)
 
 		_scale_group_initial_data.clear()
+		_scale_mirror_initial_data.clear()
+		_record_move_start_state()
 		for b in selected_balls:
 			if is_instance_valid(b):
 				_scale_group_initial_data[b.ball_no] = {
 					"pos": b.global_transform.origin, "size": b.ball_size
 				}
-				if move_mode_settings_instance.is_mirror_x_active():
+				if not pet_node._orig_world_pos.has(b.ball_no):
+					pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+				_track_pending_move(b)
+				if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 					var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 					if partner_id != -1 and partner_id != b.ball_no:
 						var mb: Spatial = find_visual_ball_by_no(partner_id)
-						if mb:
-							_scale_group_initial_data[partner_id] = {
+						if mb and not _scale_mirror_initial_data.has(partner_id):
+							_scale_mirror_initial_data[partner_id] = {
 								"pos": mb.global_transform.origin, "size": mb.ball_size
 							}
+							if not pet_node._orig_world_pos.has(partner_id):
+								pet_node._orig_world_pos[partner_id] = mb.global_transform.origin
+							_track_pending_move(mb)
 		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 	else:
 		_record_move_start_state()
@@ -1170,7 +1185,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 						is_scale_group = true
 					elif event.alt:
 						is_set_pivot = true
-					elif event.control:
+					elif LnzLiveUtils.shortcut_modifier(event):
 						is_multi_select = true
 
 				if is_scale_group and selected_balls.size() > 0:
@@ -1261,6 +1276,22 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 									):
 										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no]["size"]
 
+					if was_resizing and is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+						for partner_id in _scale_mirror_initial_data:
+							var mb: Spatial = find_visual_ball_by_no(partner_id)
+							if is_instance_valid(mb) and not pending_moves.has(partner_id):
+								pending_moves[partner_id] = {
+									"orig_pos": _scale_mirror_initial_data[partner_id].pos,
+									"new_pos": mb.global_transform.origin,
+									"orig_size": _scale_mirror_initial_data[partner_id].size,
+									"new_size": mb.ball_size,
+									"orig_basis": mb.global_transform.basis,
+									"new_basis": mb.global_transform.basis
+								}
+							elif is_instance_valid(mb):
+								pending_moves[partner_id]["new_pos"] = mb.global_transform.origin
+								pending_moves[partner_id]["new_size"] = mb.ball_size
+
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
 					_update_unapplied_changes_label()
 					_record_move_end_state("Drag Move")
@@ -1288,6 +1319,8 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 			var engine_scale: float = pet_node.lnz.scales[1]
 			for b_no in _scale_group_initial_data:
+				if b_no >= KeyBallsData.max_base_ball_num:
+					continue
 				var b: Spatial = find_visual_ball_by_no(b_no)
 				if not is_instance_valid(b):
 					continue
@@ -1307,7 +1340,29 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				)
 				b.set_ball_size(snapped_visual)
 
-			if move_mode_settings_instance.is_mirror_x_active():
+			for b_no in _scale_group_initial_data:
+				if b_no < KeyBallsData.max_base_ball_num:
+					continue
+				var b: Spatial = find_visual_ball_by_no(b_no)
+				if not is_instance_valid(b):
+					continue
+
+				var initial: Dictionary = _scale_group_initial_data[b_no]
+
+				var offset_from_pivot: Vector3 = initial.pos - _scale_group_pivot
+				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
+
+				var target_visual: float = clamp(initial["size"] * scale_factor, 1.0, 500.0)
+				var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b_no)
+				var is_addball: bool = sizing_info.is_addball
+				var bhd_s: int = sizing_info.bhd_size
+
+				var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+					target_visual, is_addball, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+				)
+				b.set_ball_size(snapped_visual)
+
+			if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 				_apply_mirror_scale(
 					selected_balls, scale_factor, true, true, _scale_group_pivot, true
 				)
@@ -1333,38 +1388,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 			if prev_intersect:
 				var delta: Vector3 = drag_current_pos - prev_intersect
-
-				var constraints: Dictionary = move_mode_settings_instance.get_constraints()
-
-				var constrain_x: bool = false
-				var constrain_y: bool = false
-				var constrain_z: bool = false
-
-				if HotkeyManager:
-					constrain_x = Input.is_action_pressed("axis_lock_x") if InputMap.has_action("axis_lock_x") else Input.is_key_pressed(KEY_X)
-					constrain_y = Input.is_action_pressed("axis_lock_y") if InputMap.has_action("axis_lock_y") else Input.is_key_pressed(KEY_Y)
-					constrain_z = Input.is_action_pressed("axis_lock_z") if InputMap.has_action("axis_lock_z") else Input.is_key_pressed(KEY_Z)
-				else:
-					constrain_x = Input.is_key_pressed(KEY_X)
-					constrain_y = Input.is_key_pressed(KEY_Y)
-					constrain_z = Input.is_key_pressed(KEY_Z)
-
-				var final_lock_x: bool = constraints.x
-				var final_lock_y: bool = constraints.y
-				var final_lock_z: bool = constraints.z
-
-				if constrain_x or constrain_y or constrain_z:
-					final_lock_x = not constrain_x
-					final_lock_y = not constrain_y
-					final_lock_z = not constrain_z
-
-				if final_lock_x:
-					delta.x = 0
-				if final_lock_y:
-					delta.y = 0
-				if final_lock_z:
-					delta.z = 0
-
+				delta = _apply_axis_constraints(delta)
 				_apply_translation_to_selection(delta)
 
 		return true
@@ -1429,7 +1453,7 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 		if HotkeyManager and InputMap.has_action("preset_apply"):
 			if HotkeyManager.is_exact_action(event, "preset_apply"):
 				is_apply = true
-		elif not event.shift and not event.control and not event.alt:
+		elif not event.shift and not LnzLiveUtils.shortcut_modifier(event) and not event.alt:
 			is_apply = true
 
 		if is_apply:
@@ -1565,12 +1589,12 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		# 2. Fallback to raw inputs (CTRL + Wheel for Scale, ALT + Wheel for Rotate)
 		if not (d_scale_up or d_scale_down or d_rotate_up or d_rotate_down):
 			if is_wheel_up:
-				if event.control:
+				if LnzLiveUtils.shortcut_modifier(event):
 					d_scale_up = true
 				elif event.alt:
 					d_rotate_up = true
 			elif is_wheel_down:
-				if event.control:
+				if LnzLiveUtils.shortcut_modifier(event):
 					d_scale_down = true
 				elif event.alt:
 					d_rotate_down = true
@@ -1718,7 +1742,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		if HotkeyManager and InputMap.has_action("paint_eraser"):
 			if HotkeyManager.is_exact_action(event, "paint_eraser"):
 				delete_mode = true
-		elif event.control:
+		elif LnzLiveUtils.shortcut_modifier(event):
 			delete_mode = true
 
 		if delete_mode:
@@ -1794,6 +1818,16 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 	return false
 
+func _zoom_view(factor: float) -> void:
+	if factor <= 0.0:
+		return
+	tex.rect_pivot_offset = tex.rect_size / 2.0
+	var current_zoom: float = abs(tex.rect_scale.x)
+	if is_zero_approx(current_zoom):
+		return
+	var target_zoom: float = clamp(current_zoom * factor, 0.01, 100.0)
+	tex.rect_scale *= target_zoom / current_zoom
+
 
 func _gui_input(event: InputEvent) -> void:
 	if input_is_paused:
@@ -1842,17 +1876,42 @@ func _gui_input(event: InputEvent) -> void:
 		tools_menu.popup()
 		return
 
+	# IF NEEDED: resolve...
+	# # Zoom view using mouse wheel or remapped hotkeys:
+	# if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_in"):
+	# 	tex.rect_pivot_offset = tex.rect_size / 2.0
+	# 	tex.rect_scale *= ZOOM_STEP
+	# 	get_tree().set_input_as_handled()
+	# 	return
+	# if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_out"):
+	# 	tex.rect_pivot_offset = tex.rect_size / 2.0
+	# 	tex.rect_scale /= ZOOM_STEP
+	# 	get_tree().set_input_as_handled()
+	# 	return
+
+	# macOS precise scrolling arrives as a pan gesture rather than wheel buttons.
+	if event is InputEventPanGesture:
+		_zoom_view(pow(ZOOM_STEP, -event.delta.y))
+		accept_event()
+
 	# Zoom view using mouse wheel or remapped hotkeys:
 	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_in"):
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale *= ZOOM_STEP
 		get_tree().set_input_as_handled()
 		return
-	if HotkeyManager and Input.is_action_just_pressed("viewport_zoom_out"):
-		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale /= ZOOM_STEP
-		get_tree().set_input_as_handled()
+	if event is InputEventMagnifyGesture:
+		_zoom_view(event.factor)
+		accept_event()
 		return
+
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == BUTTON_WHEEL_DOWN or event.button_index == BUTTON_WHEEL_UP:
+			var direction: float = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
+			_zoom_view(pow(ZOOM_STEP, direction * event.factor))
+			accept_event()
+			return
+
 	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if (
 		event is InputEventMouseButton
@@ -2035,8 +2094,8 @@ func _gui_input(event: InputEvent) -> void:
 		elif Input.is_mouse_button_pressed(BUTTON_LEFT):
 			var motion: Vector2 = event.relative
 			camera_holder.rotation.x += motion.y * 0.01
-			#camera_holder.rotation.y += motion.x * -0.01
-			camera_holder.rotation.y -= motion.x * -0.01
+			# The viewport is mirrored horizontally, so yaw follows positive mouse motion.
+			camera_holder.rotation.y += motion.x * 0.01
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
@@ -2059,24 +2118,15 @@ func _gui_input(event: InputEvent) -> void:
 		and not is_instance_valid(_last_selected_by_tab)
 	):
 		var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
+		var hit_ball = get_intended_ball(screen_pos)
 
-		var from: Vector3 = camera.project_ray_origin(screen_pos)
-		var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 950
-		# Skip paintball colliders so hover reaches the underlying ball
-		var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
-		var result: Dictionary = camera.get_world().direct_space_state.intersect_ray(
-			from, to, paintball_nodes, 0x7FFFFFFF, false, true
-		)
-
-		if result:
+		if hit_ball:
 			ball_label.show()
 			deal_with_last_selected()
-			
-			var hit_ball = result.collider.get_parent()
-			
+
 			if hit_ball.has_method("set_select_mode_active"):
 				hit_ball.select_mode_active = true
-				
+
 			hit_ball._on_Area_mouse_entered()
 			last_selected = hit_ball
 		else:
@@ -2259,7 +2309,7 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				get_tree().set_input_as_handled()
 				return true
 
-	if not event.control and not event.alt and not event.shift:
+	if not LnzLiveUtils.shortcut_modifier(event) and not event.alt and not event.shift:
 		if _is_text_input_focused(event):
 			return false
 
@@ -2434,7 +2484,7 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 func _is_text_input_focused(event: InputEventKey) -> bool:
 	var focus_owner: Node = get_focus_owner()
 	if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
-		if event.control or event.alt or event.shift:
+		if LnzLiveUtils.shortcut_modifier(event) or event.alt or event.shift:
 			return false
 		return true
 	return false
@@ -2454,6 +2504,7 @@ func _get_hotkey_hint_for_ball(hovered_ball: Spatial) -> String:
 	parts.append(_get_hotkey_display("select_jump_move") + " or " + _get_hotkey_display("select_jump_move_alt") + ": [Move]")
 	parts.append(_get_hotkey_display("select_jump_project") + " or " + _get_hotkey_display("select_jump_project_alt") + ": [Project Ball]")
 	parts.append(_get_hotkey_display("select_jump_line") + " or " + _get_hotkey_display("select_jump_line_alt") + ": [Line]")
+	parts.append(_get_hotkey_display("select_jump_paintball") + ": [Paint Ballz]")
 	var result: String = ""
 	for i in range(parts.size()):
 		result += parts[i]
@@ -2704,6 +2755,13 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 	if input_is_paused:
 		return
 
+	# Move Mode: Duplicate Selection (CTRL+D)
+	if HotkeyManager and HotkeyManager.is_action_pressed("move_duplicate_selection"):
+		if move_mode and not selected_balls.empty():
+			_duplicate_selected_addballz()
+			get_tree().set_input_as_handled()
+			return
+
 	if event.scancode == KEY_SPACE:
 		if event.pressed:
 			_space_pan_active = true
@@ -2749,7 +2807,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		return
 
 	if event is InputEventKey:
-		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT, KEY_ESCAPE, KEY_ENTER, KEY_SPACE, KEY_TAB]:
+		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_META, KEY_ALT, KEY_ESCAPE, KEY_ENTER, KEY_SPACE, KEY_TAB]:
 			mark_ui_dirty()
 
 	if HotkeyManager and HotkeyManager.is_action_pressed("select_cycle_nearby"):
@@ -2791,7 +2849,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 				get_tree().set_input_as_handled()
 				return
 
-	if event is InputEventKey and event.pressed and event.control and event.shift:
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.shift:
 		if event.scancode == KEY_Z:  # Undo
 			if paintball_mode:
 				_undo_queued_paintball()
@@ -2819,7 +2877,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
 			pet_node.unhide_all_balls()
 		return
-	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_H:
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_H:
 		get_tree().set_input_as_handled()
 		if is_instance_valid(pet_node) and pet_node.has_method("unhide_all_balls"):
 			pet_node.unhide_all_balls()
@@ -2835,7 +2893,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 		tools_menu.rect_global_position = get_viewport().get_mouse_position()
 		tools_menu.popup()
 		return
-	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
+	if event is InputEventKey and event.pressed and LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
 		if last_selected_is_valid():
 			tools_menu.selected_visual_ball = last_selected
@@ -2854,7 +2912,7 @@ func _unhandled_key_input(event: InputEventKey) -> void:
 			_unlock_all_balls()
 			get_tree().set_input_as_handled()
 			return
-		if event.control and event.scancode == KEY_Q:
+		if LnzLiveUtils.shortcut_modifier(event) and event.scancode == KEY_Q:
 			_unlock_all_balls()
 			get_tree().set_input_as_handled()
 			return
@@ -2941,7 +2999,7 @@ func _on_recolor_settings_apply_batch_bucket(changes, write_to_overrides) -> voi
 	if is_instance_valid(lnz_text_edit):
 		lnz_text_edit.apply_batch_presets(changes, write_to_overrides)
 
-func _update_unapplied_changes_label(_unused = null) -> void:
+func _update_unapplied_changes_label(_unused1 = null, _unused2 = null) -> void:
 	var total = 0
 	if is_instance_valid(lnz_text_edit):
 		if lnz_text_edit.has_unsaved_text_changes():
@@ -3243,9 +3301,19 @@ func _update_selected_ballz_from_affected_text(settings_instance) -> void:
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from: Vector3 = camera.project_ray_origin(screen_pos)
 	var to: Vector3 = from + camera.project_ray_normal(screen_pos) * 10000
-
 	var space_state = camera.get_world().direct_space_state
 	var paintball_nodes: Array = get_tree().get_nodes_in_group("paintballs")
+
+	if ball_picking_mode == BallPickingMode.GEOMETRIC_DEPTH:
+		var result: Dictionary = space_state.intersect_ray(from, to, paintball_nodes, 1, false, true)
+		if result and result.collider:
+			var parent: Node = result.collider.get_parent()
+			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
+					return null
+				return parent
+		return null
+
 	var exclude_list = paintball_nodes.duplicate()
 	var hit_balls = []
 
@@ -3254,7 +3322,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 		if result and result.collider:
 			var parent: Node = result.collider.get_parent()
 			exclude_list.append(result.collider)
-			
+
 			if parent.is_in_group("balls") or parent.is_in_group("addballs"):
 				if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
 					continue
@@ -3271,15 +3339,16 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	for ball in hit_balls:
 		var local_pos = camera.global_transform.affine_inverse().xform(ball.global_transform.origin)
 		var depth: float = -local_pos.z
-		
+
 		var z_add_val = 0.0
 		var mi = ball.get_node_or_null("MeshInstance")
 		if mi and mi.material_override and mi.material_override is ShaderMaterial:
 			var param = mi.material_override.get_shader_param("z_add")
-			if param != null: z_add_val = float(param)
+			if param != null: 
+				z_add_val = float(param)
 		elif "z_add" in ball: 
 			z_add_val = float(ball.z_add)
-			
+
 		depth -= z_add_val * 0.001
 
 		if depth < min_depth:
@@ -3410,7 +3479,7 @@ func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_nod
 	var engine_scale: float = pet_node.lnz.scales[1]
 
 	return LnzLiveUtils.visual_size_to_lnz_size(
-		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+		raw_target_visual, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
 	)
 
 func _isolate_target_ball(target_ball: Spatial) -> void:
@@ -3532,6 +3601,81 @@ func _on_unselect_all() -> void:
 	for b in to_update:
 		if is_instance_valid(b) and "ball_no" in b:
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
+
+func _duplicate_selected_addballz() -> void:
+	if selected_balls.empty():
+		return
+
+	var max_base: int = KeyBallsData.max_base_ball_num if KeyBallsData else 67
+
+	var balls_to_clone: Array = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if b.ball_no >= max_base:
+				balls_to_clone.append(b)
+
+	if balls_to_clone.empty():
+		print("[WARNING] PetViewContainer: No addballs to duplicate in selection (base balls excluded).")
+		return
+
+	var addballs_data: Array = []
+	var nudge: Vector3 = Vector3(20, -20, 20)
+
+	for i in range(balls_to_clone.size()):
+		var old_id: int = balls_to_clone[i].ball_no
+		var ref_ball: Spatial = find_visual_ball_by_no(old_id)
+		if not is_instance_valid(ref_ball):
+			continue
+
+		var props: Dictionary = {}
+
+		if is_instance_valid(pet_node) and pet_node.lnz and pet_node.lnz.addballs.has(old_id):
+			var ab = pet_node.lnz.addballs[old_id]
+			props["target_base_ball"] = ab.base
+			props["position"] = ab.position
+			props["size"] = ab.size
+			props["fuzz"] = ab.fuzz
+			props["color"] = ab.color_index
+			props["outline_color"] = ab.outline_color_index
+			props["outline"] = ab.outline
+			props["bodyarea"] = ab.body_area
+			props["texture_id"] = ab.texture_id
+			props["anchor_ball"] = ab.anchor_ball
+		else:
+			props["target_base_ball"] = ref_ball.base_ball_no if ref_ball.has("base_ball_no") and ref_ball.base_ball_no != -1 else 0
+			props["position"] = nudge
+			props["size"] = int(round(ref_ball.ball_size))
+			props["fuzz"] = 0
+			props["color"] = ref_ball.color_index if ref_ball.has("color_index") else 0
+			props["outline_color"] = ref_ball.outline_color_index if ref_ball.has("outline_color_index") else 0
+			props["outline"] = ref_ball.old_outline if ref_ball.has("old_outline") else 0
+			props["bodyarea"] = 1
+			props["texture_id"] = -1
+
+		props["position"] = props["position"] + nudge
+		props["old_ball_no"] = old_id
+		addballs_data.append(props)
+
+	if is_instance_valid(lnz_text_edit):
+		lnz_text_edit.batch_duplicate_addballz_and_linez(addballs_data)
+
+	if is_instance_valid(pet_node):
+		pet_node.set_skip_next_rebuild(false)
+		pet_node.generate_pet(pet_node.last_loaded_filepath)
+
+	_on_unselect_all()
+
+	var new_visual_balls: Array = []
+	for ci in range(addballs_data.size()):
+		var new_id: int = max_base + pet_node.lnz.addballs.size() - addballs_data.size() + ci
+		var visual_ball: Spatial = find_visual_ball_by_no(new_id)
+		if is_instance_valid(visual_ball):
+			selected_balls.append(visual_ball)
+			visual_ball.apply_outline_state(visual_ball.OutlineState.ACTIVE_SELECTED)
+			new_visual_balls.append(visual_ball)
 
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
@@ -3671,7 +3815,7 @@ func _commit_box_selection() -> void:
 	# ])
 
 
-# HISTORY
+# HISTORY & STATE
 # _capture_pending_state_snapshot
 # _record_move_history_entry
 # _restore_move_snapshot
@@ -3733,6 +3877,8 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 		if pending_moves.has(b.ball_no):
 			var data: Dictionary = pending_moves[b.ball_no]
 			b.global_transform.origin = data.new_pos
+			if data.has("new_basis"):
+				_restore_ball_basis_and_mesh_scale(b, data.new_basis)
 			if data.has("new_size"):
 				b.set_ball_size(data.new_size)
 			b.apply_outline_state(get_visual_state_for_ball(b))
@@ -3742,7 +3888,8 @@ func _restore_move_snapshot(snapshot: Dictionary) -> void:
 
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
 	_update_unapplied_changes_label()
 
 func _cap_history_arrays() -> void:
@@ -3821,7 +3968,7 @@ func _record_move_end_state(action_name: String) -> void:
 
 	print("[TIME] PetViewContainer: _record_move_end_state took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-# HELPERS
+# MOVE HELPERS
 # _flatten_symmetry_dict
 # _begin_auto_move_for_ball
 # schedule_autodrag_for_addball
@@ -4783,29 +4930,65 @@ func _restore_preset_selection(ids: Array) -> void:
 
 
 ### MOVE MODE ###
-# _on_move_mode_clear
-# _update_pivot_limit
-# _track_pending_move
-# _on_move_mode_apply
+
+# INPUTS & HELPERS
+# _initialize_move_drag
+# _handle_move_mode_gui_input
+# _handle_group_pan_input
+# _handle_move_nudge_key_input
+# _begin_auto_move_for_ball
+# schedule_autodrag_for_addball
+# _wait_for_addball_then_autodrag
+
+# SELECT / LOCK / GROUP
+# _update_selected_ballz_in_settings
+# _on_select_balls_by_ids
+# _on_unselect_all
+# _on_unselect_side
+# _on_move_mode_select_group
+# _has_selected_ancestor
+# _on_lock_all
+# _on_unlock_all
+# _toggle_lock_ball
+# _unlock_all_balls
+# _on_select_locked_balls_by_ids
+# _sync_locked_balls_to_visuals
+# _is_ball_locked
+# update_locked_ballz_text
+
+# SPATIAL / MATH / MIRROR
 # _on_align_selection
 # _align_ball_list
-# _get_axis_val
 # _on_snap_selection
 # _snap_ball_list_to_target
 # _on_nudge_selection
-# _on_move_mode_select_group
-# _apply_eye_iris_binding
-# _apply_mirror_move
-# _apply_mirror_scale
-# _get_rotation_pivot_origin
+# _apply_translation_to_selection
 # _on_rotate_selection
 # _on_flip_selection
 # _on_apply_scale
-# _on_pivot_changed
-# _toggle_lock_ball
-# _unlock_all_balls
-# _is_ball_locked
-# _handle_group_pan_input
+# _get_axis_val
+# _apply_axis_constraints
+# _get_rotation_pivot_origin
+# _restore_ball_basis_and_mesh_scale
+# _apply_mirror_move
+# _apply_mirror_scale
+# _get_unselected_mirror_partners
+# _apply_eye_iris_binding
+
+# APPLY / CLEAR / TRACK
+# _on_move_mode_apply
+# _on_move_mode_clear
+# _track_pending_move
+# _track_pending_move_on_selection
+# _record_move_start_state
+# _record_move_end_state
+# _capture_pending_state_snapshot
+# _record_move_history_entry
+# _restore_move_snapshot
+# _undo_queued_move
+# _redo_queued_move
+# _duplicate_selected_addballz
+# _on_randomize_moves
 
 func _on_move_mode_clear() -> void:
 	var all_balls: Array = _get_all_visual_balls()
@@ -4818,11 +5001,15 @@ func _on_move_mode_clear() -> void:
 
 			b.global_transform.origin = move_data.orig_pos
 
+			if move_data.has("orig_basis"):
+				_restore_ball_basis_and_mesh_scale(b, move_data.orig_basis)
+
 			if move_data.has("orig_size"):
 				b.set_ball_size(move_data.orig_size)
 
 	pending_moves.clear()
-	move_mode_settings_instance.set_queued_count(0)
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.set_queued_count(0)
 
 	for b in all_balls:
 		if not "ball_no" in b:
@@ -4929,21 +5116,8 @@ func _on_align_selection(axis: String, mode: int) -> void:
 
 	_align_ball_list(selected_balls, axis, mode)
 
-	if move_mode_settings_instance.is_mirror_x_active():
-		var mirrored_group: Array = []
-
-		for b in selected_balls:
-			var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
-
-			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
-
-				if (
-					partner_visual
-					and not (partner_visual in selected_balls)
-					and not (partner_visual in mirrored_group)
-				):
-					mirrored_group.append(partner_visual)
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group: Array = _get_unselected_mirror_partners(selected_balls)
 
 		if not mirrored_group.empty():
 			var target_mode: int = mode
@@ -4960,17 +5134,24 @@ func _on_align_selection(axis: String, mode: int) -> void:
 func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 	var reference_val: float = 0.0
 	var first: bool = true
+	var valid_count: int = 0
 
 	if mode == 1:
 		var sum: float = 0.0
 		for b in ball_list:
 			if not "ball_no" in b:
 				continue
+			if _is_ball_locked(b):
+				continue
 			sum += _get_axis_val(b, axis)
-		reference_val = sum / ball_list.size()
+			valid_count += 1
+		if valid_count > 0:
+			reference_val = sum / valid_count
 	else:
 		for b in ball_list:
 			if not "ball_no" in b:
+				continue
+			if _is_ball_locked(b):
 				continue
 			var val: float = _get_axis_val(b, axis)
 			if first:
@@ -4986,6 +5167,8 @@ func _align_ball_list(ball_list: Array, axis: String, mode: int) -> void:
 
 	for b in ball_list:
 		if not "ball_no" in b:
+			continue
+		if _is_ball_locked(b):
 			continue
 		if axis == "x":
 			b.global_transform.origin.x = reference_val
@@ -5007,6 +5190,8 @@ func _get_axis_val(ball: Spatial, axis: String) -> float:
 func _on_snap_selection(axis: String, direction: int) -> void:
 	if selected_balls.empty():
 		return
+
+	_record_move_start_state()
 
 	var all_balls: Array = _get_all_visual_balls()
 	var target_val: float = 0.0
@@ -5034,21 +5219,13 @@ func _on_snap_selection(axis: String, direction: int) -> void:
 
 	_snap_ball_list_to_target(selected_balls, axis, direction, target_val)
 
-	if move_mode_settings_instance.is_mirror_x_active():
-		var mirrored_group: Array = []
-		for b in selected_balls:
-			var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
-			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
-				if (
-					partner_visual
-					and not (partner_visual in selected_balls)
-					and not (partner_visual in mirrored_group)
-				):
-					mirrored_group.append(partner_visual)
-
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group: Array = _get_unselected_mirror_partners(selected_balls)
 		if not mirrored_group.empty():
 			_snap_ball_list_to_target(mirrored_group, axis, direction, target_val)
+
+	_record_move_end_state("Snap " + axis)
+	_update_unapplied_changes_label()
 
 func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, target_val: float) -> void:
 	var selection_extreme: float = 0.0
@@ -5056,6 +5233,8 @@ func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, t
 
 	for b in ball_list:
 		if not "ball_no" in b:
+			continue
+		if _is_ball_locked(b):
 			continue
 		var val: float = _get_axis_val(b, axis)
 
@@ -5078,6 +5257,8 @@ func _snap_ball_list_to_target(ball_list: Array, axis: String, direction: int, t
 	for b in ball_list:
 		if not "ball_no" in b:
 			continue
+		if _is_ball_locked(b):
+			continue
 		if axis == "y":
 			b.global_transform.origin.y += offset
 		elif axis == "z":
@@ -5089,22 +5270,13 @@ func _apply_translation_to_selection(delta: Vector3) -> void:
 		if is_instance_valid(b):
 			if _is_ball_locked(b):
 				continue
-
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if not addballz_base_selected:
-				b.global_transform.origin += delta
-
-			# Record for undo/redo
+			if _has_selected_ancestor(b):
+				_track_pending_move(b)
+				continue
+			b.global_transform.origin += delta
 			_track_pending_move(b)
 
-	if move_mode_settings_instance.is_mirror_x_active():
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 		_apply_mirror_move(selected_balls, delta)
 
 func _on_nudge_selection(vector: Vector3) -> void:
@@ -5128,7 +5300,7 @@ func _on_nudge_selection(vector: Vector3) -> void:
 	_record_move_end_state("Nudge")
 
 func _on_move_mode_select_group(group_name: String) -> void:
-	if not Input.is_key_pressed(KEY_CONTROL):
+	if not LnzLiveUtils.shortcut_modifier_pressed():
 		_on_unselect_all()
 
 	var balls_to_select: Array = KeyBallsData.get_group_balls(group_name)
@@ -5166,15 +5338,7 @@ func _apply_mirror_move(balls_moved: Array, delta: Vector3) -> void:
 		if not "ball_no" in b:
 			continue
 
-		var addballz_base_selected: bool = false
-		var p: Node = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in balls_moved:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
-		if addballz_base_selected:
+		if _has_selected_ancestor(b, balls_moved):
 			var partner_id_check: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 			if partner_id_check != -1 and partner_id_check != b.ball_no:
 				var partner_visual: Spatial = find_visual_ball_by_no(partner_id_check)
@@ -5184,11 +5348,9 @@ func _apply_mirror_move(balls_moved: Array, delta: Vector3) -> void:
 
 		var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
 		if partner_id != -1 and partner_id != b.ball_no:
-			# Find visual ball for partner
 			var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
 			if partner_visual and not (partner_visual in selected_balls):
 				var mirrored_delta: Vector3 = delta * mirror_mult
-
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
 
@@ -5196,6 +5358,16 @@ func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_
 	var selected_nos: Dictionary = {}
 	for b in targets:
 		selected_nos[b.ball_no] = true
+
+	var mirror_pivot: Vector3 = Vector3(-pivot_origin.x, pivot_origin.y, pivot_origin.z)
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_use_pivot_active():
+		var pivot_id: int = move_mode_settings_instance.get_pivot_ball_id()
+		if pivot_id != -1:
+			var pivot_ball: Spatial = find_visual_ball_by_no(pivot_id)
+			if is_instance_valid(pivot_ball):
+				var mirror_partner: Spatial = find_visual_ball_by_no(lnz_text_edit.find_mirrored_ball(pivot_id))
+				if is_instance_valid(mirror_partner):
+					mirror_pivot = mirror_partner.global_transform.origin
 
 	for b in targets:
 		if not is_instance_valid(b):
@@ -5208,21 +5380,32 @@ func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_
 		var mb: Spatial = find_visual_ball_by_no(partner_id)
 		if not is_instance_valid(mb):
 			continue
+		if _is_ball_locked(mb):
+			continue
+
+		var mirror_start_pos: Vector3 = mb.global_transform.origin
+		if is_interactive and _scale_mirror_initial_data.has(partner_id):
+			mirror_start_pos = _scale_mirror_initial_data[partner_id].pos
+		elif not is_interactive and not pet_node._orig_world_pos.has(partner_id):
+			pet_node._orig_world_pos[partner_id] = mirror_start_pos
 
 		if scale_dist:
-			var start_pos: Vector3 = mb.global_transform.origin
-
-			if is_interactive and _scale_group_initial_data.has(partner_id):
-				start_pos = _scale_group_initial_data[partner_id].pos
-			elif not is_interactive:
-				if not pet_node._orig_world_pos.has(partner_id):
-					pet_node._orig_world_pos[partner_id] = start_pos
-
-			var rel_pos: Vector3 = start_pos - pivot_origin
-			mb.global_transform.origin = pivot_origin + (rel_pos * factor)
+			var rel_pos: Vector3 = mirror_start_pos - mirror_pivot
+			mb.global_transform.origin = mirror_pivot + (rel_pos * factor)
 
 		if scale_size:
-			mb.set_ball_size(b.ball_size)
+			var initial_size: float = mb.ball_size
+			if is_interactive and _scale_mirror_initial_data.has(partner_id):
+				initial_size = _scale_mirror_initial_data[partner_id].size
+			var target_visual: float = clamp(initial_size * factor, 1.0, 500.0)
+			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, partner_id)
+			var is_ab: bool = sizing_info.is_addball
+			var bhd_s: int = sizing_info.bhd_size
+			var engine_scale: float = pet_node.lnz.scales[1]
+			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+			)
+			mb.set_ball_size(snapped_visual)
 
 		_track_pending_move(mb)
 
@@ -5262,19 +5445,11 @@ func _on_rotate_selection(rotation_degrees: Vector3, pivot_id: int) -> void:
 
 	for b in selected_balls:
 		if is_instance_valid(b):
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if addballz_base_selected:
+			if _has_selected_ancestor(b):
+				_track_pending_move(b)
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
-			var current_basis: Basis = b.global_transform.basis
 			_track_pending_move(b)
 
 			var rel_pos: Vector3 = current_pos - pivot_origin
@@ -5303,19 +5478,10 @@ func _on_flip_selection(axis_vector: Vector3, pivot_id: int) -> void:
 
 	for b in selected_balls:
 		if is_instance_valid(b):
-			var addballz_base_selected: bool = false
-			var p: Node = b.get_parent()
-			while is_instance_valid(p) and p != get_tree().root:
-				if p in selected_balls:
-					addballz_base_selected = true
-					break
-				p = p.get_parent()
-
-			if addballz_base_selected:
+			if _has_selected_ancestor(b):
 				continue
 
 			var current_pos: Vector3 = b.global_transform.origin
-			var current_basis: Basis = b.global_transform.basis
 
 			if not pending_moves.has(b.ball_no):
 				_track_pending_move(b)
@@ -5333,15 +5499,7 @@ func _on_flip_selection(axis_vector: Vector3, pivot_id: int) -> void:
 			b.global_transform.basis = scale_basis * b.global_transform.basis
 
 			if scale_basis.determinant() < 0:
-				var mesh_instance: MeshInstance = b.get_node_or_null("MeshInstance")
-				if mesh_instance:
-					mesh_instance.scale.x *= -1.0
-
-				for child in b.get_children():
-					if child.is_in_group("paintballs"):
-						var pb_mesh: MeshInstance = child.get_node_or_null("MeshInstance")
-						if pb_mesh:
-							pb_mesh.scale.x *= -1.0
+				_restore_ball_basis_and_mesh_scale(b, b.global_transform.basis)
 
 	for b in selected_balls:
 		if is_instance_valid(b):
@@ -5360,34 +5518,23 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 	for b in selected_balls:
 		if not is_instance_valid(b):
 			continue
-
-		var addballz_base_selected: bool = false
-		var p: Node = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in selected_balls:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
+		if b.ball_no >= KeyBallsData.max_base_ball_num:
+			continue
+		if _is_ball_locked(b):
+			continue
 		if scale_dist:
-			if not addballz_base_selected:
-				var current_pos: Vector3 = b.global_transform.origin
-				var rel_pos: Vector3 = current_pos - pivot_origin
-				var new_rel_pos: Vector3 = rel_pos * factor
-				var new_pos: Vector3 = pivot_origin + new_rel_pos
-
-				if not pet_node._orig_world_pos.has(b.ball_no):
-					pet_node._orig_world_pos[b.ball_no] = current_pos
-
-				var delta: Vector3 = new_pos - current_pos
-				b.global_transform.origin = new_pos
-
-				_apply_eye_iris_binding(b, delta)
-
+			var current_pos: Vector3 = b.global_transform.origin
+			var rel_pos: Vector3 = current_pos - pivot_origin
+			var new_rel_pos: Vector3 = rel_pos * factor
+			var new_pos: Vector3 = pivot_origin + new_rel_pos
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos
+			var delta: Vector3 = new_pos - current_pos
+			b.global_transform.origin = new_pos
+			_apply_eye_iris_binding(b, delta)
 		if scale_size:
 			var original_s: float = b.ball_size
-			var target_visual: float = original_s * factor
-			target_visual = clamp(target_visual, 1.0, 500.0)
+			var target_visual: float = clamp(original_s * factor, 1.0, 500.0)
 			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b.ball_no)
 			var is_ab: bool = sizing_info.is_addball
 			var bhd_s: int = sizing_info.bhd_size
@@ -5397,16 +5544,46 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 			)
 			b.set_ball_size(snapped_visual)
 
-			pass
+	_track_pending_move_on_selection()
 
 	for b in selected_balls:
-		if is_instance_valid(b):
-			_track_pending_move(b)
+		if not is_instance_valid(b):
+			continue
+		if b.ball_no < KeyBallsData.max_base_ball_num:
+			continue
+		if _is_ball_locked(b):
+			continue
+		if scale_dist:
+			var current_pos: Vector3 = b.global_transform.origin
+			var rel_pos: Vector3 = current_pos - pivot_origin
+			var new_rel_pos: Vector3 = rel_pos * factor
+			var new_pos: Vector3 = pivot_origin + new_rel_pos
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos
+			b.global_transform.origin = new_pos
+		if scale_size:
+			var original_s: float = b.ball_size
+			var target_visual: float = clamp(original_s * factor, 1.0, 500.0)
+			var sizing_info: Dictionary = _get_ball_sizing_info(pet_node, b.ball_no)
+			var is_ab: bool = sizing_info.is_addball
+			var bhd_s: int = sizing_info.bhd_size
+			var engine_scale: float = pet_node.lnz.scales[1]
+			var snapped_visual: float = LnzLiveUtils.snap_visual_size(
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y, sizing_info.is_anchored
+			)
+			b.set_ball_size(snapped_visual)
 
-	if move_mode_settings_instance.is_mirror_x_active():
+	_track_pending_move_on_selection()
+
+	if is_instance_valid(move_mode_settings_instance) and move_mode_settings_instance.is_mirror_x_active():
 		_apply_mirror_scale(selected_balls, factor, scale_dist, scale_size, pivot_origin)
 
 	_record_move_end_state("Scale")
+
+func _track_pending_move_on_selection() -> void:
+	for b in selected_balls:
+		if is_instance_valid(b) and not _is_ball_locked(b):
+			_track_pending_move(b)
 
 func _on_pivot_changed() -> void:
 	var all_balls: Array = _get_all_visual_balls()
@@ -5422,8 +5599,11 @@ func _toggle_lock_ball(ball: Spatial) -> void:
 		locked_balls.erase(ball_no)
 	else:
 		locked_balls.append(ball_no)
+		if ball in selected_balls:
+			selected_balls.erase(ball)
 	_sync_locked_balls_to_visuals()
 	update_locked_ballz_text(locked_balls)
+	_update_selected_ballz_in_settings()
 
 func _unlock_all_balls() -> void:
 	locked_balls.clear()
@@ -5452,6 +5632,85 @@ func _is_ball_locked(ball: Spatial) -> bool:
 		return false
 	return ball.ball_no in locked_balls
 
+func _has_selected_ancestor(ball: Spatial, group: Array = selected_balls) -> bool:
+	var p: Node = ball.get_parent()
+	while is_instance_valid(p) and p != get_tree().root:
+		if p in group:
+			return true
+		p = p.get_parent()
+	return false
+
+func _get_unselected_mirror_partners(balls: Array) -> Array:
+	var mirrored_group: Array = []
+	for b in balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+		var partner_id: int = lnz_text_edit.find_mirrored_ball(b.ball_no)
+		if partner_id != -1 and partner_id != b.ball_no:
+			var partner_visual: Spatial = find_visual_ball_by_no(partner_id)
+			if (
+				is_instance_valid(partner_visual)
+				and not _is_ball_locked(partner_visual)
+				and not (partner_visual in balls)
+				and not (partner_visual in mirrored_group)
+			):
+				mirrored_group.append(partner_visual)
+	return mirrored_group
+
+func _apply_axis_constraints(delta: Vector3) -> Vector3:
+	var constraints: Dictionary = {}
+	if is_instance_valid(move_mode_settings_instance):
+		constraints = move_mode_settings_instance.get_constraints()
+
+	var final_lock_x: bool = constraints.x
+	var final_lock_y: bool = constraints.y
+	var final_lock_z: bool = constraints.z
+
+	if HotkeyManager:
+		var constrain_x: bool = Input.is_action_pressed("axis_lock_x") if InputMap.has_action("axis_lock_x") else false
+		var constrain_y: bool = Input.is_action_pressed("axis_lock_y") if InputMap.has_action("axis_lock_y") else false
+		var constrain_z: bool = Input.is_action_pressed("axis_lock_z") if InputMap.has_action("axis_lock_z") else false
+		if constrain_x or constrain_y or constrain_z:
+			final_lock_x = not constrain_x
+			final_lock_y = not constrain_y
+			final_lock_z = not constrain_z
+	else:
+		if Input.is_key_pressed(KEY_X):
+			final_lock_x = false
+		if Input.is_key_pressed(KEY_Y):
+			final_lock_y = false
+		if Input.is_key_pressed(KEY_Z):
+			final_lock_z = false
+
+	if final_lock_x:
+		delta.x = 0
+	if final_lock_y:
+		delta.y = 0
+	if final_lock_z:
+		delta.z = 0
+
+	return delta
+
+func _restore_ball_basis_and_mesh_scale(b: Spatial, target_basis: Basis) -> void:
+	b.global_transform.basis = target_basis
+	var scale_sign: float = 1.0
+	if target_basis.determinant() >= 0:
+		scale_sign = 1.0
+	else:
+		scale_sign = -1.0
+
+	var mesh_instance: MeshInstance = b.get_node_or_null("MeshInstance")
+	if mesh_instance and is_instance_valid(mesh_instance):
+		var abs_scale: float = abs(mesh_instance.scale.x)
+		mesh_instance.scale.x = scale_sign * abs_scale
+
+	for child in b.get_children():
+		if child.is_in_group("paintballs"):
+			var pb_mesh: MeshInstance = child.get_node_or_null("MeshInstance")
+			if pb_mesh and is_instance_valid(pb_mesh):
+				var abs_scale: float = abs(pb_mesh.scale.x)
+				pb_mesh.scale.x = scale_sign * abs_scale
+
 func _handle_group_pan_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
@@ -5461,7 +5720,7 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT) and not Input.is_key_pressed(KEY_ALT):
 		_group_panning = true
 		_group_pan_start_pos = event.position
-		# Capture the current world position of the first selected ball as reference
+		_record_move_start_state()
 		if selected_balls.size() > 0 and is_instance_valid(selected_balls[0]):
 			_group_pan_start_origin = selected_balls[0].global_transform.origin
 		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
@@ -5471,6 +5730,8 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 	if _group_panning and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
 		_group_panning = false
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		_update_unapplied_changes_label()
+		_record_move_end_state("Group Pan")
 		return true
 
 	# Handle group pan drag
@@ -5490,29 +5751,8 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 
 		if current_intersect and prev_intersect:
 			var delta: Vector3 = current_intersect - prev_intersect
-
-			# Apply axis/plane constraints
-			var constrain_x: bool = Input.is_key_pressed(KEY_X)
-			var constrain_y: bool = Input.is_key_pressed(KEY_Y)
-			var constrain_z: bool = Input.is_key_pressed(KEY_Z)
-
-			if constrain_x or constrain_y or constrain_z:
-				if not constrain_x:
-					delta.x = 0
-				if not constrain_y:
-					delta.y = 0
-				if not constrain_z:
-					delta.z = 0
-
-			for b in selected_balls:
-				if is_instance_valid(b):
-					if _is_ball_locked(b):
-						continue
-					b.global_transform.origin += delta
-					_track_pending_move(b)
-
-			if move_mode_settings_instance.is_mirror_x_active():
-				_apply_mirror_move(selected_balls, delta)
+			delta = _apply_axis_constraints(delta)
+			_apply_translation_to_selection(delta)
 
 		return true
 
@@ -5520,12 +5760,17 @@ func _handle_group_pan_input(event: InputEvent) -> bool:
 
 
 func _on_lock_all() -> void:
+	var to_remove: Array = []
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:
 			if not b.ball_no in locked_balls:
 				locked_balls.append(b.ball_no)
+				to_remove.append(b)
+	for b in to_remove:
+		selected_balls.erase(b)
 	_sync_locked_balls_to_visuals()
 	update_locked_ballz_text(locked_balls)
+	_update_selected_ballz_in_settings()
 
 func _on_unlock_all() -> void:
 	_unlock_all_balls()
@@ -5536,39 +5781,15 @@ func _on_select_locked_balls_by_ids(ids: Array) -> void:
 	else:
 		locked_balls = ids.duplicate()
 	_sync_locked_balls_to_visuals()
+	var to_remove: Array = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if b.ball_no in locked_balls:
+				to_remove.append(b)
+	for b in to_remove:
+		selected_balls.erase(b)
+	_update_selected_ballz_in_settings()
 
 func update_locked_ballz_text(ball_ids: Array) -> void:
-	if not is_instance_valid(move_mode_settings_instance):
-		return
-	var locked_node = move_mode_settings_instance.find_node("LockedBallz")
-	if not locked_node:
-		return
-	if ball_ids.empty():
-		locked_node.text = ""
-		return
-	var sorted_ids: Array = ball_ids.duplicate()
-	sorted_ids.sort()
-	var start: int = sorted_ids[0]
-	var prev: int = start
-	var ranges: Array = []
-	for i in range(1, sorted_ids.size()):
-		var curr: int = sorted_ids[i]
-		if curr == prev + 1:
-			prev = curr
-		else:
-			if start == prev:
-				ranges.append(str(start))
-			else:
-				ranges.append(str(start) + "-" + str(prev))
-			start = curr
-			prev = curr
-	if start == prev:
-		ranges.append(str(start))
-	else:
-		ranges.append(str(start) + "-" + str(prev))
-	var s: String = ""
-	for i in range(ranges.size()):
-		if i > 0:
-			s += ","
-		s += str(ranges[i])
-	locked_node.text = s
+	if is_instance_valid(move_mode_settings_instance):
+		move_mode_settings_instance.update_locked_balls_text(ball_ids)

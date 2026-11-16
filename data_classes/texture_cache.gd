@@ -2,6 +2,8 @@ extends Reference
 ## texture_cache.gd
 ## Stateless texture caching manager for dog_generator.gd that handles loading and caching of textures
 
+const PETZ_IMAGE = preload("res://scripts/petz_image.gd")
+
 var _texture_cache = {}
 var _atlas_manifest = {}
 var _atlas_manifest_normalized = {}
@@ -26,9 +28,10 @@ func _build_atlas_manifest_lookup():
 
 func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_palette: Array = []) -> Texture:
 	var t_start = OS.get_ticks_msec()
-	if _texture_cache.has(texture_filename):
+	var cache_key = texture_filename.to_lower()
+	if _texture_cache.has(cache_key):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-		return _texture_cache[texture_filename]
+		return _texture_cache[cache_key]
 
 	var texture = null
 	var base_name = texture_filename.get_basename()
@@ -64,7 +67,7 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 			texture.atlas = atlas_tex
 			texture.region = region
 
-			_texture_cache[texture_filename] = texture
+			_texture_cache[cache_key] = texture
 			print("[INFO] dog_generator: load_texture: loaded atlas texture: " + texture_filename)
 			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 			return texture
@@ -88,27 +91,37 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 				var h = raw_bmp_data["h"]
 				var data = raw_bmp_data["data"]
 				var img = Image.new()
-				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
+				img.create_from_data(w, h, false, Image.FORMAT_L8, data)
 				texture = ImageTexture.new()
-				texture.create_from_image(img, 0)
+				texture.create_from_image(img, Texture.FLAG_REPEAT)
 				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
 			
-		# FALLBACK: native loader for PNGs, failed BMPs, or virtual res:// files
+		# FALLBACK: petz_image.gd for BMPs that load_raw_8bit_bmp rejected, or PNGs
 		if texture == null:
-			var user_fallback = "user://resources/textures".plus_file(texture_filename)
-			var res_fallback = "res://resources/textures".plus_file(texture_filename)
-			
-			if ResourceLoader.exists(user_fallback):
-				texture = ResourceLoader.load(user_fallback)
-			elif ResourceLoader.exists(res_fallback):
-				texture = ResourceLoader.load(res_fallback)
+			var candidates: Array = []
+			if loaded_path != "":
+				candidates.append(loaded_path)
+			else:
+				candidates.append("user://resources/textures".plus_file(texture_filename))
+				candidates.append("res://resources/textures".plus_file(texture_filename))
+			for candidate in candidates:
+				if candidate == "":
+					continue
+				var img = Image.new()
+				var err: int = PETZ_IMAGE.load_image(img, candidate, true, true)
+				if err == OK and img.get_width() > 0:
+					img.convert(Image.FORMAT_L8)
+					texture = ImageTexture.new()
+					texture.create_from_image(img, Texture.FLAG_REPEAT)
+					print("[INFO] dog_generator: petz_image.gd fallback loaded: " + candidate)
+					break
 
 	# PRELOADER FALLBACK
 	if texture == null and preloader != null:
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
-	_texture_cache[texture_filename] = texture
+	_texture_cache[cache_key] = texture
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 
 	return texture
@@ -128,11 +141,14 @@ func load_texture_from_list(texture_id: int, texture_list: Array, preloader: Res
 func clear_texture_cache_for(filename: String) -> void:
 	var exact = filename
 	var lower = filename.to_lower()
+	var file_lower = filename.get_file().to_lower()
 
 	if _texture_cache.has(exact):
 		_texture_cache.erase(exact)
 	if _texture_cache.has(lower):
 		_texture_cache.erase(lower)
+	if _texture_cache.has(file_lower):
+		_texture_cache.erase(file_lower)
 
 	# Force a path lookup on the next request
 	var base_key = lower.get_file().trim_suffix(".import")

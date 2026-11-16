@@ -371,28 +371,35 @@ func _on_Area_input_event(camera: Node, event: InputEvent, click_position: Vecto
 func _input(event: InputEvent) -> void:
 	var handled: bool = false
 	if event is InputEventKey and event.pressed and is_over and select_mode_active:
-		if event.scancode == KEY_SPACE and event.control:
+		if event.scancode == KEY_SPACE and LnzLiveUtils.shortcut_modifier(event):
 			return
 		if HotkeyManager:
 			if HotkeyManager.is_action_pressed("select_jump_info") or HotkeyManager.is_action_pressed("select_jump_info_alt"):
-				if not event.alt and not event.control:
+				if not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.BALL)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_move") or HotkeyManager.is_action_pressed("select_jump_move_alt"):
-				if not event.alt and not event.control:
+				if not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.MOVE)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_project") or HotkeyManager.is_action_pressed("select_jump_project_alt"):
-				if not event.alt and not event.control:
+				if not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
 					return
 			if HotkeyManager.is_action_pressed("select_jump_line") or HotkeyManager.is_action_pressed("select_jump_line_alt"):
-				if not event.alt and not event.control:
+				if not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 					get_tree().set_input_as_handled()
 					emit_signal("ball_selected", ball_no, Section.Section.LINE)
+					return
+			if HotkeyManager.is_action_pressed("select_jump_paintball"):
+				if not event.alt and not LnzLiveUtils.shortcut_modifier(event):
+					get_tree().set_input_as_handled()
+					var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+					if is_instance_valid(lnz_text_edit):
+						lnz_text_edit.select_paintball(ball_no, true)
 					return
 			if HotkeyManager.is_action_pressed("select_delete_ball"):
 				get_tree().set_input_as_handled()
@@ -402,22 +409,27 @@ func _input(event: InputEvent) -> void:
 				get_tree().set_input_as_handled()
 				emit_signal("hide_ball", ball_no)
 				return
-		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
+		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.BALL)
-		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
+		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.MOVE)
-		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not event.control:
+		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
-		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
+		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not LnzLiveUtils.shortcut_modifier(event):
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.LINE)
+		elif event.scancode == KEY_J and not event.alt and not LnzLiveUtils.shortcut_modifier(event) and not event.shift:
+			get_tree().set_input_as_handled()
+			var lnz_text_edit: Node = LnzLiveUtils.get_lnz_text_edit(get_tree().root)
+			if is_instance_valid(lnz_text_edit):
+				lnz_text_edit.select_paintball(ball_no, true)
 		elif event.scancode == KEY_DELETE:
 			get_tree().set_input_as_handled()
 			emit_signal("delete_ball", ball_no)
-		elif event.scancode == KEY_H and not event.control and not event.alt and not event.shift:
+		elif event.scancode == KEY_H and not LnzLiveUtils.shortcut_modifier(event) and not event.alt and not event.shift:
 			get_tree().set_input_as_handled()
 			emit_signal("hide_ball", ball_no)
 

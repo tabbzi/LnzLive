@@ -38,3 +38,6 @@ docs/llm-rag-chromadb/main/chroma.sqlite3
 
 # Ignore Godot 3.2 docs .rst files (keep local)
 docs/godot/
+
+# MacOS
+.DS_Store

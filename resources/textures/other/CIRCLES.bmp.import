@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/FLOWER.bmp-76c6c1a3f57839b60f4794cd18ee82bc.stex"
+path="res://.import/CIRCLES.bmp-48f77f628966e04743363ca80dd79c96.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/wallpaper/FLOWER.bmp"
-dest_files=[ "res://.import/FLOWER.bmp-76c6c1a3f57839b60f4794cd18ee82bc.stex" ]
+source_file="res://resources/textures/other/CIRCLES.bmp"
+dest_files=[ "res://.import/CIRCLES.bmp-48f77f628966e04743363ca80dd79c96.stex" ]
 
 [params]
 
