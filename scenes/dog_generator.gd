@@ -42,14 +42,18 @@ export var draw_special_balls = false
 export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
+export var use_grouped_paintballs = true
 export var draw_polygons = true
 export var draw_omitted_balls = false
 export var draw_negative_balls = false
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
+var paintball_group_scene = preload("res://PaintballGroup.tscn")
 var line_scene = preload("res://Line.tscn")
 var polygon_scene = preload("res://Polygon.tscn")
+
+var PaintBallEntry = preload("res://data_classes/paintball_entry.gd")
 
 var bhd: BhdParser
 var lnz: LnzParser
@@ -482,6 +486,31 @@ func _on_OptionButton_file_saved(file_name):
 	generate_pet(file_name)
 
 
+func unload_lnz_model() -> void:
+	if is_instance_valid(pet_view) and pet_view.has_node("variation_tree"):
+		var vt = pet_view.get_node("variation_tree")
+		if is_instance_valid(vt):
+			if "lnz_parser" in vt:
+				vt.lnz_parser = null
+			if "_sections_map" in vt:
+				vt._sections_map = null
+
+	if lnz != null:
+		lnz.paintballs.clear()
+		lnz.balls.clear()
+		lnz.addballs.clear()
+		lnz.lines.clear()
+		lnz.polygons.clear()
+		lnz.sections_map.clear()
+		lnz.addball_raw_to_ball_map.clear()
+		lnz = null
+
+	ball_map.clear()
+	paintball_map.clear()
+	polygons_map.clear()
+	lines_map.clear()
+
+
 ### MODEL GENERATION ###
 # generate_pet
 # set_skip_next_rebuild
@@ -500,6 +529,10 @@ func generate_pet(file_path):
 	var full_rebuild = not _skip_next_rebuild
 	_skip_next_rebuild = false
 
+	var is_switching_files = (file_path != last_loaded_filepath)
+	if is_switching_files:
+		unload_lnz_model()
+
 	var lnz_info = LnzParser.new(file_path)
 	if not _validate_lnz_file(lnz_info):
 		print("[ERROR] dog_generator: generate_pet: LNZ file validation failed, aborting load of: " + file_path)
@@ -510,15 +543,7 @@ func generate_pet(file_path):
 	lnz = lnz_info
 	lnz.get_species()
 
-	if file_path != last_loaded_filepath:
-
-		_clear_paintball_state_on_model_load()
-
-		# TBD: May be helpful to clear caches when switching models (not on every reload)
-		# clear_texture_cache()
-		# _atlas_textures.clear()
-		# _orig_lnz_pos.clear()
-		# _orig_world_pos.clear()
+	if is_switching_files:
 
 		last_loaded_filepath = file_path
 		_clear_hidden_state_lists()
@@ -690,28 +715,8 @@ func clear_lnz_data(keep_visuals: bool = false):
 		lines_map.clear()
 
 func recompose_model():
-	# Clear LNZ data structures
-	# lnz.balls.clear()
-	# lnz.paintballs.clear()
-	# lnz.lines.clear()
-	# lnz.addballs.clear()
-	# lnz.omissions.clear()
-	# lnz.project_ball.clear()
-	# lnz.polygons.clear()
-	# lnz.moves.clear()
-	# lnz.texture_list.clear()
-	# lnz.custom_eyes.clear()
-	# lnz.whisker_connections.clear()
-	# lnz.no_texture_rotate.clear()
-	# lnz.quadrant_balls.clear()
-
-	# Load temporary LNZ and validate
-	var temp_lnz = LnzParser.new(lnz.file_path)
-	if temp_lnz == null:
-		print("[ERROR] dog_generator: recompose_model: failed to create temp LNZ parser for: " + lnz.file_path)
-		return
-
-	temp_lnz.get_species()
+	lnz.reset_parsed_data()
+	lnz.get_species()
 
 	var ordered_sections = [
 		"Texture List",
@@ -773,60 +778,32 @@ func recompose_model():
 		if current_variation_config.has(section):
 			var method = section_methods[section]
 			var sec_cfg = current_variation_config[section]
-			var reader = temp_lnz.compile_section(section, sec_cfg)
-			temp_lnz.call(method, reader)
+			var reader = lnz.compile_section(section, sec_cfg)
+			lnz.call(method, reader)
 
 	if current_variation_config.has("Paint Ballz"):
 		var pb_cfg = current_variation_config["Paint Ballz"]
-		temp_lnz.parse_paintballs(temp_lnz.compile_section("Paint Ballz", pb_cfg))
+		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", pb_cfg))
 
 	if current_variation_config.has("Move"):
 		var move_cfg = current_variation_config["Move"]
-		temp_lnz.parse_moves(temp_lnz.compile_section("Move", move_cfg))
+		lnz.parse_moves(lnz.compile_section("Move", move_cfg))
 
 	if current_variation_config.has("Project Ball"):
 		var pball_cfg = current_variation_config["Project Ball"]
-		temp_lnz.get_project_balls(temp_lnz.compile_section("Project Ball", pball_cfg))
+		lnz.get_project_balls(lnz.compile_section("Project Ball", pball_cfg))
 
 	# Cat without [Whiskers] section: apply default whisker connections
-	if temp_lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
-		var defaults = KeyBallsData.get_default_whisker_connections(temp_lnz.species)
+	if lnz.species == KeyBallsData.Species.CAT and not current_variation_config.has("Whiskers"):
+		var defaults = KeyBallsData.get_default_whisker_connections(lnz.species)
 		for conn in defaults:
-			temp_lnz.whisker_connections.append(conn)
+			lnz.whisker_connections.append(conn)
 
-	if not _validate_parsed_lnz_data(temp_lnz):
-		print("[ERROR] dog_generator: recompose_model: temp LNZ validation failed, old model preserved")
+	if not _validate_parsed_lnz_data(lnz):
+		print("[ERROR] dog_generator: recompose_model: LNZ validation failed, old model preserved")
 		if console_log:
-			console_log.log_message("Model recomposition failed: temp LNZ validation failed")
+			console_log.log_message("Model recomposition failed: LNZ validation failed")
 		return
-
-	lnz.balls = temp_lnz.balls
-	lnz.paintballs = temp_lnz.paintballs
-	lnz.lines = temp_lnz.lines
-	lnz.addballs = temp_lnz.addballs
-	lnz.omissions = temp_lnz.omissions
-	lnz.project_ball = temp_lnz.project_ball
-	lnz.polygons = temp_lnz.polygons
-	lnz.moves = temp_lnz.moves
-	lnz.texture_list = temp_lnz.texture_list
-	lnz.custom_eyes = temp_lnz.custom_eyes
-	lnz.whisker_connections = temp_lnz.whisker_connections
-	lnz.no_texture_rotate = temp_lnz.no_texture_rotate
-	lnz.quadrant_balls = temp_lnz.quadrant_balls
-	lnz.scales = temp_lnz.scales
-	lnz.eyelid_color = temp_lnz.eyelid_color
-	lnz.leg_extensions = temp_lnz.leg_extensions
-	lnz.body_extension = temp_lnz.body_extension
-	lnz.face_extension = temp_lnz.face_extension
-	lnz.ear_extension = temp_lnz.ear_extension
-	lnz.head_enlargement = temp_lnz.head_enlargement
-	lnz.foot_enlargement = temp_lnz.foot_enlargement
-	lnz.palette = temp_lnz.palette
-	lnz.eyelash_lengths = temp_lnz.eyelash_lengths
-	lnz.eyelash_angle = temp_lnz.eyelash_angle
-	lnz.eyelash_spacing = temp_lnz.eyelash_spacing
-	lnz.eyelash_color = temp_lnz.eyelash_color
-	lnz.z_shade_slope = temp_lnz.z_shade_slope
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
@@ -892,27 +869,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 			a.anchor_ball
 		)
 
-	var paintballs = {}
-
-	for k in lnz_info.paintballs:
-		var ar = lnz_info.paintballs[k]
-		paintballs[k] = ar.duplicate()
-		var i = 0
-		for a in ar:
-			paintballs[k][i] = {
-				base = a.base,
-				size = a.size,
-				normalised_position = a.normalised_position,
-				color_index = a.color_index,
-				outline = a.outline,
-				outline_color_index = a.outline_color_index,
-				fuzz = a.fuzz,
-				z_add = a.z_add,
-				group = a.group,
-				texture_id = a.texture_id,
-				anchored = a.anchored
-			}
-			i += 1
+	var paintballs = lnz_info.paintballs
 
 	collated_data = {balls = collated_data, addballs = addballs, paintballs = paintballs}
 	collated_data = munge_balls(collated_data, lnz_info)
@@ -929,12 +886,6 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		new_create,
 		lnz_info.no_texture_rotate
 	)
-
-	# TBD: Determine whether redundant
-	for key in ball_map:
-		var node = ball_map[key]
-		if is_instance_valid(node) and node is Spatial:
-			node.force_update_transform()
 
 	if new_create:
 		_finish_dependent_geometry(new_create)
@@ -1285,10 +1236,16 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			ball_map[key] = ball_scene.instance()
 		
 		for key in paintball_data:
-			var p_arr = []
-			for i in range(paintball_data[key].size()): 
-				p_arr.append(paintball_scene.instance())
-			paintball_map[key] = p_arr
+			if paintball_data[key].empty():
+				paintball_map[key] = []
+				continue
+			if use_grouped_paintballs:
+				paintball_map[key] = [paintball_group_scene.instance()]
+			else:
+				var p_arr = []
+				for i in range(paintball_data[key].size()): 
+					p_arr.append(paintball_scene.instance())
+				paintball_map[key] = p_arr
 
 	# --- BASE BALLZ ---
 	for key in ball_data:
@@ -1474,56 +1431,121 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			for pb in paintball_map[key]:
 				if is_instance_valid(pb):
 					pb.queue_free()
+			paintball_map[key] = []
 			continue
 
 		var paint_list = paintball_data[key].duplicate()
 		paint_list.invert() 
 
-		var count = 0
 		var is_omitted = omissions.has(key)
 		var base_z = base_node.z_add if "z_add" in base_node else 0.0
 
-		for pb_data in paint_list:
-			var node = paintball_map[key][count]
-			var final_size = snap_ball_size(base_data.size * (pb_data.size / 100.0))
+		if use_grouped_paintballs:
+			var group_node = paintball_map[key][0] if (paintball_map.has(key) and paintball_map[key].size() > 0) else null
+			if not is_instance_valid(group_node):
+				continue
+
+			var need_mesh_build: bool = new_create or (base_data.size != group_node.base_ball_size)
+			var entries: Array = []
+
+			if need_mesh_build:
+				var count = 0
+				for pb_data in paint_list:
+					var entry = PaintBallEntry.new()
+					entry.local_origin = pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size
+					entry.pb_normal = pb_data.normalised_position
+					entry.pb_normal.y *= -1.0
+					entry.ball_size = int(snap_ball_size(base_data.size * (pb_data.size / 100.0)))
+					entry.color_index = pb_data.color_index
+					entry.outline_color_index = pb_data.outline_color_index
+					entry.outline = pb_data.outline
+					entry.fuzz_amount = int(fuzz_to_amount(pb_data.fuzz))
+					entry.z_add = base_z_offset(base_z) + float(count)
+					entry.group = pb_data.group
+					entry.has_texture = false
+					entry.tile_texture = not lnz.no_texture_rotate.has(key)
+					entry.transparent_color = 0
+					if pb_data.texture_id >= 0 and pb_data.texture_id < texture_list.size():
+						var tex = load_texture_from_list(pb_data.texture_id, texture_list, preloader, active_custom_palette, is_babyz_mode)
+						if tex:
+							entry.has_texture = true
+							entry.texture = tex
+							var tex_info = texture_list[pb_data.texture_id]
+							entry.texture_size = tex_info.texture_size if (tex_info.has("texture_size") and tex_info.texture_size != null) else Vector2(256, 256)
+							entry.transparent_color = int(tex_info.transparent_color)
+					entries.append(entry)
+					count += 1
 
 			if new_create:
-				base_node.add_child(node)
-				#node.set_owner(root)
-				node.add_to_group("paintballs")
-				
-				node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
-				node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
-				node.set_species(species, is_babyz_mode)
+				group_node.base_ball_no = key
+				base_node.add_child(group_node)
+				group_node.add_to_group("paintballs")
+				group_node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
+				group_node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+				group_node.set_species(species, is_babyz_mode)
+				group_node.set_palette(palette)
+				group_node.set_render_flat_colors(render_flat_colors_global)
+				group_node.tile_texture = not lnz.no_texture_rotate.has(key)
+				group_node.base_ball_size = base_data.size
+				group_node.base_ball_position = base_node.global_transform.origin
+				group_node.build_mesh(entries)
+			else:
+				if need_mesh_build:
+					group_node.update_base_ball_size_and_origins(base_data.size, entries)
+				group_node.base_ball_position = base_node.global_transform.origin
 
-				var pb_normal = pb_data.normalised_position
-				pb_normal.y *= -1.0
-				node.set_surface_normal(pb_normal)
-
-				apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
-
-				# Inherit no_texture_rotate from base ball so paintball texture stays centered
-				if lnz.no_texture_rotate.has(key):
-					node.set_tile_texture(false)
-
-			#node.base_ball_position = base_node.transform.origin
-			node.base_ball_position = base_node.global_transform.origin
-			
-			node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
-			node.ball_size = final_size
-			node.base_ball_size = base_data.size
-			node.z_add = base_z_offset(base_z) + float(count)
-			node.base_ball_no = pb_data.base
-
+			group_node.omitted = is_omitted
 			if is_omitted:
-				if draw_omitted_balls: node.visible_override = true
+				if draw_omitted_balls:
+					group_node.visible_override = true
+					group_node.set_visible(true)
 				else:
-					node.call_deferred("set_visible", false)
-					node.call_deferred("set_visible", false) # TBD: Check whether this is really needed but IIRC it was... but definitely hacky
-			elif !draw_paintballs:
-				node.call_deferred("set_visible", false)
+					group_node.call_deferred("set_visible", false)
+			elif not draw_paintballs:
+				group_node.call_deferred("set_visible", false)
+
+		else:
+			var count = 0
+			for pb_data in paint_list:
+				var node = paintball_map[key][count]
+				var final_size = snap_ball_size(base_data.size * (pb_data.size / 100.0))
+
+				if new_create:
+					base_node.add_child(node)
+					#node.set_owner(root)
+					node.add_to_group("paintballs")
+					
+					node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
+					node.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+					node.set_species(species, is_babyz_mode)
+
+					var pb_normal = pb_data.normalised_position
+					pb_normal.y *= -1.0
+					node.set_surface_normal(pb_normal)
+
+					apply_visual_properties(node, pb_data, texture_list, palette, null, active_custom_palette)
+
+					if lnz.no_texture_rotate.has(key):
+						node.set_tile_texture(false)
+
+				#node.base_ball_position = base_node.transform.origin
+				node.base_ball_position = base_node.global_transform.origin
 				
-			count += 1
+				node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
+				node.ball_size = final_size
+				node.base_ball_size = base_data.size
+				node.z_add = base_z_offset(base_z) + float(count)
+				node.base_ball_no = pb_data.base
+
+				if is_omitted:
+					if draw_omitted_balls: node.visible_override = true
+					else:
+						node.call_deferred("set_visible", false)
+						node.call_deferred("set_visible", false) # TBD: Check whether this is really needed but IIRC it was... but definitely hacky
+				elif !draw_paintballs:
+					node.call_deferred("set_visible", false)
+					
+				count += 1
 
 	# Update global positions for ballz in paintballz visual properties
 	for key in ball_map.keys():
