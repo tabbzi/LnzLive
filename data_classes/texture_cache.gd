@@ -2,6 +2,8 @@ extends Reference
 ## texture_cache.gd
 ## Stateless texture caching manager for dog_generator.gd that handles loading and caching of textures
 
+const PETZ_IMAGE = preload("res://scripts/petz_image.gd")
+
 var _texture_cache = {}
 var _atlas_manifest = {}
 var _atlas_manifest_normalized = {}
@@ -88,20 +90,29 @@ func load_texture(texture_filename, preloader, is_babyz_mode: bool, custom_lnz_p
 				var h = raw_bmp_data["h"]
 				var data = raw_bmp_data["data"]
 				var img = Image.new()
-				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
+				img.create_from_data(w, h, false, Image.FORMAT_L8, data)
 				texture = ImageTexture.new()
-				texture.create_from_image(img, 0)
+				texture.create_from_image(img, Texture.FLAG_REPEAT)
 				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
 			
-		# FALLBACK: native loader for PNGs, failed BMPs, or virtual res:// files
+		# FALLBACK: petz_image.gd for BMPs that load_raw_8bit_bmp rejected, or PNGs
 		if texture == null:
-			var user_fallback = "user://resources/textures".plus_file(texture_filename)
-			var res_fallback = "res://resources/textures".plus_file(texture_filename)
-			
-			if ResourceLoader.exists(user_fallback):
-				texture = ResourceLoader.load(user_fallback)
-			elif ResourceLoader.exists(res_fallback):
-				texture = ResourceLoader.load(res_fallback)
+			var candidates: Array = []
+			if loaded_path != "":
+				candidates.append(loaded_path)
+			candidates.append("user://resources/textures".plus_file(texture_filename))
+			candidates.append("res://resources/textures".plus_file(texture_filename))
+			for candidate in candidates:
+				if candidate == "":
+					continue
+				var img = Image.new()
+				var err: int = PETZ_IMAGE.load_image(img, candidate, true, true)
+				if err == OK and img.get_width() > 0:
+					img.convert(Image.FORMAT_L8)
+					texture = ImageTexture.new()
+					texture.create_from_image(img, Texture.FLAG_REPEAT)
+					print("[INFO] dog_generator: petz_image.gd fallback loaded: " + candidate)
+					break
 
 	# PRELOADER FALLBACK
 	if texture == null and preloader != null:

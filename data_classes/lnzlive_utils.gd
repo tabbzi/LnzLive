@@ -683,7 +683,15 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	if debug:
 		print("[DEBUG] BMP Import - Dumping first 5 palette entries for: ", path)
 		
-	for i in range(256):
+	f.seek(46)
+	var colors_used: int = f.get_32()
+	var palette_entry_count: int = colors_used if (colors_used > 0 and colors_used < 256) else 256
+	
+	f.seek(14 + _header_size)
+	var max_possible_entries: int = (pixel_offset - (14 + _header_size)) / 4
+	var palette_limit: int = min(palette_entry_count, max_possible_entries)
+	
+	for i in range(palette_limit):
 		var b: int = f.get_8()
 		var g: int = f.get_8()
 		var r: int = f.get_8()
