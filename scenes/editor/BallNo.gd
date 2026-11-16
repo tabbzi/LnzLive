@@ -7,6 +7,9 @@ onready var ball_label: Label = self
 onready var lnz_edit: Node = get_node("../../LnzTextEdit")
 
 func _update_ball_label(ball_no: int) -> void:
+	if not is_instance_valid(lnz_edit):
+		ball_label.visible = false
+		return
 	var current_section: String = lnz_edit.get_current_section_name()
 	
 	if current_section == "[Texture List]":
