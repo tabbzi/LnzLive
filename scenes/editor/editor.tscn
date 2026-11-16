@@ -186,7 +186,6 @@ script = ExtResource( 3 )
 transform = Transform( 0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0, 0, 0 )
 visible = false
 mesh = SubResource( 1 )
-material/0 = null
 
 [node name="SceneRoot" type="Control" parent="."]
 anchor_right = 1.0
@@ -266,9 +265,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer" groups=[
-"SidebarController",
-]]
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer" groups=["SidebarController"]]
 margin_right = 378.0
 margin_bottom = 1080.0
 grow_horizontal = 0
@@ -285,6 +282,7 @@ __meta__ = {
 margin_right = 378.0
 margin_bottom = 1051.0
 size_flags_vertical = 3
+custom_fonts/font = ExtResource( 27 )
 custom_icons/increment_highlight = ExtResource( 22 )
 custom_icons/increment = ExtResource( 16 )
 custom_icons/decrement_highlight = ExtResource( 17 )
@@ -293,7 +291,6 @@ custom_styles/tab_fg = SubResource( 2 )
 custom_styles/tab_disabled = SubResource( 3 )
 custom_styles/tab_bg = SubResource( 4 )
 custom_styles/panel = ExtResource( 23 )
-custom_fonts/font = ExtResource( 27 )
 tab_align = 0
 
 [node name="FileTree" type="VBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs"]
@@ -311,13 +308,13 @@ margin_right = 376.0
 margin_bottom = 955.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_icons/arrow = ExtResource( 30 )
-custom_icons/arrow_collapsed = ExtResource( 31 )
-custom_styles/bg = SubResource( 5 )
 custom_constants/item_margin = 48
 custom_constants/hseparation = 32
 custom_constants/draw_relationship_lines = 16
 custom_constants/button_margin = 48
+custom_icons/arrow = ExtResource( 30 )
+custom_icons/arrow_collapsed = ExtResource( 31 )
+custom_styles/bg = SubResource( 5 )
 allow_rmb_select = true
 hide_root = true
 script = ExtResource( 2 )
@@ -335,11 +332,10 @@ items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null
 margin_top = 825.0
 margin_right = 700.0
 margin_bottom = 1425.0
+rect_min_size = Vector2( 300, 105 )
 window_title = "Open File(s)"
 mode = 1
 access = 2
-current_dir = "/Users/kathl/Documents/GitHub/LnzLive"
-current_path = "/Users/kathl/Documents/GitHub/LnzLive/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -355,12 +351,12 @@ margin_left = 12.0
 margin_right = 140.0
 margin_bottom = 24.0
 hint_tooltip = "Import new palette (.bmp)"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Import Palette "
 
 [node name="ImportButtonTexBMP" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox1"]
@@ -368,12 +364,12 @@ margin_left = 144.0
 margin_right = 269.0
 margin_bottom = 24.0
 hint_tooltip = "Import new texture (.bmp)"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Import Texture"
 
 [node name="ImportButtonLNZ" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox1"]
@@ -381,12 +377,12 @@ margin_left = 273.0
 margin_right = 364.0
 margin_bottom = 24.0
 hint_tooltip = "Import LNZ from text file (.lnz or .txt)"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Import LNZ"
 
 [node name="FileNavHBox2" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
@@ -400,12 +396,12 @@ margin_left = 95.0
 margin_right = 232.0
 margin_bottom = 38.0
 hint_tooltip = "Open folder where user resources and config for LnzLive are stored"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Open User Folder"
 
 [node name="RescanButton" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2"]
@@ -440,12 +436,12 @@ margin_bottom = 1080.0
 rect_min_size = Vector2( 0, 25 )
 hint_tooltip = "Hide/view sidebar"
 size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 2 )
 custom_styles/pressed = SubResource( 2 )
 custom_styles/focus = SubResource( 2 )
 custom_styles/disabled = SubResource( 2 )
 custom_styles/normal = SubResource( 2 )
-custom_fonts/font = ExtResource( 27 )
 text = "<< Hide Sidebar <<"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
@@ -488,12 +484,12 @@ margin_right = 97.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "File"
 switch_on_hover = true
 
@@ -524,12 +520,12 @@ margin_right = 241.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Edit"
 switch_on_hover = true
 
@@ -539,12 +535,12 @@ margin_right = 161.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Tool"
 switch_on_hover = true
 
@@ -570,12 +566,12 @@ margin_right = 225.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Mode"
 switch_on_hover = true
 
@@ -609,12 +605,12 @@ margin_right = 299.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Render"
 switch_on_hover = true
 
@@ -646,13 +642,13 @@ mouse_filter = 0
 margin_right = 128.0
 margin_bottom = 19.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Draw polygons"
 
@@ -661,13 +657,13 @@ margin_top = 23.0
 margin_right = 128.0
 margin_bottom = 42.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Draw lines"
 
@@ -676,13 +672,13 @@ margin_top = 46.0
 margin_right = 128.0
 margin_bottom = 65.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Draw paintballz"
 
@@ -691,13 +687,13 @@ margin_top = 69.0
 margin_right = 128.0
 margin_bottom = 88.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Draw addballz"
 
@@ -706,13 +702,13 @@ margin_top = 92.0
 margin_right = 128.0
 margin_bottom = 111.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Draw ballz"
 
@@ -729,52 +725,52 @@ __meta__ = {
 margin_right = 152.0
 margin_bottom = 19.0
 mouse_filter = 1
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Show omitted ballz"
 
 [node name="ToggleSpecialBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
 margin_top = 23.0
 margin_right = 152.0
 margin_bottom = 42.0
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Show special ballz"
 
 [node name="ToggleNegativeBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
 margin_top = 46.0
 margin_right = 152.0
 margin_bottom = 65.0
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Show negative ballz"
 
 [node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
 margin_top = 69.0
 margin_right = 152.0
 margin_bottom = 88.0
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Transparency (253)"
 
@@ -783,12 +779,12 @@ margin_top = 92.0
 margin_right = 152.0
 margin_bottom = 122.0
 rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Unhide Ballz"
 
 [node name="ExportOptionButton" type="MenuButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
@@ -797,12 +793,12 @@ margin_right = 373.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Export"
 switch_on_hover = true
 
@@ -822,12 +818,12 @@ margin_bottom = 64.0
 margin_right = 137.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
 
@@ -836,12 +832,12 @@ margin_top = 34.0
 margin_right = 137.0
 margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 28 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 28 )
 text = "Export to Clothes CLZ"
 script = ExtResource( 38 )
 
@@ -852,12 +848,12 @@ margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 hint_tooltip = "Helpful tips and resources"
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "Help"
 switch_on_hover = true
 
@@ -867,12 +863,12 @@ margin_right = 466.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Change viewer background color"
+custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_styles/hover = ExtResource( 25 )
 custom_styles/pressed = ExtResource( 25 )
 custom_styles/focus = ExtResource( 25 )
 custom_styles/disabled = ExtResource( 25 )
 custom_styles/normal = ExtResource( 25 )
-custom_colors/font_color = Color( 0, 0, 0, 1 )
 text = "BG"
 color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
@@ -884,12 +880,12 @@ margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Toggle reference image to background or popup"
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 25 )
 custom_styles/pressed = ExtResource( 25 )
 custom_styles/focus = ExtResource( 25 )
 custom_styles/disabled = ExtResource( 25 )
 custom_styles/normal = ExtResource( 25 )
-custom_fonts/font = ExtResource( 27 )
 icon = ExtResource( 34 )
 flat = true
 expand_icon = true
@@ -937,12 +933,12 @@ margin_right = 29.0
 margin_bottom = 22.0
 rect_min_size = Vector2( 25, 20 )
 size_flags_vertical = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "<"
 
 [node name="AnimPicker" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
@@ -952,8 +948,8 @@ margin_bottom = 20.0
 rect_min_size = Vector2( 75, 20 )
 mouse_filter = 1
 size_flags_vertical = 0
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 29 )
+custom_styles/normal = ExtResource( 19 )
 align = 1
 placeholder_text = "anim #"
 __meta__ = {
@@ -966,12 +962,12 @@ margin_right = 137.0
 margin_bottom = 22.0
 rect_min_size = Vector2( 25, 20 )
 size_flags_vertical = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
@@ -993,12 +989,12 @@ rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
 size_flags_horizontal = 3
 size_flags_vertical = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 toggle_mode = true
 text = "Play"
 script = ExtResource( 6 )
@@ -1021,13 +1017,13 @@ margin_right = 759.0
 margin_bottom = 22.0
 hint_tooltip = "Click to toggle symmetrical pose"
 focus_mode = 0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
 text = "T-Pose"
 
 [node name="HelperContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
@@ -1062,9 +1058,9 @@ size_flags_vertical = 0
 margin_right = 655.0
 margin_bottom = 26.0
 hint_tooltip = "Click to apply changes from Text Editor"
-custom_fonts/font = ExtResource( 26 )
 custom_colors/font_color_hover = Color( 0.607843, 0.678431, 0.717647, 1 )
 custom_colors/font_color_pressed = Color( 0.384314, 0.654902, 0.654902, 1 )
+custom_fonts/font = ExtResource( 26 )
 text = "Apply Changes"
 flat = true
 __meta__ = {
@@ -1107,11 +1103,11 @@ margin_bottom = 50.0
 rect_min_size = Vector2( 0, 50 )
 rect_clip_content = false
 mouse_filter = 2
-custom_fonts/normal_font = ExtResource( 35 )
 custom_colors/default_color = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 0.501961 )
 custom_constants/shadow_offset_x = 1
 custom_constants/shadow_offset_y = 1
+custom_fonts/normal_font = ExtResource( 35 )
 bbcode_enabled = true
 scroll_active = false
 script = ExtResource( 39 )
@@ -1120,8 +1116,8 @@ script = ExtResource( 39 )
 margin_top = 54.0
 margin_right = 759.0
 margin_bottom = 74.0
-custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.8 )
+custom_fonts/font = ExtResource( 35 )
 align = 2
 script = ExtResource( 42 )
 
@@ -1130,8 +1126,8 @@ visible = false
 margin_left = 10.0
 margin_top = 78.0
 margin_bottom = 98.0
-custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
+custom_fonts/font = ExtResource( 35 )
 align = 2
 
 [node name="UnappliedChangesLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
@@ -1141,8 +1137,8 @@ margin_top = 38.0
 margin_right = 759.0
 margin_bottom = 58.0
 rect_min_size = Vector2( 0, 30 )
-custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 0.2, 0.2, 1 )
+custom_fonts/font = ExtResource( 35 )
 align = 2
 autowrap = true
 clip_text = true
@@ -1151,9 +1147,9 @@ clip_text = true
 margin_top = 78.0
 margin_right = 759.0
 margin_bottom = 98.0
-custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.8-preview-21"
+custom_fonts/font = ExtResource( 35 )
+text = "PB-beta-v1.4.8-preview-22"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1182,12 +1178,12 @@ size_flags_horizontal = 3
 margin_right = 85.0
 margin_bottom = 24.0
 hint_tooltip = "Click to switch font"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Font: Pixel"
 
 [node name="DecreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1196,12 +1192,12 @@ margin_right = 109.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 20, 20 )
 hint_tooltip = "Decrease font size"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "-"
 
 [node name="IncreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1210,12 +1206,12 @@ margin_right = 135.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 22, 20 )
 hint_tooltip = "Increase font size"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "+"
 
 [node name="AutowrapButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1223,12 +1219,12 @@ margin_left = 139.0
 margin_right = 220.0
 margin_bottom = 24.0
 hint_tooltip = "Toggle word wrap in Text Editor"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Wrap: Off"
 
 [node name="FindReplaceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1236,12 +1232,12 @@ margin_left = 224.0
 margin_right = 332.0
 margin_bottom = 24.0
 hint_tooltip = "Find and replace text in Text Editor"
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Find/Replace"
 
 [node name="TextModeButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1249,12 +1245,12 @@ visible = false
 margin_left = 336.0
 margin_right = 425.0
 margin_bottom = 24.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Text Editor"
 
 [node name="TableModeButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1262,12 +1258,12 @@ visible = false
 margin_left = 349.0
 margin_right = 447.0
 margin_bottom = 21.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
 [node name="BallNo" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1327,60 +1323,60 @@ rect_clip_content = true
 [node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_right = 81.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Find Next"
 
 [node name="FindPrevButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_left = 85.0
 margin_right = 168.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Find Prev"
 
 [node name="ReplaceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_left = 172.0
 margin_right = 247.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Replace"
 
 [node name="ReplaceAllButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_left = 251.0
 margin_right = 352.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Replace All"
 
 [node name="MatchCaseCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_left = 356.0
 margin_right = 475.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Match Case"
 
 [node name="WholeWordsCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_left = 479.0
 margin_right = 609.0
 margin_bottom = 25.0
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Whole Words"
 
 [node name="CloseButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
@@ -1388,10 +1384,10 @@ margin_left = 613.0
 margin_right = 743.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 27 )
 custom_styles/hover = SubResource( 11 )
 custom_styles/pressed = SubResource( 11 )
 custom_styles/normal = SubResource( 12 )
-custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
@@ -1438,12 +1434,12 @@ margin_bottom = 24.0
 rect_min_size = Vector2( 25, 20 )
 hint_tooltip = "Sets base model that LNZ applies on"
 size_flags_vertical = 0
+custom_fonts/font = ExtResource( 35 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 35 )
 text = "game model"
 
 [node name="GameLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
@@ -1463,12 +1459,12 @@ margin_bottom = 24.0
 rect_min_size = Vector2( 25, 20 )
 hint_tooltip = "Sets base game palette that renders"
 size_flags_vertical = 0
+custom_fonts/font = ExtResource( 35 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = ExtResource( 35 )
 text = "game palette"
 
 [node name="BallLabel" type="Label" parent="SceneRoot"]
@@ -1489,9 +1485,9 @@ margin_top = 750.0
 margin_right = 450.0
 margin_bottom = 770.0
 rect_min_size = Vector2( 200, 0 )
+custom_fonts/font = ExtResource( 35 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/panel = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
 allow_search = true
 script = ExtResource( 10 )
 __meta__ = {
@@ -1502,9 +1498,9 @@ __meta__ = {
 margin_right = 150.0
 margin_bottom = 214.0
 rect_min_size = Vector2( 150, 0 )
+custom_fonts/font = ExtResource( 35 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/panel = ExtResource( 19 )
-custom_fonts/font = ExtResource( 35 )
 items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Tongue", null, 0, false, false, 8, 0, null, "", false, "Color Swap", null, 0, false, false, 9, 0, null, "", false ]
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1542,6 +1538,7 @@ margin_left = -497.0
 margin_top = 131.0
 margin_right = 141.0
 margin_bottom = 515.0
+rect_min_size = Vector2( 300, 105 )
 size_flags_horizontal = 3
 window_title = "Color Swap"
 dialog_text = "Note that Color Swap always excludes eyes and tongue from recoloring. Use the 'Nose ballz' toggle to control nose exclusion.
@@ -1752,6 +1749,7 @@ anchor_right = 0.6
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
+rect_min_size = Vector2( 300, 105 )
 window_title = "Confirm File Load"
 dialog_text = "Are you sure you want to load this file?"
 dialog_autowrap = true
@@ -1762,6 +1760,7 @@ __meta__ = {
 [node name="BhdPromptDialog" type="ConfirmationDialog" parent="SceneRoot"]
 margin_right = 300.0
 margin_bottom = 100.0
+rect_min_size = Vector2( 300, 105 )
 window_title = "Select Base Model"
 dialog_text = "No species or base model could be determined from the file. Please select a base model (BHD) to use:"
 
@@ -1769,7 +1768,7 @@ dialog_text = "No species or base model could be determined from the file. Pleas
 margin_left = 8.0
 margin_top = 22.0
 margin_right = 668.0
-margin_bottom = 64.0
+margin_bottom = 69.0
 
 [node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/BhdPromptDialog/VBoxContainer"]
 margin_right = 660.0
@@ -1795,8 +1794,8 @@ margin_right = 110.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 64, 25 )
 size_flags_horizontal = 3
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 max_length = 3
 placeholder_text = "color #"
 
@@ -1806,8 +1805,8 @@ margin_right = 110.0
 margin_bottom = 54.0
 rect_min_size = Vector2( 64, 25 )
 size_flags_horizontal = 3
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 max_length = 3
 placeholder_text = "outcol #"
 
@@ -1831,8 +1830,8 @@ __meta__ = {
 margin_right = 110.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 placeholder_text = "move in x"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1843,8 +1842,8 @@ margin_top = 29.0
 margin_right = 110.0
 margin_bottom = 54.0
 rect_min_size = Vector2( 0, 25 )
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 placeholder_text = "move in y"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1855,8 +1854,8 @@ margin_top = 58.0
 margin_right = 110.0
 margin_bottom = 83.0
 rect_min_size = Vector2( 0, 25 )
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 placeholder_text = "move in z"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1882,8 +1881,8 @@ __meta__ = {
 margin_right = 110.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 64, 45 )
-custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
+custom_styles/normal = ExtResource( 19 )
 placeholder_text = "fuzz amount"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1921,9 +1920,9 @@ margin_top = -250.0
 margin_right = 250.0
 margin_bottom = 250.0
 rect_min_size = Vector2( 500, 500 )
-custom_styles/panel = ExtResource( 19 )
-custom_fonts/title_font = SubResource( 13 )
 custom_colors/title_color = Color( 1, 1, 1, 1 )
+custom_fonts/title_font = SubResource( 13 )
+custom_styles/panel = ExtResource( 19 )
 
 [node name="ReferenceImageSettings" parent="SceneRoot" instance=ExtResource( 44 )]
 anchor_left = 0.5
@@ -1935,9 +1934,9 @@ margin_top = -200.0
 margin_right = 375.0
 margin_bottom = 200.0
 rect_min_size = Vector2( 750, 400 )
-custom_styles/panel = ExtResource( 19 )
-custom_fonts/title_font = SubResource( 13 )
 custom_colors/title_color = Color( 1, 1, 1, 1 )
+custom_fonts/title_font = SubResource( 13 )
+custom_styles/panel = ExtResource( 19 )
 
 [node name="ReferenceImagePopup" parent="SceneRoot" instance=ExtResource( 45 )]
 anchor_left = 0.5
