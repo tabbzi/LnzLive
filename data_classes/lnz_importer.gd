@@ -1,9 +1,11 @@
 extends Reference
-# Read-only extraction of cached pet text and PE32 breed LNZ resources.
+# Read-only extraction of cached pet text and PE32 breed LNZ and BMP resources.
 # All binary reads are bounded; invalid input never reaches the text editor.
 var data: PoolByteArray
 var error: String = ""
 var sections: Array = []
+var textures: Dictionary = {}
+var breed_file: String = ""
 var resource_base: int = 0
 var resource_size: int = 0
 
@@ -34,14 +36,19 @@ func extract(bytes: PoolByteArray, pet: bool) -> Array:
 	data = bytes
 	error = ""
 	sections = []
+	textures = {}
+	breed_file = ""
 	var result: Array = _pet() if pet else _breed()
-	if not error.empty(): return []
+	if not error.empty():
+		textures = {}
+		return []
 	if result.empty():
 		error = "No cached LNZ found. Import the pet's breed file instead." if pet else "No embedded LNZ resources found in this breed file."
 	return result
 
 func _pet() -> Array:
 	if not _require(0, 800): return []
+	breed_file = _text(0x202, 260).replace("\\", "/").get_file()
 	var version: int = _u32(0x318)
 	if version != 0x0acb0002 and version != 0x0acb0001:
 		error = "Unsupported pet version (Petz 3–5 cached LNZ required)."
@@ -102,7 +109,7 @@ func _name(value: int) -> String:
 	for i in range(count): result += char(_u16(resource_base + offset + 2 + i * 2))
 	return result
 
-func _directory(offset: int, depth: int, label: String, result: Array) -> void:
+func _directory(offset: int, depth: int, label: String, result: Array, kind: String = "") -> void:
 	if not _resource(offset, 16): return
 	var base: int = resource_base + offset
 	var count: int = _u16(base + 12) + _u16(base + 14)
@@ -111,21 +118,29 @@ func _directory(offset: int, depth: int, label: String, result: Array) -> void:
 		var entry: int = base + 16 + i * 8
 		var name: String = _name(_u32(entry))
 		var child: int = _u32(entry + 4)
-		if depth == 0 and name.to_upper() != "LNZ": continue
+		if depth == 0 and not name.to_upper() in ["LNZ", "BMP"]: continue
+		var next_kind: String = name.to_upper() if depth == 0 else kind
 		var next_label: String = name if depth == 1 else label
 		if child & 0x80000000:
 			if depth >= 2:
 				error = "Invalid resource directory depth."
 				return
-			_directory(child & 0x7fffffff, depth + 1, next_label, result)
+			_directory(child & 0x7fffffff, depth + 1, next_label, result, next_kind)
 		elif depth == 2:
 			if not _resource(child, 16): return
 			var size: int = _u32(resource_base + child + 4)
 			var start: int = _rva(_u32(resource_base + child), size)
 			if start < 0: return
-			var text: String = _text(start, size)
-			if not text.strip_edges().empty():
-				result.append({"name": label + " (" + name + ")", "text": text})
+			if kind == "BMP":
+				var filename: String = label.replace("\\", "/").get_file()
+				if filename.get_extension().to_lower() != "bmp": filename += ".bmp"
+				# First language wins, matching the game's resource lookup.
+				if size > 0 and not textures.has(filename):
+					textures[filename] = data.subarray(start, start + size - 1)
+			else:
+				var text: String = _text(start, size)
+				if not text.strip_edges().empty():
+					result.append({"name": label + " (" + name + ")", "text": text})
 		if not error.empty(): return
 
 func _breed() -> Array:

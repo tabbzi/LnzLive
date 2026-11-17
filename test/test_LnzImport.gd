@@ -113,3 +113,42 @@ func test_every_breed_truncation_is_rejected():
 	for size in range(bytes.size()):
 		var truncated: PoolByteArray = bytes.subarray(0, size - 1) if size > 0 else PoolByteArray()
 		assert_eq(importer.extract(truncated, false).size(), 0, "size " + str(size))
+
+func _breed_with_texture() -> PoolByteArray:
+	var bytes: PoolByteArray = _breed()
+	# Add BMP -> AD -> language 1033 alongside LNZ in the same PE section.
+	bytes = _put(bytes, 524, 2, 2)
+	bytes = _put(bytes, 536, 0x80000098)
+	bytes = _put(bytes, 540, 0x800000a0)
+	bytes = _put(bytes, 664, 3, 2)
+	for i in range(3): bytes = _put(bytes, 666 + i * 2, "BMP".ord_at(i), 2)
+	bytes = _put(bytes, 684, 1, 2)
+	bytes = _put(bytes, 688, 0x80000090)
+	bytes = _put(bytes, 692, 0x800000c0)
+	bytes = _put(bytes, 718, 1, 2)
+	bytes = _put(bytes, 720, 1033)
+	bytes = _put(bytes, 724, 0xe0)
+	bytes = _put(bytes, 736, 0x1180)
+	bytes = _put(bytes, 740, 6)
+	# Binary bytes must survive extraction unchanged, including NUL and high bytes.
+	for i in range(6): bytes[896 + i] = [66, 77, 0, 128, 254, 255][i]
+	return bytes
+
+func test_embedded_textures_and_importer_reuse():
+	var importer = Importer.new()
+	assert_eq(importer.extract(_breed_with_texture(), false).size(), 1)
+	assert_true(importer.textures.has("AD.bmp"))
+	assert_eq(Array(importer.textures["AD.bmp"]), [66, 77, 0, 128, 254, 255])
+	importer.extract(_pet(), true)
+	assert_true(importer.textures.empty())
+	var broken: PoolByteArray = _breed_with_texture()
+	broken = _put(broken, 736, 0x999999)
+	assert_true(importer.extract(broken, false).empty())
+	assert_true(importer.textures.empty())
+	assert_ne(importer.error, "")
+
+func test_pet_breed_reference():
+	var importer = Importer.new()
+	var bytes: PoolByteArray = _string(_pet(), 0x202, "C:\\Petz\\Resource\\Dogz\\Custom.dog")
+	assert_eq(importer.extract(bytes, true).size(), 2)
+	assert_eq(importer.breed_file, "Custom.dog")
