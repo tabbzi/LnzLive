@@ -13,8 +13,10 @@ signal user_file_selected(filepath)
 signal palette_selected(fileprefix)
 signal backup_file
 
-enum ImportType { NONE, LNZ, TEXTURE, PALETTE, PET, BREED }
+enum ImportType { NONE, LNZ, TEXTURE, PALETTE, PET, BREED, PET_BREED }
 var current_import_type: int = ImportType.NONE
+var pending_pet_entries: Array = []
+var pending_pet_filename: String = ""
 
 enum SortMode { ALPHABETICAL, MODIFIED_DATE }
 var current_sort_mode: int = SortMode.ALPHABETICAL
@@ -340,14 +342,14 @@ func _on_FileDialog_files_selected(paths: Array) -> void:
 		rescan_palettes()
 
 func _on_FileDialog_file_selected(selected_path: String, skip_rescan: bool = false) -> String:
-	if current_import_type in [ImportType.PET, ImportType.BREED]:
+	if current_import_type in [ImportType.PET, ImportType.BREED, ImportType.PET_BREED]:
 		var source: File = File.new()
 		if source.open(selected_path, File.READ) != OK:
 			_binary_import_error("Could not read " + selected_path.get_file())
 			return ""
 		var bytes: PoolByteArray = source.get_buffer(source.get_len())
 		source.close()
-		_extract_binary_lnz(bytes, selected_path.get_file())
+		_extract_binary_lnz(bytes, selected_path)
 		return ""
 	var file_extension: String = selected_path.get_extension().to_lower()
 	var dest_dir: String = ""
@@ -454,7 +456,7 @@ func _on_web_file_upload_popup_confirmed() -> void:
 		return
 		
 	var file_name: String = JavaScript.eval("window.fileUploadData.name")
-	if current_import_type in [ImportType.PET, ImportType.BREED]:
+	if current_import_type in [ImportType.PET, ImportType.BREED, ImportType.PET_BREED]:
 		_extract_binary_lnz(file_blob, file_name)
 		return
 	var file_extension: String = file_name.get_extension().to_lower()
@@ -756,8 +758,12 @@ func scan_local_textures() -> void:
 	print("[STATUS] FileTree: scan_local_textures: running")
 	var t_start: int = OS.get_ticks_msec()
 
+	_scan_user_texture_directory(user_file_location.plus_file("textures"), local_storage_textures)
+	print("[STATUS] FileTree: scan_local_textures: complete")
+	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
+
+func _scan_user_texture_directory(textures_dir: String, parent_item: TreeItem, scoped: bool = false) -> void:
 	var dir: Directory = Directory.new()
-	var textures_dir: String = user_file_location + "/textures"
 	if dir.open(textures_dir) != OK:
 		print("[WARNING] FileTree: scan_local_textures: directory not found, will create on texture import")
 		return
@@ -766,9 +772,14 @@ func scan_local_textures() -> void:
 	var file: File = File.new()
 
 	while filename != "":
-		if filename.to_lower().ends_with(".bmp"):
+		if dir.current_is_dir() and filename != "." and filename != ".." and not scoped:
+			var folder: TreeItem = create_item(parent_item)
+			folder.set_text(0, filename)
+			folder.set_metadata(0, textures_dir.plus_file(filename) + "/")
+			_scan_user_texture_directory(textures_dir.plus_file(filename), folder, true)
+		elif not dir.current_is_dir() and filename.to_lower().ends_with(".bmp"):
 			var full_path: String = textures_dir.plus_file(filename)
-			var new_item: TreeItem = create_item(local_storage_textures)
+			var new_item: TreeItem = create_item(parent_item)
 			new_item.set_text(0, filename)
 			new_item.set_metadata(0, full_path)
 
@@ -788,9 +799,9 @@ func scan_local_textures() -> void:
 					full_tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
 					
 					var res_name: String = filename.to_lower()
-					if preloader.has_resource(res_name):
+					if not scoped and preloader.has_resource(res_name):
 						preloader.remove_resource(res_name)
-					preloader.add_resource(res_name, full_tex)
+					if not scoped: preloader.add_resource(res_name, full_tex)
 
 					# Load image for thumbnail
 					if file.open(full_path, File.READ) == OK:
@@ -819,8 +830,6 @@ func scan_local_textures() -> void:
 
 		filename = dir.get_next()
 	dir.list_dir_end()
-	print("[STATUS] FileTree: scan_local_textures: complete")
-	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func scan_res_textures() -> void:
 	print("[STATUS] FileTree: scan_res_textures: running")
@@ -1607,8 +1616,61 @@ func _extract_binary_lnz(bytes: PoolByteArray, filename: String) -> void:
 	if entries.empty():
 		_binary_import_error(importer.error)
 		return
+	if current_import_type == ImportType.PET_BREED:
+		_finish_binary_import(pending_pet_entries, pending_pet_filename, importer.textures)
+		pending_pet_entries = []
+		return
+	var textures: Dictionary = importer.textures
+	if current_import_type == ImportType.PET:
+		var breed_path: String = filename.get_base_dir().plus_file(importer.breed_file)
+		var source: File = File.new()
+		if not OS.has_feature("HTML5") and not importer.breed_file.empty() and source.open(breed_path, File.READ) == OK:
+			var breed_importer = preload("res://data_classes/lnz_importer.gd").new()
+			breed_importer.extract(source.get_buffer(source.get_len()), false)
+			source.close()
+			textures = breed_importer.textures
+			if not breed_importer.error.empty():
+				_offer_pet_breed(entries, filename, importer.breed_file)
+				return
+		else:
+			_offer_pet_breed(entries, filename, importer.breed_file)
+			return
+	_finish_binary_import(entries, filename, textures)
+
+func _offer_pet_breed(entries: Array, filename: String, breed: String) -> void:
+	pending_pet_entries = entries
+	pending_pet_filename = filename
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Pet breed resources"
+	dialog.dialog_text = "Select the pet's breed file to import its custom textures." + ("\nReferenced breed: " + breed if not breed.empty() else "")
+	dialog.get_ok().text = "Select breed"
+	dialog.get_cancel().text = "Import without textures"
+	add_child(dialog)
+	dialog.connect("confirmed", self, "_select_pet_breed")
+	dialog.connect("popup_hide", dialog, "queue_free")
+	# The cancel button lets the cached LNZ remain usable without its breed.
+	dialog.get_cancel().connect("pressed", self, "_pet_without_textures")
+	dialog.popup_centered()
+
+func _pet_without_textures() -> void:
+	_finish_binary_import(pending_pet_entries, pending_pet_filename, {})
+	pending_pet_entries = []
+
+func _select_pet_breed() -> void:
+	current_import_type = ImportType.PET_BREED
+	if OS.has_feature("HTML5"):
+		web_file_dialog(".dog,.cat")
+		return
+	pet_view_container.input_is_paused = true
+	file_dialog.clear_filters()
+	file_dialog.add_filter("*.dog,*.cat ; Breed Files")
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.popup_centered()
+
+func _finish_binary_import(entries: Array, filename: String, textures: Dictionary) -> void:
+	filename = filename.get_file()
 	if entries.size() == 1:
-		_save_binary_lnz(entries[0].text, filename.get_basename())
+		_save_binary_lnz(entries[0].text, filename.get_basename(), textures)
 		return
 	var dialog: ConfirmationDialog = ConfirmationDialog.new()
 	dialog.window_title = "Choose LNZ to import"
@@ -1617,26 +1679,46 @@ func _extract_binary_lnz(bytes: PoolByteArray, filename: String) -> void:
 		choice.add_item(entry.name)
 	dialog.add_child(choice)
 	add_child(dialog)
-	dialog.connect("confirmed", self, "_binary_lnz_chosen", [choice, entries, filename.get_basename()])
+	dialog.connect("confirmed", self, "_binary_lnz_chosen", [choice, entries, filename.get_basename(), textures])
 	dialog.connect("popup_hide", dialog, "queue_free")
 	dialog.popup_centered(Vector2(420, 110))
 
-func _binary_lnz_chosen(choice: OptionButton, entries: Array, basename: String) -> void:
+func _binary_lnz_chosen(choice: OptionButton, entries: Array, basename: String, textures: Dictionary) -> void:
 	var entry: Dictionary = entries[choice.selected]
-	_save_binary_lnz(entry.text, basename + "_" + str(choice.selected + 1))
+	_save_binary_lnz(entry.text, basename + "_" + str(choice.selected + 1), textures)
 
-func _save_binary_lnz(contents: String, basename: String) -> void:
+func _save_binary_lnz(contents: String, basename: String, textures: Dictionary = {}) -> void:
 	var dir: Directory = Directory.new()
 	if dir.make_dir_recursive(user_file_location) != OK and not dir.dir_exists(user_file_location):
 		_binary_import_error("Could not create the user LNZ folder.")
 		return
 	var path: String = user_file_location.plus_file(basename + ".lnz")
 	var suffix: int = 2
-	while dir.file_exists(path):
+	while dir.file_exists(path) or dir.dir_exists(LnzLiveUtils.imported_texture_directory(path)):
 		path = user_file_location.plus_file(basename + "_" + str(suffix) + ".lnz")
 		suffix += 1
+	var texture_dir: String = LnzLiveUtils.imported_texture_directory(path)
+	if not textures.empty():
+		if dir.make_dir_recursive(texture_dir) != OK and not dir.dir_exists(texture_dir):
+			_binary_import_error("Could not create the imported textures folder.")
+			return
+		for name in textures:
+			# The directory scopes resources to this LNZ without renaming the BMPs.
+			var texture_file: File = File.new()
+			if texture_file.open(texture_dir.plus_file(name), File.WRITE) != OK:
+				_delete_dir_recursive(texture_dir)
+				_binary_import_error("Could not save embedded texture " + name)
+				return
+			texture_file.store_buffer(textures[name])
+			var texture_error: int = texture_file.get_error()
+			texture_file.close()
+			if texture_error != OK:
+				_delete_dir_recursive(texture_dir)
+				_binary_import_error("Could not write embedded texture " + name)
+				return
 	var output: File = File.new()
 	if output.open(path, File.WRITE) != OK:
+		if not textures.empty(): _delete_dir_recursive(texture_dir)
 		_binary_import_error("Could not save extracted LNZ text.")
 		return
 	output.store_string(contents)
@@ -1644,6 +1726,8 @@ func _save_binary_lnz(contents: String, basename: String) -> void:
 	output.close()
 	if write_error != OK:
 		dir.remove(path)
+		if not textures.empty(): _delete_dir_recursive(texture_dir)
 		_binary_import_error("Could not write extracted LNZ text.")
 		return
+	if not textures.empty(): rescan_textures(true)
 	rescan_with_extension("lnz", path)

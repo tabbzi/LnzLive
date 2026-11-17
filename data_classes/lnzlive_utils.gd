@@ -472,6 +472,38 @@ static func validate_8bit_bmp(path: String) -> Dictionary:
 		
 	return {"valid": true}
 
+# Petz resolves BMP resources by filename, independent of the Windows art path.
+static func texture_filename(path: String) -> String:
+	return path.replace("\\", "/").get_file()
+
+# Each imported LNZ has its own resource folder; BMP names and LNZ remain intact.
+static func imported_texture_directory(lnz_path: String) -> String:
+	if lnz_path.empty(): return ""
+	return lnz_path.get_base_dir().plus_file("textures").plus_file(lnz_path.get_file())
+
+static func find_texture_file(directory: String, texture_path: String) -> String:
+	if directory.empty(): return ""
+	var filename: String = texture_filename(texture_path)
+	var dir: Directory = Directory.new()
+	if dir.file_exists(directory.plus_file(filename)):
+		return directory.plus_file(filename)
+	if dir.open(directory) != OK: return ""
+	dir.list_dir_begin(true, true)
+	var entry: String = dir.get_next()
+	var result: String = ""
+	while not entry.empty():
+		if not dir.current_is_dir() and entry.to_lower() == filename.to_lower():
+			result = directory.plus_file(entry)
+			break
+		entry = dir.get_next()
+	dir.list_dir_end()
+	return result
+
+static func resolve_user_texture(texture_path: String, lnz_path: String = "") -> String:
+	var path: String = find_texture_file(imported_texture_directory(lnz_path), texture_path)
+	if not path.empty(): return path
+	return find_texture_file("user://resources/textures", texture_path)
+
 static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: bool = false) -> Dictionary:
 	var f: File = File.new()
 	if f.open(path, File.READ) != OK:
