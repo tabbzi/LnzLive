@@ -1257,6 +1257,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				base_node.set_eyelash_color(lnz.eyelash_color if lnz.eyelash_color != -1 else lnz.eyelid_color)
 
 		node.base_ball_size = base_data.size
+		node.base_ball_fuzz = base_data.fuzz
 		
 		var base_pos = base_data.position
 		base_pos.y *= -1.0
@@ -1323,6 +1324,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
 			node.ball_size = final_size
 			node.base_ball_size = base_data.size
+			node.base_ball_fuzz = base_data.fuzz
 			node.z_add = base_z_offset(base_z) + float(count)
 			node.base_ball_no = pb_data.base
 
@@ -1699,6 +1701,7 @@ func _update_paintball_transforms():
 		for pb_node in paintball_map[key]:
 			if is_instance_valid(pb_node):
 				pb_node.base_ball_position = new_global_pos
+				pb_node.base_ball_fuzz = base_node.fuzz_amount
 
 func _update_whisker_position(visual_line: Spatial, start_node: Spatial, end_node: Spatial):
 	var start_pos = start_node.global_transform.origin
@@ -1756,7 +1759,7 @@ func restore_ball_visual_states(ball_nos: Array):
 		visual_node.color_index = data.color_index
 		visual_node.outline_color_index = data.outline_color_index
 		visual_node.outline = data.outline
-		visual_node.fuzz_amount = fuzz_to_amount(data.fuzz)
+		visual_node.fuzz_amount = data.fuzz
 
 		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
 			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
@@ -2098,7 +2101,7 @@ func apply_visual_properties(node, data, texture_list, palette, fallback_texture
 	node.outline_color_index = data.outline_color_index
 	node.outline = data.outline
 	node.ball_size = get_real_ball_size(data.size)
-	node.fuzz_amount = fuzz_to_amount(data.fuzz)
+	node.fuzz_amount = data.fuzz
 	node.palette = palette
 	if data.texture_id >= 0 and data.texture_id < texture_list.size():
 		var tex = load_texture_from_list(data.texture_id, texture_list)
@@ -2511,11 +2514,12 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 	pb_visual_ball.base_ball_no = base_ball_node.name.to_int() # Ensure consistent naming
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
+	pb_visual_ball.base_ball_fuzz = base_ball_node.fuzz_amount
 	pb_visual_ball.color_index = pb_data.color
 	pb_visual_ball.outline_color_index = pb_data.outline_color
 	pb_visual_ball.outline = pb_data.outline
 	pb_visual_ball.group = pb_data.group
-	pb_visual_ball.fuzz_amount = fuzz_to_amount(pb_data.fuzz)
+	pb_visual_ball.fuzz_amount = pb_data.fuzz
 	pb_visual_ball.palette = base_ball_node.palette
 
 	if pb_data.texture > -1:
@@ -2700,7 +2704,7 @@ func inject_single_addball(props: Dictionary, ball_no: int, reference_ball: Spat
 	node.color_index = addball_data.color_index if addball_data.color_index != -1 else 0
 	node.outline_color_index = addball_data.outline_color_index
 	node.outline = addball_data.outline
-	node.fuzz_amount = fuzz_to_amount(addball_data.fuzz)
+	node.fuzz_amount = addball_data.fuzz
 	node.palette = current_palette_texture
 	
 	if addball_data.texture_id >= 0:

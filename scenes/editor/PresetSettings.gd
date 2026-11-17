@@ -545,7 +545,7 @@ func update_preview() -> void:
 		base_visual_ball.outline = -1
 
 	if include_fuzz_chk.pressed:
-		base_visual_ball.fuzz_amount = clamp(int(fuzz_spinbox.value) / 2, 0, 5)
+		base_visual_ball.fuzz_amount = int(fuzz_spinbox.value)
 	else:
 		base_visual_ball.fuzz_amount = 0
 
@@ -619,10 +619,11 @@ func update_preview() -> void:
 
 				pb_visual.ball_size = final_size
 				pb_visual.base_ball_size = base_size
+				pb_visual.base_ball_fuzz = base_visual_ball.fuzz_amount
 				pb_visual.color_index = col
 				pb_visual.outline_color_index = out_col
 				pb_visual.outline = outline
-				pb_visual.fuzz_amount = clamp(fuzz / 2, 0, 5)
+				pb_visual.fuzz_amount = fuzz
 				pb_visual.palette = active_palette
 
 				pb_visual.z_add = z_add_counter

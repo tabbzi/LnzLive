@@ -25,6 +25,7 @@ uniform float eyelash_angle_rad = 0.0;
 uniform float eyelash_spacing_norm = 0.5;
 uniform int   eyelash_color_index = 244;
 
+uniform sampler2D fuzz_offsets;
 uniform int fuzz_amount = 0;                      // fuzz jitter
 uniform int ball_size = 1;                        // diameter in pixels
 uniform int outline = -1;                         // outline drawing (-3, draw as nose; -2, shift half R; -1, none; 0, shift half L; 1, shift R + L; 2+, full thickness)
@@ -70,11 +71,13 @@ varying vec2 mesh_pos;                            // pet‐local XY
 
 varying flat vec3 view_forward;
 
-// Pseudorandom jitter values for rendering fuzz
-float random (float x) {
-    return fract(sin(dot(vec2(x),
-                         vec2(12.9898,78.233)))*
-        43758.5453123);
+// Petz uses one deterministic sideways shift per circle row and fuzz variant.
+float circle_fuzz_shift(int diameter, int fuzz, float row_offset) {
+    float d = clamp(float(diameter), 1.0, 129.0);
+    float row = clamp(floor((d - 1.0) / 2.0 - row_offset), 0.0, d - 1.0);
+    float index = float(clamp(fuzz, 0, 7)) * 8385.0 + d * (d - 1.0) / 2.0 + row;
+    vec2 uv = (vec2(mod(index, 512.0), floor(index / 512.0)) + vec2(0.5)) / vec2(512.0, 256.0);
+    return round(texture(fuzz_offsets, uv).r * 255.0) - 7.0;
 }
 
 // Apply z-based palette shifts (z-shading)
@@ -316,11 +319,7 @@ void fragment() {
     vec2 st = FRAGCOORD.xy;
 
     // FUZZING
-    // Generates pseudo-random value based on fragment screen coordinates and offsets UV coords for jitter effect
-    float r = random(st.y - c.y);
-    r = (r * 2.0) - 1.0;
-    r *= float(fuzz_amount);
-    st.x += floor(r);
+    st.x -= circle_fuzz_shift(ball_size, fuzz_amount, FRAGCOORD.y - c.y);
 
     // OUTLINING
     // Assigns inner pixels that will compose outline

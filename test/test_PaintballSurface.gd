@@ -140,7 +140,7 @@ func test_textured_flat_marking_on_an_untextured_addball():
 		source += "10, 45, -1, 0, -1, 0, 4, -1\n"
 	source += "[Add Ball]\n52, -80, -4, 18, 206, 45, 0, 0, -1, -1, 45, 0, 0, -1\n"
 	source += "[Color Info Override]\n67, 206, -1, -1\n"
-	source += "[Paint Ballz]\n67, 200, -80, -4, 18, 10, -1, 3, -1, -1, 0, 0\n"
+	source += "[Fuzz Override]\n67, 3\n[Paint Ballz]\n67, 200, -80, -4, 18, 10, -1, 3, -1, -1, 0, 0\n"
 	var file: File = File.new()
 	assert_eq(file.open(path, File.WRITE), OK)
 	file.store_string(source)
@@ -153,6 +153,9 @@ func test_textured_flat_marking_on_an_untextured_addball():
 	generator.generate_pet(path)
 	assert_eq(generator.lnz.addballs[67].texture_id, -1)
 	var marking: Spatial = generator.paintball_map[67][0]
+	assert_eq(generator.ball_map[67].fuzz_amount, 3)
+	assert_eq(marking.fuzz_amount, 3)
+	assert_eq(marking.base_ball_fuzz, 3)
 	assert_false(marking.surface_mode)
 	assert_true(marking.texture is AtlasTexture, "A flat marking must retain its stock texture on an untextured host.")
 	assert_true(marking.get_node("MeshInstance").material_override.get_shader_param("has_texture"))
