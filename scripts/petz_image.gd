@@ -106,7 +106,8 @@ static func load_bmp(image: Image, bytes: PoolByteArray, force_palette: bool = f
 				pixels[dest + 1] = bytes[pos + 1]
 				pixels[dest + 2] = bytes[pos]
 				pixels[dest + 3] = bytes[pos + 3] if bpp == 32 else 255
-	image.create_from_data(width, height, false, Image.FORMAT_R8 if indexed else Image.FORMAT_RGBA8, pixels)
+	# L8 exposes palette indices in red on both GLES2 and GLES3.
+	image.create_from_data(width, height, false, Image.FORMAT_L8 if indexed else Image.FORMAT_RGBA8, pixels)
 	return OK
 
 static func _distance(a: Color, b: Color) -> float:
