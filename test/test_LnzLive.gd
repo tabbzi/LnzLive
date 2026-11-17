@@ -1158,7 +1158,7 @@ func test_paintball_data_defaults():
 	assert_eq(pb.outline, -1, "Default outline should be -1.")
 	assert_eq(pb.fuzz, 0, "Default fuzz should be 0.")
 	assert_eq(pb.texture_id, -1, "Default texture_id should be -1.")
-	assert_eq(pb.anchored, 0, "Default anchored should be 0.")
+	assert_eq(pb.anchored, 1, "Paint balls default to surface mode when the optional flag is absent.")
 	assert_eq(pb.group, 0, "Default group should be 0.")
 
 func test_poly_data_constructor():

@@ -1313,6 +1313,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var pb_normal = pb_data.normalised_position
 				pb_normal.y *= -1.0
 				node.set_surface_normal(pb_normal)
+				node.set_surface_mode(pb_data.anchored != 0)
 
 				apply_visual_properties(node, pb_data, texture_list, palette)
 
@@ -2503,6 +2504,7 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 	pb_visual_ball.ball_size = final_size
 	pb_visual_ball.transform.origin = pb_pos
 	pb_visual_ball.set_surface_normal(pb_pos.normalized())
+	pb_visual_ball.set_surface_mode(pb_data.get("anchored", 1) != 0)
 
 	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
 	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
@@ -2538,7 +2540,8 @@ func add_pending_paintball(paintball_info):
 	var pb_data = {
 		"color": paintball_info.color, "outline_color": paintball_info.outline_color,
 		"outline": paintball_info.outline_type, "fuzz": paintball_info.fuzz,
-		"texture": paintball_info.texture, "group": paintball_info.group
+		"texture": paintball_info.texture, "group": paintball_info.group,
+		"anchored": int(paintball_info.get("anchored", 1))
 	}
 
 	_setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, 

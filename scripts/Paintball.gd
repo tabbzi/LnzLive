@@ -41,6 +41,9 @@ const BABYZ_PALETTE               = LnzLiveUtils.BABYZ_PALETTE
 
 export var petz_palette           = DEFAULT_PALETTE
 
+# Surface paint is culled on the far side; flat markings remain visible at the rim.
+export var surface_mode           = true setget set_surface_mode
+
 export var surface_normal         = Vector3.FORWARD setget set_surface_normal
 
 enum OutlineState {
@@ -86,6 +89,7 @@ func _ready():
 
 	# Pass the original texture to the shader
 	set_texture(texture)
+	set_surface_mode(surface_mode)
 
 	# Pass the default Petz palette to the shader
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
@@ -105,6 +109,11 @@ func set_visible(new_value):
 func set_z_add(new_value):
 	z_add = new_value
 	$MeshInstance.material_override.set_shader_param("z_add", new_value)
+
+func set_surface_mode(enabled: bool) -> void:
+	surface_mode = enabled
+	if is_inside_tree() and $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("surface_mode", surface_mode)
 
 func set_surface_normal(new_normal: Vector3):
 	surface_normal = new_normal

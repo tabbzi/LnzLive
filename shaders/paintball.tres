@@ -41,6 +41,7 @@ uniform bool highlight = false;
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
+uniform bool surface_mode = true;                // optional final Paint Ballz field
 uniform vec3 pb_normal;                           // direction of paintballz from ballz center
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
@@ -225,7 +226,7 @@ void fragment() {
     // Discard paintballz going in vectors from ballz centers away from camera 
     vec3 view_normal = (INV_CAMERA_MATRIX * vec4(pb_normal, 0.0)).xyz;
 
-    if (view_normal.z < 0.0) {
+    if (surface_mode && view_normal.z < 0.0) {
         discard;
     }
 
@@ -424,5 +425,6 @@ shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
 shader_param/highlight = false
 shader_param/rotation = Vector3( 0, 0, 0 )
 shader_param/tiling_unit = 128.0
+shader_param/surface_mode = true
 shader_param/pb_normal = null
 shader_param/tile_texture = true

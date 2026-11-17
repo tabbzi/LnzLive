@@ -493,7 +493,7 @@ func parse_paintballs(reader: VirtualFileLineReader) -> void:
 		var fuzz: int = int(split_line[7].get_string())
 		var outline: int = int(split_line[8].get_string())
 		var texture: int = int(split_line[10].get_string())
-		var anchored: int = int(split_line[11].get_string()) if split_line.size() > 11 else 0
+		var anchored: int = int(split_line[11].get_string()) if split_line.size() > 11 else 1
 
 		var paintball: PaintBallData = PaintBallData.new(base, diameter, position, color, outline_color, outline, fuzz, 0, texture, anchored)
 		var pb_array: Array = self.paintballs.get(base, [])
