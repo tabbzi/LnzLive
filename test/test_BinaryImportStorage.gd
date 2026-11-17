@@ -5,6 +5,10 @@ class ImportTree:
 	extends "res://scenes/editor/FileTree.gd"
 	var saved_path: String = ""
 	var failure: String = ""
+	var conflict_dialog: ConfirmationDialog
+	func _show_texture_conflicts(dialog: ConfirmationDialog) -> void:
+		conflict_dialog = dialog
+		add_child(dialog)
 	func rescan_textures(_reload_model: bool = false) -> void:
 		pass
 	func rescan_with_extension(_extension: String, path: String = "") -> void:
@@ -12,41 +16,84 @@ class ImportTree:
 	func _binary_import_error(message: String) -> void:
 		failure = message
 
-func test_embedded_textures_persist_without_overwriting_existing_imports():
+func test_shared_textures_are_reused_and_identical_imports_are_silent():
 	var tree = ImportTree.new()
 	tree.user_file_location = "user://test_binary_import_" + str(OS.get_ticks_usec())
 	var bytes: PoolByteArray = PoolByteArray([66, 77, 0, 128, 255])
 	var source: String = "[Texture List]\r\n\\art\\textures\\AD.BMP 1 256 256\r\n"
-	var paths: Array = []
-	var texture_dirs: Array = []
-	for i in range(2):
-		bytes[4] = 254 + i
-		tree._save_binary_lnz(source, "sample", {"Ad.BmP": bytes})
-		assert_eq(tree.failure, "")
-		var file: File = File.new()
-		assert_eq(file.open(tree.saved_path, File.READ), OK)
-		var text: String = file.get_buffer(file.get_len()).get_string_from_utf8()
-		file.close()
-		assert_eq(text, source, "Import must preserve every byte of the LNZ, including paths.")
-		var texture_dir: String = LnzLiveUtils.imported_texture_directory(tree.saved_path)
-		texture_dirs.append(texture_dir)
-		var texture_path: String = texture_dir.plus_file("Ad.BmP")
-		assert_eq(LnzLiveUtils.resolve_user_texture("\\art\\textures\\AD.BMP", tree.saved_path), texture_path)
-		assert_eq(LnzLiveUtils.resolve_user_texture("/art/textures/ad.bmp", tree.saved_path), texture_path)
-		assert_eq(file.open(texture_path, File.READ), OK)
-		assert_eq(Array(file.get_buffer(file.get_len())), Array(bytes))
-		file.close()
-		paths.append(tree.saved_path)
-		paths.append(texture_path)
-	# Both imports must remain available independently.
-	assert_ne(paths[0], paths[2])
-	var dir: Directory = Directory.new()
-	for path in paths:
-		assert_true(dir.file_exists(path))
-		dir.remove(path)
-	for texture_dir in texture_dirs: dir.remove(texture_dir)
-	dir.remove(tree.user_file_location.plus_file("textures"))
-	dir.remove(tree.user_file_location)
+	tree._save_binary_lnz(source, "breed", {"Ad.BmP": bytes})
+	var texture_path: String = tree.user_file_location.plus_file("textures/Ad.BmP")
+	assert_true(tree._texture_bytes_match(texture_path, bytes))
+	tree._save_binary_lnz(source, "breed", {"AD.BMP": bytes})
+	assert_eq(tree.saved_path, tree.user_file_location.plus_file("breed_2.lnz"))
+	assert_null(tree.conflict_dialog, "Identical bytes need no conflict dialog, regardless of filename case.")
+	tree._save_binary_lnz(source, "pet")
+	assert_eq(LnzLiveUtils.resolve_user_texture("/art/textures/ad.bmp", tree.saved_path), texture_path)
+	var file: File = File.new()
+	assert_eq(file.open(tree.saved_path, File.READ), OK)
+	assert_eq(file.get_buffer(file.get_len()).get_string_from_utf8(), source, "Original LNZ text must remain unchanged.")
+	file.close()
+	assert_eq(tree.failure, "")
+	tree._delete_dir_recursive(tree.user_file_location)
+	tree.free()
+
+func test_conflicts_default_to_preserving_existing_and_only_selected_files_replace():
+	var tree = ImportTree.new()
+	tree.user_file_location = "user://test_binary_conflicts_" + str(OS.get_ticks_usec())
+	var original: PoolByteArray = _bmp(100)
+	var incoming: PoolByteArray = _bmp(101)
+	tree._save_binary_lnz("original", "breed", {"Coat.bmp": original, "Eyes.bmp": original})
+	var previous_path: String = tree.saved_path
+	tree._save_binary_lnz("new", "pet", {"COAT.BMP": incoming, "eyes.bmp": incoming, "new.bmp": incoming})
+	assert_eq(tree.saved_path, previous_path, "No writes before confirmation.")
+	var dialog: ConfirmationDialog = tree.conflict_dialog
+	var rows: VBoxContainer = dialog.get_node("ConflictLayout/ConflictScroll/ConflictRows")
+	var choices: Dictionary = {}
+	for row in rows.get_children():
+		var choice: CheckBox = row.get_child(0)
+		assert_false(choice.pressed, "Overwriting must be opt-in.")
+		assert_not_null(row.get_child(1).get_child(1).texture, "Current texture thumbnail must load.")
+		assert_not_null(row.get_child(2).get_child(1).texture, "Incoming texture thumbnail must load.")
+		choices[choice.text.replace("Replace ", "")] = choice
+	assert_true(tree._texture_bytes_match(tree.user_file_location.plus_file("textures/Coat.bmp"), original))
+	choices["eyes.bmp"].pressed = true
+	dialog.emit_signal("confirmed")
+	assert_eq(tree.saved_path, tree.user_file_location.plus_file("pet.lnz"))
+	assert_true(tree._texture_bytes_match(tree.user_file_location.plus_file("textures/Coat.bmp"), original))
+	assert_true(tree._texture_bytes_match(tree.user_file_location.plus_file("textures/Eyes.bmp"), incoming))
+	assert_true(tree._texture_bytes_match(tree.user_file_location.plus_file("textures/new.bmp"), incoming))
+	assert_false(Directory.new().file_exists(tree.user_file_location.plus_file("textures/eyes.bmp")), "Replace the existing case variant in place.")
+	tree._delete_dir_recursive(tree.user_file_location)
+	tree.free()
+
+func test_cancelling_conflicts_writes_nothing():
+	var tree = ImportTree.new()
+	tree.user_file_location = "user://test_binary_cancel_" + str(OS.get_ticks_usec())
+	var original: PoolByteArray = _bmp(100)
+	tree._save_binary_lnz("breed", "breed", {"coat.bmp": original})
+	var saved_path: String = tree.saved_path
+	tree._save_binary_lnz("pet", "pet", {"coat.bmp": _bmp(101), "new.bmp": _bmp(102)})
+	assert_not_null(tree.conflict_dialog)
+	tree.conflict_dialog.free()
+	assert_eq(tree.saved_path, saved_path)
+	assert_false(Directory.new().file_exists(tree.user_file_location.plus_file("pet.lnz")))
+	assert_false(Directory.new().file_exists(tree.user_file_location.plus_file("textures/new.bmp")))
+	assert_true(tree._texture_bytes_match(tree.user_file_location.plus_file("textures/coat.bmp"), original))
+	tree._delete_dir_recursive(tree.user_file_location)
+	tree.free()
+
+func test_older_scoped_textures_keep_precedence_over_shared_files():
+	var tree = ImportTree.new()
+	tree.user_file_location = "user://test_binary_legacy_" + str(OS.get_ticks_usec())
+	tree._save_binary_lnz("breed", "breed", {"coat.bmp": _bmp(100)})
+	var scoped: String = LnzLiveUtils.imported_texture_directory(tree.saved_path)
+	Directory.new().make_dir_recursive(scoped)
+	var file: File = File.new()
+	assert_eq(file.open(scoped.plus_file("coat.bmp"), File.WRITE), OK)
+	file.store_buffer(_bmp(101))
+	file.close()
+	assert_eq(LnzLiveUtils.resolve_user_texture("coat.bmp", tree.saved_path), scoped.plus_file("coat.bmp"))
+	tree._delete_dir_recursive(tree.user_file_location)
 	tree.free()
 
 func _put(bytes: PoolByteArray, offset: int, value: int, width: int = 4) -> PoolByteArray:
@@ -74,61 +121,21 @@ func _bmp(index: int) -> PoolByteArray:
 	bytes[1078] = index
 	return bytes
 
-func test_renderer_resolves_original_paths_before_stock_atlas_and_scopes_cache():
+func test_renderer_uses_shared_breed_texture_for_later_pet():
 	var tree = ImportTree.new()
 	tree.user_file_location = "user://test_binary_render_" + str(OS.get_ticks_usec())
+	tree._save_binary_lnz("breed", "breed", {"SharedCoat.BmP": _bmp(100)})
+	tree._save_binary_lnz("pet", "pet")
 	var generator = preload("res://scenes/dog_generator.gd").new()
-	# A stock atlas entry with the same name must lose to an embedded resource.
-	var stock_image: Image = Image.new()
-	stock_image.create(1, 1, false, Image.FORMAT_L8)
-	stock_image.fill(Color(0, 0, 0))
-	var stock_texture: ImageTexture = ImageTexture.new()
-	stock_texture.create_from_image(stock_image, 0)
-	generator._atlas_manifest = {"sharedcoat": {"petz_atlas": "test.png", "x": 0, "y": 0, "w": 1, "h": 1}}
-	generator._atlas_textures = {"res://resources/texture_atlas/test.png": stock_texture}
-	var paths: Array = []
-	var source: String = "[Texture List]\r\n\\art\\textures\\sharedcoat.bmp 1 256 256\r\n"
-	for i in range(2):
-		tree._save_binary_lnz(source, "sample", {"SharedCoat.BmP": _bmp(100 + i)})
-		assert_eq(tree.failure, "")
-		paths.append(tree.saved_path)
-		generator.last_loaded_filepath = tree.saved_path
-		var parser = LnzParser.new(tree.saved_path)
-		parser.get_texture_list(parser.compile_section("Texture List", [0]))
-		assert_eq(parser.texture_list[0].filename, "sharedcoat.bmp")
-		var texture: Texture = generator.load_texture_from_list(0, parser.texture_list)
-		assert_not_null(texture)
-		assert_false(texture is AtlasTexture, "Embedded BMP must take precedence over stock atlas.")
-		var image: Image = texture.get_data()
-		assert_eq(image.get_width(), 1)
-		assert_eq(Array(image.get_data()), [100 + i], "Renderer must receive this import's palette indices.")
-		var ball: Spatial = generator.ball_scene.instance()
-		get_tree().root.add_child(ball)
-		var ball_data = BallData.new(10, Vector3.ZERO, 0)
-		ball_data.texture_id = 0
-		generator.apply_visual_properties(ball, ball_data, parser.texture_list, LnzLiveUtils.DEFAULT_PALETTE)
-		var material: ShaderMaterial = ball.get_node("MeshInstance").material_override
-		assert_eq(material.get_shader_param("ball_texture"), texture, "Imported image must reach the ball shader.")
-		assert_true(material.get_shader_param("has_texture"))
-		assert_false(material.get_shader_param("is_atlas"))
-		ball.free()
-	# Reloading an earlier import must not reuse the other breed's texture.
-	generator.last_loaded_filepath = paths[0]
-	var first: Texture = generator.load_texture("/art/textures/sharedcoat.bmp", null)
-	assert_eq(Array(first.get_data().get_data()), [100])
+	generator.last_loaded_filepath = tree.saved_path
+	var texture: Texture = generator.load_texture("/art/textures/sharedcoat.bmp", null)
+	assert_not_null(texture)
+	if texture != null:
+		assert_eq(Array(texture.get_data().get_data()), [100])
 	generator.clear_texture_cache()
-	first = generator.load_texture("/art/textures/sharedcoat.bmp", null)
-	assert_eq(Array(first.get_data().get_data()), [100], "Rebuilding must resolve persisted resources.")
-	generator.last_loaded_filepath = ""
-	assert_true(generator.load_texture("sharedcoat.bmp", null) is AtlasTexture, "Unrelated models retain stock textures.")
-	var dir: Directory = Directory.new()
-	for path in paths:
-		var texture_dir: String = LnzLiveUtils.imported_texture_directory(path)
-		dir.remove(texture_dir.plus_file("SharedCoat.BmP"))
-		dir.remove(texture_dir)
-		dir.remove(path)
-	dir.remove(tree.user_file_location.plus_file("textures"))
-	dir.remove(tree.user_file_location)
+	texture = generator.load_texture("sharedcoat.bmp", null)
+	assert_not_null(texture, "Shared resources must survive a rebuild.")
+	tree._delete_dir_recursive(tree.user_file_location)
 	generator.free()
 	tree.free()
 

@@ -1687,7 +1687,99 @@ func _binary_lnz_chosen(choice: OptionButton, entries: Array, basename: String, 
 	var entry: Dictionary = entries[choice.selected]
 	_save_binary_lnz(entry.text, basename + "_" + str(choice.selected + 1), textures)
 
+# Resolve collisions before writing anything. A cancelled dialog cancels the import.
 func _save_binary_lnz(contents: String, basename: String, textures: Dictionary = {}) -> void:
+	var texture_dir: String = user_file_location.plus_file("textures")
+	var conflicts: Dictionary = {}
+	var selected: Dictionary = {}
+	for name in textures:
+		var existing: String = LnzLiveUtils.find_texture_file(texture_dir, name)
+		if existing.empty():
+			selected[name] = textures[name]
+		elif not _texture_bytes_match(existing, textures[name]):
+			conflicts[name] = existing
+	if conflicts.empty():
+		_commit_binary_import(contents, basename, selected, {})
+		return
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.window_title = "Texture conflicts"
+	dialog.get_ok().text = "Import"
+	var layout: VBoxContainer = VBoxContainer.new()
+	layout.name = "ConflictLayout"
+	dialog.add_child(layout)
+	var explanation: Label = Label.new()
+	explanation.text = "These filenames already exist in User Textures.\nCheck only the textures you want to replace. Unchecked files stay unchanged."
+	layout.add_child(explanation)
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.name = "ConflictScroll"
+	scroll.rect_min_size = Vector2(600, 340)
+	layout.add_child(scroll)
+	var rows: VBoxContainer = VBoxContainer.new()
+	rows.name = "ConflictRows"
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(rows)
+	var choices: Dictionary = {}
+	for name in conflicts:
+		var row: HBoxContainer = HBoxContainer.new()
+		rows.add_child(row)
+		var choice: CheckBox = CheckBox.new()
+		choice.text = "Replace " + name
+		choice.pressed = false
+		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(choice)
+		choices[name] = choice
+		var file: File = File.new()
+		var current_bytes: PoolByteArray = PoolByteArray()
+		if file.open(conflicts[name], File.READ) == OK:
+			current_bytes = file.get_buffer(file.get_len())
+			file.close()
+		_add_texture_preview(row, "Current", current_bytes)
+		_add_texture_preview(row, "New", textures[name])
+	dialog.connect("confirmed", self, "_texture_conflicts_confirmed", [contents, basename, textures, selected, conflicts, choices])
+	dialog.connect("popup_hide", dialog, "queue_free")
+	_show_texture_conflicts(dialog)
+
+func _show_texture_conflicts(dialog: ConfirmationDialog) -> void:
+	add_child(dialog)
+	dialog.popup_centered()
+
+func _texture_bytes_match(path: String, bytes: PoolByteArray) -> bool:
+	var file: File = File.new()
+	if file.open(path, File.READ) != OK: return false
+	var matches: bool = file.get_len() == bytes.size() and file.get_buffer(file.get_len()) == bytes
+	file.close()
+	return matches
+
+func _add_texture_preview(row: HBoxContainer, title: String, bytes: PoolByteArray) -> void:
+	var column: VBoxContainer = VBoxContainer.new()
+	row.add_child(column)
+	var label: Label = Label.new()
+	label.text = title
+	column.add_child(label)
+	var image: Image = Image.new()
+	if preload("res://scripts/petz_image.gd").load_bmp(image, bytes) != OK:
+		var unavailable: Label = Label.new()
+		unavailable.text = "Preview unavailable"
+		column.add_child(unavailable)
+		return
+	var texture: ImageTexture = ImageTexture.new()
+	texture.create_from_image(image, 0)
+	var preview: TextureRect = TextureRect.new()
+	preview.texture = texture
+	preview.expand = true
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.rect_min_size = Vector2(112, 112)
+	column.add_child(preview)
+
+func _texture_conflicts_confirmed(contents: String, basename: String, textures: Dictionary, selected: Dictionary, conflicts: Dictionary, choices: Dictionary) -> void:
+	var replacements: Dictionary = {}
+	for name in choices:
+		if choices[name].pressed:
+			selected[name] = textures[name]
+			replacements[name] = conflicts[name]
+	_commit_binary_import(contents, basename, selected, replacements)
+
+func _commit_binary_import(contents: String, basename: String, textures: Dictionary, replacements: Dictionary) -> void:
 	var dir: Directory = Directory.new()
 	if dir.make_dir_recursive(user_file_location) != OK and not dir.dir_exists(user_file_location):
 		_binary_import_error("Could not create the user LNZ folder.")
@@ -1697,28 +1789,28 @@ func _save_binary_lnz(contents: String, basename: String, textures: Dictionary =
 	while dir.file_exists(path) or dir.dir_exists(LnzLiveUtils.imported_texture_directory(path)):
 		path = user_file_location.plus_file(basename + "_" + str(suffix) + ".lnz")
 		suffix += 1
-	var texture_dir: String = LnzLiveUtils.imported_texture_directory(path)
+	var texture_dir: String = user_file_location.plus_file("textures")
 	if not textures.empty():
 		if dir.make_dir_recursive(texture_dir) != OK and not dir.dir_exists(texture_dir):
-			_binary_import_error("Could not create the imported textures folder.")
+			_binary_import_error("Could not create the user textures folder.")
 			return
 		for name in textures:
-			# The directory scopes resources to this LNZ without renaming the BMPs.
+			var target: String = replacements.get(name, texture_dir.plus_file(name))
+			# Recheck new names in case another import added them while the dialog was open.
+			if not replacements.has(name) and not LnzLiveUtils.find_texture_file(texture_dir, name).empty():
+				continue
 			var texture_file: File = File.new()
-			if texture_file.open(texture_dir.plus_file(name), File.WRITE) != OK:
-				_delete_dir_recursive(texture_dir)
+			if texture_file.open(target, File.WRITE) != OK:
 				_binary_import_error("Could not save embedded texture " + name)
 				return
 			texture_file.store_buffer(textures[name])
 			var texture_error: int = texture_file.get_error()
 			texture_file.close()
 			if texture_error != OK:
-				_delete_dir_recursive(texture_dir)
 				_binary_import_error("Could not write embedded texture " + name)
 				return
 	var output: File = File.new()
 	if output.open(path, File.WRITE) != OK:
-		if not textures.empty(): _delete_dir_recursive(texture_dir)
 		_binary_import_error("Could not save extracted LNZ text.")
 		return
 	output.store_string(contents)
@@ -1726,7 +1818,6 @@ func _save_binary_lnz(contents: String, basename: String, textures: Dictionary =
 	output.close()
 	if write_error != OK:
 		dir.remove(path)
-		if not textures.empty(): _delete_dir_recursive(texture_dir)
 		_binary_import_error("Could not write extracted LNZ text.")
 		return
 	if not textures.empty(): rescan_textures(true)
