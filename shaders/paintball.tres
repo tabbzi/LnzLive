@@ -51,7 +51,6 @@ varying flat vec2 base_center_fragcoord;
 varying flat float z_center_ball;
 varying flat float z_center_pet;
 
-varying flat vec3 view_forward;
 
 // Pseudorandom jitter values for rendering fuzz
 float random (float x) {
@@ -97,31 +96,11 @@ vec3 get_shifted_color(int palette_index) {
     return texture(palette, vec2(float(new_palette_index) / 255.0, 0.5)).rgb;
 }
 
-vec2 calculate_uvs(vec2 offset, vec2 screen_uv, vec2 viewport_size) {
+vec2 calculate_uvs(vec2 offset) {
     vec2 tex_coords;
     if (tile_texture) {
-        vec2 center_uv = (center_fragcoord / viewport_size) - vec2(1.0);
-        vec2 uv = (screen_uv - center_uv) * (1000.0 / texture_size);
-
-        // Grab true view rotation captured in the vertex shader
-        float m6 = view_forward.x;
-        float m7 = -view_forward.y; 
-        float m8 = view_forward.z;
-
-        // Calculate the turn angles in radians
-        float angle_u = atan(m6, m8);
-        float angle_v = atan(m7, m8);
-
-        // Slide texture a distance equal to angle * radius
-        float radius = float(ball_size) / 2.0;
-        
-        // Divide by texture_size_raw to convert that pixel distance into UV space
-        float shift_u = (angle_u * radius) / texture_size_raw.x;
-        float shift_v = (angle_v * radius) / texture_size_raw.y;
-
-        // Apply shifts
-        uv.x -= shift_u;
-        uv.y += shift_v;
+        // Sample pixel-for-pixel around the marking, independent of viewport size.
+        vec2 uv = (floor(offset) + 0.5) / texture_size_raw + vec2(0.5);
 
         if (is_atlas) {
             vec2 tiled_uv = fract(uv);
@@ -315,7 +294,7 @@ void fragment() {
 
     if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
-        vec2 tex_coords = calculate_uvs(offset, SCREEN_UV, VIEWPORT_SIZE);
+        vec2 tex_coords = calculate_uvs(offset);
 
         float raw_val = texture(ball_texture, tex_coords).r;
         int palette_index = int(round(raw_val * 255.0));
@@ -351,9 +330,6 @@ void fragment() {
 }
 
 void vertex() {
-    mat4 original_mv = INV_CAMERA_MATRIX * WORLD_MATRIX;
-    view_forward = normalize(original_mv[2].xyz);
-    
     // Billboard and retain scaling
     MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
     
