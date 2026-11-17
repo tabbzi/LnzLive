@@ -356,6 +356,37 @@ Most tools and modes have settings panels that extend `DraggablePanel.gd` to all
 
 ### Textures
 
+#### Loading
+
+All runtime texture loading goes through `texture_cache.gd:load_texture()`. The entry point determines the pathway by texture origin:
+
+```
+Is texture a user texture (user://) or game texture (res://)?
+│
+├─ res:// (game texture) → Path A: Atlas Lookup
+│   1. Look up basename in atlas_manifest.json (case-insensitive)
+│   2. Select petz_atlas or babyz_atlas based on is_babyz_mode
+│   3. Load atlas PNG from res://resources/texture_atlas/
+│   4. Create AtlasTexture with region from manifest
+│   5. Cache in _texture_cache, return
+│
+└─ user:// (user texture) → Path B: CPU-baked BMP
+    1. Look up basename in _path_cache (case-insensitive, recursive depth 3)
+    2. Call LnzLiveUtils.load_raw_8bit_bmp() on the file
+    3. Compare BMP palette vs DEFAULT_PALETTE / BABYZ_PALETTE / custom_lnz_palette
+    4. If palette matches (< 1.0 diff) → use raw indices as-is (FORMAT_L8)
+    5. If palette differs → requantize indices → create FORMAT_L8 ImageTexture
+    6. Cache in _texture_cache, return
+    │
+    └─ If Path B fails → Path C: petz_image.gd fallback
+        1. Try loaded_path (if found in _path_cache) or user:// + res:// candidates
+        2. Load via PETZ_IMAGE.load_image() (BMP parser or Godot PNG loader)
+        3. Convert to FORMAT_L8, create ImageTexture with FLAG_REPEAT
+        4. Cache in _texture_cache, return
+```
+
+All pathways also check `_texture_cache` first (keyed by lowercase filename + mode suffix) and fall through to a preloader lookup if everything else fails.
+
 #### Texture (BMP) files
 
 #### Atlas (PNG) files
