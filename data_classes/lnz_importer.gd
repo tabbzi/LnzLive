@@ -142,16 +142,6 @@ func _find_ascii(needle: String, from: int, limit: int = -1) -> int:
 		pos = data.find(first_byte, pos + 1)
 	return -1
 
-func _backtrack_text_start(from: int, min_offset: int) -> int:
-	var pos: int = from
-	while pos > min_offset:
-		var b: int = data[pos - 1]
-		if (b >= 0x20 and b <= 0x7E) or b == 0x09 or b == 0x0A or b == 0x0D:
-			pos -= 1
-		else:
-			break
-	return pos
-
 func _rva(rva: int, count: int) -> int:
 	for section in sections:
 		var delta: int = rva - section.rva
