@@ -1,6 +1,8 @@
 extends Reference
-# Read-only extraction of cached pet text and PE32 breed LNZ and BMP resources.
+# Read-only extraction of cached adopted file (.pet, .baby) text and PE32 breed file (.cat, .dog) LNZ and BMP resources.
 # All binary reads are bounded; invalid input never reaches the text editor.
+const LNZ_ANCHORS: Array = [
+	"[Texture List]", "[Lnz Version]", "[Default Linez File]", "[Ballz Info]"]
 var data: PoolByteArray
 var error: String = ""
 var sections: Array = []
@@ -8,6 +10,7 @@ var textures: Dictionary = {}
 var breed_file: String = ""
 var resource_base: int = 0
 var resource_size: int = 0
+var is_babyz: bool = false
 
 func _require(offset: int, count: int) -> bool:
 	if offset < 0 or count < 0 or offset > data.size() - count:
@@ -38,16 +41,28 @@ func extract(bytes: PoolByteArray, pet: bool) -> Array:
 	sections = []
 	textures = {}
 	breed_file = ""
+	is_babyz = false
 	var result: Array = _pet() if pet else _breed()
 	if not error.empty():
 		textures = {}
 		return []
 	if result.empty():
-		error = "No cached LNZ found. Import the pet's breed file instead." if pet else "No embedded LNZ resources found in this breed file."
+		if is_babyz:
+			error = "Could not find cached LNZ data in this .baby file."
+		elif pet:
+			error = "Could not find cached LNZ data in this .pet file."
+		else:
+			error = "Could not find embedded LNZ data in this breed file."
 	return result
 
 func _pet() -> Array:
-	if not _require(0, 800): return []
+	if not _require(0, 0x435 + 7): return []
+
+	# Check for .baby file, which has pfmagic signature at offset 0x435 and pfmagic1 at offset 0x1AFF
+	if _text(0x435, 7) == "pfmagic":
+		return _babyz()
+
+	# Check that .pet file has pfmagic signature at offset 0x435 and a PE32 breed file at offset 0x202
 	breed_file = _text(0x202, 260).replace("\\", "/").get_file()
 	var version: int = _u32(0x318)
 	if version != 0x0acb0002 and version != 0x0acb0001:
@@ -58,6 +73,7 @@ func _pet() -> Array:
 	if _text(header, 17) != tag:
 		error = "Invalid pet stream signature."
 		return []
+
 	# PetzInfoPOD, followed by PetSavedColorInfo's three counted arrays.
 	var pos: int = header + 17 + 1 + 24 + 8 + 1 + 32 + 2400 + 36 + 4 + 6
 	for stride in [1, 4, 4]:
@@ -69,8 +85,27 @@ func _pet() -> Array:
 	if _text(pos, 17) != tag:
 		error = "Invalid pet LNZ signature."
 		return []
-	pos += 17
+	return _extract_adopted_blocks(pos + 17, true)
+
+func _find_first_anchor(from: int) -> int:
+	var earliest: int = -1
+	for anchor in LNZ_ANCHORS:
+		var found: int = _find_ascii(anchor, from)
+		if found >= 0 and (earliest < 0 or found < earliest):
+			earliest = found
+	return earliest
+
+func _append_entry(result: Array, name: String, start: int, end: int) -> void:
+	if end <= start: return
+	var text: String = _text(start, end - start)
+	if not text.strip_edges().empty():
+		result.append({"name": name, "text": text})
+
+func _extract_adopted_blocks(search_from: int, strict_terminator: bool) -> Array:
 	var result: Array = []
+
+	# Find two null-terminated blocks, each followed by 0x03bbccaa
+	var pos: int = search_from
 	for label in ["Adult", "Juvenile"]:
 		var start: int = pos
 		while pos < data.size() and data[pos] != 0:
@@ -79,10 +114,43 @@ func _pet() -> Array:
 		if _u32(pos + 1) != 0x03bbccaa:
 			error = "Invalid pet LNZ cache terminator."
 			return []
-		if pos > start:
-			result.append({"name": label, "text": _text(start, pos - start)})
+		_append_entry(result, label, start, pos)
 		pos += 5
 	return result
+
+func _babyz() -> Array:
+	is_babyz = true
+	if not _require(0, 0x1B10): return []
+	var first_bracket: int = _find_first_anchor(0x1B04)
+	if first_bracket < 0: return []
+	return _extract_adopted_blocks(first_bracket, true)
+
+func _find_ascii(needle: String, from: int, limit: int = -1) -> int:
+	var end: int = data.size() if limit < 0 or limit > data.size() else limit
+	var n: int = needle.length()
+	if n == 0 or from < 0: return -1
+	var first_byte: int = needle.ord_at(0)
+	var pos: int = data.find(first_byte, from)
+	while pos >= 0 and pos <= end - n:
+		var matched: bool = true
+		for k in range(1, n):
+			if data[pos + k] != needle.ord_at(k):
+				matched = false
+				break
+		if matched:
+			return pos
+		pos = data.find(first_byte, pos + 1)
+	return -1
+
+func _backtrack_text_start(from: int, min_offset: int) -> int:
+	var pos: int = from
+	while pos > min_offset:
+		var b: int = data[pos - 1]
+		if (b >= 0x20 and b <= 0x7E) or b == 0x09 or b == 0x0A or b == 0x0D:
+			pos -= 1
+		else:
+			break
+	return pos
 
 func _rva(rva: int, count: int) -> int:
 	for section in sections:
@@ -138,9 +206,7 @@ func _directory(offset: int, depth: int, label: String, result: Array, kind: Str
 				if size > 0 and not textures.has(filename):
 					textures[filename] = data.subarray(start, start + size - 1)
 			else:
-				var text: String = _text(start, size)
-				if not text.strip_edges().empty():
-					result.append({"name": label + " (" + name + ")", "text": text})
+				_append_entry(result, label + " (" + name + ")", start, start + size)
 		if not error.empty(): return
 
 func _breed() -> Array:
