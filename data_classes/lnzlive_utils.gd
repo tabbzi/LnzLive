@@ -505,6 +505,13 @@ static func resolve_user_texture(texture_path: String, lnz_path: String = "") ->
 	if not lnz_path.empty():
 		path = find_texture_file(lnz_path.get_base_dir().plus_file("textures"), texture_path)
 		if not path.empty(): return path
+		var dir: String = lnz_path.get_base_dir()
+		while not dir.empty():
+			path = find_texture_file(dir.plus_file("textures"), texture_path)
+			if not path.empty(): return path
+			var parent: String = dir.get_base_dir()
+			if parent == dir: break
+			dir = parent
 	return find_texture_file("user://resources/textures", texture_path)
 
 static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: bool = false) -> Dictionary:
