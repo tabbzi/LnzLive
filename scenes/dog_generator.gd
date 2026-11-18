@@ -432,8 +432,8 @@ func generate_pet(file_path):
 
 	if file_path != last_loaded_filepath:
 
-		# TBD: May be helpful to clear caches when switching models (not on every reload)
-		# clear_texture_cache()
+		clear_texture_cache()
+		# Clear model-specific state when switching files.
 		# _atlas_textures.clear()
 		# _orig_lnz_pos.clear()
 		# _orig_world_pos.clear()
@@ -874,15 +874,26 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Texture:
 	var t_start = OS.get_ticks_msec()
-	if _texture_cache.has(texture_filename):
+	texture_filename = LnzLiveUtils.texture_filename(texture_filename)
+	var cache_key: String = last_loaded_filepath + "::" + texture_filename.to_lower()
+	if _texture_cache.has(cache_key):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
-		return _texture_cache[texture_filename]
+		return _texture_cache[cache_key]
 
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()
 
-	# Check atlas manifest first
+	# Embedded resources and user replacements take precedence over stock atlases.
+	var user_path: String = LnzLiveUtils.resolve_user_texture(texture_filename, last_loaded_filepath)
+	if not user_path.empty():
+		texture = _load_indexed_texture(user_path)
+		if texture != null:
+			_texture_cache[cache_key] = texture
+			_perf_texture_load_time += OS.get_ticks_msec() - t_start
+			return texture
+
+	# Stock texture fallback
 	var atlas_key = texture_filename.get_basename() # e.g. "hair10" from "hair10.bmp"
 
 	# Try exact match or case-insensitive match against manifest keys
@@ -919,7 +930,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 			texture.atlas = atlas_tex
 			texture.region = region
 
-			_texture_cache[texture_filename] = texture
+			_texture_cache[cache_key] = texture
 			print("[INFO] dog_generator: load_texture: loaded atlas texture: " + texture_filename)
 			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 			return texture
@@ -940,30 +951,11 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 			deduped.append(v)
 	filename_variants = deduped
 
-	# ALL MODES + USER TEXTURE: exact 8-bit index parsing
-	if texture == null:
-		var loaded_path = ""
-		var dir = Directory.new()
-		for variant in filename_variants:
-			if dir.file_exists("user://resources/textures/" + variant):
-				loaded_path = "user://resources/textures/" + variant
-				break
-			elif dir.file_exists("res://resources/textures/" + variant):
-				loaded_path = "res://resources/textures/" + variant
-				break
+	# User resources were checked above; now try an individual stock BMP.
+	var stock_path: String = LnzLiveUtils.find_texture_file("res://resources/textures", texture_filename)
+	if not stock_path.empty():
+		texture = _load_indexed_texture(stock_path)
 
-		if loaded_path != "":
-			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode)
-			if raw_bmp_data.has("data"):
-				var w = raw_bmp_data["w"]
-				var h = raw_bmp_data["h"]
-				var data = raw_bmp_data["data"]
-				var img = Image.new()
-				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
-				texture = ImageTexture.new()
-				texture.create_from_image(img, 0)
-				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
-	
 	# FALLBACK: native loader
 	if texture == null:
 		for variant in filename_variants:
@@ -979,12 +971,22 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 
 	# PRELOADER FALLBACK
 	if texture == null:
-		if preloader.has_resource(texture_filename.to_lower()):
+		if preloader and preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
-	_texture_cache[texture_filename] = texture
+	_texture_cache[cache_key] = texture
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 	
+	return texture
+
+func _load_indexed_texture(path: String) -> Texture:
+	var raw_bmp_data: Dictionary = LnzLiveUtils.load_raw_8bit_bmp(path, is_babyz_mode)
+	if not raw_bmp_data.has("data"): return null
+	var image: Image = Image.new()
+	# GLES2 uploads R8 as alpha; the palette shaders read the red channel.
+	image.create_from_data(raw_bmp_data.w, raw_bmp_data.h, false, Image.FORMAT_L8, raw_bmp_data.data)
+	var texture: ImageTexture = ImageTexture.new()
+	texture.create_from_image(image, 0)
 	return texture
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
@@ -998,8 +1000,8 @@ func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
 	return null
 
 func clear_texture_cache_for(filename: String):
-	if _texture_cache.has(filename):
-		_texture_cache.erase(filename)
+	var cache_key: String = last_loaded_filepath + "::" + LnzLiveUtils.texture_filename(filename).to_lower()
+	_texture_cache.erase(cache_key)
 
 func clear_texture_cache():
 	_texture_cache.clear()

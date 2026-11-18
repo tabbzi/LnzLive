@@ -32,7 +32,7 @@ func test_rows_padding_and_top_down():
 	for top_down in [false, true]:
 		var image: Image = Image.new()
 		assert_eq(Loader.load_bmp(image, _bmp(top_down), false, true), OK)
-		assert_eq(image.get_format(), Image.FORMAT_R8)
+		assert_eq(image.get_format(), Image.FORMAT_L8)
 		var expected: PoolByteArray = PoolByteArray([1, 2, 3, 4, 5, 6] if top_down else [4, 5, 6, 1, 2, 3])
 		assert_eq(image.get_data(), expected)
 

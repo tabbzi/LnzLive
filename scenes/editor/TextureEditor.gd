@@ -399,17 +399,10 @@ func _populate_active_textures() -> void:
 				if not used_textures.has(txt_name):
 					used_textures.append(txt_name)
 
-	var dir: Directory = Directory.new()
 	var custom_textures: Array = []
-	if dir.open("user://resources/textures") == OK:
-		dir.list_dir_begin()
-		var file_name: String = dir.get_next()
-		while file_name != "":
-			if not dir.current_is_dir() and file_name.to_lower().ends_with(".bmp"):
-				var name_only: String = file_name.to_lower()
-				if used_textures.has(name_only):
-					custom_textures.append(file_name)
-			file_name = dir.get_next()
+	for texture_name in used_textures:
+		var path: String = LnzLiveUtils.resolve_user_texture(texture_name, dog_generator.last_loaded_filepath)
+		if not path.empty(): custom_textures.append(path.get_file())
 
 	active_textures_option.add_separator()
 	active_textures_option.add_item("--- Custom Textures ---")
@@ -728,7 +721,9 @@ func _on_SaveButton_pressed() -> void:
 	if not fname.to_lower().ends_with(".bmp"):
 		fname += ".bmp"
 
-	var path: String = "user://resources/textures".plus_file(fname)
+	var model_path: String = dog_generator.last_loaded_filepath if dog_generator else ""
+	var path: String = LnzLiveUtils.resolve_user_texture(fname, model_path)
+	if path.empty(): path = "user://resources/textures".plus_file(fname)
 	save_indexed_bmp(path)
 
 	var root: Node = get_tree().get_root()
@@ -829,21 +824,15 @@ func _on_LoadButton_pressed() -> void:
 		base_name.to_lower() + "." + extension.to_lower()
 	]
 	
-	var loaded_path: String = ""
-	var dir: Directory = Directory.new()
-	for v in variants:
-		if dir.file_exists("user://resources/textures/" + v):
-			loaded_path = "user://resources/textures/" + v
-			break
-		elif dir.file_exists("res://resources/textures/" + v):
-			loaded_path = "res://resources/textures/" + v
-			break
+	var model_path: String = dog_generator.last_loaded_filepath if dog_generator else ""
+	var loaded_path: String = LnzLiveUtils.resolve_user_texture(fname, model_path)
+	if loaded_path.empty():
+		loaded_path = LnzLiveUtils.find_texture_file("res://resources/textures", fname)
 
 	var raw_bmp_data: Dictionary = {}
-	if loaded_path != "":
-		if loaded_path != "":
-			var is_babyz: bool = (current_mode == GameMode.BABYZ)
-			raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz)
+	if not loaded_path.empty():
+		var is_babyz: bool = (current_mode == GameMode.BABYZ)
+		raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz)
 
 	# 8bit BMP
 	if raw_bmp_data.has("data"):
