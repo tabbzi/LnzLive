@@ -977,15 +977,23 @@ func _on_SaveButton_pressed() -> void:
 	if not fname.to_lower().ends_with(".bmp"):
 		fname += ".bmp"
 
-	var path: String = "user://resources/textures".plus_file(fname)
+	var path: String = ""
+	var variants: Array = [fname, fname.to_lower(), fname.to_upper()]
+	var existing_path: String = _find_file_recursive("user://resources/textures", variants)
+	
+	if existing_path != "":
+		path = existing_path
+	else:
+		path = "user://resources/textures".plus_file(fname)
+
 	save_indexed_bmp(path)
 
 	var root: Node = get_tree().get_root()
 	var editor: Node = root.get_node_or_null("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 	var pet_node: Node = LnzLiveUtils.get_pet_node(root)
 
-	if is_instance_valid(pet_node) and pet_node.has_method("clear_texture_cache_for"):
-		pet_node.clear_texture_cache_for(fname)
+	if is_instance_valid(pet_node) and pet_node.has_method("clear_texture_cache"):
+		pet_node.clear_texture_cache()
 
 	if editor and editor.has_method("rescan_textures"):
 		editor.rescan_textures(false)
@@ -1379,7 +1387,16 @@ func _add_texture_to_lnz_list(texture_filename: String) -> void:
 	var fname: String = texture_filename.strip_edges()
 	if not fname.to_lower().ends_with(".bmp"):
 		fname += ".bmp"
-	var save_path: String = "user://resources/textures".plus_file(fname)
+		
+	var save_path: String = ""
+	var variants: Array = [fname, fname.to_lower(), fname.to_upper()]
+	var existing_path: String = _find_file_recursive("user://resources/textures", variants)
+	
+	if existing_path != "":
+		save_path = existing_path
+	else:
+		save_path = "user://resources/textures".plus_file(fname)
+		
 	save_indexed_bmp(save_path)
 	
 	var lnz = dog_generator.lnz
