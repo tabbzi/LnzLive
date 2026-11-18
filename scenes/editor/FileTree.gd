@@ -1594,11 +1594,11 @@ func _on_RescanButton_pressed() -> void:
 func import_binary_lnz(pet: bool) -> void:
 	current_import_type = ImportType.PET if pet else ImportType.BREED
 	if OS.has_feature("HTML5"):
-		web_file_dialog(".pet" if pet else ".dog,.cat")
+		web_file_dialog("*.pet,*.baby" if pet else ".dog,.cat")
 		return
 	pet_view_container.input_is_paused = true
 	file_dialog.clear_filters()
-	file_dialog.add_filter("*.pet ; Pet Files" if pet else "*.dog,*.cat ; Breed Files")
+	file_dialog.add_filter("*.pet,*.baby ; Adopted Files" if pet else "*.dog,*.cat ; Breed Files")
 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
 	file_dialog.popup_centered()
 
