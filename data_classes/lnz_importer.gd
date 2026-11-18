@@ -85,7 +85,7 @@ func _pet() -> Array:
 	if _text(pos, 17) != tag:
 		error = "Invalid pet LNZ signature."
 		return []
-	return _extract_adopted_blocks(pos + 17, true)
+	return _extract_adopted_blocks(pos + 17)
 
 func _find_first_anchor(from: int) -> int:
 	var earliest: int = -1
@@ -101,7 +101,7 @@ func _append_entry(result: Array, name: String, start: int, end: int) -> void:
 	if not text.strip_edges().empty():
 		result.append({"name": name, "text": text})
 
-func _extract_adopted_blocks(search_from: int, strict_terminator: bool) -> Array:
+func _extract_adopted_blocks(search_from: int) -> Array:
 	var result: Array = []
 
 	# Find two null-terminated blocks, each followed by 0x03bbccaa
@@ -123,7 +123,7 @@ func _babyz() -> Array:
 	if not _require(0, 0x1B10): return []
 	var first_bracket: int = _find_first_anchor(0x1B04)
 	if first_bracket < 0: return []
-	return _extract_adopted_blocks(first_bracket, true)
+	return _extract_adopted_blocks(first_bracket)
 
 func _find_ascii(needle: String, from: int, limit: int = -1) -> int:
 	var end: int = data.size() if limit < 0 or limit > data.size() else limit
