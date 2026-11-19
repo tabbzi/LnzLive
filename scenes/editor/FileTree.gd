@@ -312,7 +312,11 @@ func _on_ImportPalette_pressed() -> void:
 
 func _on_OpenUserFolder_pressed() -> void:
 	var path: String = ProjectSettings.globalize_path("user://")
-	OS.shell_open(path)
+	if OS.get_name() == "OSX":
+		# Godot 3 treats shell_open's argument as a URL on macOS.
+		OS.execute("/usr/bin/open", [path], false)
+	else:
+		OS.shell_open(path)
 
 func _on_FileDialog_files_selected(paths: Array) -> void:
 	var imported_types: Dictionary = {"lnz": false, "bmp": false, "png": false}
