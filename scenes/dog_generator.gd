@@ -959,7 +959,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Tex
 				var h = raw_bmp_data["h"]
 				var data = raw_bmp_data["data"]
 				var img = Image.new()
-				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
+				img.create_from_data(w, h, false, Image.FORMAT_L8, data)
 				texture = ImageTexture.new()
 				texture.create_from_image(img, 0)
 				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
