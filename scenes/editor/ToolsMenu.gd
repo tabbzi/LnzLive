@@ -256,7 +256,7 @@ func _on_ToolsMenu_index_pressed(index: int) -> void:
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = true
-		is_addball = ball_no > KeyBallsData.max_base_ball_num
+		is_addball = ball_no >= KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
 
 	# Match against IDs so reordering items in _ready() doesn't break logic
@@ -369,7 +369,7 @@ func _on_ToolsMenu_about_to_show() -> void:
 		if is_instance_valid(lnz_text_edit):
 			b_name = lnz_text_edit.get_ball_name(ball_no)
 
-		is_addball = ball_no > KeyBallsData.max_base_ball_num
+		is_addball = ball_no >= KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
 
 	if is_ball_selected:

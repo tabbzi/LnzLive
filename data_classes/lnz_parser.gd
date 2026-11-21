@@ -548,8 +548,10 @@ func get_eyes(reader: VirtualFileLineReader) -> void:
 		var irisL: int = parsed_lines[1].left
 		var irisR: int = parsed_lines[1].right
 		
-		custom_eyes[irisL] = eyeL
-		custom_eyes[irisR] = eyeR
+		if irisL >= 0 and eyeL >= 0:
+			custom_eyes[irisL] = eyeL
+		if irisR >= 0 and eyeR >= 0:
+			custom_eyes[irisR] = eyeR
 		
 		print("[STATUS] lnz_parser: get_eyes: parsed custom eyes mapping: ", custom_eyes)
 

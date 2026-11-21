@@ -293,7 +293,7 @@ func signal_ball_selected(ball_no, section):
 
 func _on_Node_ball_deleted(ball_no):
 	print("[STATUS] Node: _on_Node_ball_deleted: ball_no %d" % ball_no)
-	if ball_no > KeyBallsData.max_base_ball_num:
+	if ball_no >= KeyBallsData.max_base_ball_num:
 		emit_signal("delete_ball", ball_no)
 	else:
 		emit_signal("omit_ball", ball_no)

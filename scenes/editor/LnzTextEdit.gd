@@ -1828,11 +1828,6 @@ func get_project_ball_section() -> Array:
 
 
 ### LNZ DATA SETTERS ###
-# _update_all_references
-# _update_pairwise_section
-# _update_single_number_section
-# _update_project_ball_section
-# _update_paintballz_section
 # update_lnz_section_one_value
 # update_lnz_section_two_values
 # write_project_ball_section
@@ -1848,154 +1843,154 @@ func get_project_ball_section() -> Array:
 # _apply_batch_sizes
 # set_batch_moves
 
-func _update_all_references(ball_no: int):
-	# Handles [Linez], [Omissions], [Project Ball], [Paint Ballz], [Polygons]
-	_update_pairwise_section("[Linez]", ball_no)
-	_update_single_number_section("[Omissions]", ball_no)
-	_update_project_ball_section("[Project Ball]", ball_no)
-	_update_paintballz_section("[Paint Ballz]", ball_no)
-	_update_polygon_section(ball_no)
+# Zero-based columns containing ball indices. Other numeric fields are left intact.
+const BALL_REFERENCE_COLUMNS = {
+	"Add Ball": [0, 14],
+	"Move": [0, 4],
+	"Linez": [0, 1],
+	"Project Ball": [0, 1],
+	"Polygons": [0, 1, 2, 3],
+	"Eyes": [0, 1],
+	"Whiskers": [0, 1],
+	"Paint Ballz": [0],
+	"Omissions": [0],
+	"No Texture Rotate": [0],
+	"Color Info Override": [0],
+	"Outline Color Override": [0],
+	"Ball Size Override": [0],
+	"Fuzz Override": [0],
+	"Add Ball Override": [0],
+	"Thin/Fat": [0],
+	"Default Glue Ball": [0],
+	"Key Balls": [0],
+	"Body Balls": [0],
+	"Right Leg Balls": [0],
+	"Left Leg Balls": [0],
+	"Right Hand Balls": [0],
+	"Left Hand Balls": [0],
+	"Right Foot Balls": [0],
+	"Left Foot Balls": [0],
+	"Head Balls": [0],
+	"Right Arm Balls": [0],
+	"Left Arm Balls": [0],
+	"Right Ear Balls": [0],
+	"Left Ear Balls": [0],
+	"Tail Balls": [0],
+	"Whisker Balls": [0],
+	"Jowlz Balls": [0],
+	"Right Brow Balls": [0],
+	"Left Brow Balls": [0],
+	"Extra Balls": [0],
+	"Extra Head Balls": [0],
+	"Fur Color Areas": [1],
+}
 
-func _update_pairwise_section(header: String, ball_no: int):
-	# Generic for [Linez] with start/end ball pair
-	var bounds = get_section_bounds(header)
-	if bounds.empty(): return
-	
-	var delim = _detect_delimiter(bounds.start, bounds.end)
-	
-	# Iterate backwards so that cutting a line doesn't skip the next one
-	for i in range(bounds.end - 1, bounds.start - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with("[") or line.begins_with(";"): continue
-			
-		var parts = split_line(line)
-		if parts.size() < 2: continue
-			
-		var b1 = int(parts[0])
-		var b2 = int(parts[1])
-		
-		# 1. Handle Deletion
-		if b1 == ball_no or b2 == ball_no:
-			# Note: In Godot TextEdit, select is (from_line, from_col, to_line, to_col)
-			select(i, 0, i + 1, 0)
-			cut()
+func _addball_deletion_text(ball_no: int, first_addball: int):
+	var token_pattern = RegEx.new()
+	token_pattern.compile("[^\\s,]+")
+	var rows = []
+	var addball_lines = []
+	var variant_addballs = []
+	var section = ""
+	var in_variant = false
+	for line in text.split("\n"):
+		var content = line.split(";", true, 1)[0].split("//", true, 1)[0]
+		var data = content.strip_edges()
+		if data.begins_with("[") and data.find("]") != -1:
+			section = data.substr(1, data.find("]") - 1)
+			in_variant = false
+		elif data.begins_with("#"):
+			in_variant = data != "##"
+		var fields = []
+		if not data.empty() and not data.begins_with("#") and not data.begins_with("["):
+			if BALL_REFERENCE_COLUMNS.has(section) or section in ["Fur Markings", "Fur Pattern Balls"]:
+				fields = token_pattern.search_all(content)
+		if section == "Add Ball" and fields.size() >= 12 and fields[0].get_string().is_valid_integer():
+			if in_variant:
+				variant_addballs.append({"row": rows.size(), "base": int(fields[0].get_string())})
+			else:
+				addball_lines.append(rows.size())
+		rows.append({"line": line, "section": section, "fields": fields})
+
+	var selected_index = ball_no - first_addball
+	if selected_index < 0 or selected_index >= addball_lines.size():
+		return null
+
+	# A ball attached to a removed base also loses its placement.
+	var removed = {ball_no: true}
+	var pending = [ball_no]
+	var children = {}
+	for i in range(addball_lines.size()):
+		var parent = int(rows[addball_lines[i]].fields[0].get_string())
+		if not children.has(parent):
+			children[parent] = []
+		children[parent].append(first_addball + i)
+	while not pending.empty():
+		for child in children.get(pending.pop_back(), []):
+			if not removed.has(child):
+				removed[child] = true
+				pending.append(child)
+	# A shared reference can refer to different balls after a variant changes
+	# the number of rows. Only remove IDs whose positions are fixed.
+	var deleted_rows = {}
+	var deleted_ids = removed.keys()
+	deleted_ids.sort()
+	var last_deleted_line = addball_lines[deleted_ids.back() - first_addball]
+	for variant in variant_addballs:
+		if variant.row < last_deleted_line or removed.has(variant.base):
+			return null
+	for id in deleted_ids:
+		deleted_rows[addball_lines[id - first_addball]] = true
+
+	var result = PoolStringArray()
+	for i in range(rows.size()):
+		if deleted_rows.has(i):
 			continue
-			
-		# 2. Handle Decrementing
-		var updates = {}
-		if b1 > ball_no: 
-			updates[0] = str(b1 - 1)
-		if b2 > ball_no: 
-			updates[1] = str(b2 - 1)
-		
-		if not updates.empty():
-			# _update_fields handles the reconstruction using the detected delimiter
-			var new_line = _update_fields(parts, updates, delim)
-			set_line(i, new_line)
+		var row = rows[i]
+		var rewritten = _remap_ball_reference_row(row, deleted_ids)
+		if rewritten != null:
+			result.append(rewritten)
+	return result.join("\n")
 
-func _update_single_number_section(header: String, ball_no: int):
-	# Generic for single-number lists like [Omissions]
-	var section = search(header, 0, 0, 0)
-	var start = section[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start + i).strip_edges()
-		if line == "" or line.begins_with("["):
-			break
-		var val = int(line)
-		if val == ball_no:
-			select(start + i, 0, start + i + 1, 0)
-			cut()
+func _remap_ball_reference_row(row: Dictionary, deleted_ids: Array):
+	var line = row.line
+	var section = row.section
+	var fields = row.fields
+	var columns = BALL_REFERENCE_COLUMNS.get(section, [])
+	var is_list = section == "Fur Pattern Balls" or section == "Fur Markings"
+	if is_list:
+		columns = range(1, fields.size())
+	var list_entries = fields.size() - 1
+
+	# Work backwards so edits keep the earlier token offsets valid.
+	for i in range(columns.size() - 1, -1, -1):
+		var column = columns[i]
+		if column >= fields.size():
 			continue
-		elif val > ball_no:
-			set_line(start + i, str(val - 1))
-		i += 1
-
-func _update_project_ball_section(header: String, ball_no: int):
-	# Specific for [Project Ball] where 2nd token is ball_no
-	var section = search(header, 0, 0, 0)
-	var start = section[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start + i).strip_edges()
-		if line == "" or line.begins_with("["):
-			break
-		var tokens = split_line(line)
-		var move_ball = int(tokens[1])
-		if move_ball == ball_no:
-			select(start + i, 0, start + i + 1, 0)
-			cut()
+		var field = fields[column]
+		var token = field.get_string()
+		var value = token.split(":", true, 1)[0] if section == "Fur Markings" else token
+		if not value.is_valid_integer():
 			continue
-		elif move_ball > ball_no:
-			var rest = line.substr(tokens[2].get_start())
-			set_line(start + i, "%s %s %s" % [tokens[0], str(move_ball - 1), rest])
-		i += 1
-
-func _update_paintballz_section(header: String, ball_no: int):
-	# Specific for [Paint Ballz] where 1st token is base ball number
-	print("[STATUS] LnzTextEdit: _update_paintballz_section: Decrementing references for deleted ball_no %d" % ball_no)
-	var bounds = get_section_bounds(header)
-	if bounds.empty(): return
-	
-	var max_iterations: int = bounds.end - bounds.start
-	if max_iterations > 10000:
-		printerr("[ERROR] LnzTextEdit: _update_paintballz_section: section has %d entries, exceeds 10000 limit. Aborting." % max_iterations)
-		return
-	
-	var delim = _detect_delimiter(bounds.start, bounds.end)
-	var i = bounds.start
-	var iteration: int = 0
-	while i < bounds.end:
-		iteration += 1
-		if iteration > max_iterations:
-			printerr("[ERROR] LnzTextEdit: _update_paintballz_section: iteration %d exceeded max %d. Aborting." % [iteration, max_iterations])
-			return
-		var raw_line = get_line(i)
-		var parts = split_line(raw_line)
-		if parts.size() < 1: 
-			i += 1
-			continue
-
-		var b = int(parts[0])
-		if b == ball_no:
-			select(i, 0, i + 1, 0)
-			cut()
-			bounds.end -= 1
-			continue 
-		elif b > ball_no:
-			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
-		i += 1
-
-func _update_polygon_section(ball_no: int):
-	# Replace deleted ball number in polygon lines with a fallback ball.
-	var bounds = get_section_bounds("[Polygons]")
-	if bounds.empty(): return
-	
-	var delim = _detect_delimiter(bounds.start, bounds.end)
-	for i in range(bounds.start, bounds.end):
-		var raw_line = get_line(i)
-		var parts = split_line(raw_line)
-		if parts.size() < 4: continue
-		
-		var deleted_idx = -1
-		for col in [0, 1, 2, 3]:
-			if int(parts[col]) == ball_no:
-				deleted_idx = col
-				break
-		
-		if deleted_idx == -1: continue
-		
-		# Pick fallback: if col 0, use col 1; if col 1, use col 0; if col 2, use col 1; if col 3, use col 2
-		var fallback_col = -1
-		if deleted_idx == 0: fallback_col = 1
-		elif deleted_idx == 1: fallback_col = 0
-		elif deleted_idx == 2: fallback_col = 1
-		elif deleted_idx == 3: fallback_col = 2
-		
-		if fallback_col >= 0:
-			var fallback_val = str(int(parts[fallback_col]))
-			var updates = {deleted_idx: fallback_val}
-			set_line(i, _update_fields(parts, updates, delim))
+		var id = int(value)
+		var new_id = id
+		if id in deleted_ids:
+			if is_list:
+				var start = fields[column - 1].get_end()
+				line = line.substr(0, start) + line.substr(field.get_end())
+				list_entries -= 1
+				continue
+			if section == "Eyes" or section == "Key Balls" or (section == "Add Ball" and column == 14):
+				new_id = -1
+			else:
+				return null
+		else:
+			new_id -= deleted_ids.bsearch(id)
+		if new_id != id:
+			line = line.substr(0, field.get_start()) + str(new_id) + line.substr(field.get_start() + value.length())
+	if section == "Fur Markings" and list_entries == 0:
+		return null
+	return line
 
 func update_lnz_section_one_value(section_name, val1):
 	var bounds = get_section_bounds(section_name)
@@ -3367,16 +3362,19 @@ func _on_Node_omit_ball(ball_no: int):
 	omit_ball(ball_no)
 
 func delete_ball(ball_no: int):
+	var first_addball = KeyBallsData.max_base_ball_num
+	if ball_no < first_addball:
+		return
+	var updated_text = _addball_deletion_text(ball_no, first_addball)
+	if updated_text == null:
+		var message = "Could not delete Add Ballz #%d. Check the Add Ball rows and variation blocks." % ball_no
+		if console_log:
+			console_log.log_message(message)
+		return
+
 	save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
-	if is_addball:
-		var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
-		if line_no != -1:
-			select(line_no, 0, line_no + 1, 0)
-			cut()
-		_update_all_references(ball_no)
-	else:
-		pass 
+	commit_full_snapshot("Before deleting Add Ballz #%d" % ball_no)
+	_set_text_preserve(updated_text)
 	save_file(true)
 	commit_full_snapshot("Deleted Addballz #%d" % ball_no)
 
