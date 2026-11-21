@@ -13,7 +13,7 @@ export var outline = -1
 export var z_add = 0.0
 export var fuzz = 0
 export var texture_id = -1
-export var anchored = 0
+export var anchored = 1
 export var group = 0
 
 func _init(
@@ -26,7 +26,7 @@ func _init(
  fuzz = 0,
  z_add = 0.0,
  texture_id = -1,
- anchored = 0,
+ anchored = 1,
  group = 0):
 	self.size = size
 	self.position = position

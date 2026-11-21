@@ -7,6 +7,7 @@ extends Spatial
 export var base_ball_no           = 0
 export var base_ball_position     = Vector3.ZERO       setget set_base_ball_position
 export var base_ball_size         = 10                 setget set_base_ball_size
+export var base_ball_fuzz         = 0                  setget set_base_ball_fuzz
 
 export var ball_size              = 10                 setget set_ball_size
 export var fuzz_amount            = 0                  setget set_fuzz_amount
@@ -40,6 +41,9 @@ const DEFAULT_PALETTE             = LnzLiveUtils.DEFAULT_PALETTE
 const BABYZ_PALETTE               = LnzLiveUtils.BABYZ_PALETTE
 
 export var petz_palette           = DEFAULT_PALETTE
+
+# Surface paint is culled on the far side; flat markings remain visible at the rim.
+export var surface_mode           = true setget set_surface_mode
 
 export var surface_normal         = Vector3.FORWARD setget set_surface_normal
 
@@ -76,6 +80,8 @@ func _ready():
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 
+	$MeshInstance.material_override.set_shader_param("fuzz_offsets", LnzLiveUtils.circle_fuzz_texture())
+
 	# Set the initial species, which will configure the shader
 	set_species(species)
 
@@ -86,6 +92,7 @@ func _ready():
 
 	# Pass the original texture to the shader
 	set_texture(texture)
+	set_surface_mode(surface_mode)
 
 	# Pass the default Petz palette to the shader
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
@@ -105,6 +112,11 @@ func set_visible(new_value):
 func set_z_add(new_value):
 	z_add = new_value
 	$MeshInstance.material_override.set_shader_param("z_add", new_value)
+
+func set_surface_mode(enabled: bool) -> void:
+	surface_mode = enabled
+	if is_inside_tree() and $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("surface_mode", surface_mode)
 
 func set_surface_normal(new_normal: Vector3):
 	surface_normal = new_normal
@@ -221,9 +233,13 @@ func set_ball_size(new_value):
 	$Area/CollisionShape.shape.radius = a * 0.008
 #	scale = Vector3(a,a,a)
 	
+func set_base_ball_fuzz(new_value):
+	base_ball_fuzz = clamp(int(new_value), 0, 7)
+	$MeshInstance.material_override.set_shader_param("base_ball_fuzz", base_ball_fuzz)
+
 func set_fuzz_amount(new_value):
-	fuzz_amount = new_value
-	$MeshInstance.material_override.set_shader_param("fuzz_amount", new_value)
+	fuzz_amount = clamp(int(new_value), 0, 7)
+	$MeshInstance.material_override.set_shader_param("fuzz_amount", fuzz_amount)
 	
 func set_outline(new_value):
 	outline = new_value

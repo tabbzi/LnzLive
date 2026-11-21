@@ -9,6 +9,32 @@ const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
 const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
 const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
 
+# Shared row offsets for Petz circle fuzz variants, encoded as shift + 7.
+const _CIRCLE_FUZZ_CACHE = {}
+
+static func circle_fuzz_texture() -> ImageTexture:
+	if _CIRCLE_FUZZ_CACHE.has("texture"):
+		return _CIRCLE_FUZZ_CACHE.texture
+	var pixels: PoolByteArray = PoolByteArray()
+	pixels.resize(512 * 256)
+	for i in range(pixels.size()): pixels[i] = 7
+	var state: int = 1
+	for diameter in range(1, 130):
+		var first_row: int = diameter * (diameter - 1) / 2
+		for row in range(diameter):
+			for fuzz in range(1, 8):
+				state = (state * 214013 + 2531011) & 0xffffffff
+				var rand_value: int = (state >> 16) & 0x7fff
+				var spread: int = min(fuzz, (diameter + 1) / 2 - 1)
+				var shift: int = (rand_value >> 2) % (spread + 1) - spread / 2
+				pixels[fuzz * 8385 + first_row + row] = shift + 7
+	var image: Image = Image.new()
+	image.create_from_data(512, 256, false, Image.FORMAT_L8, pixels)
+	var texture: ImageTexture = ImageTexture.new()
+	texture.create_from_image(image, 0)
+	_CIRCLE_FUZZ_CACHE.texture = texture
+	return texture
+
 # Godot maps command to Ctrl on Windows/Linux and Command on macOS.
 # Keep physical Ctrl available on macOS for existing tool controls.
 static func shortcut_modifier(event: InputEventWithModifiers) -> bool:

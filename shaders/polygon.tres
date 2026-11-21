@@ -199,6 +199,11 @@ void fragment() {
 }
 
 void vertex() {
+    // Supply the depth values used by palette shading in the fragment stage.
+    vec3 center_position = (ball_world_pos1 + ball_world_pos2 + ball_world_pos3 + ball_world_pos4) * 0.25;
+    z_center_line = (MODELVIEW_MATRIX * vec4(center_position, 1.0)).z;
+    z_center_pet = (INV_CAMERA_MATRIX * vec4(z_center, 1.0)).z;
+
     // Interpolate the positions based on UV coordinates
     vec3 interp_pos1 = mix(ball_world_pos1, ball_world_pos2, UV.x);
     vec3 interp_pos2 = mix(ball_world_pos4, ball_world_pos3, UV.x);

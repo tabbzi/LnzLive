@@ -17,8 +17,10 @@ const int TRANSPARENT_COLOR_INDEX = 253;
 uniform bool render_flat_colors = false;
 
 uniform vec3 base_world_position;
+uniform sampler2D fuzz_offsets;
 uniform int fuzz_amount = 0;
 uniform int base_ball_size = 1;
+uniform int base_ball_fuzz = 0;
 uniform int ball_size = 1;
 uniform int outline = -1;
 uniform int color_index = 0;
@@ -41,6 +43,7 @@ uniform bool highlight = false;
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
+uniform bool surface_mode = true;                // optional final Paint Ballz field
 uniform vec3 pb_normal;                           // direction of paintballz from ballz center
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
@@ -50,13 +53,14 @@ varying flat vec2 base_center_fragcoord;
 varying flat float z_center_ball;
 varying flat float z_center_pet;
 
-varying flat vec3 view_forward;
 
-// Pseudorandom jitter values for rendering fuzz
-float random (float x) {
-    return fract(sin(dot(vec2(x),
-                         vec2(12.9898,78.233)))*
-        43758.5453123);
+// Petz uses one deterministic sideways shift per circle row and fuzz variant.
+float circle_fuzz_shift(int diameter, int fuzz, float row_offset) {
+    float d = clamp(float(diameter), 1.0, 129.0);
+    float row = clamp(floor((d - 1.0) / 2.0 - row_offset), 0.0, d - 1.0);
+    float index = float(clamp(fuzz, 0, 7)) * 8385.0 + d * (d - 1.0) / 2.0 + row;
+    vec2 uv = (vec2(mod(index, 512.0), floor(index / 512.0)) + vec2(0.5)) / vec2(512.0, 256.0);
+    return round(texture(fuzz_offsets, uv).r * 255.0) - 7.0;
 }
 
 // Apply z-based palette shifts (z-shading)
@@ -96,31 +100,11 @@ vec3 get_shifted_color(int palette_index) {
     return texture(palette, vec2(float(new_palette_index) / 255.0, 0.5)).rgb;
 }
 
-vec2 calculate_uvs(vec2 offset, vec2 screen_uv, vec2 viewport_size) {
+vec2 calculate_uvs(vec2 offset) {
     vec2 tex_coords;
     if (tile_texture) {
-        vec2 center_uv = (center_fragcoord / viewport_size) - vec2(1.0);
-        vec2 uv = (screen_uv - center_uv) * (1000.0 / texture_size);
-
-        // Grab true view rotation captured in the vertex shader
-        float m6 = view_forward.x;
-        float m7 = -view_forward.y; 
-        float m8 = view_forward.z;
-
-        // Calculate the turn angles in radians
-        float angle_u = atan(m6, m8);
-        float angle_v = atan(m7, m8);
-
-        // Slide texture a distance equal to angle * radius
-        float radius = float(ball_size) / 2.0;
-        
-        // Divide by texture_size_raw to convert that pixel distance into UV space
-        float shift_u = (angle_u * radius) / texture_size_raw.x;
-        float shift_v = (angle_v * radius) / texture_size_raw.y;
-
-        // Apply shifts
-        uv.x -= shift_u;
-        uv.y += shift_v;
+        // Sample pixel-for-pixel around the marking, independent of viewport size.
+        vec2 uv = (floor(offset) + 0.5) / texture_size_raw + vec2(0.5);
 
         if (is_atlas) {
             vec2 tiled_uv = fract(uv);
@@ -225,7 +209,7 @@ void fragment() {
     // Discard paintballz going in vectors from ballz centers away from camera 
     vec3 view_normal = (INV_CAMERA_MATRIX * vec4(pb_normal, 0.0)).xyz;
 
-    if (view_normal.z < 0.0) {
+    if (surface_mode && view_normal.z < 0.0) {
         discard;
     }
 
@@ -234,14 +218,7 @@ void fragment() {
     vec2 st = FRAGCOORD.xy;
 
     // FUZZING
-    // Find random number based on y-pixel, offset to center of ball
-    float r = random(st.y - c.y);
-    // Stretch random number between -1.0 and 1.0
-    r = (r * 2.0) - 1.0;
-    // Increase distortion by fuzz amount
-    r *= float(fuzz_amount);
-    // Offset x line by the final random amount
-    st.x += floor(r);
+    st.x -= circle_fuzz_shift(ball_size, fuzz_amount, FRAGCOORD.y - c.y);
 
     // OUTLINING
     float pct2 = 0.0;
@@ -291,7 +268,9 @@ void fragment() {
     }
 
     // DRAWING
-    vec2 vector_from_base_center = st - b;
+    vec2 base_st = FRAGCOORD.xy;
+    base_st.x -= circle_fuzz_shift(base_ball_size, base_ball_fuzz, FRAGCOORD.y - b.y);
+    vec2 vector_from_base_center = base_st - b;
     vec2 vector_from_center = st - c;
     
     // Draw a circle.
@@ -314,7 +293,7 @@ void fragment() {
 
     if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
-        vec2 tex_coords = calculate_uvs(offset, SCREEN_UV, VIEWPORT_SIZE);
+        vec2 tex_coords = calculate_uvs(offset);
 
         float raw_val = texture(ball_texture, tex_coords).r;
         int palette_index = int(round(raw_val * 255.0));
@@ -350,9 +329,6 @@ void fragment() {
 }
 
 void vertex() {
-    mat4 original_mv = INV_CAMERA_MATRIX * WORLD_MATRIX;
-    view_forward = normalize(original_mv[2].xyz);
-    
     // Billboard and retain scaling
     MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
     
@@ -407,6 +383,7 @@ shader_param/render_flat_colors = false
 shader_param/base_world_position = Vector3( 0, 0, 0 )
 shader_param/fuzz_amount = 0
 shader_param/base_ball_size = 10
+shader_param/base_ball_fuzz = 0
 shader_param/ball_size = 10
 shader_param/outline = -1
 shader_param/color_index = -1
@@ -424,5 +401,6 @@ shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
 shader_param/highlight = false
 shader_param/rotation = Vector3( 0, 0, 0 )
 shader_param/tiling_unit = 128.0
+shader_param/surface_mode = true
 shader_param/pb_normal = null
 shader_param/tile_texture = true

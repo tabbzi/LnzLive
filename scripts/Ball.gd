@@ -84,6 +84,8 @@ func _ready() -> void:
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 
+	$MeshInstance.material_override.set_shader_param("fuzz_offsets", LnzLiveUtils.circle_fuzz_texture())
+
 	# Set the initial species, which will configure the shader
 	set_species(species)
 
@@ -186,8 +188,8 @@ func set_eyelash_color(new_value: int) -> void:
 		$MeshInstance.material_override.set_shader_param("eyelash_color_index", new_value)
 
 func set_fuzz_amount(new_value: int) -> void:
-	fuzz_amount = new_value
-	$MeshInstance.material_override.set_shader_param("fuzz_amount", new_value)
+	fuzz_amount = clamp(int(new_value), 0, 7)
+	$MeshInstance.material_override.set_shader_param("fuzz_amount", fuzz_amount)
 	
 func set_outline(new_value: int) -> void:
 	outline = new_value
