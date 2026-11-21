@@ -1980,10 +1980,52 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		paintballs = all_ball_dict.paintballs
 	}
 
+func _move_rotation_basis(rot_euler: Vector3) -> Basis:
+	return Basis(Vector3(deg2rad(rot_euler.x), deg2rad(rot_euler.y), deg2rad(rot_euler.z)))
+
 func apply_movement_with_rotation(vec: Vector3, rot_euler: Vector3):
-	var q = Quat()
-	q.set_euler(Vector3(deg2rad(rot_euler.x), deg2rad(rot_euler.y), deg2rad(rot_euler.z)))
-	return q.xform(vec)
+	return _move_rotation_basis(rot_euler).xform(vec)
+
+func get_move_anchor_basis(ball_no: int) -> Basis:
+	# The renderer treats anchor 0 as unrotated.
+	if ball_no != 0:
+		for ball in balls:
+			if ball.ball_no == ball_no:
+				return _move_rotation_basis(ball.rotation)
+	return Basis.IDENTITY
+
+func get_drag_position_scale(ball_no: int, is_addball: bool) -> float:
+	# Track how a unit change in the stored position reaches the viewport.
+	# Projection moves descendants along with their projected parent.
+	var weights = {}
+	var moved = ball_map.get(ball_no)
+	for id in ball_map:
+		var node = ball_map[id]
+		if is_instance_valid(node) and is_instance_valid(moved):
+			weights[id] = 1.0 if node == moved or moved.is_a_parent_of(node) else 0.0
+	for projection in lnz.project_ball:
+		var projected = ball_map.get(projection.project_ball)
+		if not is_instance_valid(projected) or not weights.has(projection.fixed_ball):
+			continue
+		var amount = (projection.min_projection + projection.max_projection) / 200.0
+		var weight = weights[projection.project_ball]
+		var change = lerp(weights[projection.fixed_ball], weight, amount) - weight
+		for id in weights:
+			if ball_map[id] == projected or projected.is_a_parent_of(ball_map[id]):
+				weights[id] += change
+
+	var scale = weights.get(ball_no, 1.0)
+	if not is_addball:
+		var extensions = KeyBallsData.get_extensions(lnz.species)
+		if not extensions.empty():
+			var head = extensions.head_ext
+			if ball_no != head[0] and ball_no in head:
+				scale *= lnz.head_enlargement.x / 100.0
+			for ears in extensions.ear_ext.values():
+				if ball_no in ears:
+					scale *= lnz.ear_extension / 100.0
+					break
+	return scale
 
 func apply_projections():
 	# have to apply projections now
