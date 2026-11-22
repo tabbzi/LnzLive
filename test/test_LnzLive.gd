@@ -1796,6 +1796,176 @@ func test_lnz_delimiter_detection_auto_priority():
 	var delim_3 = lnz_text._detect_delimiter(1, 3, true)
 	assert_eq(delim_3, ", ", "Tie between ', ' and ',' should favor ', ' due to priority.")
 	
+func test_delete_addball_remaps_references_from_tools_menu():
+	var addball = " 0 0 0 0 69 69 -1 0 0 0 10 0 0 69"
+	var before = """
+[Add Ball]
+; keep header comment
+%s
+67%s
+%s 67
+69%s 69
+[Linez]
+1 67 69
+69, 70, 69 ; keep color
+[Project Ball] // comment
+
+67 0 69
+  69,\t70, 69 ; keep amount
+[Polygons]
+1 69 70 68 69
+1 69 70 6 69
+[Move]
+69 67 69 70 68
+70 67 69 70 69
+[Paint Ballz]
+68 10 0 0 -1 69 0 0 0 0 69
+70 10 0 0 -1 69 0 0 0 0 69
+[Omissions]
+; note
+67
+
+70
+[Color Info Override]
+#2
+68 1 2 3
+69 69 69 69
+##
+[Outline Color Override]
+70 69
+[Ball Size Override]
+70 69
+[Fuzz Override]
+70 69
+[Add Ball Override]
+70 69 69 69
+[No Texture Rotate]
+70 1
+[Thin/Fat]
+69 -68 70
+[Eyes]
+67 70
+68 69
+[Whiskers]
+69 70
+[Key Balls]
+67
+70
+[Head Balls]
+67
+70
+[Fur Color Areas]
+5 69 2 4
+[Fur Pattern Balls]
+addballs: 67 69 70
+[Fur Markings]
+2 67:1, 70:69
+[Num Ballz]
+67
+[Unknown]
+67 70
+[Linez]
+69 70 68
+68 69 70""".trim_prefix("\n") % [addball, addball.substr(2), addball, addball.substr(2)]
+	var expected = """
+[Add Ball]
+; keep header comment
+%s -1
+67%s 67
+[Linez]
+67, 68, 69 ; keep color
+[Project Ball] // comment
+
+  67,\t68, 69 ; keep amount
+[Polygons]
+1 67 68 6 69
+[Move]
+68 67 69 70 67
+[Paint Ballz]
+68 10 0 0 -1 69 0 0 0 0 69
+[Omissions]
+; note
+
+68
+[Color Info Override]
+#2
+67 69 69 69
+##
+[Outline Color Override]
+68 69
+[Ball Size Override]
+68 69
+[Fuzz Override]
+68 69
+[Add Ball Override]
+68 69 69 69
+[No Texture Rotate]
+68 1
+[Thin/Fat]
+67 -68 70
+[Eyes]
+-1 68
+-1 67
+[Whiskers]
+67 68
+[Key Balls]
+-1
+68
+[Head Balls]
+68
+[Fur Color Areas]
+5 67 2 4
+[Fur Pattern Balls]
+addballs: 67 68
+[Fur Markings]
+2, 68:69
+[Num Ballz]
+67
+[Unknown]
+67 70
+[Linez]
+67 68 68""".trim_prefix("\n") % [addball, addball.substr(2)]
+	var previous_base = KeyBallsData.max_base_ball_num
+	var previous_path = lnz_text.filepath
+	var previous_is_user_file = lnz_text.is_user_file
+	var path = "user://test_addball_deletion_%d.lnz" % OS.get_ticks_usec()
+	var menu = editor_instance.get_node("SceneRoot/ToolsMenu")
+	var ball = autofree(load("res://Ball.tscn").instance())
+	ball.ball_no = 67
+	menu.selected_visual_ball = ball
+	KeyBallsData.max_base_ball_num = 67
+	lnz_text.filepath = path
+	lnz_text.is_user_file = true
+	lnz_text.text = before
+	lnz_text.initialize_history()
+	lnz_text.set_block_signals(true)
+	menu._on_ToolsMenu_index_pressed(menu.get_item_index(menu.ToolsAction.DELETE_ADDBALLZ))
+	assert_eq(lnz_text.text, expected)
+	var file = File.new()
+	var open_result = file.open(path, File.READ)
+	assert_eq(open_result, OK)
+	if open_result == OK:
+		assert_eq(file.get_as_text(), expected)
+		file.close()
+	lnz_text.undo_visual_edit()
+	assert_eq(lnz_text.text, before)
+	lnz_text.set_block_signals(false)
+	menu.selected_visual_ball = null
+	KeyBallsData.max_base_ball_num = previous_base
+	lnz_text.filepath = previous_path
+	lnz_text.is_user_file = previous_is_user_file
+	var directory = Directory.new()
+	for suffix in [".lnz", "_backup_1.lnz"]:
+		directory.remove(path.trim_suffix(".lnz") + suffix)
+
+
+func test_delete_addball_with_variant_rows():
+	var ball = "0 0 0 0 0 0 -1 0 0 0 10 0"
+	lnz_text.text = "[Add Ball]\n" + ball + "\n#1\n" + ball + "\n##\n[Omissions]\n68"
+	assert_null(lnz_text._addball_deletion_text(68, 67))
+	assert_eq(lnz_text._addball_deletion_text(67, 67), "[Add Ball]\n#1\n" + ball + "\n##\n[Omissions]\n67")
+
+
 func test_lnz_undo_restores_cursor_and_scroll():
 	# Verify that undoing a visual edit restores the text content, 
 	# cursor position, and scroll position to their pre-edit state.
