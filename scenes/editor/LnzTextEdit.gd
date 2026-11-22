@@ -3084,116 +3084,71 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 	move_ball(ball_no, new_pos)
 
 func move_ball(ball_no: int, new_pos: Vector3):
-	save_backup()
-	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	var moved_ball_node = pet_node.ball_map.get(ball_no) if is_instance_valid(pet_node) else null
-	var is_addball = ball_no > max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
+	var position_scale = pet_node.get_drag_position_scale(ball_no, is_addball)
+	if is_zero_approx(position_scale):
+		var ball = pet_node.ball_map.get(ball_no)
+		if is_instance_valid(ball) and pet_node._orig_world_pos.has(ball_no):
+			ball.global_transform.origin = pet_node._orig_world_pos[ball_no]
+		if console_log:
+			console_log.log_message("Ball #%d has a fixed position under the current LNZ settings." % ball_no)
+		return
 
-	var section_tag = "[Move]"
+	var delta = new_pos / position_scale
+	var section = "[Add Ball]" if is_addball else "[Move]"
+	var bounds = get_section_bounds(section)
+	var line_index = -1
 	if is_addball:
-		section_tag = "[Add Ball]"
-	var bounds = get_section_bounds(section_tag)
-	if bounds.empty():
-		if section_tag == "[Move]":
-			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-			var all_lines = get_text().split("\n")
-			all_lines.insert(first_section_line, "[Move]")
-			#all_lines.insert(first_section_line + 1, "")
-			_set_text_preserve(all_lines.join("\n"))
-		else:
+		line_index = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
+		if line_index == -1:
 			return
+	elif not bounds.empty():
+		for i in range(bounds.start, bounds.end):
+			var parts = split_line(get_line(i))
+			if parts.size() >= 5 and parts[0].is_valid_integer() and int(parts[0]) == ball_no:
+				line_index = i
 
-	var start_line = bounds.start
-	var end_line = bounds.end
-
-	var delim = _detect_delimiter(start_line, end_line)
-
+	var action = "Moved Addballz #%d" % ball_no if is_addball else "Moved Ballz #%d" % ball_no
+	var old_line = get_line(line_index) if line_index != -1 else ""
+	var parts = split_line(old_line) if line_index != -1 else [str(ball_no), "0", "0", "0", ""]
+	if parts.size() < 5:
+		return
+	save_backup()
+	var position = Vector3(float(parts[1]), float(parts[2]), float(parts[3]))
 	if is_addball:
-		moved_ball_node = pet_node.ball_map.get(ball_no)
-		if moved_ball_node:
-			var base_ball_no = moved_ball_node.base_ball_no
-			var base_ball_node = pet_node.ball_map.get(base_ball_no)
-			if base_ball_node:
-				var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
-				var new_relative_pos = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
-
-				var idx = ball_no - KeyBallsData.max_base_ball_num
-				var count = 0
-				for i in range(start_line, end_line):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					if count == idx:
-						var old_line = get_line(i)
-						var parts = split_line(raw)
-						if parts.size() >= 4:
-							parts[1] = str(round(new_relative_pos.x))
-							parts[2] = str(round(new_relative_pos.y))
-							parts[3] = str(round(new_relative_pos.z))
-							var new_line = _join_array(parts, delim)
-							set_line(i, new_line)
-							save_file(true)
-
-							var success = commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-							if not success:
-								var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
-								print(msg)
-								console_log.log_message(msg)
-								commit_full_snapshot("Moved Addballz #%d [FULL COMMIT]" % ball_no)
-						break
-					count += 1
+		position += delta
 	else:
-		var updated = false
-		var head_id = KeyBallsData.get_ball_id_by_name("head")
-		
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"): continue
-			var parts = split_line(raw)
-			
-			if parts.size() >= 4 and parts[0].is_valid_integer() and parts[0].to_int() == ball_no:
-				var old_line = get_line(i)
-				
-				var nx = parts[1].to_int() + new_pos.x
-				var ny = parts[2].to_int() + new_pos.y
-				var nz = parts[3].to_int() + new_pos.z
-				
-				parts[1] = str(nx)
-				parts[2] = str(ny)
-				parts[3] = str(nz)
-				
-				if KeyBallsData.get_group_balls("Head").has(ball_no):
-					if abs(ny) > max_move_head or abs(nz) > max_move_head:
-						if parts.size() < 5: 
-							parts.resize(5) 
-							parts[4] = str(head_id)
-				
-				var new_line = _join_array(parts, delim)
-				set_line(i, new_line)
-				updated = true
-				save_file(true)
+		# Offsets in [Move] are stored in the anchor's local coordinates.
+		var anchor = int(parts[4]) if parts.size() > 5 and parts[4].is_valid_integer() else ball_no
+		var basis = pet_node.get_move_anchor_basis(anchor)
+		var world_offset = basis.xform(position) + delta
+		position = basis.xform_inv(world_offset)
+		if parts.size() == 5 and KeyBallsData.get_group_balls("Head").has(ball_no):
+			if abs(position.y) > max_move_head or abs(position.z) > max_move_head:
+				var head = KeyBallsData.get_ball_id_by_name("head")
+				if head >= 0:
+					position = pet_node.get_move_anchor_basis(head).xform_inv(world_offset)
+					parts.insert(4, str(head))
 
-				var success = commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
-				if not success:
-					var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
-					print(msg)
-					commit_full_snapshot("Moved Ballz #%d [FULL COMMIT]" % ball_no)
-				break
-
-		if not updated:
-			var nx = int(new_pos.x)
-			var ny = int(new_pos.y)
-			var nz = int(new_pos.z)
-			var parts = [str(ball_no), str(nx), str(ny), str(nz)]
-			
-			if KeyBallsData.get_group_balls("Head").has(ball_no):
-				if abs(ny) > max_move_head or abs(nz) > max_move_head:
-					parts.append(str(head_id))
-			
-			var line_txt = _join_array(parts, delim)
-			var insert_at = _find_insertion_line(start_line, end_line)
-			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
-			save_file(true)
-			commit_full_snapshot("Created Move for Ballz #%d" % ball_no)
+	for i in range(3):
+		parts[i + 1] = str(int(round(position[i])))
+	var delim = _detect_delimiter(bounds.start, bounds.end) if not bounds.empty() else " "
+	var new_line = _join_array(parts, delim)
+	if line_index != -1:
+		set_line(line_index, new_line)
+		save_file(true)
+		if not commit_logical_change(action, section, ball_no, old_line, new_line, line_index):
+			commit_full_snapshot(action)
+	else:
+		var lines = Array(text.split("\n"))
+		if bounds.empty():
+			lines.insert(0, section)
+			lines.insert(1, new_line)
+		else:
+			lines.insert(_find_insertion_line(bounds.start, bounds.end), new_line)
+		_set_text_preserve(PoolStringArray(lines).join("\n"))
+		save_file(true)
+		commit_full_snapshot(action)
 
 
 ### TOOLS MENU SIGNALS ###
