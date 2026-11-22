@@ -432,7 +432,7 @@ func get_species() -> void:
 func get_texture_list(reader: VirtualFileLineReader) -> void:
 	var parsed_lines: Array = get_parsed_line_strings(reader, ["filepath", "transparent_color", "width", "height"])
 	for line in parsed_lines:
-		var filename: String = line.filepath.get_file()
+		var filename: String = LnzLiveUtils.texture_filename(line.filepath)
 		var texture_size = null
 
 		if line.has("width") and line.has("height"):
